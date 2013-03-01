@@ -1,0 +1,137 @@
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svnroot/edk2/!svn/ver/13686/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe
+END
+PciRomTable.c
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/edk2/!svn/ver/13095/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciRomTable.c
+END
+PciIo.c
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/edk2/!svn/ver/13686/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciIo.c
+END
+ComponentName.c
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/ComponentName.c
+END
+PciRomTable.h
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciRomTable.h
+END
+PciIo.h
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciIo.h
+END
+PciEnumeratorSupport.c
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/edk2/!svn/ver/13674/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciEnumeratorSupport.c
+END
+PciCommand.c
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciCommand.c
+END
+PciEnumerator.c
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciEnumerator.c
+END
+PciEnumeratorSupport.h
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciEnumeratorSupport.h
+END
+PciCommand.h
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciCommand.h
+END
+PciOptionRomSupport.c
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/edk2/!svn/ver/13095/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciOptionRomSupport.c
+END
+PciEnumerator.h
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciEnumerator.h
+END
+PciBusNoEnumeration.inf
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+END
+PciOptionRomSupport.h
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciOptionRomSupport.h
+END
+PciBus.c
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciBus.c
+END
+PciPowerManagement.c
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/edk2/!svn/ver/13189/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciPowerManagement.c
+END
+PciDriverOverride.c
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciDriverOverride.c
+END
+PciDeviceSupport.c
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciDeviceSupport.c
+END
+PciBus.h
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciBus.h
+END
+PciPowerManagement.h
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svnroot/edk2/!svn/ver/10567/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciPowerManagement.h
+END
+PciDriverOverride.h
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciDriverOverride.h
+END
+PciDeviceSupport.h
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/edk2/!svn/ver/10438/trunk/edk2/DuetPkg/PciBusNoEnumerationDxe/PciDeviceSupport.h
+END
