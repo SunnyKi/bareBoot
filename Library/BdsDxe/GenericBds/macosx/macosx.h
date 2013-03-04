@@ -581,12 +581,6 @@ FileExists (
   IN EFI_FILE *Root, IN CHAR16 *RelativePath
 );
 
-UINT8
-Checksum8 (
-  VOID* startPtr,
-  UINT32 len
-);
-
 TagPtr
 GetProperty (
   TagPtr dict,

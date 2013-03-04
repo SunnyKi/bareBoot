@@ -1570,9 +1570,9 @@ FinalizeSmbios (
         SmbiosEpsNew->NumberOfSmbiosStructures = NumberOfRecords;
         SmbiosEpsNew->MaxStructureSize = MaxStructureSize;
         SmbiosEpsNew->IntermediateChecksum = 0;
-        SmbiosEpsNew->IntermediateChecksum = (UINT8) (256 - Checksum8 ((UINT8*) SmbiosEpsNew + 0x10, SmbiosEpsNew->EntryPointLength - 0x10));
+        SmbiosEpsNew->IntermediateChecksum = (UINT8) (256 - CalculateSum8 ((UINT8*) SmbiosEpsNew + 0x10, SmbiosEpsNew->EntryPointLength - 0x10));
         SmbiosEpsNew->EntryPointStructureChecksum = 0;
-        SmbiosEpsNew->EntryPointStructureChecksum = (UINT8) (256 - Checksum8 ((UINT8*) SmbiosEpsNew, SmbiosEpsNew->EntryPointLength));
+        SmbiosEpsNew->EntryPointStructureChecksum = (UINT8) (256 - CalculateSum8 ((UINT8*) SmbiosEpsNew, SmbiosEpsNew->EntryPointLength));
         gBS->InstallConfigurationTable (&gEfiSmbiosTableGuid, (VOID*) SmbiosEpsNew);
         *Table = (UINT32) (UINTN) SmbiosEpsNew;
         gST->Hdr.CRC32 = 0;

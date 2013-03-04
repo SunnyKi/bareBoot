@@ -376,10 +376,10 @@ PatchACPI (
 
       RsdPointer->XsdtAddress = (UINT64) Xsdt;
       RsdPointer->Checksum = 0;
-      RsdPointer->Checksum = (UINT8) (256 - Checksum8 ((CHAR8*) RsdPointer, 20));
+      RsdPointer->Checksum = (UINT8) (256 - CalculateSum8 ((CHAR8*) RsdPointer, 20));
 #if 0
       RsdPointer->ExtendedChecksum = 0;
-      RsdPointer->ExtendedChecksum = (UINT8) (256 - Checksum8 ((CHAR8*) RsdPointer, RsdPointer->Length));
+      RsdPointer->ExtendedChecksum = (UINT8) (256 - CalculateSum8 ((CHAR8*) RsdPointer, RsdPointer->Length));
 #endif
     } else {
       Print (L"no allocate page for new xsdt\r\n");
@@ -467,7 +467,7 @@ PatchACPI (
     }
 
     ApicTable->Checksum = 0;
-    ApicTable->Checksum = (UINT8) (256 - Checksum8 ((CHAR8*) ApicTable, ApicTable->Length));
+    ApicTable->Checksum = (UINT8) (256 - CalculateSum8 ((CHAR8*) ApicTable, ApicTable->Length));
   } else {
     Pause (L"No APIC table Found !!!\r\n");
   }
@@ -609,7 +609,7 @@ PatchACPI (
     newFadt->XGpe1Blk.Address    = (UINT64) (newFadt->Gpe1Blk);
     FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) newFadt;
     FadtPointer->Header.Checksum = 0;
-    FadtPointer->Header.Checksum = (UINT8) (256 - Checksum8 ((CHAR8*) FadtPointer, FadtPointer->Header.Length));
+    FadtPointer->Header.Checksum = (UINT8) (256 - CalculateSum8 ((CHAR8*) FadtPointer, FadtPointer->Header.Length));
 
 // We are sure that Fadt is the first entry in RSDT/XSDT table
     if (Rsdt != NULL) {
@@ -647,7 +647,7 @@ PatchACPI (
       // Flags |= EFI_ACPI_4KB_PAGE_PROTECTION , EFI_ACPI_64KB_PAGE_PROTECTION
       // verify checksum
       Hpet->Header.Checksum = 0;
-      Hpet->Header.Checksum = (UINT8) (256 - Checksum8 ((CHAR8*) Hpet, Hpet->Header.Length));
+      Hpet->Header.Checksum = (UINT8) (256 - CalculateSum8 ((CHAR8*) Hpet, Hpet->Header.Length));
 
       //then we have to install new table into Xsdt
       if (Xsdt != NULL) {
@@ -719,12 +719,12 @@ PatchACPI (
 
   if (Rsdt) {
     Rsdt->Header.Checksum = 0;
-    Rsdt->Header.Checksum = (UINT8) (256 - Checksum8 ((CHAR8*) Rsdt, Rsdt->Header.Length));
+    Rsdt->Header.Checksum = (UINT8) (256 - CalculateSum8 ((CHAR8*) Rsdt, Rsdt->Header.Length));
   }
 
   if (Xsdt) {
     Xsdt->Header.Checksum = 0;
-    Xsdt->Header.Checksum = (UINT8) (256 - Checksum8 ((CHAR8*) Xsdt, Xsdt->Header.Length));
+    Xsdt->Header.Checksum = (UINT8) (256 - CalculateSum8 ((CHAR8*) Xsdt, Xsdt->Header.Length));
   }
 
 #if 0

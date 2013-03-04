@@ -447,26 +447,6 @@ GetDefaultSettings (
   AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
 }
 
-UINT8
-Checksum8 (
-  VOID* startPtr,
-  UINT32 len
-)
-{
-  UINT8 Value;
-  UINT8 *ptr;
-  UINT32  i;
-
-  Value = 0;
-  ptr = (UINT8 *) startPtr;
-
-  for (i = 0; i < len; i++) {
-    Value += *ptr++;
-  }
-
-  return Value;
-}
-
 BOOLEAN
 IsHexDigit (
   CHAR8 c
