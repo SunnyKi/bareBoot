@@ -255,11 +255,19 @@ CHAR8* RuLang = "ru:0";
 //---------------------------------------------------------------------------------
 
 #if 0
-VOID *GetDataSetting (IN TagPtr dict, IN CHAR8 *propName, OUT UINTN *dataLen) {
+VOID *
+GetDataSetting (
+  IN TagPtr dict,
+  IN CHAR8 *propName,
+  OUT UINTN *dataLen
+  )
+{
   TagPtr  prop;
   UINT8   *data = NULL;
   UINT32   len;
-  //UINTN   i;
+#if 0
+  UINTN   i;
+#endif
   prop = GetProperty (dict, propName);
 
   if (prop) {
@@ -272,9 +280,11 @@ VOID *GetDataSetting (IN TagPtr dict, IN CHAR8 *propName, OUT UINTN *dataLen) {
         *dataLen = prop->dataLen;
       }
 
-      //DBG("Data: %p, Len: %d = ", data, prop->dataLen);
-      //for (i = 0; i < prop->dataLen; i++) DBG("%02x ", data[i]);
-      //DBG("\n");
+#if 0
+      DBG("Data: %p, Len: %d = ", data, prop->dataLen);
+      for (i = 0; i < prop->dataLen; i++) DBG("%02x ", data[i]);
+      DBG("\n");
+#endif
     } else {
       // assume data in hex encoded string property
       len = (UINT32) (AsciiStrLen (prop->string) >> 1);       // 2 chars per byte
@@ -285,9 +295,11 @@ VOID *GetDataSetting (IN TagPtr dict, IN CHAR8 *propName, OUT UINTN *dataLen) {
         *dataLen = len;
       }
 
-      //DBG("Data(str): %p, Len: %d = ", data, len);
-      //for (i = 0; i < len; i++) DBG("%02x ", data[i]);
-      //DBG("\n");
+#if 0
+      DBG("Data(str): %p, Len: %d = ", data, len);
+      for (i = 0; i < len; i++) DBG("%02x ", data[i]);
+      DBG("\n");
+#endif
     }
   }
 
