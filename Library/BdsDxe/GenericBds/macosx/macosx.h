@@ -79,7 +79,7 @@ extern EFI_GUID gEfiAppleBootGuid;
 #define IS_UPPER(a)         ((a) >= 'A' && (a) <= 'Z')
 #define IS_ALPHA(x)         (IS_LOWER(x) || IS_UPPER(x))
 #define IS_ASCII(x)         ((x) >= 0x20 && (x) <= 0x7F)
-#define IS_PUNCT(x)         ((x) == '.') || (x) == '-')
+#define IS_PUNCT(x)         ((x) == '.' || (x) == '-')
 
 #define EBDA_BASE_ADDRESS 0x40E
 #define EFI_SYSTEM_TABLE_MAX_ADDRESS 0xFFFFFFFF
