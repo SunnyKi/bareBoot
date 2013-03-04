@@ -18,7 +18,8 @@ Abstract:
 **/
 
 #include "SmbiosGen.h"
-EFI_HII_DATABASE_PROTOCOL   *gHiiDatabase;
+
+extern EFI_HII_DATABASE_PROTOCOL   *gHiiDatabase;
 extern UINT8                SmbiosGenDxeStrings[];
 EFI_SMBIOS_PROTOCOL         *gSmbios;
 EFI_HII_HANDLE              gStringHandle;
@@ -301,13 +302,13 @@ GetSmbiosString (
   AString = (CHAR8 *)(SmbiosTable.Raw + SmbiosTable.Hdr->Length);
   while (Index != String) {
     while (*AString != 0) {
-      AString ++;
+      AString++;
     }
-    AString ++;
+    AString++;
     if (*AString == 0) {
       return AString;
     }
-    Index ++;
+    Index++;
   }
 
   return AString;

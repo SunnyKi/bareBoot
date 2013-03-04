@@ -65,13 +65,13 @@
   gEfiSimpleTextInProtocolGuid                  # PROTOCOL BY_START
   gEfiSimpleTextInputExProtocolGuid             # PROTOCOL BY_START
 #  gEfiLegacyBiosProtocolGuid                    # PROTOCOL TO_START
-   gEfiLegacy8259ProtocolGuid					 # PROTOCOL TO_START
+   gEfiLegacy8259ProtocolGuid                   # PROTOCOL TO_START
   gEfiPs2PolicyProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
   gEfiDevicePathProtocolGuid                    # PROTOCOL ALWAYS_CONSUMED
 
 [FeaturePcd]
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdPs2KbdExtendedVerification|FALSE
-  
+
 [BuildOptions]
   XCODE:*_*_*_CC_FLAGS = -Os
   GCC:*_*_*_CC_FLAGS = -Os

@@ -49,7 +49,7 @@ extern EFI_COMPONENT_NAME2_PROTOCOL gBiosKeyboardComponentName2;
 #include <IndustryStandard/Pci.h>
 
 //
-// BISO Keyboard Defines
+// BIOS Keyboard Defines
 //
 #define CHAR_SCANCODE                   0xe0
 #define CHAR_ESC                        0x1b
@@ -62,6 +62,7 @@ extern EFI_COMPONENT_NAME2_PROTOCOL gBiosKeyboardComponentName2;
 #define KEYBOARD_WAITFORVALUE_TIMEOUT   1000000 // 1s
 #define KEYBOARD_BAT_TIMEOUT            4000000 // 4s
 #define KEYBOARD_TIMER_INTERVAL         200000  // 0.02s
+
 //  KEYBOARD COMMAND BYTE -- read by writing command KBC_CMDREG_VIA64_CMDBYTE_R to 64H, then read from 60H
 //                           write by wrting command KBC_CMDREG_VIA64_CMDBYTE_W to 64H, then write to  60H
 //  7: Reserved
@@ -72,7 +73,7 @@ extern EFI_COMPONENT_NAME2_PROTOCOL gBiosKeyboardComponentName2;
 //  2: System Flag: selftest successful
 //  1: Enable Auxiliary device interrupt
 //  0: Enable Keyboard interrupt )
-//
+
 #define KB_CMMBYTE_KSCAN2UNI_COV  (0x1 << 6)
 #define KB_CMMBYTE_DISABLE_AUX    (0x1 << 5)
 #define KB_CMMBYTE_DISABLE_KB     (0x1 << 4)
@@ -90,7 +91,7 @@ extern EFI_COMPONENT_NAME2_PROTOCOL gBiosKeyboardComponentName2;
 //  2: KBC self-test successful / Power-on reset
 //  1: Input buffer holds CPU data / empty
 //  0: Output buffer holds keyboard data / empty
-//
+
 #define KBC_STSREG_VIA64_PARE (0x1 << 7)
 #define KBC_STSREG_VIA64_TIM  (0x1 << 6)
 #define KBC_STSREG_VIA64_AUXB (0x1 << 5)
@@ -210,33 +211,33 @@ typedef struct {
 } SIMPLE_QUEUE;
 
 typedef struct {
-	UINTN                                       Signature;
-	EFI_HANDLE                                  Handle;
-	EFI_LEGACY_8259_PROTOCOL                    *Legacy8259;
-	THUNK_CONTEXT                               *ThunkContext;
-	EFI_ISA_IO_PROTOCOL                         *IsaIo;
-	EFI_SIMPLE_TEXT_INPUT_PROTOCOL              SimpleTextIn;
-	EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL           SimpleTextInputEx;
-	UINT16                                      DataRegisterAddress;
-	UINT16                                      StatusRegisterAddress;
-	UINT16                                      CommandRegisterAddress;
-	BOOLEAN                                     ExtendedKeyboard;
-	
-	//
-	// Buffer storing EFI_KEY_DATA
-	//
-	SIMPLE_QUEUE                                Queue;
-	
-	EFI_UNICODE_STRING_TABLE					*ControllerNameTable;
-	
-	EFI_DEVICE_PATH_PROTOCOL					*DevicePath;
-	
-	//
-	// Notification Function List
-	//
-	LIST_ENTRY                                  NotifyList;
-	EFI_EVENT                                   TimerEvent;
-	
+  UINTN                                       Signature;
+  EFI_HANDLE                                  Handle;
+  EFI_LEGACY_8259_PROTOCOL                    *Legacy8259;
+  THUNK_CONTEXT                               *ThunkContext;
+  EFI_ISA_IO_PROTOCOL                         *IsaIo;
+  EFI_SIMPLE_TEXT_INPUT_PROTOCOL              SimpleTextIn;
+  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL           SimpleTextInputEx;
+  UINT16                                      DataRegisterAddress;
+  UINT16                                      StatusRegisterAddress;
+  UINT16                                      CommandRegisterAddress;
+  BOOLEAN                                     ExtendedKeyboard;
+
+  //
+  // Buffer storing EFI_KEY_DATA
+  //
+  SIMPLE_QUEUE                                Queue;
+
+  EFI_UNICODE_STRING_TABLE          *ControllerNameTable;
+
+  EFI_DEVICE_PATH_PROTOCOL          *DevicePath;
+
+  //
+  // Notification Function List
+  //
+  LIST_ENTRY                                  NotifyList;
+  EFI_EVENT                                   TimerEvent;
+
 } BIOS_KEYBOARD_DEV;
 
 #define BIOS_KEYBOARD_DEV_FROM_THIS(a)  CR (a, BIOS_KEYBOARD_DEV, SimpleTextIn, BIOS_KEYBOARD_DEV_SIGNATURE)
@@ -502,7 +503,7 @@ BiosKeyboardWaitForKey (
   Check key buffer to get the key stroke status.
 
   @param  This         Pointer of the protocol EFI_SIMPLE_TEXT_IN_PROTOCOL.
-  
+
   @retval EFI_SUCCESS  A key is being pressed now.
   @retval Other        No key is now pressed.
 
@@ -519,7 +520,7 @@ BiosKeyboardCheckForKey (
   @param  KeyChar      Unicode of key.
   @param  ScanCode     Scan code of key.
 
-  @return The value of EFI Scancode for the key.    
+  @return The value of EFI Scancode for the key.
   @retval SCAN_NULL   No corresponding value in the EFI convert table is found for the key.
 
 **/
@@ -532,7 +533,7 @@ ConvertToEFIScanCode (
 /**
   Check whether there is Ps/2 Keyboard device in system by 0xF4 Keyboard Command
   If Keyboard receives 0xF4, it will respond with 'ACK'. If it doesn't respond, the device
-  should not be in system. 
+  should not be in system.
 
   @param  BiosKeyboardPrivate  Keyboard Private Data Struture
 
@@ -547,9 +548,9 @@ CheckKeyboardConnect (
 
 /**
   Timer event handler: read a series of key stroke from 8042
-  and put them into memory key buffer. 
+  and put them into memory key buffer.
   It is registered as running under TPL_NOTIFY
-  
+
   @param  Event   The timer event
   @param  Context A BIOS_KEYBOARD_DEV pointer
 
@@ -563,12 +564,12 @@ BiosKeyboardTimerHandler (
 
 /**
   Reset the input device and optionaly run diagnostics
- 
+
   @param  This                  Protocol instance pointer.
   @param  ExtendedVerification  Driver may perform diagnostics on reset.
 
   @retval EFI_SUCCESS           The device was reset.
-  @retval EFI_DEVICE_ERROR      The device is not functioning properly and could 
+  @retval EFI_DEVICE_ERROR      The device is not functioning properly and could
                                 not be reset.
 
 **/
@@ -580,19 +581,19 @@ BiosKeyboardResetEx (
   );
 
 /**
-  Reads the next keystroke from the input device. The WaitForKey Event can 
+  Reads the next keystroke from the input device. The WaitForKey Event can
   be used to test for existance of a keystroke via WaitForEvent () call.
 
   @param  This         Protocol instance pointer.
-  @param  KeyData      A pointer to a buffer that is filled in with the keystroke 
+  @param  KeyData      A pointer to a buffer that is filled in with the keystroke
                        state data for the key that was pressed.
-  
+
   @retval  EFI_SUCCESS           The keystroke information was returned.
   @retval  EFI_NOT_READY         There was no keystroke data availiable.
-  @retval  EFI_DEVICE_ERROR      The keystroke information was not returned due to 
+  @retval  EFI_DEVICE_ERROR      The keystroke information was not returned due to
                                  hardware errors.
-  @retval  EFI_INVALID_PARAMETER KeyData is NULL.                        
-    
+  @retval  EFI_INVALID_PARAMETER KeyData is NULL.
+
 **/
 EFI_STATUS
 EFIAPI
@@ -605,16 +606,16 @@ BiosKeyboardReadKeyStrokeEx (
   Set certain state for the input device.
 
   @param  This              Protocol instance pointer.
-  @param  KeyToggleState    A pointer to the EFI_KEY_TOGGLE_STATE to set the 
+  @param  KeyToggleState    A pointer to the EFI_KEY_TOGGLE_STATE to set the
                             state for the input device.
 
   @retval EFI_SUCCESS           The device state was set successfully.
-  @retval EFI_DEVICE_ERROR      The device is not functioning correctly and could 
+  @retval EFI_DEVICE_ERROR      The device is not functioning correctly and could
                                 not have the setting adjusted.
   @retval EFI_UNSUPPORTED       The device does not have the ability to set its state.
-  @retval EFI_INVALID_PARAMETER KeyToggleState is NULL.                       
+  @retval EFI_INVALID_PARAMETER KeyToggleState is NULL.
 
-**/   
+**/
 EFI_STATUS
 EFIAPI
 BiosKeyboardSetState (
@@ -626,18 +627,18 @@ BiosKeyboardSetState (
   Register a notification function for a particular keystroke for the input device.
 
   @param  This                    Protocol instance pointer.
-  @param  KeyData                 A pointer to a buffer that is filled in with the keystroke 
+  @param  KeyData                 A pointer to a buffer that is filled in with the keystroke
                                   information data for the key that was pressed.
-  @param  KeyNotificationFunction Points to the function to be called when the key 
-                                  sequence is typed specified by KeyData.                        
-  @param  NotifyHandle            Points to the unique handle assigned to the registered notification.                          
+  @param  KeyNotificationFunction Points to the function to be called when the key
+                                  sequence is typed specified by KeyData.
+  @param  NotifyHandle            Points to the unique handle assigned to the registered notification.
 
-  
+
   @retval EFI_SUCCESS             The notification function was registered successfully.
   @retval EFI_OUT_OF_RESOURCES    Unable to allocate resources for necesssary data structures.
   @retval EFI_INVALID_PARAMETER   KeyData or NotifyHandle is NULL.
-                                                  
-**/   
+
+**/
 EFI_STATUS
 EFIAPI
 BiosKeyboardRegisterKeyNotify (
@@ -650,13 +651,13 @@ BiosKeyboardRegisterKeyNotify (
 /**
   Remove a registered notification function from a particular keystroke.
 
-  @param  This                 Protocol instance pointer.    
+  @param  This                 Protocol instance pointer.
   @param  NotificationHandle   The handle of the notification function being unregistered.
-  
+
   @retval EFI_SUCCESS             The notification function was unregistered successfully.
   @retval EFI_INVALID_PARAMETER   The NotificationHandle is invalid.
-                              
-**/   
+
+**/
 EFI_STATUS
 EFIAPI
 BiosKeyboardUnregisterKeyNotify (
@@ -712,19 +713,19 @@ KeyboardWrite (
 EFI_STATUS
 BiosKeyboardFreeNotifyList (
   IN OUT LIST_ENTRY           *ListHead
-  );  
+  );
 
 /**
   Check if key is registered.
 
-  @param  RegsiteredData    A pointer to a buffer that is filled in with the keystroke 
+  @param  RegsiteredData    A pointer to a buffer that is filled in with the keystroke
                             state data for the key that was registered.
-  @param  InputData         A pointer to a buffer that is filled in with the keystroke 
+  @param  InputData         A pointer to a buffer that is filled in with the keystroke
                             state data for the key that was pressed.
 
   @retval TRUE              Key be pressed matches a registered key.
-  @retval FLASE             Match failed. 
-  
+  @retval FLASE             Match failed.
+
 **/
 BOOLEAN
 IsKeyRegistered (
@@ -737,7 +738,7 @@ IsKeyRegistered (
 
   @param  Event    The event that be siganlled when any key has been stroked.
   @param  Context  Pointer of the protocol EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL.
-  
+
 **/
 VOID
 EFIAPI
@@ -748,13 +749,13 @@ BiosKeyboardWaitForKeyEx (
 
 /**
  Initialize legacy environment for BIOS INI caller.
- 
+
  @param ThunkContext   the instance pointer of THUNK_CONTEXT
  **/
 VOID
 InitializeBiosIntCaller (
-						 THUNK_CONTEXT     *ThunkContext
-						 );
+             THUNK_CONTEXT     *ThunkContext
+             );
 
 /**
  Initialize interrupt redirection code and entries, because
@@ -762,35 +763,34 @@ InitializeBiosIntCaller (
  Or the interrupt will lost when we do thunk.
  NOTE: We do not reset 8259 vector base, because it will cause pending
  interrupt lost.
- 
+
  @param Legacy8259  Instance pointer for EFI_LEGACY_8259_PROTOCOL.
- 
- **/  
+
+ **/
 VOID
 InitializeInterruptRedirection (
-								IN  EFI_LEGACY_8259_PROTOCOL  *Legacy8259
-								);
+                IN  EFI_LEGACY_8259_PROTOCOL  *Legacy8259
+                );
 
 /**
- Thunk to 16-bit real mode and execute a software interrupt with a vector 
- of BiosInt. Regs will contain the 16-bit register context on entry and 
+ Thunk to 16-bit real mode and execute a software interrupt with a vector
+ of BiosInt. Regs will contain the 16-bit register context on entry and
  exit.
- 
+
  @param  This    Protocol instance pointer.
  @param  BiosInt Processor interrupt vector to invoke
  @param  Reg     Register contexted passed into (and returned) from thunk to 16-bit mode
- 
+
  @retval TRUE   Thunk completed, and there were no BIOS errors in the target code.
  See Regs for status.
- @retval FALSE  There was a BIOS erro in the target code.  
- **/  
+ @retval FALSE  There was a BIOS erro in the target code.
+ **/
 BOOLEAN
 EFIAPI
 LegacyBiosInt86 (
-				 IN  BIOS_KEYBOARD_DEV               *BiosDev,
-				 IN  UINT8                           BiosInt,
-				 IN  IA32_REGISTER_SET				*Regs
-				 );    
+         IN  BIOS_KEYBOARD_DEV        *BiosDev,
+         IN  UINT8                    BiosInt,
+         IN  IA32_REGISTER_SET        *Regs
+         );
 
 #endif
-

@@ -76,23 +76,27 @@ BdsLibBootViaBootOption (
   EFI_HANDLE                ImageHandle;
   EFI_DEVICE_PATH_PROTOCOL  *FilePath;
   EFI_LOADED_IMAGE_PROTOCOL *ImageInfo;
-//  EFI_DEVICE_PATH_PROTOCOL  *WorkingDevicePath;
-//  EFI_ACPI_S3_SAVE_PROTOCOL *AcpiS3Save;
-//  LIST_ENTRY                TempBootLists;
-//  UINT8                     Index;
-//  BOOLEAN                   isVerbose = FALSE;
-  UINT16	buffer[255];    
+#if 0
+  EFI_DEVICE_PATH_PROTOCOL  *WorkingDevicePath;
+  EFI_ACPI_S3_SAVE_PROTOCOL *AcpiS3Save;
+  LIST_ENTRY                TempBootLists;
+  UINT8                     Index;
+  BOOLEAN                   isVerbose = FALSE;
+#endif
+  UINT16 buffer[255];    
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
-/*  Status = gBS->LocateProtocol (&gEfiAcpiS3SaveProtocolGuid, NULL, (VOID **) &AcpiS3Save);
+#if 0
+  Status = gBS->LocateProtocol (&gEfiAcpiS3SaveProtocolGuid, NULL, (VOID **) &AcpiS3Save);
   if (!EFI_ERROR (Status)) {
     AcpiS3Save->S3Save (AcpiS3Save, NULL);
   }
-*/
+#endif
   BdsSetMemoryTypeInformationVariable ();
   ASSERT (Option->DevicePath != NULL);
-/*  Status = BdsLibUpdateFvFileDevicePath (&DevicePath, PcdGetPtr(PcdShellFile));
+#if 0
+  Status = BdsLibUpdateFvFileDevicePath (&DevicePath, PcdGetPtr(PcdShellFile));
   if (!EFI_ERROR(Status)) {
     if (Option->DevicePath != NULL) {
       FreePool(Option->DevicePath);
@@ -111,7 +115,8 @@ BdsLibBootViaBootOption (
     //
     FreePool (DevicePath);
     DevicePath = Option->DevicePath;
-  } */
+  }
+#endif
   EfiSignalEventReadyToBoot();
   Status = gBS->LoadImage (
                   TRUE,
@@ -273,47 +278,51 @@ BdsLibBootViaBootOption (
     goto Done;
 
 MacOS:
-  InitializeConsoleSim(gImageHandle); 
-  PrepatchSmbios();
-  GetCPUProperties();
-  ScanSPD();
-  SetPrivateVarProto();
-  GetDefaultSettings();
-  GetUserSettings(gRootFHandle, L"\\EFI\\mini\\config.plist");
-  SetDevices();
-  PatchSmbios();
-  PatchACPI(gRootFHandle);
-  SetVariablesForOSX();
-  FinalizeSmbios();
-  SetupDataForOSX();
-//  EventsInitialize ();
+  InitializeConsoleSim (gImageHandle); 
+  PrepatchSmbios ();
+  GetCPUProperties ();
+  ScanSPD ();
+  SetPrivateVarProto ();
+  GetDefaultSettings ();
+  GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
+  SetDevices ();
+  PatchSmbios ();
+  PatchACPI (gRootFHandle);
+  SetVariablesForOSX ();
+  FinalizeSmbios ();
+  SetupDataForOSX ();
+#if 0
+  EventsInitialize ();
+#endif
   
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
   AsciiStrToUnicodeStr(gSettings.BootArgs, buffer);
   
-  if (StrLen(buffer)>0) 
+  if (StrLen(buffer) > 0) 
   {
     ImageInfo->LoadOptionsSize  = (UINT32)StrSize(buffer);
     ImageInfo->LoadOptions      = buffer;
   }
-  /*
-   if (Option->LoadOptionsSize != 0) {
-   ImageInfo->LoadOptionsSize  = Option->LoadOptionsSize;
-   ImageInfo->LoadOptions      = Option->LoadOptions;
-   }
-   */
+#if 0
+  if (Option->LoadOptionsSize != 0) {
+    ImageInfo->LoadOptionsSize  = Option->LoadOptionsSize;
+    ImageInfo->LoadOptions      = Option->LoadOptions;
+  }
+#endif
 
-  DumpCPU();
-  /*
-  if ((bootArgsLen > 1) && (bootArgsLen < 120)) 
-    for (Index=0; Index < bootArgsLen-1; Index++) {
-      if ((gSettings.BootArgs[Index] == '-') && (gSettings.BootArgs[Index+1] =='v')) { 
-        isVerbose = TRUE; 
-        break; 
+  DumpCPU ();
+
+#if 0
+  if ((bootArgsLen > 1) && (bootArgsLen < 120)) {
+    for (Index = 0; Index < bootArgsLen - 1; Index++) {
+      if ((gSettings.BootArgs[Index] == '-') && (gSettings.BootArgs[Index + 1] == 'v')) {
+        isVerbose = TRUE;
+        break;
       }
     }
-   */
+   }
+#endif
   if ((AsciiStrStr(gSettings.BootArgs, "-v") == 0) && (gST->ConOut != NULL)) {
     gST->ConOut = NULL; 
   } 
@@ -507,11 +516,8 @@ BdsLibEnumerateAllBootOption (
   UINT16                        FloppyNumber;
   UINT16                        CdromNumber;
   UINT16                        NonBlockNumber;
-  UINTN                         NumberBlockIoHandles;
-  EFI_HANDLE                    *BlockIoHandles;
   EFI_BLOCK_IO_PROTOCOL         *BlkIo;
   BOOLEAN                       Removable[2];
-  UINTN                         RemovableIndex;
   UINTN                         Index;
   UINTN                         FvHandleCount;
   EFI_HANDLE                    *FvHandleBuffer;
@@ -529,18 +535,27 @@ BdsLibEnumerateAllBootOption (
   CHAR8                         *LastLang;  
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
-  EFI_FILE_SYSTEM_INFO            *FileSystemInfo	= NULL;
+  EFI_FILE_SYSTEM_INFO            *FileSystemInfo;
   UINT32                          BufferSizeVolume;
 
   FloppyNumber    = 0;
   CdromNumber     = 0;
-//  HarddriveNumber = 0;
-//  UsbNumber       = 0;
-//  MiscNumber      = 0;
-//  ScsiNumber      = 0;
+#if 0
+  HarddriveNumber = 0;
+  UsbNumber       = 0;
+  MiscNumber      = 0;
+  ScsiNumber      = 0;
+#endif
   PlatLang        = NULL;
   LastLang        = NULL;
   gRootFHandle    = NULL;
+  FileSystemInfo  = NULL;
+  FileSystemHandles = NULL;
+  FHandle         = NULL;
+  BlkIo           = NULL;
+
+  NumberFileSystemHandles = 0;
+  DevicePathType          = 0;
     
   ZeroMem (Buffer, sizeof (Buffer));
 
@@ -594,63 +609,7 @@ BdsLibEnumerateAllBootOption (
   Removable[0]  = FALSE;
   Removable[1]  = TRUE;
 
-  gBS->LocateHandleBuffer (
-        ByProtocol,
-        &gEfiBlockIoProtocolGuid,
-        NULL,
-        &NumberBlockIoHandles,
-        &BlockIoHandles
-        );
-
-  for (RemovableIndex = 0; RemovableIndex < 2; RemovableIndex++) {
-    for (Index = 0; Index < NumberBlockIoHandles; Index++) {
-
-      Status = gBS->HandleProtocol (
-                      BlockIoHandles[Index],
-                      &gEfiBlockIoProtocolGuid,
-                      (VOID **) &BlkIo
-                      );
-      if (EFI_ERROR (Status) || (BlkIo->Media->RemovableMedia == Removable[RemovableIndex])) {
-        continue;
-      }
-      DevicePath  = DevicePathFromHandle (BlockIoHandles[Index]);
-      DevicePathType = BdsGetBootTypeFromDevicePath (DevicePath);
-
-      switch (DevicePathType) {
-      case BDS_EFI_ACPI_FLOPPY_BOOT:
-        if (FloppyNumber != 0) {
-          UnicodeSPrint (Buffer, 255, L"%s %d", L"Floppy", FloppyNumber);
-        } else {
-          UnicodeSPrint (Buffer, 255, L"%s", L"Floppy");
-        }
-        BdsLibBuildOptionFromHandle (BlockIoHandles[Index], L"All", BdsBootOptionList, Buffer, FALSE);
-        FloppyNumber++;
-        break;
-      case BDS_EFI_MESSAGE_ATAPI_BOOT:
-      case BDS_EFI_MESSAGE_SATA_BOOT:
-        if (BlkIo->Media->RemovableMedia) {
-          if (CdromNumber != 0) {
-            UnicodeSPrint (Buffer, 255, L"%s %d", L"DVD/CDROM", CdromNumber);
-          } else {
-            UnicodeSPrint (Buffer, 255, L"%s", L"DVD/CDROM");
-          }
-          CdromNumber++;
-        } else {
-          break;
-        }
-        DEBUG ((DEBUG_INFO | DEBUG_LOAD, "Buffer: %S\n", Buffer));
-        BdsLibBuildOptionFromHandle (BlockIoHandles[Index], L"All", BdsBootOptionList, Buffer, FALSE);
-        break;
-
-      default:
-        break;
-      }
-    }
-  }
-  if ((DevicePathType != BDS_EFI_ACPI_FLOPPY_BOOT) && 
-     !(((DevicePathType = BDS_EFI_MESSAGE_ATAPI_BOOT) || (DevicePathType = BDS_EFI_MESSAGE_ATAPI_BOOT)) &&
-      (BlkIo->Media->RemovableMedia)))
-  {
+  if (DevicePathType != BDS_EFI_ACPI_FLOPPY_BOOT) {
     NonBlockNumber = 0;
     gBS->LocateHandleBuffer (
           ByProtocol,
@@ -672,12 +631,20 @@ BdsLibEnumerateAllBootOption (
                                      &FHandle
                                      );
       }
-//      if ((FileExists(FHandle, L"EFI\\config.plist")) && (gRootFHandle == NULL)) gRootFHandle = FHandle;
-//      if ((FileExists(FHandle, L"\\EFI\\mini\\config.plist"))
-//          && (FileExists(FHandle, L"\\EFI\\.mini")))
-//          gRootFHandle = FHandle;
-        
-      if (FileExists(FHandle, L"\\EFI\\mini\\config.plist")) gRootFHandle = FHandle;
+#if 0
+      if ((FileExists (FHandle, L"EFI\\config.plist")) && (gRootFHandle == NULL)) {
+        gRootFHandle = FHandle;
+      }
+      
+      if ((FileExists (FHandle, L"\\EFI\\mini\\config.plist"))
+           && (FileExists (FHandle, L"\\EFI\\.mini"))) {
+        gRootFHandle = FHandle;
+      }
+#endif
+
+      if (FileExists (FHandle, L"\\EFI\\mini\\config.plist")) {
+        gRootFHandle = FHandle;
+      }
         
       BufferSizeVolume = SIZE_OF_EFI_FILE_SYSTEM_INFO + 255;
       FileSystemInfo = AllocateZeroPool(BufferSizeVolume);      
@@ -686,12 +653,16 @@ BdsLibEnumerateAllBootOption (
         if (FileSystemInfo->VolumeLabel) 
           UnicodeSPrint (Buffer, BufferSizeVolume, L"%s", FileSystemInfo->VolumeLabel);
       }
-//      if (FileSystemInfo->VolumeLabel == NULL) 
-//        UnicodeSPrint (Buffer, 255, L"%s", L"No Volume Label");
-//        else if (*FileSystemInfo->VolumeLabel == 0x0000)
-//          UnicodeSPrint (Buffer, 255, L"%s", L"No Volume Label");
-//      if (StrCmp(Buffer, L"EFI")) {
-//      }
+#if 0
+      if (FileSystemInfo->VolumeLabel == NULL) {
+        UnicodeSPrint (Buffer, 255, L"%s", L"No Volume Label");
+      } else if (*FileSystemInfo->VolumeLabel == 0x0000) {
+        UnicodeSPrint (Buffer, 255, L"%s", L"No Volume Label");
+      }
+      
+      if (StrCmp (Buffer, L"EFI")) {
+      }
+#endif
       if (FileExists(FHandle, MACOSX_LOADER_PATH))
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
 
@@ -724,10 +695,13 @@ BdsLibEnumerateAllBootOption (
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], REDHAT_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
       }
       if (FileExists(FHandle, EFI_REMOVABLE_MEDIA_FILE_NAME)) {
-        /*        if (FileSystemInfo->VolumeLabel == NULL) 
-         UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader");
-         else if (*FileSystemInfo->VolumeLabel == 0x0000)
-         UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader"); */
+#if 0
+        if (FileSystemInfo->VolumeLabel == NULL) {
+          UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader");
+        } else if (*FileSystemInfo->VolumeLabel == 0x0000) {
+          UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader");
+        }
+#endif
         if ((FileSystemInfo->VolumeLabel == NULL)     ||
             (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader");
         else UnicodeSPrint (Buffer, 255, L"%s (%s)", FileSystemInfo->VolumeLabel, L"EFI Boot Loader");
@@ -735,13 +709,19 @@ BdsLibEnumerateAllBootOption (
       }
 
       if (FileExists(FHandle, WINDOWS_LOADER_PATH)) {
-/*        if (FileSystemInfo->VolumeLabel == NULL) 
+#if 0
+        if (FileSystemInfo->VolumeLabel == NULL) {
           UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
-        else if (*FileSystemInfo->VolumeLabel == 0x0000) 
-          UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader"); 
+        } else if (*FileSystemInfo->VolumeLabel == 0x0000) {
+          UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
+        }
+        
         if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)  ||
-            (StrCmp(Buffer, L"EFI") == 0)) UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader"); */
+             (*FileSystemInfo->VolumeLabel == 0x0000)  ||
+             (StrCmp (Buffer, L"EFI") == 0)) {
+          UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
+        }
+#endif
         if ((FileSystemInfo->VolumeLabel == NULL)     ||
             (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
           else UnicodeSPrint (Buffer, 255, L"%s (%s)", FileSystemInfo->VolumeLabel, L"Windows EFI Loader");
@@ -768,12 +748,7 @@ BdsLibEnumerateAllBootOption (
     }
     GetBootDefault(gRootFHandle, L"\\EFI\\mini\\config.plist");
   }
-  if (NumberFileSystemHandles != 0) {
-    FreePool (FileSystemHandles);
-  }
-  if (NumberBlockIoHandles != 0) {
-    FreePool (BlockIoHandles);
-  }
+
   gBS->LocateHandleBuffer (
         ByProtocol,
         &gEfiFirmwareVolume2ProtocolGuid,
@@ -952,14 +927,16 @@ BdsLibGetBootableHandle (
 
   UINTN                           NumberSimpleFileSystemHandles;
   UINTN                           Index;
-//  EFI_IMAGE_DOS_HEADER            DosHeader;
-//  EFI_IMAGE_OPTIONAL_HEADER_UNION       HdrData;
-//  EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION   Hdr;
-  
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
-//  EFI_FILE                        *TmpHandle;
+#if 0
+  EFI_IMAGE_DOS_HEADER            DosHeader;
+  EFI_IMAGE_OPTIONAL_HEADER_UNION       HdrData;
+  EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION   Hdr;
+  EFI_FILE                        *TmpHandle;
+#endif
 
+  FHandle = NULL;
 
   UpdatedDevicePath = DevicePath;
 

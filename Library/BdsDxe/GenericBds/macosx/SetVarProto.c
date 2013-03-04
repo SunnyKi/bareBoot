@@ -10,7 +10,7 @@
  * hope that it will be useful, but WITHOUT ANY WARRANTY of any kind.
  */
 /*
- Slice 2011, 
+ Slice 2011,
  some more adoptations for Apple's OS
  */
 
@@ -31,13 +31,13 @@ EFI_STATUS
   IN     APPLE_GETVAR_PROTOCOL   *This,
   IN     CHAR8                   *Buffer,
   IN OUT UINT32                  *BufferSize
-  );
+);
 
 struct _APPLE_GETVAR_PROTOCOL {
   UINT64    Sign;
-  EFI_STATUS(EFIAPI *Unknown1)(IN VOID *);
-  EFI_STATUS(EFIAPI *Unknown2)(IN VOID *);
-  EFI_STATUS(EFIAPI *Unknown3)(IN VOID *);
+  EFI_STATUS (EFIAPI *Unknown1) (IN VOID *);
+  EFI_STATUS (EFIAPI *Unknown2) (IN VOID *);
+  EFI_STATUS (EFIAPI *Unknown3) (IN VOID *);
   APPLE_GETVAR_PROTOCOL_GET_DEVICE_PROPS  GetDevProps;
   APPLE_GETVAR_PROTOCOL_GET_DEVICE_PROPS  GetDevProps1;
 };
@@ -47,106 +47,124 @@ CHAR8                           *cDevProp = NULL;
 
 
 EFI_STATUS EFIAPI
-GetDeviceProps(IN     APPLE_GETVAR_PROTOCOL   *This,
-               IN     CHAR8                   *Buffer,
-               IN OUT UINT32                  *BufferSize)
-{ 
-    UINT32		cnt = 0;
-	UINT8     *binStr = NULL;
- // EFI_STATUS    Status;
-
+GetDeviceProps (
+  IN     APPLE_GETVAR_PROTOCOL   *This,
+  IN     CHAR8                   *Buffer,
+  IN OUT UINT32                  *BufferSize
+)
+{
+  UINT32    cnt = 0;
+  UINT8     *binStr = NULL;
+#if 0
+  EFI_STATUS    Status;
+#endif
+#if 0
   // iCloud
-  //Status = gRT->SetVariable(L"ROM", &gEfiAppleNvramGuid, 0, 0, NULL);
-  
-    if ((cDevProp!=NULL) && AsciiStrLen(cDevProp)>3)
-	{
-        cnt = (UINT32)AsciiStrLen(cDevProp) / 2;
-		binStr = AllocateZeroPool(cnt);
-        if(hex2bin(cDevProp, binStr, cnt))
-        {
-          *BufferSize = cnt;    
-          CopyMem(Buffer, binStr,  cnt);
-          return EFI_SUCCESS;      
-        }
+  Status = gRT->SetVariable (L"ROM", &gEfiAppleNvramGuid, 0, 0, NULL);
+#endif
+
+  if ((cDevProp != NULL) && AsciiStrLen (cDevProp) > 3) {
+    cnt = (UINT32) AsciiStrLen (cDevProp) / 2;
+    binStr = AllocateZeroPool (cnt);
+
+    if (hex2bin (cDevProp, binStr, cnt)) {
+      *BufferSize = cnt;
+      CopyMem (Buffer, binStr,  cnt);
+      return EFI_SUCCESS;
     }
-    else if ((gDevProp!=NULL) && AsciiStrLen(gDevProp)>3)
-    {
-      cnt = (UINT32)AsciiStrLen(gDevProp) / 2;
-      binStr = AllocateZeroPool(cnt);
-      if(hex2bin(gDevProp, binStr, cnt))
-      {
-          *BufferSize = cnt;
-          CopyMem(Buffer, binStr,  cnt);
-          return EFI_SUCCESS;
-      }
+  } else if ((gDevProp != NULL) && AsciiStrLen (gDevProp) > 3) {
+    cnt = (UINT32) AsciiStrLen (gDevProp) / 2;
+    binStr = AllocateZeroPool (cnt);
+
+    if (hex2bin (gDevProp, binStr, cnt)) {
+      *BufferSize = cnt;
+      CopyMem (Buffer, binStr,  cnt);
+      return EFI_SUCCESS;
     }
-    *BufferSize = 0;
-	return EFI_SUCCESS;
+  }
+
+  *BufferSize = 0;
+  return EFI_SUCCESS;
 }
 
-APPLE_GETVAR_PROTOCOL mDeviceProperties=
-{
-	DEVICE_PROPERTIES_SIGNATURE,
-	NULL,
-	NULL,
-	NULL,
-	GetDeviceProps,   
-    GetDeviceProps,
+APPLE_GETVAR_PROTOCOL mDeviceProperties = {
+  DEVICE_PROPERTIES_SIGNATURE,
+  NULL,
+  NULL,
+  NULL,
+  GetDeviceProps,
+  GetDeviceProps,
 };
 
-typedef	EFI_STATUS (EFIAPI *EFI_SCREEN_INFO_FUNCTION)(
-  VOID* This, 
+typedef EFI_STATUS (EFIAPI *EFI_SCREEN_INFO_FUNCTION) (
+  VOID* This,
   UINT64* baseAddress,
   UINT64* frameBufferSize,
   UINT32* byterPerRow,
   UINT32* Width,
   UINT32* Height,
   UINT32* colorDepth
-  );
+);
 
-typedef struct {	
-	EFI_SCREEN_INFO_FUNCTION GetScreenInfo;	
+typedef struct {
+  EFI_SCREEN_INFO_FUNCTION GetScreenInfo;
 } EFI_INTERFACE_SCREEN_INFO;
 
-EFI_STATUS GetScreenInfo(VOID* This, UINT64* baseAddress, UINT64* frameBufferSize,
-                         UINT32* bpr, UINT32* w, UINT32* h, UINT32* colorDepth)
+EFI_STATUS
+GetScreenInfo (
+  VOID* This,
+  UINT64* baseAddress,
+  UINT64* frameBufferSize,
+  UINT32* bpr,
+  UINT32* w,
+  UINT32* h,
+  UINT32* colorDepth
+)
 {
-	EFI_GRAPHICS_OUTPUT_PROTOCOL	*GraphicsOutput=NULL;
-	EFI_STATUS						Status;
-	
-	Status = gBS->HandleProtocol (
-              gST->ConsoleOutHandle,
-              &gEfiGraphicsOutputProtocolGuid,
-              (VOID **) &GraphicsOutput);
-	if(EFI_ERROR(Status))		return EFI_UNSUPPORTED;
-	Print(L"GetScreenInfo called with args: %lx %lx %lx %lx %lx %lx\n",
-          baseAddress, frameBufferSize, bpr, w, h, colorDepth);
-	*frameBufferSize = (UINT64)GraphicsOutput->Mode->FrameBufferSize;
-	*baseAddress = (UINT64)GraphicsOutput->Mode->FrameBufferBase;
-	*w = (UINT32)GraphicsOutput->Mode->Info->HorizontalResolution;
-	*h = (UINT32)GraphicsOutput->Mode->Info->VerticalResolution;
-	*colorDepth = 32;
-	*bpr = (UINT32)(GraphicsOutput->Mode->Info->PixelsPerScanLine*32) >> 3;
-	return EFI_SUCCESS;
+  EFI_STATUS            Status;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput;
+
+  GraphicsOutput = NULL;
+
+  Status = gBS->HandleProtocol (
+             gST->ConsoleOutHandle,
+             &gEfiGraphicsOutputProtocolGuid,
+             (VOID **) &GraphicsOutput);
+
+  if (EFI_ERROR (Status)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  Print (L"GetScreenInfo called with args: %lx %lx %lx %lx %lx %lx\n",
+         baseAddress, frameBufferSize, bpr, w, h, colorDepth);
+  *frameBufferSize = (UINT64) GraphicsOutput->Mode->FrameBufferSize;
+  *baseAddress = (UINT64) GraphicsOutput->Mode->FrameBufferBase;
+  *w = (UINT32) GraphicsOutput->Mode->Info->HorizontalResolution;
+  *h = (UINT32) GraphicsOutput->Mode->Info->VerticalResolution;
+  *colorDepth = 32;
+  *bpr = (UINT32) (GraphicsOutput->Mode->Info->PixelsPerScanLine * 32) >> 3;
+  return EFI_SUCCESS;
 }
 
-EFI_INTERFACE_SCREEN_INFO mScreenInfo=
-{
-	GetScreenInfo
+EFI_INTERFACE_SCREEN_INFO mScreenInfo = {
+  GetScreenInfo
 };
 
-EFI_STATUS EFIAPI
-SetPrivateVarProto(VOID)
+EFI_STATUS
+EFIAPI
+SetPrivateVarProto (
+  VOID
+)
 {
   EFI_STATUS  Status;
-	
+
   Status = gBS->InstallMultipleProtocolInterfaces (
-                   &gImageHandle,
-                   &gDevicePropertiesGuid,
-                   &mDeviceProperties,
-                   &gAppleScreenInfoGuid,
-                   &mScreenInfo,
-                   NULL
-                   );
+             &gImageHandle,
+             &gDevicePropertiesGuid,
+             &mDeviceProperties,
+             &gAppleScreenInfoGuid,
+             &mScreenInfo,
+             NULL
+           );
   return Status;
 }

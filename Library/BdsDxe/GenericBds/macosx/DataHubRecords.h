@@ -1279,10 +1279,10 @@ typedef struct {
   ///
   /// The memory speed in megahertz (MHz). A value of 0x00 denotes that 
   /// the speed is unknown.
-	/// Inconsistent with specification here:  
-	/// In MemSubclass specification 0.9, the naming is MemoryTypeSpeed.
-	/// Keep it unchanged for backward compatibilty.
-	///
+  /// Inconsistent with specification here:  
+  /// In MemSubclass specification 0.9, the naming is MemoryTypeSpeed.
+  /// Keep it unchanged for backward compatibilty.
+  ///
   EFI_EXP_BASE10_DATA               MemorySpeed;
   ///
   /// The memory state. 

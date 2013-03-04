@@ -1,14 +1,14 @@
 /** @file
   Provide legacy thunk interface for accessing Bios Functions.
-  
+
 Copyright (c) 2006 - 2007, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 /**
   Initialize legacy environment for BIOS INI caller.
-  
+
   @param ThunkContext   the instance pointer of THUNK_CONTEXT
 **/
 VOID
@@ -44,7 +44,7 @@ InitializeBiosIntCaller (
                   &LegacyRegionBase
                   );
   ASSERT_EFI_ERROR (Status);
-  
+
   ThunkContext->RealModeBuffer     = (VOID*)(UINTN)LegacyRegionBase;
   ThunkContext->RealModeBufferSize = LegacyRegionSize;
   ThunkContext->ThunkAttributes    = THUNK_ATTRIBUTE_BIG_REAL_MODE|THUNK_ATTRIBUTE_DISABLE_A20_MASK_INT_15;
@@ -57,9 +57,9 @@ InitializeBiosIntCaller (
    Or the interrupt will lost when we do thunk.
    NOTE: We do not reset 8259 vector base, because it will cause pending
    interrupt lost.
-   
+
    @param Legacy8259  Instance pointer for EFI_LEGACY_8259_PROTOCOL.
-   
+
 **/
 CONST   UINT32   InterruptRedirectionCode[8] = {
   0x90CF08CD, // INT8; IRET; NOP
@@ -121,17 +121,17 @@ InitializeInterruptRedirection (
 }
 
 /**
-  Thunk to 16-bit real mode and execute a software interrupt with a vector 
-  of BiosInt. Regs will contain the 16-bit register context on entry and 
+  Thunk to 16-bit real mode and execute a software interrupt with a vector
+  of BiosInt. Regs will contain the 16-bit register context on entry and
   exit.
-  
+
   @param  This    Protocol instance pointer.
   @param  BiosInt Processor interrupt vector to invoke
   @param  Reg     Register contexted passed into (and returned) from thunk to 16-bit mode
-  
+
   @retval TRUE   Thunk completed, and there were no BIOS errors in the target code.
                  See Regs for status.
-  @retval FALSE  There was a BIOS erro in the target code.  
+  @retval FALSE  There was a BIOS erro in the target code.
 **/
 BOOLEAN
 EFIAPI
@@ -146,7 +146,7 @@ LegacyBiosInt86 (
   IA32_REGISTER_SET     ThunkRegSet;
   BOOLEAN               Ret;
   UINT16                *Stack16;
-  
+
   ZeroMem (&ThunkRegSet, sizeof (ThunkRegSet));
   ThunkRegSet.E.EFLAGS.Bits.Reserved_0 = 1;
   ThunkRegSet.E.EFLAGS.Bits.Reserved_1 = 0;
@@ -157,7 +157,7 @@ LegacyBiosInt86 (
   ThunkRegSet.E.EFLAGS.Bits.IF         = 1;
   ThunkRegSet.E.EFLAGS.Bits.TF         = 0;
   ThunkRegSet.E.EFLAGS.Bits.CF         = 0;
-  
+
   ThunkRegSet.E.EDI  = Regs->E.EDI;
   ThunkRegSet.E.ESI  = Regs->E.ESI;
   ThunkRegSet.E.EBP  = Regs->E.EBP;
@@ -181,7 +181,7 @@ LegacyBiosInt86 (
   //
   Status = BiosDev->Legacy8259->SetMode (BiosDev->Legacy8259, Efi8259LegacyMode, NULL, NULL);
   ASSERT_EFI_ERROR (Status);
-  
+
   Stack16 = (UINT16 *)((UINT8 *) BiosDev->ThunkContext->RealModeBuffer + BiosDev->ThunkContext->RealModeBufferSize - sizeof (UINT16));
 
   ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
@@ -191,7 +191,7 @@ LegacyBiosInt86 (
   ThunkRegSet.E.CS   = (UINT16)(((UINT32 *)NULL)[BiosInt] >> 16);
   BiosDev->ThunkContext->RealModeState = &ThunkRegSet;
   AsmThunk16 (BiosDev->ThunkContext);
-  
+
   //
   // Restore protected mode interrupt state
   //
@@ -205,16 +205,16 @@ LegacyBiosInt86 (
     EnableInterrupts ();
   }
 
-  Regs->E.EDI      = ThunkRegSet.E.EDI;      
-  Regs->E.ESI      = ThunkRegSet.E.ESI;  
-  Regs->E.EBP      = ThunkRegSet.E.EBP;  
-  Regs->E.EBX      = ThunkRegSet.E.EBX;  
-  Regs->E.EDX      = ThunkRegSet.E.EDX;  
-  Regs->E.ECX      = ThunkRegSet.E.ECX;  
+  Regs->E.EDI      = ThunkRegSet.E.EDI;
+  Regs->E.ESI      = ThunkRegSet.E.ESI;
+  Regs->E.EBP      = ThunkRegSet.E.EBP;
+  Regs->E.EBX      = ThunkRegSet.E.EBX;
+  Regs->E.EDX      = ThunkRegSet.E.EDX;
+  Regs->E.ECX      = ThunkRegSet.E.ECX;
   Regs->E.EAX      = ThunkRegSet.E.EAX;
   Regs->E.SS       = ThunkRegSet.E.SS;
-  Regs->E.CS       = ThunkRegSet.E.CS;  
-  Regs->E.DS       = ThunkRegSet.E.DS;  
+  Regs->E.CS       = ThunkRegSet.E.CS;
+  Regs->E.DS       = ThunkRegSet.E.DS;
   Regs->E.ES       = ThunkRegSet.E.ES;
 
   CopyMem (&(Regs->E.EFLAGS), &(ThunkRegSet.E.EFLAGS), sizeof (UINT32));
@@ -223,5 +223,3 @@ LegacyBiosInt86 (
 
   return Ret;
 }
-
-

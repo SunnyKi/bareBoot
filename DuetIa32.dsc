@@ -1,4 +1,4 @@
-Duet## @file
+## @file
 #  An EFI/Framework Emulation Platform with UEFI HII interface supported.
 #
 #  Developer's UEFI Emulation. DUET provides an EFI/UEFI IA32/X64 environment on legacy BIOS,
@@ -26,9 +26,9 @@ Duet## @file
   PLATFORM_GUID                  = 199E24E0-0989-42aa-87F2-611A8C397E72
   PLATFORM_VERSION               = 0.4
   DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/DuetIA32
+  OUTPUT_DIRECTORY               = Build/DuetIa32
   SUPPORTED_ARCHITECTURES        = IA32
-  BUILD_TARGETS                  = DEBUG
+  BUILD_TARGETS                  = DEBUG || RELEASE
   SKUID_IDENTIFIER               = DEFAULT
   FLASH_DEFINITION               = Duet/Duet.fdf
 
@@ -58,7 +58,18 @@ Duet## @file
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
-  PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+  #PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+  PeCoffLib|Duet/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
+#  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
+#  EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
+#  PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
+#  SmbusLib|MdePkg/Library/DxeSmbusLib/DxeSmbusLib.inf
+#  S3BootScriptLib|MdeModulePkg/Library/PiDxeS3BootScriptLib/DxeS3BootScriptLib.inf
+
+#  IoApicLib|PcAtChipsetPkg/Library/BaseIoApicLib/BaseIoApicLib.inf
+#
+  LocalApicLib|UefiCpuPkg/Library/BaseXApicLib/BaseXApicLib.inf
+
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
   #
   # UEFI & PI
@@ -73,6 +84,8 @@ Duet## @file
   UefiDecompressLib|MdePkg/Library/BaseUefiDecompressLib/BaseUefiDecompressLib.inf
   DxeServicesLib|MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
   DxeServicesTableLib|MdePkg/Library/DxeServicesTableLib/DxeServicesTableLib.inf
+#
+  UefiCpuLib|UefiCpuPkg/Library/BaseUefiCpuLib/BaseUefiCpuLib.inf
   
   #
   # Generic Modules
@@ -80,14 +93,13 @@ Duet## @file
   UefiUsbLib|MdePkg/Library/UefiUsbLib/UefiUsbLib.inf
   UefiScsiLib|MdePkg/Library/UefiScsiLib/UefiScsiLib.inf
   OemHookStatusCodeLib|MdeModulePkg/Library/OemHookStatusCodeLibNull/OemHookStatusCodeLibNull.inf
-  GenericBdsLib|IntelFrameworkModulePkg/Library/GenericBdsLib/GenericBdsLib.inf
+
   SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   #
   # Platform
   #
-  PlatformBdsLib|Duet/Library/DuetBdsLib/PlatformBds.inf
   TimerLib|Duet/Library/DuetTimerLib/DuetTimerLib.inf
   #
   # Misc
@@ -99,9 +111,14 @@ Duet## @file
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   PlatformHookLib|MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf
-  SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
+#  SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
+  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
-  
+  LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
+  EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
+#  EblNetworkLib|EmbeddedPkg/Library/EblNetworkLib/EblNetworkLib.inf
+  CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
+
   #
   # To save size, use NULL library for DebugLib and ReportStatusCodeLib.
   # If need status code output, do library instance overriden as below DxeMain.inf does
@@ -124,60 +141,33 @@ Duet## @file
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x0
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x0
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
-
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyAEnable|FALSE
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyBEnable|FALSE
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom1Enable|FALSE
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|FALSE
+  gPcAtChipsetPkgTokenSpaceGuid.Pcd8259LegacyModeMask|0xFFFC
+#  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|0xF0000000
+  
+[PcdsPatchableInModule]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
+  
 [PcdsFeatureFlag]
   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|TRUE
 
 ###################################################################################################
-#
-# Components Section - list of the modules and components that will be processed by compilation
-#                      tools and the EDK II tools to generate PE32/PE32+/Coff image files.
-#
-# Note: The EDK II DSC file is not used to specify how compiled binary images get placed
-#       into firmware volume images. This section is just a list of modules to compile from
-#       source into UEFI-compliant binaries.
-#       It is the FDF file that contains information on combining binary files into firmware
-#       volume images, whose concept is beyond UEFI and is described in PI specification.
-#       Binary modules do not need to be listed in this section, as they should be
-#       specified in the FDF file. For example: Shell binary (Shell_Full.efi), FAT binary (Fat.efi),
-#       Logo (Logo.bmp), and etc.
-#       There may also be modules listed in this section that are not required in the FDF file,
-#       When a module listed here is excluded from FDF file, then UEFI-compliant binary will be
-#       generated for it, but the binary will not be put into any firmware volume.
-#
-###################################################################################################
 [Components]
-  Duet/DxeIpl/DxeIpl.inf {
-    <LibraryClasses>
-      #
-      # If no following overriden for ReportStatusCodeLib library class,
-      # All other module can *not* output debug information even they are use not NULL library
-      # instance for DebugLib and ReportStatusCodeLib
-      #
-      ReportStatusCodeLib|MdeModulePkg/Library/DxeReportStatusCodeLib/DxeReportStatusCodeLib.inf
-  }
-
-  MdeModulePkg/Core/Dxe/DxeMain.inf {
-    #
-    # Enable debug output for DxeCore module, this is a sample for how to enable debug output
-    # for a module. If need turn on debug output for other module, please copy following overriden
-    # PCD and library instance to other module's override section.
-    #
-    <PcdsFixedAtBuild>
-      gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
-      gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2F
-      gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x80000042
-    <LibraryClasses>
-      DebugLib|IntelFrameworkModulePkg/Library/PeiDxeDebugLibReportStatusCode/PeiDxeDebugLibReportStatusCode.inf
-      ReportStatusCodeLib|Duet/Library/DxeCoreReportStatusCodeLibFromHob/DxeCoreReportStatusCodeLibFromHob.inf
-  }
+  Duet/DxeIpl/DxeIpl.inf 
+  MdeModulePkg/Core/Dxe/DxeMain.inf 
 
   MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
   MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
 
-  Duet/FSVariable/FSVariable.inf
+  MdeModulePkg/Universal/Variable/EmuRuntimeDxe/EmuVariableRuntimeDxe.inf
   MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
   MdeModulePkg/Universal/MemoryTest/NullMemoryTestDxe/NullMemoryTestDxe.inf
   MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
@@ -190,23 +180,21 @@ Duet## @file
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
 
   MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
-  MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
   MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-
-
   Duet/SmbiosGenDxe/SmbiosGen.inf
-  #Duet/FvbRuntimeService/DUETFwh.inf
+
   Duet/EfiLdr/EfiLdr.inf {
     <LibraryClasses>
       DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
       NULL|IntelFrameworkModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   }
-  IntelFrameworkModulePkg/Universal/BdsDxe/BdsDxe.inf {
+
+  Duet/Library/BdsDxe/BdsDxe.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   }
-  MdeModulePkg/Universal/EbcDxe/EbcDxe.inf
+# ----+++++++------
   UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
   UefiCpuPkg/CpuDxe/CpuDxe.inf
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
@@ -217,19 +205,24 @@ Duet## @file
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
   Duet/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   Duet/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
-  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf
+
+#  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
+#  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf
 
   # IDE/AHCI Support
+#  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
+#  Duet/BlockIoDxe/BlockIoDxe.inf
   Duet/SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
+
   # Usb Support
   MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
   MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+#  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
   MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
@@ -237,21 +230,25 @@ Duet## @file
   # ISA Support
   PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
   IntelFrameworkModulePkg/Bus/Isa/IsaBusDxe/IsaBusDxe.inf
-  IntelFrameworkModulePkg/Bus/Isa/IsaSerialDxe/IsaSerialDxe.inf
-  IntelFrameworkModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2keyboardDxe.inf
-  IntelFrameworkModulePkg/Bus/Isa/IsaFloppyDxe/IsaFloppyDxe.inf
+#  IntelFrameworkModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2keyboardDxe.inf
+  Duet/BiosKeyboard/KeyboardDxe.inf
 
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
-  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+  Duet/PartitionDxe/PartitionDxe.inf
+
 
   # Bios Thunk
-  Duet/BiosVideoThunkDxe/BiosVideo.inf
+  Duet/BiosVideo/BiosVideo.inf
 
-  #
-  # Sample Application
-  #
-  MdeModulePkg/Application/HelloWorld/HelloWorld.inf
+  # ACPI Support
+#  MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
+#  MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
+#  Duet/OsxAcpiTableDxe/AcpiTableDxe.inf
+#  Duet/OsxAcpiPlatformDxe/AcpiPlatformDxe.inf
+
+  # DataHub
+  IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
 ###################################################################################################
 #
@@ -264,4 +261,4 @@ Duet## @file
 ###################################################################################################
 [BuildOptions]
   MSFT:*_*_*_CC_FLAGS = /FAsc /FR$(@R).SBR
-
+  GCC:*_*_*_CC_FLAGS = -DMDEPKG_NDEBUG

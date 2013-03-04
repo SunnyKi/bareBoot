@@ -1138,4 +1138,3 @@ DisableQuietBoot (
   gST->ConOut->EnableCursor (gST->ConOut, TRUE);
   return EFI_SUCCESS;
 }
-

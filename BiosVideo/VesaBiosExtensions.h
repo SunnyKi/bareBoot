@@ -2,14 +2,14 @@
 
 Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
 
-This program and the accompanying materials                          
+This program and the accompanying materials
 are licensed and made available under the terms and conditions
 of the BSD License which accompanies this distribution.  The
 full text of the license may be found at
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
 
@@ -175,9 +175,9 @@ Revision History
 //
 #define VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE                    128
 #define VESA_BIOS_EXTENSIONS_EDID_ESTABLISHED_TIMING_MAX_NUMBER 17
-#define DETAILED_TIMING_DESCRIPTIONS_START	0x36
-#define DETAILED_TIMING_DESCRIPTION_SIZE	18
-#define NO_DETAILED_TIMING_DESCRIPTIONS		4
+#define DETAILED_TIMING_DESCRIPTIONS_START  0x36
+#define DETAILED_TIMING_DESCRIPTION_SIZE  18
+#define NO_DETAILED_TIMING_DESCRIPTIONS    4
 
 typedef struct {
   UINT16  HorizontalResolution;
@@ -238,6 +238,7 @@ typedef struct {
   UINT8   Reserved[222];      // Reserved for VBE implementation scratch area
   UINT8   OemData[256];       // Data area for OEM strings.  Pad to 512 byte block size
 } VESA_BIOS_EXTENSIONS_INFORMATION_BLOCK;
+
 //A sample at 0x9c000
 /*
 0x0000:  56 45 53 41 00 03 00 c1 00 90 01 00 00 00 40 c0    VESA............

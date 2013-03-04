@@ -128,7 +128,7 @@ BiosInitBlockIo (
   @param  Drive          Legacy drive.
 
   @return  Result of device parameter retrieval.
- 
+
 **/
 UINTN
 Int13GetDeviceParameters (
@@ -144,7 +144,9 @@ Int13GetDeviceParameters (
 
   Regs.H.AH = 0x08;
   Regs.H.DL = Drive->Number;
-//  CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+  CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
   CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
   if (CarryFlag != 0 || Regs.H.AH != 0x00) {
     Drive->ErrorCode = Regs.H.AH;
@@ -183,7 +185,7 @@ Int13GetDeviceParameters (
   @param  Drive          Legacy drive.
 
   @return  Result of this extension.
- 
+
 **/
 UINTN
 Int13Extensions (
@@ -199,7 +201,9 @@ Int13Extensions (
   Regs.H.AH = 0x41;
   Regs.X.BX = 0x55aa;
   Regs.H.DL = Drive->Number;
-//  CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+  CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
   CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
   if (CarryFlag != 0 || Regs.X.BX != 0xaa55) {
     Drive->ExtendedInt13            = FALSE;
@@ -225,7 +229,7 @@ Int13Extensions (
   @param  Drive          Legacy drive.
 
   @return  Result of drive parameter retrieval.
- 
+
 **/
 UINTN
 GetDriveParameters (
@@ -248,7 +252,9 @@ GetDriveParameters (
   mLegacyDriverUnder1Mb->Parameters.StructureSize = (UINT16) sizeof (EDD_DRIVE_PARAMETERS);
   Regs.E.DS = EFI_SEGMENT ((UINTN)(&mLegacyDriverUnder1Mb->Parameters));
   Regs.X.SI = EFI_OFFSET ((UINTN)(&mLegacyDriverUnder1Mb->Parameters));
-//  CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+  CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
   CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
   if (CarryFlag != 0 || Regs.H.AH != 0x00) {
     Drive->ErrorCode = Regs.H.AH;
@@ -270,7 +276,9 @@ GetDriveParameters (
     //
     Regs.H.AH = 0x20;
     Regs.H.DL = Drive->Number;
-//    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
     if (CarryFlag != 0) {
       //
@@ -404,7 +412,7 @@ GetDriveParameters (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid, 
+  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid,
                                 or the buffer is not on proper alignment.
 
 **/
@@ -492,7 +500,9 @@ Edd30BiosReadBlocks (
     Regs.X.SI                         = EFI_OFFSET (AddressPacket);
     Regs.E.DS                         = EFI_SEGMENT (AddressPacket);
 
-//    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
     Media->MediaPresent = TRUE;
     if (CarryFlag != 0) {
@@ -508,9 +518,11 @@ Edd30BiosReadBlocks (
             Media->LastBlock  = (EFI_LBA) Bios->Parameters.PhysicalSectors - 1;
             Media->BlockSize  = (UINT32) Bios->Parameters.BytesPerSector;
           }
-          /*else {
+#if 0
+          else {
             ASSERT (FALSE);
-          } */
+          }
+#endif
 
           Media->ReadOnly = FALSE;
           gBS->HandleProtocol (BiosBlockIoDev->Handle, &gEfiBlockIoProtocolGuid, (VOID **) &BlockIo);
@@ -551,7 +563,7 @@ Edd30BiosReadBlocks (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid, 
+  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid,
                                 or the buffer is not on proper alignment.
 
 **/
@@ -643,7 +655,9 @@ Edd30BiosWriteBlocks (
     Regs.X.SI = EFI_OFFSET (AddressPacket);
     Regs.E.DS = EFI_SEGMENT (AddressPacket);
 
-//    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
     Media->MediaPresent = TRUE;
     if (CarryFlag != 0) {
@@ -658,9 +672,12 @@ Edd30BiosWriteBlocks (
           if (Int13Extensions (BiosBlockIoDev, Bios) != 0) {
             Media->LastBlock  = (EFI_LBA) Bios->Parameters.PhysicalSectors - 1;
             Media->BlockSize  = (UINT32) Bios->Parameters.BytesPerSector;
-          } /* else {
+          }
+#if 0
+	  else {
             ASSERT (FALSE);
-          } */
+          }
+#endif
 
           Media->ReadOnly = FALSE;
           gBS->HandleProtocol (BiosBlockIoDev->Handle, &gEfiBlockIoProtocolGuid, (VOID **) &BlockIo);
@@ -736,13 +753,17 @@ BiosBlockIoReset (
 
   Regs.H.AH       = 0x00;
   Regs.H.DL       = BiosBlockIoDev->Bios.Number;
-//  CarryFlag       = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+  CarryFlag       = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
   CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
   if (CarryFlag != 0) {
     if (Regs.H.AL == BIOS_RESET_FAILED) {
       Regs.H.AH = 0x00;
       Regs.H.DL = BiosBlockIoDev->Bios.Number;
- //     CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+      CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
       CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
       if (CarryFlag != 0) {
         BiosBlockIoDev->Bios.ErrorCode = Regs.H.AH;
@@ -774,7 +795,7 @@ BiosBlockIoReset (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid, 
+  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid,
                                 or the buffer is not on proper alignment.
 
 **/
@@ -867,9 +888,11 @@ Edd11BiosReadBlocks (
     Regs.X.SI           = EFI_OFFSET (AddressPacket);
     Regs.E.DS           = EFI_SEGMENT (AddressPacket);
 
- //   CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
- //     BiosBlockIoDev->Bios.Number, CarryFlag, Regs.H.AH, Lba, NumberOfBlocks);
+    // BiosBlockIoDev->Bios.Number, CarryFlag, Regs.H.AH, Lba, NumberOfBlocks);
     Media->MediaPresent = TRUE;
     if (CarryFlag != 0) {
       //
@@ -884,9 +907,11 @@ Edd11BiosReadBlocks (
             Media->LastBlock  = (EFI_LBA) Bios->Parameters.PhysicalSectors - 1;
             Media->BlockSize  = (UINT32) Bios->Parameters.BytesPerSector;
           }
-          /*else {
+#if 0
+          else {
             ASSERT (FALSE);
-          }*/
+          }
+#endif
 
           Media->ReadOnly = FALSE;
           gBS->HandleProtocol (BiosBlockIoDev->Handle, &gEfiBlockIoProtocolGuid, (VOID **) &BlockIo);
@@ -928,7 +953,7 @@ Edd11BiosReadBlocks (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid, 
+  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid,
                                 or the buffer is not on proper alignment.
 
 **/
@@ -1028,7 +1053,9 @@ Edd11BiosWriteBlocks (
     TransferByteSize  = NumberOfBlocks * BlockSize;
     CopyMem ((VOID *) (UINTN) TransferBuffer, Buffer, TransferByteSize);
 
-//    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+    CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
  //     BiosBlockIoDev->Bios.Number, CarryFlag, Regs.H.AH, Lba, NumberOfBlocks);
     Media->MediaPresent = TRUE;
@@ -1045,9 +1072,11 @@ Edd11BiosWriteBlocks (
             Media->LastBlock  = (EFI_LBA) Bios->Parameters.PhysicalSectors - 1;
             Media->BlockSize  = (UINT32) Bios->Parameters.BytesPerSector;
           }
-          /*else {
+#if 0
+          else {
             ASSERT (FALSE);
-          }*/
+          }
+#endif
 
           Media->ReadOnly = FALSE;
           gBS->HandleProtocol (BiosBlockIoDev->Handle, &gEfiBlockIoProtocolGuid, (VOID **) &BlockIo);
@@ -1090,7 +1119,7 @@ Edd11BiosWriteBlocks (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid, 
+  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid,
                                 or the buffer is not on proper alignment.
 
 **/
@@ -1188,7 +1217,9 @@ BiosReadLegacyDrive (
       CheckLba      = Cylinder * (BiosBlockIoDev->Bios.MaxHead + 1) + Head;
       CheckLba      = CheckLba * BiosBlockIoDev->Bios.MaxSector + Sector - 1;
 
-     // ASSERT (CheckLba == ShortLba);
+#if 0
+      ASSERT (CheckLba == ShortLba);
+#endif
       if (CheckLba != ShortLba) {
         return EFI_DEVICE_ERROR;
       }
@@ -1199,7 +1230,9 @@ BiosReadLegacyDrive (
 
       Regs.X.BX = EFI_OFFSET (mEdd11Buffer);
       Regs.E.ES = EFI_SEGMENT (mEdd11Buffer);
-//      CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+      CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
       CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
       Retry--;
     } while (CarryFlag != 0 && Retry != 0 && Regs.H.AH != BIOS_DISK_CHANGED);
@@ -1269,7 +1302,7 @@ BiosReadLegacyDrive (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid, 
+  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid,
                                 or the buffer is not on proper alignment.
 
 **/
@@ -1367,7 +1400,9 @@ BiosWriteLegacyDrive (
       CheckLba      = Cylinder * (BiosBlockIoDev->Bios.MaxHead + 1) + Head;
       CheckLba      = CheckLba * BiosBlockIoDev->Bios.MaxSector + Sector - 1;
 
- //     ASSERT (CheckLba == ShortLba);
+#if 0
+      ASSERT (CheckLba == ShortLba);
+#endif
       if (CheckLba != ShortLba) {
         return EFI_DEVICE_ERROR;
       }
@@ -1382,7 +1417,9 @@ BiosWriteLegacyDrive (
       TransferByteSize  = NumberOfBlocks * BlockSize;
       CopyMem (mEdd11Buffer, Buffer, TransferByteSize);
 
-//      CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#if 0
+      CarryFlag = BiosBlockIoDev->LegacyBios->Int86 (BiosBlockIoDev->LegacyBios, 0x13, &Regs);
+#endif
       CarryFlag = LegacyBiosInt86 (BiosBlockIoDev, 0x13, &Regs);
       Retry--;
     } while (CarryFlag != 0 && Retry != 0 && Regs.H.AH != BIOS_DISK_CHANGED);

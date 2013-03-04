@@ -149,5 +149,4 @@ BiosKeyboardComponentNameGetControllerName (
   OUT CHAR16                                          **ControllerName
   );
 
-
 #endif

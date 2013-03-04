@@ -45,7 +45,7 @@
   gEfiDevicePathProtocolGuid
   gEfiPciIoProtocolGuid
 //  gEfiLegacyBiosProtocolGuid
-  gEfiLegacy8259ProtocolGuid					 # PROTOCOL TO_START
+  gEfiLegacy8259ProtocolGuid           # PROTOCOL TO_START
 
 
 [Guids]
@@ -57,4 +57,3 @@
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
 #  Duet/Duet.dec
-

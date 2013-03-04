@@ -27,7 +27,14 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define EFI_HANDLE_TYPE_CONTROLLER_HANDLE           0x200
 #define EFI_HANDLE_TYPE_CHILD_HANDLE                0x400
 
-EFI_STATUS ScanDeviceHandles(EFI_HANDLE ControllerHandle,UINT32 *ControllerHandleIndex,UINTN *HandleCount, EFI_HANDLE **HandleBuffer,UINT32 **HandleType)
+EFI_STATUS
+ScanDeviceHandles (
+  EFI_HANDLE ControllerHandle,
+  UINT32 *ControllerHandleIndex,
+  UINTN *HandleCount,
+  EFI_HANDLE **HandleBuffer,
+  UINT32 **HandleType
+  )
 {
   EFI_STATUS                          Status;
   UINTN                               HandleIndex;
@@ -39,43 +46,43 @@ EFI_STATUS ScanDeviceHandles(EFI_HANDLE ControllerHandle,UINT32 *ControllerHandl
   UINTN                               OpenInfoIndex;
   UINTN                               ChildIndex;
   BOOLEAN                             ControllerHandleIndexValid;
-  
+
   ControllerHandleIndexValid = FALSE;
-  if (ControllerHandleIndex != NULL)    *ControllerHandleIndex = 0xffffffff;
+
+  if (ControllerHandleIndex != NULL) {
+    *ControllerHandleIndex = 0xffffffff;
+  }
 
   *HandleCount  = 0;
   *HandleBuffer = NULL;
   *HandleType   = NULL;
-  
+
   //
   // Retrieve the list of all handles from the handle database
   //
   Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, HandleCount, HandleBuffer);
-  if (EFI_ERROR (Status)) 
-  {
+  if (EFI_ERROR (Status)) {
     goto Error;
   }
-  
+
   *HandleType = AllocatePool (*HandleCount * sizeof (UINT32));
-  if (*HandleType == NULL) 
-  {
+  if (*HandleType == NULL) {
     goto Error;
   }
-  
-  for (HandleIndex = 0; HandleIndex < *HandleCount; HandleIndex++) 
-  {
+
+  for (HandleIndex = 0; HandleIndex < *HandleCount; HandleIndex++) {
     //
     // Assume that the handle type is unknown
     //
     (*HandleType)[HandleIndex] = EFI_HANDLE_TYPE_UNKNOWN;
-    
+
     if (ControllerHandle != NULL && ControllerHandleIndex != NULL && (*HandleBuffer)[HandleIndex] == ControllerHandle) {
       *ControllerHandleIndex      = (UINT32) HandleIndex;
       ControllerHandleIndexValid  = TRUE;
     }
-    
+
   }
-  
+
   for (HandleIndex = 0; HandleIndex < *HandleCount; HandleIndex++) {
     //
     // Retrieve the list of all the protocols on each handle
@@ -86,23 +93,22 @@ EFI_STATUS ScanDeviceHandles(EFI_HANDLE ControllerHandle,UINT32 *ControllerHandl
                     &ArrayCount
                     );
     if (!EFI_ERROR (Status)) {
-      
-      for (ProtocolIndex = 0; ProtocolIndex < ArrayCount; ProtocolIndex++) 
-      {
-        
+
+      for (ProtocolIndex = 0; ProtocolIndex < ArrayCount; ProtocolIndex++) {
+
         if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiLoadedImageProtocolGuid) == TRUE)
           (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_IMAGE_HANDLE;
         if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiDriverBindingProtocolGuid) == TRUE)
           (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_DRIVER_BINDING_HANDLE;
-        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiDriverConfigurationProtocolGuid) == TRUE) 
+        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiDriverConfigurationProtocolGuid) == TRUE)
           (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_DRIVER_CONFIGURATION_HANDLE;
-        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiDriverDiagnosticsProtocolGuid) == TRUE) 
+        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiDriverDiagnosticsProtocolGuid) == TRUE)
           (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_DRIVER_DIAGNOSTICS_HANDLE;
-        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiComponentName2ProtocolGuid) == TRUE) 
+        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiComponentName2ProtocolGuid) == TRUE)
           (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_COMPONENT_NAME_HANDLE;
-        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiComponentNameProtocolGuid) == TRUE) 
+        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiComponentNameProtocolGuid) == TRUE)
           (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_COMPONENT_NAME_HANDLE;
-        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiDevicePathProtocolGuid) == TRUE) 
+        if ((BOOLEAN)CompareGuid (ProtocolGuidArray[ProtocolIndex], &gEfiDevicePathProtocolGuid) == TRUE)
           (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_DEVICE_HANDLE;
         //
         // Retrieve the list of agents that have opened each protocol
@@ -114,51 +120,51 @@ EFI_STATUS ScanDeviceHandles(EFI_HANDLE ControllerHandle,UINT32 *ControllerHandl
                          &OpenInfoCount
                          );
         if (!EFI_ERROR (Status)) {
-          
+
           for (OpenInfoIndex = 0; OpenInfoIndex < OpenInfoCount; OpenInfoIndex++) {
-            if (ControllerHandle != NULL && (*HandleBuffer)[HandleIndex] == ControllerHandle) 
-              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER) == EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER) 
-                for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++) 
-                  if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].ControllerHandle) 
+            if (ControllerHandle != NULL && (*HandleBuffer)[HandleIndex] == ControllerHandle)
+              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER) == EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER)
+                for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++)
+                  if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].ControllerHandle)
                     (*HandleType)[ChildIndex] |= (EFI_HANDLE_TYPE_DEVICE_HANDLE | EFI_HANDLE_TYPE_CHILD_HANDLE);
-            
+
             if (OpenInfo[OpenInfoIndex].ControllerHandle == ControllerHandle)
             {
-              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) == EFI_OPEN_PROTOCOL_BY_DRIVER) 
-                for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++) 
-                  if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].AgentHandle) 
+              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) == EFI_OPEN_PROTOCOL_BY_DRIVER)
+                for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++)
+                  if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].AgentHandle)
                     (*HandleType)[ChildIndex] |= EFI_HANDLE_TYPE_DEVICE_DRIVER;
               if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER) == EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER)
                 (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_PARENT_HANDLE;
-                for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++) 
-                  if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].AgentHandle) 
+                for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++)
+                  if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].AgentHandle)
                     (*HandleType)[ChildIndex] |= EFI_HANDLE_TYPE_BUS_DRIVER;
             }
           }
-          
+
           FreePool (OpenInfo);
         }
       }
-      
+
       FreePool (ProtocolGuidArray);
     }
   }
-  
+
   return EFI_SUCCESS;
-  
+
 Error:
   if (*HandleType != NULL) {
     FreePool (*HandleType);
   }
-  
+
   if (*HandleBuffer != NULL) {
     FreePool (*HandleBuffer);
   }
-  
+
   *HandleCount  = 0;
   *HandleBuffer = NULL;
   *HandleType   = NULL;
-  
+
   return Status;
 }
 
@@ -254,7 +260,7 @@ BdsLibConnectDevicePath (
     return EFI_OUT_OF_RESOURCES;
   }
   CopyOfDevicePath  = DevicePath;
-  
+
   do {
     //
     // The outer loop handles multi instance device paths.
@@ -267,7 +273,7 @@ BdsLibConnectDevicePath (
       FreePool (CopyOfDevicePath);
       return EFI_OUT_OF_RESOURCES;
     }
-    
+
     Next      = Instance;
     while (!IsDevicePathEndType (Next)) {
       Next = NextDevicePathNode (Next);
@@ -338,8 +344,8 @@ BdsLibConnectDevicePath (
 
 
 /**
-  This function will connect all current system handles recursively. 
-  
+  This function will connect all current system handles recursively.
+
   gBS->ConnectController() service is invoked for each handle exist in system handler buffer.
   If the handle is bus type handler, all childrens also will be connected recursively
   by gBS->ConnectController().
@@ -358,7 +364,7 @@ BdsLibConnectAllEfi (
   UINTN       HandleCount;
   EFI_HANDLE  *HandleBuffer;
   UINTN       Index;
-  
+
   Status = gBS->LocateHandleBuffer (
                   AllHandles,
                   NULL,
@@ -372,7 +378,7 @@ BdsLibConnectAllEfi (
   for (Index = 0; Index < HandleCount; Index++) {
     Status = gBS->ConnectController (HandleBuffer[Index], NULL, NULL, TRUE);
   }
-  
+
   if (HandleBuffer != NULL) {
     FreePool (HandleBuffer);
   }
@@ -381,8 +387,8 @@ BdsLibConnectAllEfi (
 }
 
 /**
-  This function will disconnect all current system handles. 
-  
+  This function will disconnect all current system handles.
+
   gBS->DisconnectController() is invoked for each handle exists in system handle buffer.
   If handle is a bus type handle, all childrens also are disconnected recursively by
   gBS->DisconnectController().
@@ -427,57 +433,60 @@ BdsLibDisconnectAllEfi (
   return EFI_SUCCESS;
 }
 
-EFI_STATUS ConnectEFIDevices()
+EFI_STATUS
+ConnectEFIDevices (
+  VOID
+  )
 {
-	EFI_STATUS				Status;
-	UINTN                   AllHandleCount;
-	EFI_HANDLE				*AllHandleBuffer;
-	UINTN                   Index;
-	UINTN                   HandleCount;
-	EFI_HANDLE				*HandleBuffer;
-	UINT32                  *HandleType;
-	UINTN                   HandleIndex;
-	BOOLEAN                 Parent;
-	BOOLEAN                 Device;
-    
-	Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &AllHandleCount, &AllHandleBuffer);
+  EFI_STATUS        Status;
+  UINTN                   AllHandleCount;
+  EFI_HANDLE        *AllHandleBuffer;
+  UINTN                   Index;
+  UINTN                   HandleCount;
+  EFI_HANDLE        *HandleBuffer;
+  UINT32                  *HandleType;
+  UINTN                   HandleIndex;
+  BOOLEAN                 Parent;
+  BOOLEAN                 Device;
+
+  Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &AllHandleCount, &AllHandleBuffer);
     if (EFI_ERROR (Status))  goto Done;
-    
-	for (Index = 0; Index < AllHandleCount; Index++)
-	{
-		Status = ScanDeviceHandles(AllHandleBuffer[Index],NULL,&HandleCount,&HandleBuffer,&HandleType);
-		if (EFI_ERROR (Status))	goto Done;
-        
-		Device = TRUE;
+
+  for (Index = 0; Index < AllHandleCount; Index++)
+  {
+    Status = ScanDeviceHandles(AllHandleBuffer[Index],NULL,&HandleCount,&HandleBuffer,&HandleType);
+    if (EFI_ERROR (Status))  goto Done;
+
+    Device = TRUE;
         if (!HandleType[Index])                                         Device = FALSE;
-		if (HandleType[Index] & EFI_HANDLE_TYPE_DRIVER_BINDING_HANDLE)  Device = FALSE;
-		if (HandleType[Index] & EFI_HANDLE_TYPE_IMAGE_HANDLE)           Device = FALSE;
-        
-		if (Device)
-		{
-			Parent = FALSE;
-			for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++)
-			{
-				if (HandleType[HandleIndex] & EFI_HANDLE_TYPE_PARENT_HANDLE)
-					Parent = TRUE;
-			}
-            
-			if (!Parent)
-			{
-				if (HandleType[Index] & EFI_HANDLE_TYPE_DEVICE_HANDLE)
-				{
-					Status = gBS->ConnectController(AllHandleBuffer[Index],NULL,NULL,TRUE);
-				}
-			}
-		}
-        
-		FreePool (HandleBuffer);
-		FreePool (HandleType);
-	}
-    
+    if (HandleType[Index] & EFI_HANDLE_TYPE_DRIVER_BINDING_HANDLE)  Device = FALSE;
+    if (HandleType[Index] & EFI_HANDLE_TYPE_IMAGE_HANDLE)           Device = FALSE;
+
+    if (Device)
+    {
+      Parent = FALSE;
+      for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++)
+      {
+        if (HandleType[HandleIndex] & EFI_HANDLE_TYPE_PARENT_HANDLE)
+          Parent = TRUE;
+      }
+
+      if (!Parent)
+      {
+        if (HandleType[Index] & EFI_HANDLE_TYPE_DEVICE_HANDLE)
+        {
+          Status = gBS->ConnectController(AllHandleBuffer[Index],NULL,NULL,TRUE);
+        }
+      }
+    }
+
+    FreePool (HandleBuffer);
+    FreePool (HandleType);
+  }
+
 Done:
-	FreePool (AllHandleBuffer);
-	return Status;
+  FreePool (AllHandleBuffer);
+  return Status;
 }
 
 

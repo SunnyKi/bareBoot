@@ -12,14 +12,14 @@
 #pragma pack(1)
 
 typedef struct APPLE_PT_HEADER {
-    UINT16  	sbSig;		/* must be BE 0x4552 */
-    UINT16  	sbBlkSize;	/* block size of device */
-    UINT32  	sbBlkCount;	/* number of blocks on device */
-    UINT16  	sbDevType;	/* device type */
-    UINT16  	sbDevId;	/* device id */
-    UINT32  	sbData;		/* not used */
-    UINT16  	sbDrvrCount;	/* driver descriptor count */
-    UINT16  	sbMap[247];	/* descriptor map */
+    UINT16   sbSig; /* must be BE 0x4552 */
+    UINT16   sbBlkSize; /* block size of device */
+    UINT32   sbBlkCount; /* number of blocks on device */
+    UINT16   sbDevType; /* device type */
+    UINT16   sbDevId; /* device id */
+    UINT32   sbData; /* not used */
+    UINT16   sbDrvrCount; /* driver descriptor count */
+    UINT16   sbMap[247]; /* descriptor map */
 } APPLE_PT_HEADER;
 
 typedef struct APPLE_PT_ENTRY  {
@@ -34,20 +34,6 @@ typedef struct APPLE_PT_ENTRY  {
 } APPLE_PT_ENTRY;
 
 #pragma pack()
-
-/*
-static UINT16
-be16_to_cpu(UINT16 x)
-{
-    return SwapBytes16(x);
-}
-
-static UINT32
-be32_to_cpu(UINT32 x)
-{
-    return SwapBytes32(x);
-}
-*/
 
 /**
   Install child handles if the Handle supports Apple partition table format.
@@ -77,24 +63,29 @@ PartitionInstallAppleChildHandles (
   EFI_STATUS                Status;
   UINT32                    Lba;
   EFI_BLOCK_IO_MEDIA       *Media;
-//  VOID                     *Block;
-  //UINTN                   MaxIndex;
+#if 0
+  VOID                     *Block;
+  UINTN                   MaxIndex;
+#endif
   /** @todo: wrong, as this PT can be on both HDD or CD */
   CDROM_DEVICE_PATH         CdDev;
-  //EFI_DEVICE_PATH_PROTOCOL  Dev;
+#if 0
+  EFI_DEVICE_PATH_PROTOCOL  Dev;
+#endif
   UINT32                    Partition;
   UINT32                    PartitionEntries;
   UINT32                    VolSpaceSize;
   UINT32                    SubBlockSize;
   UINT32                    BlkPerSec;
   UINT32                    MediaId;
-	UINT32                    BlockSize;
-	EFI_LBA                   LastBlock;
+  UINT32                    BlockSize;
+  EFI_LBA                   LastBlock;
   APPLE_PT_HEADER           *AppleHeader;
   APPLE_PT_ENTRY            *AppleEntry;
   UINT32                    StartLba;
   UINT32                    SizeLbs;
-	
+
+  AppleEntry = NULL;
 
   Media         = BlockIo->Media;
   BlockSize     = BlockIo->Media->BlockSize;
@@ -104,7 +95,9 @@ PartitionInstallAppleChildHandles (
 
   AppleHeader = AllocatePool (BlockSize);
 
-  if (AppleHeader == NULL) return EFI_NOT_FOUND;
+  if (AppleHeader == NULL) {
+    return EFI_NOT_FOUND;
+  }
 
   do {
       Lba = 0;
@@ -115,8 +108,12 @@ PartitionInstallAppleChildHandles (
                        BlockSize,
                        AppleHeader
                        );
-      if (EFI_ERROR (Status)) goto done;
-//      Header = (APPLE_PT_HEADER *)Block;
+      if (EFI_ERROR (Status)) {
+        goto done;
+      }
+#if 0
+      Header = (APPLE_PT_HEADER *)Block;
+#endif
 
       if (SwapBytes16(AppleHeader->sbSig) != 0x4552) {
         Status = EFI_NOT_FOUND;
@@ -145,7 +142,9 @@ PartitionInstallAppleChildHandles (
               goto done; /* would break, but ... */
           }
 
-//          Entry = (APPLE_PT_ENTRY *)Block;
+#if 0
+          Entry = (APPLE_PT_ENTRY *)Block;
+#endif
 
           if (SwapBytes16(AppleEntry->signature) != 0x504D) continue;
           if (Partition == 1) PartitionEntries  = SwapBytes32(AppleEntry->map_entries);
