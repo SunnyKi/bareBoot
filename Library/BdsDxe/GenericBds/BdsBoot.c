@@ -293,6 +293,7 @@ MacOS:
   SetupDataForOSX ();
 #if 0
   EventsInitialize ();
+  DumpCPU ();
 #endif
   
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
@@ -310,8 +311,6 @@ MacOS:
     ImageInfo->LoadOptions      = Option->LoadOptions;
   }
 #endif
-
-  DumpCPU ();
 
 #if 0
   if ((bootArgsLen > 1) && (bootArgsLen < 120)) {
