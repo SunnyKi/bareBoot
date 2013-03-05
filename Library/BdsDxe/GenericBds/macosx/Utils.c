@@ -751,6 +751,21 @@ GetBoolProperty (
 }
 
 VOID
+GetAsciiProperty (
+  TagPtr dict,
+  CHAR8* key,
+  CHAR8* aptr
+)
+{
+  TagPtr dentry;
+
+  dentry = GetProperty (dict, key);
+  if (dentry != NULL) {
+    AsciiStrCpy (aptr, dentry->string);
+  }
+}
+
+VOID
 GetUnicodeProperty (
   TagPtr dict,
   CHAR8* key,
@@ -848,14 +863,8 @@ GetUserSettings (
     dictPointer = GetProperty (dict, "SystemParameters");
 
     if (dictPointer) {
-      prop = GetProperty (dictPointer, "prev-lang");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.Language, prop->string);
-      } else {
-        AsciiStrCpy (gSettings.Language, RuLang);
-      }
-
+      AsciiStrCpy (gSettings.Language, RuLang);
+      GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
       prop = GetProperty (dictPointer, "boot-args");
 
       if (prop) {
@@ -987,97 +996,23 @@ GetUserSettings (
     dictPointer = GetProperty (dict, "SMBIOS");
 
     if (dictPointer) {
-      prop = GetProperty (dictPointer, "BiosVendor");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.VendorName, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "BiosVersion");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.RomVersion, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "BiosReleaseDate");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.ReleaseDate, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "Manufacturer");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.ManufactureName, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "ProductName");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.ProductName, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "Version");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.VersionNr, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "Family");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.FamilyName, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "SerialNumber");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.SerialNr, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "BoardManufacturer");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.BoardManufactureName, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "BoardSerialNumber");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.BoardSerialNumber, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "Board-ID");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.BoardNumber, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "BoardVersion");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.BoardVersion, prop->string);
-      }
-
       gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
 
-      prop = GetProperty (dictPointer, "LocationInChassis");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.LocationInChassis, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "ChassisManufacturer");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.ChassisManufacturer, prop->string);
-      }
-
-      prop = GetProperty (dictPointer, "ChassisAssetTag");
-
-      if (prop) {
-        AsciiStrCpy (gSettings.ChassisAssetTag, prop->string);
-      }
+      GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
+      GetAsciiProperty (dictPointer, "BiosVersion", gSettings.RomVersion);
+      GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
+      GetAsciiProperty (dictPointer, "Manufacturer", gSettings.ManufactureName);
+      GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
+      GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
+      GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
+      GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
+      GetAsciiProperty (dictPointer, "BoardManufacturer", gSettings.BoardManufactureName);
+      GetAsciiProperty (dictPointer, "BoardSerialNumber", gSettings.BoardSerialNumber);
+      GetAsciiProperty (dictPointer, "Board-ID", gSettings.BoardNumber);
+      GetAsciiProperty (dictPointer, "BoardVersion", gSettings.BoardVersion);
+      GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
+      GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
+      GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
     }
 
     dictPointer = GetProperty (dict, "CPU");
