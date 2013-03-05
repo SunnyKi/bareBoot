@@ -224,6 +224,7 @@ devprop_add_device (
   return device;
 }
 
+#if 0
 DevPropDevice *
 devprop_add_device_pci (
   DevPropString *StringBuf,
@@ -298,6 +299,7 @@ devprop_add_device_pci (
   StringBuf->entries[StringBuf->numentries++] = device;
   return device;
 }
+#endif
 
 BOOLEAN
 devprop_add_value (

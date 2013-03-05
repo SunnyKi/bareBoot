@@ -74,7 +74,7 @@ extern EFI_GUID gEfiAppleBootGuid;
 #define IS_NULL(a)          ((a) == L'\0')
 
 #define IS_DIGIT(a)         ((a) >= '0' && (a) <= '9')
-#define IS_HEX(a)           ((a) >= 'A' && (a) <= 'F')
+#define IS_HEX(a)           ((a) >= 'a' && (a) <= 'f')
 #define IS_LOWER(a)         ((a) >= 'a' && (a) <= 'z')
 #define IS_UPPER(a)         ((a) >= 'A' && (a) <= 'Z')
 #define IS_ALPHA(x)         (IS_LOWER(x) || IS_UPPER(x))
