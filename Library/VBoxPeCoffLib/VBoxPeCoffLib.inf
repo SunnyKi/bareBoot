@@ -55,7 +55,7 @@
   PeCoffLoaderEx.c
 
 [Packages]
-  miniClover/Duet.dec
+  miniClover/miniClover.dec
   MdePkg/MdePkg.dec
 
 [LibraryClasses]

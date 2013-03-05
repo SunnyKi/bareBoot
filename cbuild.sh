@@ -114,7 +114,7 @@ echo Building from: $WORKSPACE
 fi
 
 
-BUILD_ROOT_ARCH=$WORKSPACE/Build/Duet$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"/$PROCESSOR
+BUILD_ROOT_ARCH=$WORKSPACE/Build/miniClover$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"/$PROCESSOR
 
 if  [[ ! -f `which build` || ! -f `which GenFv` ]];
 then
@@ -130,22 +130,22 @@ fi
 
 if [[ $ARG == cleanall ]]; then
 make -C $WORKSPACE/BaseTools clean
-build -p $WORKSPACE/Duet/Duet$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
+build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
 exit $?
 fi
 
 if [[ $ARG == clean ]]; then
-build -p $WORKSPACE/Duet/Duet$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
+build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
 exit $?
 fi
 
-# Build the edk2 Duet
-echo Running edk2 build for Duet$Processor
-echo "#define FIRMWARE_VERSION \"2.31\"" > $WORKSPACE/Duet/Version.h
-echo "#define FIRMWARE_BUILDDATE \"`date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $WORKSPACE/Duet/Version.h
-echo "#define FIRMWARE_REVISION L\"`svnversion Duet -n | tr -d [:alpha:]`\"" >> $WORKSPACE/Duet/Version.h
+# Build the edk2 miniClover
+echo Running edk2 build for miniClover$Processor
+echo "#define FIRMWARE_VERSION \"2.31\"" > $WORKSPACE/miniClover/Version.h
+echo "#define FIRMWARE_BUILDDATE \"`date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $WORKSPACE/miniClover/Version.h
+echo "#define FIRMWARE_REVISION L\"`svnversion miniClover -n | tr -d [:alpha:]`\"" >> $WORKSPACE/miniClover/Version.h
 
-build -p $WORKSPACE/Duet/Duet$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 $*
+build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 $*
 
 }
 
@@ -158,8 +158,8 @@ export BASETOOLS_DIR=$WORKSPACE/BaseTools/Source/C/bin
 else
 export BASETOOLS_DIR=$EDK_TOOLS_PATH/Source/C/bin
 fi
-export BOOTSECTOR_BIN_DIR=$WORKSPACE/Duet/BootSector/bin
-export BUILD_DIR=$WORKSPACE/Build/Duet$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"
+export BOOTSECTOR_BIN_DIR=$WORKSPACE/miniClover/BootSector/bin
+export BUILD_DIR=$WORKSPACE/Build/miniClover$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"
 
 echo Compressing DUETEFIMainFv.FV ...
 $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DUETEFIMAINFV.z $BUILD_DIR/FV/DUETEFIMAINFV.Fv

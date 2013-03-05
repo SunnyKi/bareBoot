@@ -22,7 +22,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  miniClover/Duet.dec
+  miniClover/miniClover.dec
 
 [LibraryClasses]
   DebugLib

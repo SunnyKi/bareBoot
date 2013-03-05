@@ -22,15 +22,15 @@
 #
 ################################################################################
 [Defines]
-  PLATFORM_NAME                  = Duet
+  PLATFORM_NAME                  = miniClover
   PLATFORM_GUID                  = 199E24E0-0989-42aa-87F2-611A8C397E72
   PLATFORM_VERSION               = 0.4
   DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/DuetIa32
-  SUPPORTED_ARCHITECTURES        = IA32
+  OUTPUT_DIRECTORY               = Build/miniCloverX64
+  SUPPORTED_ARCHITECTURES        = X64
   BUILD_TARGETS                  = DEBUG || RELEASE
   SKUID_IDENTIFIER               = DEFAULT
-  FLASH_DEFINITION               = miniClover/Duet.fdf
+  FLASH_DEFINITION               = miniClover/miniClover.fdf
 
 ################################################################################
 #

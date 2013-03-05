@@ -17,7 +17,7 @@
 
 [Defines]
   DEC_SPECIFICATION              = 0x00010005
-  PACKAGE_NAME                   = Duet
+  PACKAGE_NAME                   = miniClover
   PACKAGE_GUID                   = 151B568B-B390-4cf1-ABD6-228E0AB96F57
   PACKAGE_VERSION                = 0.4
 

@@ -105,7 +105,7 @@
   DuetBds/BdsPlatform.h
 
 [Packages]
-  miniClover/Duet.dec
+  miniClover/miniClover.dec
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
