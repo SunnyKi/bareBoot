@@ -40,7 +40,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  Duet/Duet.dec
+  miniClover/Duet.dec
 
 [LibraryClasses]
   BaseLib

@@ -30,7 +30,7 @@
   SUPPORTED_ARCHITECTURES        = X64
   BUILD_TARGETS                  = DEBUG || RELEASE
   SKUID_IDENTIFIER               = DEFAULT
-  FLASH_DEFINITION               = Duet/Duet.fdf
+  FLASH_DEFINITION               = miniCLover/Duet.fdf
 
 ################################################################################
 #
@@ -59,7 +59,7 @@
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
   #PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
-  PeCoffLib|Duet/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
+  PeCoffLib|miniClover/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
 #  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
 #  EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
 #  PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
@@ -100,7 +100,7 @@
   #
   # Platform
   #
-  TimerLib|Duet/Library/DuetTimerLib/DuetTimerLib.inf
+  TimerLib|miniClover/Library/DuetTimerLib/DuetTimerLib.inf
   #
   # Misc
   #
@@ -159,7 +159,7 @@
 
 ###################################################################################################
 [Components]
-  Duet/DxeIpl/DxeIpl.inf 
+  miniCLover/DxeIpl/DxeIpl.inf 
   MdeModulePkg/Core/Dxe/DxeMain.inf 
 
   MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
@@ -182,15 +182,15 @@
   MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-  Duet/SmbiosGenDxe/SmbiosGen.inf
+  miniCLover/SmbiosGenDxe/SmbiosGen.inf
 
-  Duet/EfiLdr/EfiLdr.inf {
+  miniCLover/EfiLdr/EfiLdr.inf {
     <LibraryClasses>
       DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
       NULL|IntelFrameworkModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   }
 
-  Duet/Library/BdsDxe/BdsDxe.inf {
+  miniCLover/Library/BdsDxe/BdsDxe.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   }
@@ -198,21 +198,21 @@
   UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
   UefiCpuPkg/CpuDxe/CpuDxe.inf
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
-  Duet/AcpiResetDxe/Reset.inf
-  Duet/LegacyMetronome/Metronome.inf
+  miniCLover/AcpiResetDxe/Reset.inf
+  miniCLover/LegacyMetronome/Metronome.inf
 
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
-  Duet/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
-  Duet/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+  miniCLover/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
+  miniCLover/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
 #  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf
 
   # IDE/AHCI Support
 #  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
-#  Duet/BlockIoDxe/BlockIoDxe.inf
-  Duet/SataControllerDxe/SataControllerDxe.inf
+#  miniCLover/BlockIoDxe/BlockIoDxe.inf
+  miniCLover/SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
@@ -231,21 +231,21 @@
   PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
   IntelFrameworkModulePkg/Bus/Isa/IsaBusDxe/IsaBusDxe.inf
 #  IntelFrameworkModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2keyboardDxe.inf
-  Duet/BiosKeyboard/KeyboardDxe.inf
+  miniCLover/BiosKeyboard/KeyboardDxe.inf
 
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
-  Duet/PartitionDxe/PartitionDxe.inf
+  miniCLover/PartitionDxe/PartitionDxe.inf
 
 
   # Bios Thunk
-  Duet/BiosVideo/BiosVideo.inf
+  miniCLover/BiosVideo/BiosVideo.inf
 
   # ACPI Support
 #  MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
 #  MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
-#  Duet/OsxAcpiTableDxe/AcpiTableDxe.inf
-#  Duet/OsxAcpiPlatformDxe/AcpiPlatformDxe.inf
+#  miniCLover/OsxAcpiTableDxe/AcpiTableDxe.inf
+#  miniCLover/OsxAcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # DataHub
   IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
