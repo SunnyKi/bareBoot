@@ -750,6 +750,21 @@ GetBoolProperty (
   return def;
 }
 
+VOID
+GetUnicodeProperty (
+  TagPtr dict,
+  CHAR8* key,
+  CHAR16* uptr
+)
+{
+  TagPtr dentry;
+
+  dentry = GetProperty (dict, key);
+  if (dentry != NULL) {
+    AsciiStrToUnicodeStr (dentry->string, uptr);
+  }
+}
+
 // ----============================----
 
 EFI_STATUS
@@ -762,7 +777,6 @@ GetBootDefault (
   CHAR8*      gConfigPtr;
   TagPtr      dict;
   TagPtr      dictPointer;
-  TagPtr      prop;
   UINTN       size;
 
   Status = EFI_NOT_FOUND;
@@ -789,11 +803,7 @@ GetBootDefault (
 
   if (dictPointer) {
     gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
-    prop = GetProperty (dictPointer, "DefaultBootVolume");
-
-    if (prop) {
-      AsciiStrToUnicodeStr (prop->string, gSettings.DefaultBoot);
-    }
+    GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
   }
 
   return Status;
@@ -859,12 +869,7 @@ GetUserSettings (
         }
       }
 
-      prop = GetProperty (dictPointer, "DefaultBootVolume");
-
-      if (prop) {
-        AsciiStrToUnicodeStr (prop->string, gSettings.DefaultBoot);
-      }
-
+      GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
       prop = GetProperty (dictPointer, "CustomUUID");
 
       if (prop) {
@@ -888,7 +893,6 @@ GetUserSettings (
       }
 
       gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
-
       prop = GetProperty (dictPointer, "VideoPorts");
 
       if (prop) {
@@ -896,12 +900,7 @@ GetUserSettings (
         gSettings.VideoPorts = (UINT16) StrDecimalToUintn ((CHAR16*) &UStr[0]);
       }
 
-      prop = GetProperty (dictPointer, "FBName");
-
-      if (prop) {
-        AsciiStrToUnicodeStr (prop->string, gSettings.FBName);
-      }
-
+      GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
       prop = GetProperty (dictPointer, "NVCAP");
 
       if (prop) {
