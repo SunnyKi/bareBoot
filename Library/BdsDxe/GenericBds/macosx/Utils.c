@@ -705,6 +705,53 @@ GetNumProperty (
   return def;
 }
 
+// Bizzare property -- FALSE or NUMERIC
+
+typedef enum {
+  xOther,
+  xFalse,
+  xTrue
+} xBool;
+
+xBool
+AsciiStr2xBool (
+  CHAR8* ps
+)
+{
+  if (ps[0] == 'y' || ps[0] == 'Y') {
+    return xTrue;
+  }
+  if (ps[0] == 'n' || ps[0] == 'N') {
+    return xFalse;
+  }
+  return xOther;
+}
+
+BOOLEAN
+GetBoolProperty (
+  TagPtr dict,
+  CHAR8* key,
+  BOOLEAN def
+)
+{
+  TagPtr dentry;
+
+  dentry = GetProperty (dict, key);
+  if (dentry != NULL) {
+    switch (AsciiStr2xBool(dentry->string)) {
+      case xFalse:
+        return FALSE;
+      case xTrue:
+        return TRUE;
+      default:
+        return def;
+    }
+  }
+  return def;
+}
+
+// ----============================----
+
 EFI_STATUS
 GetBootDefault (
   IN EFI_FILE *RootFileHandle,
@@ -831,12 +878,7 @@ GetUserSettings (
     dictPointer = GetProperty (dict, "Graphics");
 
     if (dictPointer) {
-      prop = GetProperty (dictPointer, "GraphicsInjector");
-      gSettings.GraphicsInjector = TRUE;
-
-      if (prop) if ((prop->string[0] == 'n') || (prop->string[0] == 'N')) {
-          gSettings.GraphicsInjector = FALSE;
-        }
+      gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", TRUE);
 
       prop = GetProperty (dictPointer, "VRAM");
 
@@ -845,12 +887,7 @@ GetUserSettings (
         gSettings.VRAM = LShiftU64 (StrDecimalToUintn ((CHAR16*) &UStr[0]), 20);      //bytes
       }
 
-      prop = GetProperty (dictPointer, "LoadVBios");
-      gSettings.LoadVBios = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.LoadVBios = TRUE;
-        }
+      gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
 
       prop = GetProperty (dictPointer, "VideoPorts");
 
@@ -906,104 +943,45 @@ GetUserSettings (
       }
 
 #if 0
-      gSettings.CustomDevProp = FALSE;
-      prop = GetProperty (dictPointer, "CustomDevProp");
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.CustomDevProp = TRUE;
-        }
+      gSettings.CustomDevProp = GetBoolProperty (dictPointer, "CustomDevProp", FALSE);
 #endif
 
-      gSettings.ETHInjection = FALSE;
-      prop = GetProperty (dictPointer, "ETHInjection");
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.ETHInjection = TRUE;
-        }
-
-      gSettings.USBInjection = FALSE;
-      prop = GetProperty (dictPointer, "USBInjection");
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.USBInjection = TRUE;
-        }
+      gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
+      gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
 
       gSettings.HDAInjection = FALSE;
       gSettings.HDALayoutId = 0;
       prop = GetProperty (dictPointer, "HDAInjection");
 
-      if (prop && (prop->string[0] != 'n' && prop->string[0] != 'N')) {
-        gSettings.HDAInjection = TRUE;
+      switch (AsciiStr2xBool (prop->string)) {
+        case xOther:
+          gSettings.HDAInjection = TRUE;
+          gSettings.HDALayoutId = AsciiStr2Uintn (prop->string);
+          break;
 
-        if ((prop->string[0] == '0')  && (prop->string[1] == 'x' || prop->string[1] == 'X')) {
-          gSettings.HDALayoutId = AsciiStrHexToUintn (prop->string);
-        } else {
-          gSettings.HDALayoutId = AsciiStrDecimalToUintn (prop->string);
-        }
+        default:
+          break;
       }
     }
 
     dictPointer = GetProperty (dict, "ACPI");
 
     if (dictPointer) {
-      prop = GetProperty (dictPointer, "DropOemSSDT");
-      gSettings.DropSSDT = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.DropSSDT = TRUE;
-        }
-
+      gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
 #if 0
-      prop = GetProperty (dictPointer, "GeneratePStates");
-      gSettings.GeneratePStates = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.GeneratePStates = TRUE;
-        }
-
-      prop = GetProperty (dictPointer, "GenerateCStates");
-      gSettings.GenerateCStates = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.GenerateCStates = TRUE;
-        }
+      gSettings.GeneratePStates = GetBoolProperty (dictPointer, "GeneratePStates", FALSE);
+      gSettings.GenerateCStates = GetBoolProperty (dictPointer, "GenerateCStates", FALSE);
 #endif
-
       gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0x64);
       gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0xFE);
-
 #if 0
       // other known pair is 0x0[C/2]F9/0x06
 
-      prop = GetProperty (dictPointer, "EnableC2");
-      gSettings.EnableC2 = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.EnableC2 = TRUE;
-        }
-
-      prop = GetProperty (dictPointer, "EnableC4");
-      gSettings.EnableC4 = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.EnableC4 = TRUE;
-        }
-
-      prop = GetProperty (dictPointer, "EnableC6");
-      gSettings.EnableC6 = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.EnableC6 = TRUE;
-        }
-
-      prop = GetProperty (dictPointer, "EnableISS");
-      gSettings.EnableISS = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.EnableISS = TRUE;
-        }
+      gSettings.EnableC2 = GetBoolProperty (dictPointer, "EnableC2", FALSE);
+      gSettings.EnableC4 = GetBoolProperty (dictPointer, "EnableC4", FALSE);
+      gSettings.EnableC6 = GetBoolProperty (dictPointer, "EnableC6", FALSE);
+      gSettings.EnableISS = GetBoolProperty (dictPointer, "EnableISS", FALSE);
 #endif
-
       gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
     }
 
@@ -1082,12 +1060,7 @@ GetUserSettings (
         AsciiStrCpy (gSettings.BoardVersion, prop->string);
       }
 
-      prop = GetProperty (dictPointer, "Mobile");
-      gSettings.Mobile = gMobile;  //default
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.Mobile = TRUE;
-        }
+      gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
 
       prop = GetProperty (dictPointer, "LocationInChassis");
 
@@ -1111,13 +1084,7 @@ GetUserSettings (
     dictPointer = GetProperty (dict, "CPU");
 
     if (dictPointer) {
-      prop = GetProperty (dictPointer, "Turbo");
-      gSettings.Turbo = FALSE;
-
-      if (prop) if ((prop->string[0] == 'y') || (prop->string[0] == 'Y')) {
-          gSettings.Turbo = TRUE;
-        }
-
+      gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
       gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
       gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
       gSettings.BusSpeed = (UINT32) GetNumProperty (dictPointer, "BusSpeedkHz", 0);
