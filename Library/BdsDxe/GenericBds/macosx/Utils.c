@@ -675,7 +675,7 @@ SaveSettings (
 // ----============================----
 
 UINTN
-AsciiStr2Uintn(
+AsciiStr2Uintn (
   CHAR8* ps
 )
 {
