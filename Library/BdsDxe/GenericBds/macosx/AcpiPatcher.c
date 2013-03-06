@@ -487,39 +487,88 @@ PatchACPI (
     UINT32 oldLength = ((EFI_ACPI_DESCRIPTION_HEADER*) FadtPointer)->Length;
     newFadt = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) BufferPtr;
     CopyMem ((UINT8*) newFadt, (UINT8*) FadtPointer, oldLength);
-    newFadt->Header.Length = 0xF4;
-#if 0
-    CopyMem ((UINT8*) newFadt->Header.OemId, (UINT8*) "APPLE  ", 6);
-#endif
-    newFadt->Header.Revision = EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION;
-    newFadt->Reserved0 = 0; //ACPIspec said it should be 0, while 1 is possible, but no more
 
-    if (gSettings.PMProfile) {
+    if ((newFadt->Header.Revision == EFI_ACPI_1_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION) ||
+        (newFadt->Header.Length < 0xF4)) {
+      newFadt->Header.Length = 0xF4;
+      newFadt->Header.Revision = EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION;
+      newFadt->Reserved0 = 0; //ACPIspec said it should be 0, while 1 is possible, but no more
+      newFadt->PLvl2Lat = 0x65;
+      newFadt->PLvl3Lat = 0x3E9;
+      newFadt->IaPcBootArch = 0x3;
+      // Reset Register Supported
+      newFadt->Flags |= 0x400; 
+      newFadt->ResetReg.AddressSpaceId     = 1;
+      newFadt->ResetReg.RegisterBitWidth   = 8;
+      newFadt->ResetReg.RegisterBitOffset  = 0;
+      newFadt->ResetReg.Reserved           = 1;
+      newFadt->Reserved2[0]        = 0;
+      newFadt->Reserved2[1]        = 0;
+      newFadt->Reserved2[2]        = 0;
+      if (gSettings.ResetAddr == 0) {
+        newFadt->ResetReg.Address = 0x64;
+      }
+      if (gSettings.ResetVal == 0) {
+        newFadt->ResetValue = 0xFE;
+      }
+      // extra blocks
+      newFadt->XPm1aEvtBlk.AddressSpaceId     = 1;
+      newFadt->XPm1aEvtBlk.RegisterBitWidth   = 0x20;
+      newFadt->XPm1aEvtBlk.RegisterBitOffset  = 0;
+      newFadt->XPm1aEvtBlk.Reserved           = 0;
+      newFadt->XPm1aEvtBlk.Address = (UINT64) (newFadt->Pm1aEvtBlk);
+      newFadt->XPm1bEvtBlk.AddressSpaceId     = 1;
+      newFadt->XPm1bEvtBlk.RegisterBitWidth   = 0;
+      newFadt->XPm1bEvtBlk.RegisterBitOffset  = 0;
+      newFadt->XPm1bEvtBlk.Reserved           = 0;
+      newFadt->XPm1bEvtBlk.Address            = (UINT64) (newFadt->Pm1bEvtBlk);
+      newFadt->XPm1aCntBlk.AddressSpaceId     = 1;
+      newFadt->XPm1aCntBlk.RegisterBitWidth   = 0x10;
+      newFadt->XPm1aCntBlk.RegisterBitOffset  = 0;
+      newFadt->XPm1aCntBlk.Reserved           = 0;
+      newFadt->XPm1aCntBlk.Address = (UINT64) (newFadt->Pm1aCntBlk);
+      newFadt->XPm1bCntBlk.AddressSpaceId     = 1;
+      newFadt->XPm1bCntBlk.RegisterBitWidth   = 0;
+      newFadt->XPm1bCntBlk.RegisterBitOffset  = 0;
+      newFadt->XPm1bCntBlk.Reserved           = 0;
+      newFadt->XPm1bCntBlk.Address = (UINT64) (newFadt->Pm1bCntBlk);
+      newFadt->XPm2CntBlk.AddressSpaceId     = 1;
+      newFadt->XPm2CntBlk.RegisterBitWidth   = 8;
+      newFadt->XPm2CntBlk.RegisterBitOffset  = 0;
+      newFadt->XPm2CntBlk.Reserved           = 0;
+      newFadt->XPm2CntBlk.Address  = (UINT64) (newFadt->Pm2CntBlk);
+      newFadt->XPmTmrBlk.AddressSpaceId     = 1;
+      newFadt->XPmTmrBlk.RegisterBitWidth   = 0x20;
+      newFadt->XPmTmrBlk.RegisterBitOffset  = 0;
+      newFadt->XPmTmrBlk.Reserved           = 0;
+      newFadt->XPmTmrBlk.Address   = (UINT64) (newFadt->PmTmrBlk);
+      newFadt->XGpe0Blk.AddressSpaceId     = 1;
+      newFadt->XGpe0Blk.RegisterBitWidth   = 0x80;
+      newFadt->XGpe0Blk.RegisterBitOffset  = 0;
+      newFadt->XGpe0Blk.Reserved           = 0;
+      newFadt->XGpe0Blk.Address    = (UINT64) (newFadt->Gpe0Blk);
+      newFadt->XGpe1Blk.AddressSpaceId     = 1;
+      newFadt->XGpe1Blk.RegisterBitWidth   = 0;
+      newFadt->XGpe1Blk.RegisterBitOffset  = 0;
+      newFadt->XGpe1Blk.Reserved           = 0;
+      newFadt->XGpe1Blk.Address    = (UINT64) (newFadt->Gpe1Blk);
+    }
+    
+    CopyMem ((UINT8*) newFadt->Header.OemId, (UINT8*) "APPLE  ", 6);
+
+    if (gSettings.PMProfile != 0) {
       newFadt->PreferredPmProfile = gSettings.PMProfile;
     } else {
       newFadt->PreferredPmProfile = gMobile ? 2 : 1;
     }
-
-#if 0
-    if (gSettings.EnableC6 || gSettings.EnableISS) {
-      newFadt->CstCnt = 0x85; //as in Mac
+    if ((gSettings.ResetAddr != 0) &&
+        (gSettings.ResetVal != 0)) {
+      newFadt->Flags |= 0x400;
+      newFadt->ResetReg.Address = gSettings.ResetAddr;
+      newFadt->ResetValue = gSettings.ResetVal;
     }
-#endif
 
-    newFadt->PLvl2Lat = 0x65;
-    newFadt->PLvl3Lat = 0x3E9;
-    newFadt->IaPcBootArch = 0x3;
-    newFadt->Flags |= 0x400; //Reset Register Supported
-    newFadt->ResetReg.AddressSpaceId     = 1;
-    newFadt->ResetReg.RegisterBitWidth   = 8;
-    newFadt->ResetReg.RegisterBitOffset  = 0;
-    newFadt->ResetReg.Reserved           = 1;
-    newFadt->ResetReg.Address               = gSettings.ResetAddr;
-    newFadt->ResetValue                     = gSettings.ResetVal;
-    newFadt->Reserved2[0]        = 0;
-    newFadt->Reserved2[1]        = 0;
-    newFadt->Reserved2[2]        = 0;
-// dsdt + xdsdt
+    // dsdt + xdsdt
     XDsdt = newFadt->XDsdt;
 
     if (BiosDsdt) {
@@ -566,47 +615,7 @@ PatchACPI (
     }
 
     Facs->Version = EFI_ACPI_4_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_VERSION;
-// extra blocks
-    newFadt->XPm1aEvtBlk.AddressSpaceId     = 1;
-    newFadt->XPm1aEvtBlk.RegisterBitWidth   = 0x20;
-    newFadt->XPm1aEvtBlk.RegisterBitOffset  = 0;
-    newFadt->XPm1aEvtBlk.Reserved           = 0;
-    newFadt->XPm1aEvtBlk.Address = (UINT64) (newFadt->Pm1aEvtBlk);
-    newFadt->XPm1bEvtBlk.AddressSpaceId     = 1;
-    newFadt->XPm1bEvtBlk.RegisterBitWidth   = 0;
-    newFadt->XPm1bEvtBlk.RegisterBitOffset  = 0;
-    newFadt->XPm1bEvtBlk.Reserved           = 0;
-    newFadt->XPm1bEvtBlk.Address            = (UINT64) (newFadt->Pm1bEvtBlk);
-    newFadt->XPm1aCntBlk.AddressSpaceId     = 1;
-    newFadt->XPm1aCntBlk.RegisterBitWidth   = 0x10;
-    newFadt->XPm1aCntBlk.RegisterBitOffset  = 0;
-    newFadt->XPm1aCntBlk.Reserved           = 0;
-    newFadt->XPm1aCntBlk.Address = (UINT64) (newFadt->Pm1aCntBlk);
-    newFadt->XPm1bCntBlk.AddressSpaceId     = 1;
-    newFadt->XPm1bCntBlk.RegisterBitWidth   = 0;
-    newFadt->XPm1bCntBlk.RegisterBitOffset  = 0;
-    newFadt->XPm1bCntBlk.Reserved           = 0;
-    newFadt->XPm1bCntBlk.Address = (UINT64) (newFadt->Pm1bCntBlk);
-    newFadt->XPm2CntBlk.AddressSpaceId     = 1;
-    newFadt->XPm2CntBlk.RegisterBitWidth   = 8;
-    newFadt->XPm2CntBlk.RegisterBitOffset  = 0;
-    newFadt->XPm2CntBlk.Reserved           = 0;
-    newFadt->XPm2CntBlk.Address  = (UINT64) (newFadt->Pm2CntBlk);
-    newFadt->XPmTmrBlk.AddressSpaceId     = 1;
-    newFadt->XPmTmrBlk.RegisterBitWidth   = 0x20;
-    newFadt->XPmTmrBlk.RegisterBitOffset  = 0;
-    newFadt->XPmTmrBlk.Reserved           = 0;
-    newFadt->XPmTmrBlk.Address   = (UINT64) (newFadt->PmTmrBlk);
-    newFadt->XGpe0Blk.AddressSpaceId     = 1;
-    newFadt->XGpe0Blk.RegisterBitWidth   = 0x80;
-    newFadt->XGpe0Blk.RegisterBitOffset  = 0;
-    newFadt->XGpe0Blk.Reserved           = 0;
-    newFadt->XGpe0Blk.Address    = (UINT64) (newFadt->Gpe0Blk);
-    newFadt->XGpe1Blk.AddressSpaceId     = 1;
-    newFadt->XGpe1Blk.RegisterBitWidth   = 0;
-    newFadt->XGpe1Blk.RegisterBitOffset  = 0;
-    newFadt->XGpe1Blk.Reserved           = 0;
-    newFadt->XGpe1Blk.Address    = (UINT64) (newFadt->Gpe1Blk);
+      
     FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) newFadt;
     FadtPointer->Header.Checksum = 0;
     FadtPointer->Header.Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) FadtPointer, FadtPointer->Header.Length));
