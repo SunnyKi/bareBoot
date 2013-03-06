@@ -260,5 +260,5 @@
 #
 ###################################################################################################
 [BuildOptions]
-  MSFT:*_*_*_CC_FLAGS = /FAsc /FR$(@R).SBR
+  MSFT:*_*_*_CC_FLAGS = /WX /wd4201 /wd4306 /wd4366 /FAsc /FR$(@R).SBR
   GCC:*_*_*_CC_FLAGS = -DMDEPKG_NDEBUG

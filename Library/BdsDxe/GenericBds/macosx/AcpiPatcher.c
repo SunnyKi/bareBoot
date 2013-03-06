@@ -271,7 +271,7 @@ PatchACPI (
   CHAR16                                            *PathToACPITables;
   CHAR16                                            *PathPatched;
   CHAR16                                            *PathDsdt;
-  UINT32                                            eCntR; //, CntSSDT=0;
+  UINT32                                            eCntR;
 #if 0
   SSDT_TABLE                                        *Ssdt = NULL;
 #endif
@@ -314,13 +314,13 @@ PatchACPI (
   }
 
   Rsdt = (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress;
-  rf = ScanRSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE);
 
+#if 0
+  rf = ScanRSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE);
   if (rf != NULL) {
     FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) (*rf);
   }
 
-#if 0
   Print (L"FADT = 0x%x\r\n", FadtPointer);
   Xsdt = (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress;
   Print (L"XSDT = 0x%x\r\n", Xsdt);
@@ -427,17 +427,21 @@ PatchACPI (
 
   Xsdt = (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress;
 #endif
-  xf = ScanXSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE);
 
-  if (xf) {
-    FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) (*xf);
+  FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN)
+    *(ScanXSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE));
+
+  if (FadtPointer == NULL) {
+    Print (L"no FADT entry in RSDT\r\n");
+    return EFI_NOT_FOUND;
   }
-
+#if 0
   if (!FadtPointer) {
     Print (L"no FADT entry in RSDT\r\n");
     return EFI_NOT_FOUND;
   }
-
+#endif
+  
 // -===== APIC =====-
 #if 0
   EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
@@ -484,9 +488,8 @@ PatchACPI (
   Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
 
   if (!EFI_ERROR (Status)) {
-    UINT32 oldLength = ((EFI_ACPI_DESCRIPTION_HEADER*) FadtPointer)->Length;
     newFadt = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) BufferPtr;
-    CopyMem ((UINT8*) newFadt, (UINT8*) FadtPointer, oldLength);
+    CopyMem ((UINT8*) newFadt, (UINT8*) FadtPointer, ((EFI_ACPI_DESCRIPTION_HEADER*) FadtPointer)->Length);
 
     if ((newFadt->Header.Revision == EFI_ACPI_1_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION) ||
         (newFadt->Header.Length < 0xF4)) {
@@ -603,7 +606,7 @@ PatchACPI (
       }
     }
 
-// facs + xfacs
+    // facs + xfacs
     XFirmwareCtrl = newFadt->XFirmwareCtrl;
 
     if (Facs) {
@@ -622,7 +625,7 @@ PatchACPI (
     FadtPointer->Header.Checksum = 0;
     FadtPointer->Header.Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) FadtPointer, FadtPointer->Header.Length));
 
-// We are sure that Fadt is the first entry in RSDT/XSDT table
+    // We are sure that Fadt is the first entry in RSDT/XSDT table
     if (Rsdt != NULL) {
       Rsdt->Entry = (UINT32) (UINTN) newFadt;
     }
@@ -662,56 +665,19 @@ PatchACPI (
 
       //then we have to install new table into Xsdt
       if (Xsdt != NULL) {
-        UINT32  EntryCount;
-
-        EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-        xf = (UINT64*) (&(Xsdt->Entry)) + EntryCount;
+        eCntR = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
+        xf = (UINT64*) (&(Xsdt->Entry)) + eCntR;
         Xsdt->Header.Length += sizeof (UINT64);
         *xf = (UINT64) (UINTN) Hpet;
       }
     }
   }
-
+  // DropSSDT = Yes
   if (gSettings.DropSSDT) {
     DropTableFromRSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE);
     DropTableFromXSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE);
   }
-
-#if 0
-  else {
-    DropTableFromRSDT (XXXX_SIGN);
-    DropTableFromXSDT (XXXX_SIGN);
-  }
-
-  for (Index = 0; Index < NUM_TABLES; Index++) {
-    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathPatched, ACPInames[Index]);
-
-    if (FileExists (FHandle, PathToACPITables)) {
-      CntSSDT++;
-    }
-  }
-
-  if (CntSSDT > 0) {
-    eCntR = Rsdt->Header.Length + CntSSDT * sizeof (UINT32;
-            eCntX = Xsdt->Header.Length + CntSSDT * sizeof (UINT64);
-            BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
-            Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
-
-    for (Index = 0; Index < NUM_TABLES; Index++) {
-    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathPatched, ACPInames[Index]);
-
-      if (FileExists (FHandle, PathToACPITables)) CntSSDT {
-        Status = egLoadFile (FHandle, PathToACPITables, &buffer, &bufferLen);
-
-        if (!EFI_ERROR (Status)) {
-          Status = InsertTable ((VOID*) buffer, bufferLen);
-        }
-      }
-    }
-  }
-
-#endif
-
+  // Load SSDTs
   for (Index = 0; Index < NUM_TABLES; Index++) {
     UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathPatched, ACPInames[Index]);
 
@@ -721,7 +687,6 @@ PatchACPI (
       if (!EFI_ERROR (Status)) {
         Status = InsertTable ((VOID*) buffer, bufferLen);
       }
-
 #if 0
       Print (L"    load table %s with status %d", PathToACPITables, Status);
 #endif
