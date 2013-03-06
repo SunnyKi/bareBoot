@@ -964,14 +964,16 @@ GetUserSettings (
       gSettings.HDALayoutId = 0;
       prop = GetProperty (dictPointer, "HDAInjection");
 
-      switch (AsciiStr2xBool (prop->string)) {
-        case xOther:
-          gSettings.HDAInjection = TRUE;
-          gSettings.HDALayoutId = AsciiStr2Uintn (prop->string);
-          break;
-
-        default:
-          break;
+      if (prop) {
+        switch (AsciiStr2xBool (prop->string)) {
+          case xOther:
+            gSettings.HDAInjection = TRUE;
+            gSettings.HDALayoutId = AsciiStr2Uintn (prop->string);
+            break;
+            
+          default:
+            break;
+        }
       }
     }
 
