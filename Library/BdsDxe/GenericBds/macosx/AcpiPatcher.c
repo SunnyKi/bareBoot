@@ -493,8 +493,10 @@ PatchACPI (
       newFadt->Header.Length = 0xF4;
       newFadt->Header.Revision = EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION;
       newFadt->Reserved0 = 0; //ACPIspec said it should be 0, while 1 is possible, but no more
+#if 0
       newFadt->PLvl2Lat = 0x65;
       newFadt->PLvl3Lat = 0x3E9;
+#endif
       newFadt->IaPcBootArch = 0x3;
       // Reset Register Supported
       newFadt->Flags |= 0x400; 
