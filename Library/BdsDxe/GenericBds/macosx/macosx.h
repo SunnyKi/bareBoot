@@ -554,10 +554,12 @@ hex2bin (
   INT32 len
 );
 
+#if 0
 UINT8
 hexstrtouint8 (
   CHAR8* buf
 );
+#endif
 
 EFI_STATUS
 StrToGuidLE (

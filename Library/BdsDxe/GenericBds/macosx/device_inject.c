@@ -58,30 +58,6 @@ devprop_create_string (
   return string;
 }
 
-CHAR8 *
-get_pci_dev_path (
-  pci_dt_t *PciDt
-)
-{
-  CHAR8*    tmp;
-  CHAR16*   devpathstr;
-  EFI_DEVICE_PATH_PROTOCOL* DevicePath;
-
-  devpathstr = NULL;
-  DevicePath = NULL;
-
-  DevicePath = DevicePathFromHandle (PciDt->DeviceHandle);
-
-  if (DevicePath == NULL) {
-    return NULL;
-  }
-
-  devpathstr = DevicePathToStr (DevicePath);
-  tmp = AllocateZeroPool ((StrLen (devpathstr) + 1) * sizeof (CHAR8));
-  UnicodeStrToAsciiStr (devpathstr, tmp);
-  return tmp;
-}
-
 UINT32
 pci_config_read32 (
   pci_dt_t *PciDt,
@@ -118,6 +94,31 @@ pci_config_read32 (
   }
 
   return res;
+}
+
+#if 0
+CHAR8 *
+get_pci_dev_path (
+                  pci_dt_t *PciDt
+                  )
+{
+  CHAR8*    tmp;
+  CHAR16*   devpathstr;
+  EFI_DEVICE_PATH_PROTOCOL* DevicePath;
+  
+  devpathstr = NULL;
+  DevicePath = NULL;
+  
+  DevicePath = DevicePathFromHandle (PciDt->DeviceHandle);
+  
+  if (DevicePath == NULL) {
+    return NULL;
+  }
+  
+  devpathstr = DevicePathToStr (DevicePath);
+  tmp = AllocateZeroPool ((StrLen (devpathstr) + 1) * sizeof (CHAR8));
+  UnicodeStrToAsciiStr (devpathstr, tmp);
+  return tmp;
 }
 
 DevPropDevice *
@@ -223,8 +224,8 @@ devprop_add_device (
   pstring->entries[pstring->numentries - 1] = device;
   return device;
 }
+#endif
 
-#if 0
 DevPropDevice *
 devprop_add_device_pci (
   DevPropString *StringBuf,
@@ -255,7 +256,7 @@ devprop_add_device_pci (
     device->acpi_dev_path.length = 0x0c;
     device->acpi_dev_path.type = 0x02;
     device->acpi_dev_path.subtype = 0x01;
-    device->acpi_dev_path._HID = 0x0a0341d0;
+    device->acpi_dev_path._HID = 0xd041030a;
     device->acpi_dev_path._UID = gSettings.PCIRootUID;
   } else {
     return NULL;
@@ -299,7 +300,6 @@ devprop_add_device_pci (
   StringBuf->entries[StringBuf->numentries++] = device;
   return device;
 }
-#endif
 
 BOOLEAN
 devprop_add_value (
@@ -468,18 +468,21 @@ set_eth_props (
 {
   DevPropDevice   *device;
   UINT8           builtin;
-  CHAR8           *devicepath;
-
-  builtin = 0x0;
-  devicepath = get_pci_dev_path (eth_dev);
-  device = devprop_add_device (string, devicepath);
 #if 0
-  device = devprop_add_device_pci (string, eth_dev);
+  CHAR8           *devicepath;
 #endif
 
+  builtin = 0;
+  
   if (string == NULL) {
     string = devprop_create_string();
   }
+  
+#if 0
+  devicepath = get_pci_dev_path (eth_dev);
+  device = devprop_add_device (string, devicepath);
+#endif
+  device = devprop_add_device_pci (string, eth_dev);
 
   if (device == NULL) {
     return FALSE;
@@ -507,13 +510,15 @@ set_usb_props (
 {
   DevPropDevice   *device;
   UINT32   fake_devid;
-  CHAR8           *devicepath;
   UINT8           builtin;
   UINT16  current_available; //mA
   UINT16  current_extra;
   UINT16  current_in_sleep;
+#if 0
+  CHAR8           *devicepath;
+#endif
 
-  builtin = 0x0;
+  builtin = 0;
   current_available = 1200; //mA
   current_extra     = 700;
   current_in_sleep  = 1000;
@@ -522,11 +527,11 @@ set_usb_props (
     string = devprop_create_string();
   }
 
+#if 0
   devicepath = get_pci_dev_path (usb_dev);
   device = devprop_add_device (string, devicepath);
-#if 0
-  device = devprop_add_device_pci (string, usb_dev);
 #endif
+  device = devprop_add_device_pci (string, usb_dev);
 
   if (device == NULL) {
     return FALSE;
@@ -579,8 +584,10 @@ set_hda_props (
 )
 {
   DevPropDevice   *device;
-  CHAR8           *devicepath;
   UINT32          layoutId;
+#if 0
+  CHAR8           *devicepath;
+#endif
 
   layoutId = 0;
 
@@ -588,11 +595,11 @@ set_hda_props (
     string = devprop_create_string();
   }
 
+#if 0
   devicepath = get_pci_dev_path (hda_dev);
   device = devprop_add_device (string, devicepath);
-#if 0
-  device = devprop_add_device_pci (string, hda_dev);
 #endif
+  device = devprop_add_device_pci (string, hda_dev);
 
   if (device == NULL) {
     return FALSE;
@@ -1081,7 +1088,6 @@ setup_nvidia_devprop (
 )
 {
   const INT32 MAX_BIOS_VERSION_LENGTH = 32;
-  CHAR8* devicepath;
   CHAR8* model;
   CHAR8* version_str;
   DevPropDevice *device;
@@ -1094,6 +1100,9 @@ setup_nvidia_devprop (
   UINT32          videoRam;
   UINT8         nvCardType;
   UINT8* rom;
+#if 0
+  CHAR8* devicepath;
+#endif
 
   device = NULL;
   nvCardType = 0;
@@ -1179,11 +1188,11 @@ setup_nvidia_devprop (
     string = devprop_create_string();
   }
 
+#if 0
   devicepath = get_pci_dev_path (nvda_dev);
   device = devprop_add_device (string, devicepath);
-#if 0
-  device = devprop_add_device_pci (string, nvda_dev);
 #endif
+  device = devprop_add_device_pci (string, nvda_dev);
   devprop_add_nvidia_template (device);
   /* FIXME: for primary graphics card only */
   boot_display = 1;
@@ -1939,7 +1948,9 @@ setup_ati_devprop (
   pci_dt_t *ati_dev
 )
 {
+#if 0
   CHAR8           *devicepath;
+#endif
 
   if (!init_card (ati_dev)) {
     return FALSE;
@@ -1949,11 +1960,11 @@ setup_ati_devprop (
     string = devprop_create_string();
   }
 
+#if 0
   devicepath = get_pci_dev_path (ati_dev);
   card->device = devprop_add_device (string, devicepath);
-#if 0
-  card->device = devprop_add_device_pci (string, ati_dev);
 #endif
+  card->device = devprop_add_device_pci (string, ati_dev);
 
   if (!card->device) {
     return FALSE;
@@ -1976,7 +1987,7 @@ setup_ati_devprop (
   return TRUE;
 }
 
-// ---------------============== ATI injection
+// ---------------============== GMA injection
 
 CHAR8 *
 get_gma_model (
@@ -2003,9 +2014,11 @@ setup_gma_devprop (
   UINT32        DualLink;
   CHAR8         *model;
   UINT8 BuiltIn;
+#if 0
   CHAR8           *devicepath;
+#endif
 
-  BuiltIn = 0x00;
+  BuiltIn = 0;
 
   model = get_gma_model ((gma_dev->vendor_id << 16) | gma_dev->device_id);
 
@@ -2013,11 +2026,11 @@ setup_gma_devprop (
     string = devprop_create_string();
   }
 
+#if 0
   devicepath = get_pci_dev_path (gma_dev);
   device = devprop_add_device (string, devicepath);
-#if 0
-  device = devprop_add_device_pci (string, gma_dev);
 #endif
+  device = devprop_add_device_pci (string, gma_dev);
 
   if (device == NULL) {
     return FALSE;

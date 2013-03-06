@@ -982,9 +982,8 @@ GetUserSettings (
 #endif
       gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0x64);
       gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0xFE);
-#if 0
       // other known pair is 0x0[C/2]F9/0x06
-
+#if 0
       gSettings.EnableC2 = GetBoolProperty (dictPointer, "EnableC2", FALSE);
       gSettings.EnableC4 = GetBoolProperty (dictPointer, "EnableC4", FALSE);
       gSettings.EnableC6 = GetBoolProperty (dictPointer, "EnableC6", FALSE);
