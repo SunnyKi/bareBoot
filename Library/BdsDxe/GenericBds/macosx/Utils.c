@@ -818,7 +818,6 @@ GetUserSettings (
   TagPtr      dict;
   TagPtr      dictPointer;
   TagPtr      prop;
-  CHAR16      UStr[64];
   CHAR8       *BA;
   CHAR16      SystemID[40];
 
@@ -875,23 +874,11 @@ GetUserSettings (
 
     if (dictPointer) {
       gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", TRUE);
-
-      prop = GetProperty (dictPointer, "VRAM");
-
-      if (prop) {
-        AsciiStrToUnicodeStr (prop->string, (CHAR16*) &UStr[0]);
-        gSettings.VRAM = LShiftU64 (StrDecimalToUintn ((CHAR16*) &UStr[0]), 20);      //bytes
-      }
-
+      gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
       gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
-      prop = GetProperty (dictPointer, "VideoPorts");
-
-      if (prop) {
-        AsciiStrToUnicodeStr (prop->string, (CHAR16*) &UStr[0]);
-        gSettings.VideoPorts = (UINT16) StrDecimalToUintn ((CHAR16*) &UStr[0]);
-      }
-
+      gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
       GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
+
       prop = GetProperty (dictPointer, "NVCAP");
 
       if (prop) {
@@ -917,15 +904,6 @@ GetUserSettings (
     dictPointer = GetProperty (dict, "PCI");
 
     if (dictPointer) {
-#if 0
-      gSettings.PCIRootUID = 0;
-      prop = GetProperty (dictPointer, "PCIRootUID");
-
-      if (prop) {
-        AsciiStrToUnicodeStr (prop->string, (CHAR16*) &UStr[0]);
-        gSettings.PCIRootUID = (UINT16) StrDecimalToUintn ((CHAR16*) &UStr[0]);
-      }
-#endif
       gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
 
       prop = GetProperty (dictPointer, "DeviceProperties");
@@ -935,50 +913,19 @@ GetUserSettings (
         AsciiStrCpy (cDevProp, prop->string);
       }
 
-#if 0
-      gSettings.CustomDevProp = GetBoolProperty (dictPointer, "CustomDevProp", FALSE);
-#endif
-
       gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
       gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-#if 0
-      gSettings.HDAInjection = FALSE;
-      gSettings.HDALayoutId = 0;
-#endif
       gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
-#if 0
-      prop = GetProperty (dictPointer, "HDAInjection");
-      if (prop != NULL) {
-        switch (AsciiStr2xBool (prop->string)) {
-          case xOther:
-            gSettings.HDAInjection = TRUE;
-            gSettings.HDALayoutId = AsciiStr2Uintn (prop->string);
-            break;
-            
-          default:
-            break;
-        }
-      }
-#endif
+
     }
 
     dictPointer = GetProperty (dict, "ACPI");
 
     if (dictPointer) {
       gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
-#if 0
-      gSettings.GeneratePStates = GetBoolProperty (dictPointer, "GeneratePStates", FALSE);
-      gSettings.GenerateCStates = GetBoolProperty (dictPointer, "GenerateCStates", FALSE);
-#endif
+      // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
       gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
       gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
-      // other known pair is 0x0[C/2]F9/0x06
-#if 0
-      gSettings.EnableC2 = GetBoolProperty (dictPointer, "EnableC2", FALSE);
-      gSettings.EnableC4 = GetBoolProperty (dictPointer, "EnableC4", FALSE);
-      gSettings.EnableC6 = GetBoolProperty (dictPointer, "EnableC6", FALSE);
-      gSettings.EnableISS = GetBoolProperty (dictPointer, "EnableISS", FALSE);
-#endif
       gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
     }
 
