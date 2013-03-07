@@ -338,15 +338,21 @@ PrepareHobLegacyTable (
   CHAR8    PrintBuffer[256];
 
   Hob->Acpi.Table   = (EFI_PHYSICAL_ADDRESS)(UINTN)FindAcpiRsdPtr ();
+#if 0
   AsciiSPrint (PrintBuffer, 256, "\nAcpiTable=0x%x ", (UINT32)(UINTN)Hob->Acpi.Table);
-//  PrintString (PrintBuffer);
+  PrintString (PrintBuffer);
+#endif
   Hob->Acpi20.Table = (EFI_PHYSICAL_ADDRESS)(UINTN)FindAcpiRsdPtr ();
   Hob->Smbios.Table = (EFI_PHYSICAL_ADDRESS)(UINTN)FindSMBIOSPtr ();
+#if 0
   AsciiSPrint (PrintBuffer, 256, "SMBIOS Table=0x%x ", (UINT32)(UINTN)Hob->Smbios.Table);
-//  PrintString (PrintBuffer);
+  PrintString (PrintBuffer);
+#endif
   Hob->Mps.Table    = (EFI_PHYSICAL_ADDRESS)(UINTN)FindMPSPtr ();
+#if 0
   AsciiSPrint (PrintBuffer, 256, "MPS Table=0x%x\n", (UINT32)(UINTN)Hob->Mps.Table);
-//  PrintString (PrintBuffer);
+  PrintString (PrintBuffer);
+#endif
 
   PrepareMcfgTable (Hob);
 
