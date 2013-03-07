@@ -199,7 +199,9 @@ HOB_TEMPLATE  gHobTemplate = {
     },
     EFI_RESOURCE_SYSTEM_MEMORY,                     // ResourceType
     (EFI_RESOURCE_ATTRIBUTE_PRESENT                 |
-//     EFI_RESOURCE_ATTRIBUTE_TESTED                  | // Do not mark as TESTED, or DxeCore will find it and use it before check Allocation
+#if 0
+     EFI_RESOURCE_ATTRIBUTE_TESTED                  | // Do not mark as TESTED, or DxeCore will find it and use it before check Allocation
+#endif
      EFI_RESOURCE_ATTRIBUTE_INITIALIZED             |
      EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             | 
      EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       | 
@@ -304,7 +306,7 @@ HOB_TEMPLATE  gHobTemplate = {
     },
     0
   },
-  /**
+#if 0
   { // Pointer to FlushInstructionCache
     EFI_HOB_TYPE_GUID_EXTENSION,       // Hob type
     sizeof (PROTOCOL_HOB),             // Hob size
@@ -340,7 +342,7 @@ HOB_TEMPLATE  gHobTemplate = {
     EFI_TIANO_DECOMPRESS_PROTOCOL_GUID,
     NULL
   },
-  **/
+#endif
   { // Pointer to ReportStatusCode
     {
       {
@@ -713,13 +715,15 @@ PrepareHobBfv (
   UINTN BfvLength
   )
 {
-  //UINTN BfvLengthPageSize;
+#if 0
+  UINTN BfvLengthPageSize;
 
   //
   // Calculate BFV location at top of the memory region.
   // This is like a RAM Disk. Align to page boundry.
   //
-  //BfvLengthPageSize = EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (BfvLength));
+  BfvLengthPageSize = EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (BfvLength));
+#endif
  
   gHob->Bfv.BaseAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)Bfv;
   gHob->Bfv.Length = BfvLength;
