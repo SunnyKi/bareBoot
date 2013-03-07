@@ -2224,7 +2224,7 @@ SetDevices (
               StringDirty |=  TmpDirty;
             }
             // HDA
-            else if (gSettings.HDAInjection &&
+            else if ((gSettings.HDALayoutId != 0) &&
                      (Pci.Hdr.ClassCode[2] == PCI_CLASS_MEDIA) &&
                      (Pci.Hdr.ClassCode[1] == PCI_CLASS_MEDIA_HDA)) {
               TmpDirty = set_hda_props (PciIo, &PCIdevice);

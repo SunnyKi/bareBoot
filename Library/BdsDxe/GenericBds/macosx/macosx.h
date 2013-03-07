@@ -398,8 +398,10 @@ typedef struct {
   UINT16  PCIRootUID;
   BOOLEAN ETHInjection;
   BOOLEAN USBInjection;
+#if 0
   BOOLEAN HDAInjection;
-  UINTN   HDALayoutId;
+#endif
+  UINT16   HDALayoutId;
 } SETTINGS_DATA;
 
 typedef enum {

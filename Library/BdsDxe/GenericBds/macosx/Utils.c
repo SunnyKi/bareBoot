@@ -959,11 +959,13 @@ GetUserSettings (
 
       gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
       gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-
+#if 0
       gSettings.HDAInjection = FALSE;
       gSettings.HDALayoutId = 0;
+#endif
+      gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
+#if 0
       prop = GetProperty (dictPointer, "HDAInjection");
-
       if (prop) {
         switch (AsciiStr2xBool (prop->string)) {
           case xOther:
@@ -975,6 +977,7 @@ GetUserSettings (
             break;
         }
       }
+#endif
     }
 
     dictPointer = GetProperty (dict, "ACPI");
