@@ -76,47 +76,14 @@ BdsLibBootViaBootOption (
   EFI_HANDLE                ImageHandle;
   EFI_DEVICE_PATH_PROTOCOL  *FilePath;
   EFI_LOADED_IMAGE_PROTOCOL *ImageInfo;
-#if 0
-  EFI_DEVICE_PATH_PROTOCOL  *WorkingDevicePath;
-  EFI_ACPI_S3_SAVE_PROTOCOL *AcpiS3Save;
-  LIST_ENTRY                TempBootLists;
-  UINT8                     Index;
-  BOOLEAN                   isVerbose = FALSE;
-#endif
-  UINT16 buffer[255];    
+  UINT16 buffer[255];
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
-#if 0
-  Status = gBS->LocateProtocol (&gEfiAcpiS3SaveProtocolGuid, NULL, (VOID **) &AcpiS3Save);
-  if (!EFI_ERROR (Status)) {
-    AcpiS3Save->S3Save (AcpiS3Save, NULL);
-  }
-#endif
+
   BdsSetMemoryTypeInformationVariable ();
   ASSERT (Option->DevicePath != NULL);
-#if 0
-  Status = BdsLibUpdateFvFileDevicePath (&DevicePath, PcdGetPtr(PcdShellFile));
-  if (!EFI_ERROR(Status)) {
-    if (Option->DevicePath != NULL) {
-      FreePool(Option->DevicePath);
-    }
-    Option->DevicePath  = AllocateZeroPool (GetDevicePathSize (DevicePath));
-    ASSERT(Option->DevicePath != NULL);
-    CopyMem (Option->DevicePath, DevicePath, GetDevicePathSize (DevicePath));
-    //
-    // Update the shell boot option
-    //
-    InitializeListHead (&TempBootLists);
-    BdsLibRegisterNewOption (&TempBootLists, NULL, DevicePath, L"EFI Internal Shell", L"BootOrder", FALSE);
 
-    //
-    // free the temporary device path created by BdsLibUpdateFvFileDevicePath()
-    //
-    FreePool (DevicePath);
-    DevicePath = Option->DevicePath;
-  }
-#endif
   EfiSignalEventReadyToBoot();
   Status = gBS->LoadImage (
                   TRUE,
@@ -305,23 +272,7 @@ MacOS:
     ImageInfo->LoadOptionsSize  = (UINT32)StrSize(buffer);
     ImageInfo->LoadOptions      = buffer;
   }
-#if 0
-  if (Option->LoadOptionsSize != 0) {
-    ImageInfo->LoadOptionsSize  = Option->LoadOptionsSize;
-    ImageInfo->LoadOptions      = Option->LoadOptions;
-  }
-#endif
 
-#if 0
-  if ((bootArgsLen > 1) && (bootArgsLen < 120)) {
-    for (Index = 0; Index < bootArgsLen - 1; Index++) {
-      if ((gSettings.BootArgs[Index] == '-') && (gSettings.BootArgs[Index + 1] == 'v')) {
-        isVerbose = TRUE;
-        break;
-      }
-    }
-   }
-#endif
   if ((AsciiStrStr(gSettings.BootArgs, "-v") == 0) && (gST->ConOut != NULL)) {
     gST->ConOut = NULL; 
   } 
@@ -539,12 +490,6 @@ BdsLibEnumerateAllBootOption (
 
   FloppyNumber    = 0;
   CdromNumber     = 0;
-#if 0
-  HarddriveNumber = 0;
-  UsbNumber       = 0;
-  MiscNumber      = 0;
-  ScsiNumber      = 0;
-#endif
   PlatLang        = NULL;
   LastLang        = NULL;
   gRootFHandle    = NULL;
@@ -630,16 +575,6 @@ BdsLibEnumerateAllBootOption (
                                      &FHandle
                                      );
       }
-#if 0
-      if ((FileExists (FHandle, L"EFI\\config.plist")) && (gRootFHandle == NULL)) {
-        gRootFHandle = FHandle;
-      }
-      
-      if ((FileExists (FHandle, L"\\EFI\\mini\\config.plist"))
-           && (FileExists (FHandle, L"\\EFI\\.mini"))) {
-        gRootFHandle = FHandle;
-      }
-#endif
 
       if (FileExists (FHandle, L"\\EFI\\mini\\config.plist")) {
         gRootFHandle = FHandle;
@@ -648,20 +583,12 @@ BdsLibEnumerateAllBootOption (
       BufferSizeVolume = SIZE_OF_EFI_FILE_SYSTEM_INFO + 255;
       FileSystemInfo = AllocateZeroPool(BufferSizeVolume);      
       Status = FHandle->GetInfo(FHandle, &gEfiFileSystemInfoGuid,(UINTN*)&BufferSizeVolume, FileSystemInfo);
+
       if (!EFI_ERROR(Status)) {
         if (FileSystemInfo->VolumeLabel) 
           UnicodeSPrint (Buffer, BufferSizeVolume, L"%s", FileSystemInfo->VolumeLabel);
       }
-#if 0
-      if (FileSystemInfo->VolumeLabel == NULL) {
-        UnicodeSPrint (Buffer, 255, L"%s", L"No Volume Label");
-      } else if (*FileSystemInfo->VolumeLabel == 0x0000) {
-        UnicodeSPrint (Buffer, 255, L"%s", L"No Volume Label");
-      }
-      
-      if (StrCmp (Buffer, L"EFI")) {
-      }
-#endif
+
       if (FileExists(FHandle, MACOSX_LOADER_PATH))
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
 
@@ -694,13 +621,6 @@ BdsLibEnumerateAllBootOption (
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], REDHAT_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
       }
       if (FileExists(FHandle, EFI_REMOVABLE_MEDIA_FILE_NAME)) {
-#if 0
-        if (FileSystemInfo->VolumeLabel == NULL) {
-          UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader");
-        } else if (*FileSystemInfo->VolumeLabel == 0x0000) {
-          UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader");
-        }
-#endif
         if ((FileSystemInfo->VolumeLabel == NULL)     ||
             (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, 255, L"%s", L"EFI Boot Loader");
         else UnicodeSPrint (Buffer, 255, L"%s (%s)", FileSystemInfo->VolumeLabel, L"EFI Boot Loader");
@@ -708,19 +628,6 @@ BdsLibEnumerateAllBootOption (
       }
 
       if (FileExists(FHandle, WINDOWS_LOADER_PATH)) {
-#if 0
-        if (FileSystemInfo->VolumeLabel == NULL) {
-          UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
-        } else if (*FileSystemInfo->VolumeLabel == 0x0000) {
-          UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
-        }
-        
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-             (*FileSystemInfo->VolumeLabel == 0x0000)  ||
-             (StrCmp (Buffer, L"EFI") == 0)) {
-          UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
-        }
-#endif
         if ((FileSystemInfo->VolumeLabel == NULL)     ||
             (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, 255, L"%s", L"Windows EFI Loader");
           else UnicodeSPrint (Buffer, 255, L"%s (%s)", FileSystemInfo->VolumeLabel, L"Windows EFI Loader");
@@ -928,12 +835,6 @@ BdsLibGetBootableHandle (
   UINTN                           Index;
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
-#if 0
-  EFI_IMAGE_DOS_HEADER            DosHeader;
-  EFI_IMAGE_OPTIONAL_HEADER_UNION       HdrData;
-  EFI_IMAGE_OPTIONAL_HEADER_PTR_UNION   Hdr;
-  EFI_FILE                        *TmpHandle;
-#endif
 
   FHandle = NULL;
 
