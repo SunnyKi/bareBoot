@@ -16,142 +16,6 @@ EFI_EVENT   mVirtualAddressChangeEvent = NULL;
 EFI_EVENT   OnReadyToBootEvent = NULL;
 EFI_EVENT   ExitBootServiceEvent = NULL;
 
-#if 0
-#include "device_tree.h"
-
-#define NextMemoryDescriptor(_Ptr, _Size)   ((EFI_MEMORY_DESCRIPTOR *) (((UINT8 *) (_Ptr)) + (_Size)))
-#define ArchConvertPointerToAddress(A)    ((UINT64)(A))
-#define LdrStaticVirtualToPhysical(V)   ((V) & (1 * 1024 * 1024 * 1024 - 1))
-
-UINT64
-AllocateKernelMemory (
-  UINTN* bufferLength,
-  UINT64* virtualAddress
-)
-{
-  UINTN  pagesCount = EFI_SIZE_TO_PAGES (*bufferLength);
-  UINT64 kernelVirtualAddress = 0;
-  UINT64 physicalAddress = LdrStaticVirtualToPhysical (kernelVirtualAddress);
-  UINT64 MmpKernelVirtualBegin = (UINT64) (-1);
-  UINT64 MmpKernelVirtualEnd = 0;
-  UINT64 MmpKernelPhysicalBegin = (UINT64) (-1);
-  UINT64 MmpKernelPhysicalEnd = 0;
-
-  if (!bufferLength || !gBS) {
-    return 0;
-  }
-
-  if (!virtualAddress || *virtualAddress == 0) {
-    if (MmpKernelVirtualBegin == -1) {
-      return 0;
-    }
-
-    kernelVirtualAddress = MmpKernelVirtualEnd;
-  } else {
-    kernelVirtualAddress = *virtualAddress;
-  }
-
-  if (!AllocatePages (AllocateAddress)
-      && AllocatePages (EfiLoaderData)
-      && AllocatePages (pagesCount)
-      && AllocatePages ((UINTN) &physicalAddress)) {
-    return 0;
-  }
-
-  *bufferLength = pagesCount << EFI_PAGE_SHIFT;
-
-  if (kernelVirtualAddress < MmpKernelVirtualBegin) {
-    MmpKernelVirtualBegin = kernelVirtualAddress;
-  }
-
-  if (kernelVirtualAddress + *bufferLength > MmpKernelVirtualEnd) {
-    MmpKernelVirtualEnd = kernelVirtualAddress + *bufferLength;
-  }
-
-  if (physicalAddress < MmpKernelPhysicalBegin) {
-    MmpKernelPhysicalBegin = physicalAddress;
-  }
-
-  if (physicalAddress + *bufferLength > MmpKernelPhysicalEnd) {
-    MmpKernelPhysicalEnd = physicalAddress + *bufferLength;
-  }
-
-  if (virtualAddress) {
-    *virtualAddress = kernelVirtualAddress;
-  }
-
-  return physicalAddress;
-}
-
-VOID
-GetKernelPhysicalRange (
-  UINT64* lowerAddress,
-  UINT64* upperAddress
-)
-{
-  UINT64 KernelPhysicalBegin = (UINT64) (-1);
-  UINT64 KernelPhysicalEnd = 0;
-  *lowerAddress = KernelPhysicalBegin;
-  *upperAddress = KernelPhysicalEnd;
-}
-
-UINT64
-GetKernelVirtualStart (
-  VOID
-)
-{
-  UINT64 KernelVirtualBegin = (UINT64) (-1);
-  return KernelVirtualBegin;
-}
-
-EFI_STATUS
-GetMemoryMap (
-  UINTN* memoryMapSize,
-  EFI_MEMORY_DESCRIPTOR** memoryMap,
-  UINTN* memoryMapKey,
-  UINTN* descriptorSize,
-  UINT32* descriptorVersion
-)
-{
-  EFI_STATUS             Status = EFI_SUCCESS;
-  EFI_MEMORY_DESCRIPTOR* allocatedMap = 0;
-  UINTN                  allocatedSize = 0;
-  UINTN                  i;
-
-  for (i = 0; i < 5; i ++) {
-    UINTN currentSize = 0;
-    Status = gBS->GetMemoryMap (&currentSize, 0, memoryMapKey, descriptorSize, descriptorVersion);
-
-    if (Status != EFI_BUFFER_TOO_SMALL) {
-      return Status;
-    }
-
-    if (currentSize > allocatedSize) {
-      if (allocatedMap) {
-        FreePool (allocatedMap);
-      }
-
-      allocatedSize = currentSize + 512;
-      currentSize = allocatedSize;
-      allocatedMap = (EFI_MEMORY_DESCRIPTOR*) (AllocatePool (allocatedSize));
-
-      if (!allocatedMap) {
-        return EFI_OUT_OF_RESOURCES;
-      }
-    }
-
-    Status = gBS->GetMemoryMap (&currentSize, allocatedMap, memoryMapKey, descriptorSize, descriptorVersion);
-
-    if (!EFI_ERROR (Status)) {
-      *memoryMap = allocatedMap;
-      *memoryMapSize = currentSize;
-      break;
-    }
-  }
-
-  return Status;
-}
-#endif
 
 VOID
 EFIAPI
@@ -160,38 +24,10 @@ OnExitBootServices (
   IN VOID       *Context
 )
 {
-#if 0
   UINT8             *DTptr = (UINT8*) (UINTN) 0x100000;
   BootArgs1         *bootArgs;
-  UINTN             archMode = sizeof (UINTN) * 8;
-  CHAR8             *dtRoot;
-  UINT64            kernelBegin = 0;
-  UINT64            kernelEnd = 0;
-
-  BootArgs2*        bootArgs2;
-  DTEntry           efiPlatform;
-  UINTN             Version = 0;
   EFI_STATUS                      Status;
   EFI_GRAPHICS_OUTPUT_PROTOCOL    *GraphicsOutput = NULL;
-  EFI_MEMORY_DESCRIPTOR           *memoryMap = 0;
-  UINTN                           memoryMapSize = 0;
-  UINTN                           memoryMapKey = 0;
-  UINTN                           descriptorSize = 0;
-  UINT32                          descriptorVersion = 0;
-  UINT64                          runtimeMemoryPages = 0;
-  UINT64                          runtimeServicesVirtualAddress = 0;
-  UINTN                           bufferLength = 0;
-  UINT64                          efiSystemTablePhysicalAddress = ArchConvertPointerToAddress (gST);
-  UINT64                          runtimeServicesPhysicalAddress = AllocateKernelMemory (&bufferLength, &runtimeServicesVirtualAddress);
-  UINT32                      gBootMode = GRAPHICS_MODE;
-
-  Status = GetMemoryMap (&memoryMapSize, &memoryMap, &memoryMapKey, &descriptorSize, &descriptorVersion);
-
-  if (EFI_ERROR (Status)) {
-    Print (L"Cannot Get MemoryMap!\n");
-    gBS->Stall (2000000);
-    return;
-  }
 
   Status = gBS->HandleProtocol (gST->ConsoleOutHandle, &gEfiGraphicsOutputProtocolGuid, (VOID **) &GraphicsOutput);
 
@@ -200,9 +36,6 @@ OnExitBootServices (
     gBS->Stall (2000000);
     return;
   }
-
-  memoryMap = NextMemoryDescriptor (memoryMap, descriptorSize);
-  runtimeMemoryPages += memoryMap->NumberOfPages;
 
   while (TRUE) {
     bootArgs = (BootArgs1*) DTptr;
@@ -223,31 +56,7 @@ OnExitBootServices (
     }
   }
 
-  CorrectMemoryMap (bootArgs1->MemoryMap,
-                    bootArgs1->MemoryMapDescriptorSize,
-                    &bootArgs1->MemoryMapSize);
-  GetKernelPhysicalRange (&kernelBegin, &kernelEnd);
-
-  bootArgs->MemoryMap = (UINT32) (UINTN) memoryMap;
-  bootArgs->MemoryMap = (UINT32) memoryMap->VirtualStart;
-  bootArgs->MemoryMapSize = (UINT32) memoryMapSize;
-  bootArgs->MemoryMapDescriptorSize = (UINT32) descriptorSize;
-  bootArgs->MemoryMapDescriptorVersion = (UINT32) descriptorVersion;
-  bootArgs->Video.v_baseAddr = (UINT32) GraphicsOutput->Mode->FrameBufferBase;
-  bootArgs->Video.v_display = (UINT32) gBootMode;
-  bootArgs->Video.v_width = (UINT32) GraphicsOutput->Mode->Info->HorizontalResolution;
-  bootArgs->Video.v_height = (UINT32) GraphicsOutput->Mode->Info->VerticalResolution;
-  bootArgs->Video.v_depth = 32;
-  bootArgs->Video.v_rowBytes = (UINT32) (GraphicsOutput->Mode->Info->PixelsPerScanLine * 32) / 8;
-  bootArgs->kaddr = (UINT32) (kernelBegin);
-  bootArgs->ksize = (UINT32) (kernelEnd - kernelBegin);
-  bootArgs->efiRuntimeServicesPageStart = (UINT32) runtimeServicesPhysicalAddress >> EFI_PAGE_SHIFT;
-  bootArgs->efiRuntimeServicesPageCount = (UINT32) runtimeMemoryPages;
-  bootArgs->efiRuntimeServicesVirtualPageStart = (UINT64) runtimeServicesVirtualAddress >> EFI_PAGE_SHIFT;
-  bootArgs->efiSystemTable = (UINT32) efiSystemTablePhysicalAddress;
-  bootArgs->efiMode = GetKernelVirtualStart() > (UINTN) (-1) ? sizeof (UINT64) * 8 : sizeof (UINTN) * 8;
-
-  bootArgs->efiSystemTable = (UINT32) (UINTN) gST;
+#if 0
   USBOwnerFix();
   DisableUsbLegacySupport();
 #endif
