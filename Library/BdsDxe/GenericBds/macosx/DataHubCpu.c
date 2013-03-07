@@ -211,9 +211,6 @@ SetupDataForOSX (
   UINT64          TSCFrequency;
   CHAR16*         productName;
   CHAR16*         serialNumber;
-#if 0
-  UINT32        KextListSize;
-#endif
 
   CloverVersion = L"2.0";
   devPathSupportedVal = 1;
@@ -226,24 +223,11 @@ SetupDataForOSX (
   Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &gDataHub);
 
   if (!EFI_ERROR (Status)) {
+
     if ((FrontSideBus < (50 * Mega)) || (FrontSideBus > (500 * Mega))) {
       FrontSideBus = 100 * Mega;
     }
 
-#if 0
-    KextListSize = GetKextListSize();
-    productName = EfiStrDuplicate (gSettings.ProductName);
-    serialNumber = EfiStrDuplicate (gSettings.SerialNr);
-
-    if (!FrontSideBus) {
-      FrontSideBus = 100 * Mega;
-    }
-
-    Print (L"FrontSideBus %d     ", FrontSideBus);
-    Print (L"CpuSpeed %d     ", CpuSpeed);
-    Print (L"TSCFrequency %d\n\r", TSCFrequency);
-    Pause (NULL);
-#endif
     AsciiStrToUnicodeStr (gSettings.ProductName, productName);
     AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &FrontSideBus, sizeof (UINT64));
@@ -253,10 +237,7 @@ SetupDataForOSX (
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Clover", CloverVersion, (UINT32) StrSize (CloverVersion));
-#if 0
-    Status =  LogDataHub (&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof (EFI_GUID));
-    Status =  LogDataHub (&gEfiMiscSubClassGuid, L"kext", &gKextList, KextListSize);
-#endif
+
     return Status;
   } else {
     return EFI_NOT_FOUND;
