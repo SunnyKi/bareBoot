@@ -335,7 +335,9 @@ PrepareHobLegacyTable (
   IN HOB_TEMPLATE  *Hob
   )
 {
+#if 0
   CHAR8    PrintBuffer[256];
+#endif
 
   Hob->Acpi.Table   = (EFI_PHYSICAL_ADDRESS)(UINTN)FindAcpiRsdPtr ();
 #if 0
