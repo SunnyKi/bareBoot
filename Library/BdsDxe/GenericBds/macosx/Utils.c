@@ -916,7 +916,7 @@ GetUserSettings (
         hex2bin (prop->string, (UINT8*) &gSettings.NVCAP[0], 20);
       }
 
-      prop = GetProperty (dictPointer, "cDevProp");
+      prop = GetProperty (dictPointer, "DisplayCfg");
 
       if (prop) {
         hex2bin (prop->string, (UINT8*) &gSettings.Dcfg[0], 8);
