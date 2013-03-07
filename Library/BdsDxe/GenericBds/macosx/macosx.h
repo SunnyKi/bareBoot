@@ -692,3 +692,9 @@ EFIAPI
 SetPrivateVarProto (
   VOID
 );
+
+EFI_STATUS
+EFIAPI
+EventsInitialize (
+  VOID
+  );

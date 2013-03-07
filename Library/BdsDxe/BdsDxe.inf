@@ -84,7 +84,7 @@
   GenericBds/macosx/SetVarProto.c
   GenericBds/macosx/AcpiPatcher.c
   GenericBds/macosx/DataHubCpu.c
-#  GenericBds/macosx/Events.c
+  GenericBds/macosx/Events.c
   GenericBds/macosx/device_inject.c
 #  GenericBds/macosx/guid.c
 #  GenericBds/macosx/Devices.c

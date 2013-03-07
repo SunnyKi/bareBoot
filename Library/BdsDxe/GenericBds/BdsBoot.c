@@ -258,8 +258,8 @@ MacOS:
   SetVariablesForOSX ();
   FinalizeSmbios ();
   SetupDataForOSX ();
-#if 0
   EventsInitialize ();
+#if 0
   DumpCPU ();
 #endif
   
