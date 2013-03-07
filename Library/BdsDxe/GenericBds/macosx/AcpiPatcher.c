@@ -272,9 +272,6 @@ PatchACPI (
   CHAR16                                            *PathPatched;
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
-#if 0
-  SSDT_TABLE                                        *Ssdt = NULL;
-#endif
 
   buffer = NULL;
   bufferLen = 0;
@@ -316,117 +313,61 @@ PatchACPI (
   Rsdt = (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress;
 
 #if 0
-  rf = ScanRSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE);
-  if (rf != NULL) {
-    FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) (*rf);
-  }
-
   Print (L"FADT = 0x%x\r\n", FadtPointer);
   Xsdt = (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress;
   Print (L"XSDT = 0x%x\r\n", Xsdt);
   eCntR = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
   eCntX = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
   Print (L"eCntR=0x%x  eCntX=0x%x\r\n", eCntR, eCntX);
+#endif
 
-  if (Xsdt == NULL) {
-    DropTableFromRSDT (UEFI_SIGN);
-    DropTableFromRSDT (SHOK_SIGN);
-    DropTableFromRSDT (ASF_SIGN);
-    DropTableFromRSDT (SLIC_SIGN);
-    DropTableFromRSDT (TAMG_SIGN);
+  BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
+  Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
+
+  if (!EFI_ERROR (Status)) {
+    Xsdt = (XSDT_TABLE*) (UINTN) BufferPtr;
+    Xsdt->Header.Signature = 0x54445358; //EFI_ACPI_2_0_EXTENDED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE
     eCntR = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
-    eCntX = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-    Print (L"eCntR=0x%x\r\n", eCntR);
-#endif
-    BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
-    Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
+    Xsdt->Header.Length = eCntR * sizeof (UINT64) + sizeof (EFI_ACPI_DESCRIPTION_HEADER);
+    Xsdt->Header.Revision = 1;
+    CopyMem ((CHAR8 *) &Xsdt->Header.OemId, (CHAR8 *) &FadtPointer->Header.OemId, 6);
+    Xsdt->Header.OemTableId = Rsdt->Header.OemTableId;
+    Xsdt->Header.OemRevision = Rsdt->Header.OemRevision;
+    Xsdt->Header.CreatorId = Rsdt->Header.CreatorId;
+    Xsdt->Header.CreatorRevision = Rsdt->Header.CreatorRevision;
+    pEntryR = (UINT32*) (&(Rsdt->Entry));
+    pEntryX = (UINT64*) (&(Xsdt->Entry));
 
-    if (!EFI_ERROR (Status)) {
-      Xsdt = (XSDT_TABLE*) (UINTN) BufferPtr;
-      Xsdt->Header.Signature = 0x54445358; //EFI_ACPI_2_0_EXTENDED_SYSTEM_DESCRIPTION_TABLE_SIGNATURE
-      eCntR = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
-      Xsdt->Header.Length = eCntR * sizeof (UINT64) + sizeof (EFI_ACPI_DESCRIPTION_HEADER);
-      Xsdt->Header.Revision = 1;
-      CopyMem ((CHAR8 *) &Xsdt->Header.OemId, (CHAR8 *) &FadtPointer->Header.OemId, 6);
-      Xsdt->Header.OemTableId = Rsdt->Header.OemTableId;
-      Xsdt->Header.OemRevision = Rsdt->Header.OemRevision;
-      Xsdt->Header.CreatorId = Rsdt->Header.CreatorId;
-      Xsdt->Header.CreatorRevision = Rsdt->Header.CreatorRevision;
-      pEntryR = (UINT32*) (&(Rsdt->Entry));
-      pEntryX = (UINT64*) (&(Xsdt->Entry));
-
-      for (Index = 0; Index < eCntR; Index ++) {
+    for (Index = 0; Index < eCntR; Index ++) {
 #if 0
-        Print (L"RSDT entry = 0x%x\r\n", *pEntryR);
+      Print (L"RSDT entry = 0x%x\r\n", *pEntryR);
 #endif
 
-        if (*pEntryR != 0) {
-          *pEntryX = 0;
-          CopyMem ((VOID*) pEntryX, (VOID*) pEntryR, sizeof (UINT32));
-          pEntryR++;
-          pEntryX++;
-        } else {
-#if 0
-          Print (L"entry addr = 0x%x, skip it", *pEntryR);
-#endif
-          Xsdt->Header.Length -= sizeof (UINT64);
-          pEntryR++;
-        }
-      }
-
-      RsdPointer->XsdtAddress = (UINT64) Xsdt;
-      RsdPointer->Checksum = 0;
-      RsdPointer->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) RsdPointer, 20));
-#if 0
-      RsdPointer->ExtendedChecksum = 0;
-      RsdPointer->ExtendedChecksum = (UINT8) (256 - CalculateSum8 ((UINT8*) RsdPointer, RsdPointer->Length));
-#endif
-    } else {
-      Print (L"no allocate page for new xsdt\r\n");
-      return EFI_OUT_OF_RESOURCES;
-    }
-
-#if 0
-  } else if (RsdPointer->Revision >= 2 && (RsdPointer->XsdtAddress < (UINT64) (UINTN) - 1)) {
-    Xsdt = (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress;
-
-    if (& (Xsdt->Entry)) {
-      eCntR = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
-      eCntX = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-      Print (L"XSDT = 0x%x\r\n", Xsdt);
-      Print (L"FADT = 0x%x\r\n", FadtPointer);
-
-      if (eCntR > eCntX) {
-        Print (L"eCntR=0x%x != eCntX=0x%x\r\n", eCntR, eCntX);
-        Rsdt->Header.Length = eCntX * sizeof (UINT32) + sizeof (EFI_ACPI_DESCRIPTION_HEADER);
-        eCntR = eCntX;
-      } else {
-        Print (L"eCntR=0x%x != eCntX=0x%x\r\n", eCntR, eCntX);
-        Xsdt->Header.Length = eCntR * sizeof (UINT64) + sizeof (EFI_ACPI_DESCRIPTION_HEADER);
-      }
-
-      pEntryR = (UINT32*) (& (Rsdt->Entry));
-      pEntryX = (UINT64*) (& (Xsdt->Entry));
-
-      for (Index = 0; Index < eCntR; Index ++) {
-        Print (L"old = 0x%x ", *pEntryX);
+      if (*pEntryR != 0) {
         *pEntryX = 0;
         CopyMem ((VOID*) pEntryX, (VOID*) pEntryR, sizeof (UINT32));
-        Print (L"new entry XSDT = 0x%x\r\n", (UINT64) *pEntryX);
         pEntryR++;
         pEntryX++;
+      } else {
+#if 0
+        Print (L"entry addr = 0x%x, skip it", *pEntryR);
+#endif
+        Xsdt->Header.Length -= sizeof (UINT64);
+        pEntryR++;
       }
     }
 
-    xf = ScanXSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE);
-
-    if (xf) {
-      FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) (*xf);
-    }
-  }
-
-  Xsdt = (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress;
+    RsdPointer->XsdtAddress = (UINT64) Xsdt;
+    RsdPointer->Checksum = 0;
+    RsdPointer->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) RsdPointer, 20));
+#if 0
+    RsdPointer->ExtendedChecksum = 0;
+    RsdPointer->ExtendedChecksum = (UINT8) (256 - CalculateSum8 ((UINT8*) RsdPointer, RsdPointer->Length));
 #endif
+  } else {
+    Print (L"no allocate page for new xsdt\r\n");
+    return EFI_OUT_OF_RESOURCES;
+  }
 
   FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN)
     *(ScanXSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE));
@@ -435,14 +376,8 @@ PatchACPI (
     Print (L"no FADT entry in RSDT\r\n");
     return EFI_NOT_FOUND;
   }
-#if 0
-  if (!FadtPointer) {
-    Print (L"no FADT entry in RSDT\r\n");
-    return EFI_NOT_FOUND;
-  }
-#endif
   
-// -===== APIC =====-
+  // -===== APIC =====-
 #if 0
   EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
   EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER   *ApicHeader;
@@ -476,7 +411,8 @@ PatchACPI (
     Pause (L"No APIC table Found !!!\r\n");
   }
 #endif
-
+  // --------------------
+  
   BiosDsdt = FadtPointer->XDsdt;
 
   if (BiosDsdt == 0) {
@@ -496,10 +432,6 @@ PatchACPI (
       newFadt->Header.Length = 0xF4;
       newFadt->Header.Revision = EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION;
       newFadt->Reserved0 = 0; //ACPIspec said it should be 0, while 1 is possible, but no more
-#if 0
-      newFadt->PLvl2Lat = 0x65;
-      newFadt->PLvl3Lat = 0x3E9;
-#endif
       newFadt->IaPcBootArch = 0x3;
       // Reset Register Supported
       newFadt->Flags |= 0x400; 
