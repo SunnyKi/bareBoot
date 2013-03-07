@@ -48,9 +48,6 @@
   DeviceIo.c
   PcatIo.c
 
-[Sources.ipf]
-  Ipf/PcatIo.c
-
 [Protocols]
   gEfiPciRootBridgeIoProtocolGuid
   gEfiDeviceIoProtocolGuid
