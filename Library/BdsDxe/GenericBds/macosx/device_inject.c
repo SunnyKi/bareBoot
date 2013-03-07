@@ -605,12 +605,7 @@ set_hda_props (
     return FALSE;
   }
 
-  if (gSettings.HDALayoutId > 0) {
-    layoutId = (UINT32) gSettings.HDALayoutId;
-  } else {
-    layoutId = 12;
-  }
-
+  layoutId = (UINT32) gSettings.HDALayoutId;
   devprop_add_value (device, "layout-id", (UINT8*) &layoutId, 4);
   layoutId = 0;
   devprop_add_value (device, "PinConfigurations", (UINT8*) &layoutId, 1);

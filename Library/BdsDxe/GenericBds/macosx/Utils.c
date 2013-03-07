@@ -250,7 +250,6 @@ CHAR8* AppleChassisAsset[24] = {
 
 CHAR8* AppleBoardSN = "C02032101R5DC771H";
 CHAR8* AppleBoardLocation = "Part Component";
-CHAR8* RuLang = "ru:0";
 
 //---------------------------------------------------------------------------------
 
@@ -270,7 +269,7 @@ GetDataSetting (
 #endif
   prop = GetProperty (dict, propName);
 
-  if (prop) {
+  if (prop != NULL) {
     if (prop->data != NULL && prop->dataLen > 0) {
       // data property
       data = AllocateZeroPool (prop->dataLen);
@@ -535,7 +534,7 @@ Pause (
   IN CHAR16* Message
 )
 {
-  if (Message) {
+  if (Message != NULL) {
     Print (L"%s", Message);
   }
 
@@ -798,7 +797,7 @@ GetBootDefault (
 
   dictPointer = GetProperty (dict, "SystemParameters");
 
-  if (dictPointer) {
+  if (dictPointer != NULL) {
     gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
     GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
   }
@@ -833,7 +832,7 @@ GetUserSettings (
     return Status;
   }
 
-  if (gConfigPtr) {
+  if (gConfigPtr != NULL) {
     if (ParseXML ((const CHAR8*) gConfigPtr, &dict) != EFI_SUCCESS) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
@@ -841,14 +840,16 @@ GetUserSettings (
 
     ZeroMem (gSettings.Language, 10);
     ZeroMem (gSettings.BootArgs, 120);
+    ZeroMem (gSettings.SerialNr, 64);
+
     dictPointer = GetProperty (dict, "SystemParameters");
 
-    if (dictPointer) {
-      AsciiStrCpy (gSettings.Language, RuLang);
+    if (dictPointer != NULL) {
       GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
+
       prop = GetProperty (dictPointer, "boot-args");
 
-      if (prop) {
+      if (prop != NULL) {
         AsciiStrCpy (gSettings.BootArgs, prop->string);
         BA = &gSettings.BootArgs[119];
         bootArgsLen = 120;
@@ -859,20 +860,18 @@ GetUserSettings (
         }
       }
 
-      GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
       prop = GetProperty (dictPointer, "CustomUUID");
 
-      if (prop) {
+      if (prop != NULL) {
         AsciiStrToUnicodeStr (prop->string, SystemID);
         Status = StrToGuidLE (SystemID, &gUuid);
         //else value from SMBIOS
       }
     }
 
-    ZeroMem (gSettings.SerialNr, 64);
     dictPointer = GetProperty (dict, "Graphics");
 
-    if (dictPointer) {
+    if (dictPointer != NULL) {
       gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", TRUE);
       gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
       gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
@@ -881,20 +880,20 @@ GetUserSettings (
 
       prop = GetProperty (dictPointer, "NVCAP");
 
-      if (prop) {
+      if (prop != NULL) {
         hex2bin (prop->string, (UINT8*) &gSettings.NVCAP[0], 20);
       }
 
       prop = GetProperty (dictPointer, "DisplayCfg");
 
-      if (prop) {
+      if (prop != NULL) {
         hex2bin (prop->string, (UINT8*) &gSettings.Dcfg[0], 8);
       }
 
 #if 0
       prop = GetProperty (dictPointer, "CustomEDID");
 
-      if (prop) {
+      if (prop != NULL) {
         UINTN j = 128;
         gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &j);
       }
@@ -903,12 +902,12 @@ GetUserSettings (
 
     dictPointer = GetProperty (dict, "PCI");
 
-    if (dictPointer) {
+    if (dictPointer != NULL) {
       gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
 
       prop = GetProperty (dictPointer, "DeviceProperties");
 
-      if (prop) {
+      if (prop != NULL) {
         cDevProp = AllocateZeroPool (AsciiStrLen (prop->string) + 1);
         AsciiStrCpy (cDevProp, prop->string);
       }
@@ -921,7 +920,7 @@ GetUserSettings (
 
     dictPointer = GetProperty (dict, "ACPI");
 
-    if (dictPointer) {
+    if (dictPointer != NULL) {
       gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
       // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
       gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
@@ -931,7 +930,7 @@ GetUserSettings (
 
     dictPointer = GetProperty (dict, "SMBIOS");
 
-    if (dictPointer) {
+    if (dictPointer != NULL) {
       gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
 
       GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
@@ -953,7 +952,7 @@ GetUserSettings (
 
     dictPointer = GetProperty (dict, "CPU");
 
-    if (dictPointer) {
+    if (dictPointer != NULL) {
       gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
       gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
       gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
