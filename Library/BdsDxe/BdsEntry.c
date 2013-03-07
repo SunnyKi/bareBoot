@@ -61,7 +61,7 @@ BdsInitialize (
   EFI_STATUS    Status;
   
   //gImageHandle  = ImageHandle;
-	gRS           = SystemTable->RuntimeServices;
+  gRS           = SystemTable->RuntimeServices;
 
   //
   // Install protocol interface
