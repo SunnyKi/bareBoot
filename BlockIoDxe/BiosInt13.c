@@ -674,9 +674,9 @@ Edd30BiosWriteBlocks (
             Media->BlockSize  = (UINT32) Bios->Parameters.BytesPerSector;
           }
 #if 0
-	  else {
+        else {
             ASSERT (FALSE);
-          }
+        }
 #endif
 
           Media->ReadOnly = FALSE;
