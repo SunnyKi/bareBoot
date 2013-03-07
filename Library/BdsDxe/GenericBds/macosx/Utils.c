@@ -966,7 +966,7 @@ GetUserSettings (
       gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
 #if 0
       prop = GetProperty (dictPointer, "HDAInjection");
-      if (prop) {
+      if (prop != NULL) {
         switch (AsciiStr2xBool (prop->string)) {
           case xOther:
             gSettings.HDAInjection = TRUE;
