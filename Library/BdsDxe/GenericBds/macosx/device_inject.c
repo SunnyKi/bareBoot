@@ -96,136 +96,6 @@ pci_config_read32 (
   return res;
 }
 
-#if 0
-CHAR8 *
-get_pci_dev_path (
-                  pci_dt_t *PciDt
-                  )
-{
-  CHAR8*    tmp;
-  CHAR16*   devpathstr;
-  EFI_DEVICE_PATH_PROTOCOL* DevicePath;
-  
-  devpathstr = NULL;
-  DevicePath = NULL;
-  
-  DevicePath = DevicePathFromHandle (PciDt->DeviceHandle);
-  
-  if (DevicePath == NULL) {
-    return NULL;
-  }
-  
-  devpathstr = DevicePathToStr (DevicePath);
-  tmp = AllocateZeroPool ((StrLen (devpathstr) + 1) * sizeof (CHAR8));
-  UnicodeStrToAsciiStr (devpathstr, tmp);
-  return tmp;
-}
-
-DevPropDevice *
-devprop_add_device (
-  DevPropString *pstring,
-  CHAR8 *path
-)
-{
-  const CHAR8   pciroot_string[] = "PciRoot(0x";
-  const CHAR8   pcieroot_string[] = "PcieRoot(0x";
-  const CHAR8   pci_device_string[] = "Pci(0x";
-
-  DevPropDevice *device;
-  INT32 numpaths = 0;
-  INT32   x, curr = 0;
-  CHAR8 buff[] = "00";
-  INT32   i;
-
-  if (pstring == NULL || path == NULL) {
-    return NULL;
-  }
-
-  device = AllocateZeroPool (sizeof (DevPropDevice));
-
-  if (AsciiStrnCmp (path, pciroot_string, AsciiStrLen (pciroot_string)) &&
-      AsciiStrnCmp (path, pcieroot_string, AsciiStrLen (pcieroot_string))) {
-    return NULL;
-  }
-
-  ZeroMem ((VOID*) device, sizeof (DevPropDevice));
-  device->acpi_dev_path._UID = gSettings.PCIRootUID;
-#if 0
-  // *getPciRootUID();0; //FIXME: what if 0?
-#endif
-
-  for (x = 0; x < (INT32) AsciiStrLen (path); x++) {
-    if (!AsciiStrnCmp (&path[x], pci_device_string, AsciiStrLen (pci_device_string))) {
-      x += (INT32) AsciiStrLen (pci_device_string);
-      curr = x;
-
-      while (path[++x] != ',');
-
-      if (x - curr == 2) {
-        AsciiSPrint (buff, 3, "%c%c", path[curr], path[curr + 1]);
-      } else if (x - curr == 1) {
-        AsciiSPrint (buff, 3, "%c", path[curr]);
-      } else {
-        numpaths = 0;
-        break;
-      }
-
-      device->pci_dev_path[numpaths].device = hexstrtouint8 (buff);
-      x += 3; // 0x
-      curr = x;
-
-      while (path[++x] != ')');
-
-      if (x - curr == 2) {
-        AsciiSPrint (buff, 3, "%c%c", path[curr], path[curr + 1]);
-      } else if (x - curr == 1) {
-        AsciiSPrint (buff, 3, "%c", path[curr]);
-      } else {
-        numpaths = 0;
-        break;
-      }
-
-      device->pci_dev_path[numpaths].function = hexstrtouint8 (buff); // TODO: find dev from CHAR8 *path
-      numpaths++;
-    }
-  }
-
-  if (numpaths == 0) {
-    return NULL;
-  }
-
-  device->numentries = 0x00;
-  device->acpi_dev_path.length = 0x0c;
-  device->acpi_dev_path.type = 0x02;
-  device->acpi_dev_path.subtype = 0x01;
-  device->acpi_dev_path._HID = 0xd041030a;
-  device->num_pci_devpaths = (UINT8) numpaths;
-  device->length = 24 + (6 * numpaths);
-
-  for (i = 0; i < numpaths; i++) {
-    device->pci_dev_path[i].length = 0x06;
-    device->pci_dev_path[i].type = 0x01;
-    device->pci_dev_path[i].subtype = 0x01;
-  }
-
-  device->path_end.length = 0x04;
-  device->path_end.type = 0x7f;
-  device->path_end.subtype = 0xff;
-  device->string = pstring;
-  device->data = NULL;
-  pstring->length += device->length;
-
-  if (pstring->entries == NULL)
-    if ((pstring->entries = (DevPropDevice**) AllocatePool (sizeof (device))) == NULL) {
-      return 0;
-    }
-
-  pstring->entries[pstring->numentries++] = (DevPropDevice*) AllocatePool (sizeof (device));
-  pstring->entries[pstring->numentries - 1] = device;
-  return device;
-}
-#endif
-
 DevPropDevice *
 devprop_add_device_pci (
   DevPropString *StringBuf,
@@ -468,9 +338,6 @@ set_eth_props (
 {
   DevPropDevice   *device;
   UINT8           builtin;
-#if 0
-  CHAR8           *devicepath;
-#endif
 
   builtin = 0;
   
@@ -478,10 +345,6 @@ set_eth_props (
     string = devprop_create_string();
   }
   
-#if 0
-  devicepath = get_pci_dev_path (eth_dev);
-  device = devprop_add_device (string, devicepath);
-#endif
   device = devprop_add_device_pci (string, eth_dev);
 
   if (device == NULL) {
@@ -514,9 +377,6 @@ set_usb_props (
   UINT16  current_available; //mA
   UINT16  current_extra;
   UINT16  current_in_sleep;
-#if 0
-  CHAR8           *devicepath;
-#endif
 
   builtin = 0;
   current_available = 1200; //mA
@@ -527,10 +387,6 @@ set_usb_props (
     string = devprop_create_string();
   }
 
-#if 0
-  devicepath = get_pci_dev_path (usb_dev);
-  device = devprop_add_device (string, devicepath);
-#endif
   device = devprop_add_device_pci (string, usb_dev);
 
   if (device == NULL) {
@@ -585,9 +441,6 @@ set_hda_props (
 {
   DevPropDevice   *device;
   UINT32          layoutId;
-#if 0
-  CHAR8           *devicepath;
-#endif
 
   layoutId = 0;
 
@@ -595,10 +448,6 @@ set_hda_props (
     string = devprop_create_string();
   }
 
-#if 0
-  devicepath = get_pci_dev_path (hda_dev);
-  device = devprop_add_device (string, devicepath);
-#endif
   device = devprop_add_device_pci (string, hda_dev);
 
   if (device == NULL) {
@@ -1095,9 +944,6 @@ setup_nvidia_devprop (
   UINT32          videoRam;
   UINT8         nvCardType;
   UINT8* rom;
-#if 0
-  CHAR8* devicepath;
-#endif
 
   device = NULL;
   nvCardType = 0;
@@ -1183,10 +1029,6 @@ setup_nvidia_devprop (
     string = devprop_create_string();
   }
 
-#if 0
-  devicepath = get_pci_dev_path (nvda_dev);
-  device = devprop_add_device (string, devicepath);
-#endif
   device = devprop_add_device_pci (string, nvda_dev);
   devprop_add_nvidia_template (device);
   /* FIXME: for primary graphics card only */
@@ -1555,12 +1397,6 @@ load_vbios_file (
   UINTN bufferLen;
   CHAR16 FileName[24];
   UINT8*  buffer;
-#if 0
-  BOOLEAN do_load = FALSE;
-#endif
-#if 0
-  getBoolForKey (key, &do_load, &bootInfo->chameleonConfig);
-#endif
 
   if (!gSettings.LoadVBios) {
     return FALSE;
@@ -1649,9 +1485,6 @@ read_vbios (
   }
 
   if (!validate_rom (rom_addr, card->pci_dev)) {
-#if 0
-    gBS->Stall (3000000);
-#endif
     return FALSE;
   }
 
@@ -1804,29 +1637,6 @@ radeon_card_posted (
   return FALSE;
 }
 
-#if 0
-BOOLEAN
-devprop_add_pci_config_space (
-  VOID
-)
-{
-  int offset;
-  UINT8 *config_space = AllocateZeroPool (0x100);
-
-  if (!config_space) {
-    return FALSE;
-  }
-
-  for (offset = 0; offset < 0x100; offset += 4) {
-    config_space[offset / 4] = pci_config_read32 (card->pci_dev, offset);
-  }
-
-  devprop_add_value (card->device, "ATY,PCIConfigSpace", config_space, 0x100);
-  FreePool (config_space);
-  return TRUE;
-}
-#endif
-
 BOOLEAN
 init_card (
   pci_dt_t *pci_dev
@@ -1943,9 +1753,6 @@ setup_ati_devprop (
   pci_dt_t *ati_dev
 )
 {
-#if 0
-  CHAR8           *devicepath;
-#endif
 
   if (!init_card (ati_dev)) {
     return FALSE;
@@ -1955,29 +1762,14 @@ setup_ati_devprop (
     string = devprop_create_string();
   }
 
-#if 0
-  devicepath = get_pci_dev_path (ati_dev);
-  card->device = devprop_add_device (string, devicepath);
-#endif
   card->device = devprop_add_device_pci (string, ati_dev);
 
   if (!card->device) {
     return FALSE;
   }
 
-  // -------------------------------------------------
-#if 0
-  UINT64 fb   = (UINT32) card->fb;
-  UINT64 mmio = (UINT32) card->mmio;
-  UINT64 io   = (UINT32) card->io;
-  devprop_add_value (card->device, "ATY,FrameBufferOffset", &fb, 8);
-  devprop_add_value (card->device, "ATY,RegisterSpaceOffset", &mmio, 8);
-  devprop_add_value (card->device, "ATY,IOSpaceOffset", &io, 8);
-#endif
   devprop_add_list (ati_devprop_list);
-#if 0
-  FreePool (card->info); //TODO we can't free constant so this info should be copy of constants
-#endif
+
   FreePool (card);
   return TRUE;
 }
@@ -2009,9 +1801,6 @@ setup_gma_devprop (
   UINT32        DualLink;
   CHAR8         *model;
   UINT8 BuiltIn;
-#if 0
-  CHAR8           *devicepath;
-#endif
 
   BuiltIn = 0;
 
@@ -2021,10 +1810,6 @@ setup_gma_devprop (
     string = devprop_create_string();
   }
 
-#if 0
-  devicepath = get_pci_dev_path (gma_dev);
-  device = devprop_add_device (string, devicepath);
-#endif
   device = devprop_add_device_pci (string, gma_dev);
 
   if (device == NULL) {
@@ -2110,9 +1895,6 @@ SetDevices (
   VOID
 )
 {
-#if 0
-  EFI_GRAPHICS_OUTPUT_MODE_INFORMATION  *modeInfo;
-#endif
   EFI_STATUS            Status;
   EFI_PCI_IO_PROTOCOL   *PciIo;
   PCI_TYPE00            Pci;
@@ -2129,12 +1911,6 @@ SetDevices (
   UINTN         Function;
   BOOLEAN       StringDirty = FALSE;
   BOOLEAN       TmpDirty = FALSE;
-#if 0
-  UINT16        PmCon;
-  gGraphics.Width  = UGAWidth;
-  gGraphics.Height = UGAHeight;
-  GetEdid();
-#endif
 
   /* Read Pci Bus for GFX */
   Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
