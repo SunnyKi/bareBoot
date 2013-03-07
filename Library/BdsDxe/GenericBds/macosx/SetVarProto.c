@@ -55,13 +55,6 @@ GetDeviceProps (
 {
   UINT32    cnt = 0;
   UINT8     *binStr = NULL;
-#if 0
-  EFI_STATUS    Status;
-#endif
-#if 0
-  // iCloud
-  Status = gRT->SetVariable (L"ROM", &gEfiAppleNvramGuid, 0, 0, NULL);
-#endif
 
   if ((cDevProp != NULL) && AsciiStrLen (cDevProp) > 3) {
     cnt = (UINT32) AsciiStrLen (cDevProp) / 2;
@@ -135,8 +128,6 @@ GetScreenInfo (
     return EFI_UNSUPPORTED;
   }
 
-  Print (L"GetScreenInfo called with args: %lx %lx %lx %lx %lx %lx\n",
-         baseAddress, frameBufferSize, bpr, w, h, colorDepth);
   *frameBufferSize = (UINT64) GraphicsOutput->Mode->FrameBufferSize;
   *baseAddress = (UINT64) GraphicsOutput->Mode->FrameBufferBase;
   *w = (UINT32) GraphicsOutput->Mode->Info->HorizontalResolution;
