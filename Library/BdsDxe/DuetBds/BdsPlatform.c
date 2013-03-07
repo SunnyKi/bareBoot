@@ -91,49 +91,6 @@ Returns:
   return;
 }
 
-#if 0
-VOID
-PrintMemoryMap (
-  VOID
-  )
-{
-  EFI_MEMORY_DESCRIPTOR       *MemMap;
-  EFI_MEMORY_DESCRIPTOR       *MemMapPtr;
-  UINTN                       MemMapSize;
-  UINTN                       MapKey, DescriptorSize;
-  UINTN                       Index;
-  UINT32                      DescriptorVersion;
-  UINT64                      Bytes;
-  EFI_STATUS                  Status;
-
-  MemMapSize = 0;
-  MemMap     = NULL;
-  Status = gBS->GetMemoryMap (&MemMapSize, MemMap, &MapKey, &DescriptorSize, &DescriptorVersion);
-  ASSERT (Status == EFI_BUFFER_TOO_SMALL);
-  MemMapSize += EFI_PAGE_SIZE;
-  Status = gBS->AllocatePool (EfiBootServicesData, MemMapSize, &MemMap);
-  ASSERT (Status == EFI_SUCCESS);
-  Status = gBS->GetMemoryMap (&MemMapSize, MemMap, &MapKey, &DescriptorSize, &DescriptorVersion);
-  ASSERT (Status == EFI_SUCCESS);
-  MemMapPtr = MemMap;
-
-  ASSERT (DescriptorVersion == EFI_MEMORY_DESCRIPTOR_VERSION);
-
-  for (Index = 0; Index < MemMapSize / DescriptorSize; Index ++) {
-    Bytes = LShiftU64 (MemMap->NumberOfPages, 12);
-    DEBUG ((EFI_D_ERROR, "%lX-%lX  %lX %lX %X\n",
-          MemMap->PhysicalStart,
-          MemMap->PhysicalStart + Bytes - 1,
-          MemMap->NumberOfPages,
-          MemMap->Attribute,
-          (UINTN)MemMap->Type));
-    MemMap = (EFI_MEMORY_DESCRIPTOR *)((UINTN)MemMap + DescriptorSize);
-  }
-
-  gBS->FreePool (MemMapPtr);
-}
-#endif
-
 VOID
 UpdateMemoryMap (
   VOID
@@ -236,9 +193,6 @@ UpdateMemoryMap (
           // For EfiACPIReclaimMemory and EfiACPIMemoryNVS, it must success.
           // For EfiReservedMemoryType, there maybe overlap. So skip check here.
           //
-#if 0
-          ASSERT_EFI_ERROR (Status);
-#endif
         }
         continue;
       }
@@ -254,221 +208,11 @@ UpdateMemoryMap (
         //
         // For the page added, it must be allocated.
         //
-#if 0
-        ASSERT_EFI_ERROR (Status);
-#endif
         continue;
       }
     }
   }
 }
-
-EFI_STATUS
-USBOwnerFix (
-  VOID
-)
-{
-  EFI_STATUS            Status = EFI_SUCCESS;
-  EFI_HANDLE            *HandleArray;
-  UINTN                 HandleArrayCount;
-  UINTN                 Index;
-  EFI_PCI_IO_PROTOCOL   *PciIo;
-  PCI_TYPE00            Pci;
-  UINT16                Command;
-  UINT32                HcCapParams;
-  UINT32                ExtendCap;
-  UINT32                Value;
-  UINT32                TimeOut;
-  UINT32                Base;
-  UINT32                PortBase;
-  UINT32                usbcmd, usbsts, usbintr;
-  UINT32                usblegsup, usblegctlsts;
-  UINTN                 isOSowned;
-  UINTN                 isBIOSowned;
-  BOOLEAN               isOwnershipConflict;
-  volatile UINT32       opaddr;
-
-  //
-  // Find the usb host controller
-  //
-  Status = gBS->LocateHandleBuffer (
-    ByProtocol,
-    &gEfiPciIoProtocolGuid,
-    NULL,
-    &HandleArrayCount,
-    &HandleArray
-  );
-
-  if (!EFI_ERROR (Status)) {
-    for (Index = 0; Index < HandleArrayCount; Index++) {
-      Status = gBS->HandleProtocol (
-        HandleArray[Index],
-        &gEfiPciIoProtocolGuid,
-        (VOID **) &PciIo
-      );
-
-      if (!EFI_ERROR (Status)) {
-        Status = PciIo->Pci.Read (
-          PciIo,
-          EfiPciIoWidthUint32,
-          0,
-          sizeof (Pci) / sizeof (UINT32),
-          &Pci
-        );
-
-        if (!EFI_ERROR (Status)) {
-          if ((PCI_CLASS_SERIAL == Pci.Hdr.ClassCode[2]) &&
-          (PCI_CLASS_SERIAL_USB == Pci.Hdr.ClassCode[1])) {
-            switch (Pci.Hdr.ClassCode[0]) {
-              case PCI_IF_UHCI:
-                //
-                // Found the UHCI, then disable the legacy support
-                //
-                Base = 0;
-                Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, 0x20, 1, &Base);
-                PortBase = (Base >> 5) & 0x07ff;
-                Command = 0x8f00;
-                Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
-
-                if (PortBase) {
-                  IoWrite16 (PortBase, 0x0002);
-                  gBS->Stall (500);
-                  IoWrite16 (PortBase + 4, 0);
-                  gBS->Stall (500);
-                  IoWrite16 (PortBase, 0);
-                }
-
-                break;
-
-              case PCI_IF_OHCI:
-                Base = 0;
-                Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, 0x10, 1, &Base);
-                Command = (UINT16) (*(UINT32 *) (UINTN) (Base + OHCI_CONTROL));
-                *(UINT32 *) (UINTN) (Base + OHCI_CONTROL) = Command & OHCI_CTRL_MASK;
-                Command = (UINT16) (*(UINT32 *) (UINTN) (Base + OHCI_CONTROL));
-                break;
-
-              case PCI_IF_EHCI:
-              case PCI_IF_XHCI:
-                Value = 0x0002;
-                PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0x04, 1, &Value);
-                Base = 0;
-                Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, 0x10, 1, &Base);
-
-                if (*((UINT8*) (UINTN) Base) < 0x0C) {
-                  break;
-                }
-
-                opaddr = Base + *((UINT8*) (UINTN) (Base));
-                Status = PciIo->Mem.Read (
-                           PciIo,
-                           EfiPciIoWidthUint32,
-                           0,                   //EHC_BAR_INDEX
-                           (UINT64) 0x08,       //EHC_HCCPARAMS_OFFSET
-                           1,
-                           &HcCapParams
-                         );
-                ExtendCap = (HcCapParams >> 8) & 0xFF;
-                usbcmd = *((UINT32*) (UINTN) (opaddr)); // Command Register
-                usbsts = *((UINT32*) (UINTN) (opaddr + 4)); // Status Register
-                usbintr = *((UINT32*) (UINTN) (opaddr + 8)); // Interrupt Enable Register
-                Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &usblegsup);
-                isBIOSowned = !!((usblegsup) & (1 << (16)));
-                isOSowned = !!((usblegsup) & (1 << (24)));
-                PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &usblegctlsts);
-                usblegctlsts &= 0xFFFF0000;
-                PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &usblegctlsts);
-                gBS->Stall (500);
-                usbcmd = *((UINT32*) (UINTN) (opaddr)); // Command Register
-                usbsts = *((UINT32*) (UINTN) (opaddr + 4)); // Status Register
-                usbintr = *((UINT32*) (UINTN) (opaddr + 8)); // Interrupt Enable Register
-                usbcmd = (usbcmd & 0xffffff00);
-                *((UINT32*) (UINTN) (opaddr)) = usbcmd;
-                *((UINT32*) (UINTN) (opaddr + 8)) = 0;  //usbintr - clear interrupt registers
-                *((UINT32*) (UINTN) (opaddr + 4)) = 0x1000; //usbsts - clear status registers
-                Value = 1;
-                PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-                usbcmd = *((UINT32*) (UINTN) (opaddr)); // Command Register
-                usbsts = *((UINT32*) (UINTN) (opaddr + 4)); // Status Register
-                usbintr = *((UINT32*) (UINTN) (opaddr + 8)); // Interrupt Enable Register
-                PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &usblegsup);
-                isBIOSowned = !!((usblegsup) & (1 << (16)));
-                isOSowned = !!((usblegsup) & (1 << (24)));
-                PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &usblegctlsts);
-                PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &usblegsup);
-                isOwnershipConflict = isBIOSowned && isOSowned;
-
-                if (isOwnershipConflict) {
-                  Value = 0;
-                  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint8, ExtendCap + 3, 1, &Value);
-                  TimeOut = 40;
-
-                  while (TimeOut--) {
-                    gBS->Stall (500);
-                    PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-
-                    if ((Value & 0x01000000) == 0x0) {
-                      break;
-                    }
-                  }
-                }
-
-                PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-                Value |= (0x1 << 24);
-                PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-                TimeOut = 40;
-
-                while (TimeOut--) {
-                  gBS->Stall (500);
-                  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-
-                  if ((Value & 0x00010000) == 0x0) {
-                    break;
-                  }
-                }
-
-                isOwnershipConflict = ((Value & 0x00010000) != 0x0);
-
-                if (isOwnershipConflict) {
-                  Value = 0;
-                  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint8, ExtendCap + 2, 1, &Value);
-                  TimeOut = 40;
-
-                  while (TimeOut--) {
-                    gBS->Stall (500);
-                    PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-
-                    if ((Value & 0x00010000) == 0x0) {
-                      break;
-                    }
-                  }
-
-                  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &usblegctlsts);
-                  usblegctlsts &= 0xFFFF0000;
-                  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &usblegctlsts);
-                }
-
-                if (Value & 0x00010000) {
-                  Status = EFI_NOT_FOUND;
-                  break;
-                }
-
-                break;
-
-              default:
-                break;
-            }
-          }
-        }
-      }
-    }
-  } else {
-    return Status;
-  }
-  gBS->FreePool (HandleArray);
-  return Status;
-}
-
 
 EFI_STATUS
 DisableUsbLegacySupport(
@@ -1362,12 +1106,6 @@ Returns:
   Timeout = gSettings.BootTimeout;
 
   if (Timeout != 0) {
-#if 0
-    if (Timeout < 0xFFFF) {
-      Print (L"  ...Press any key to enter the boot manager (or will boot to the default partition)...\n\r");
-    }
-#endif
-
     if (Timeout < 0xFFFF) {
       Print (L".");
     }
@@ -1789,27 +1527,3 @@ Returns:
   @retval EFI_UNSUPPORTED Password not found
 
 **/
-#if 0
-EFI_STATUS
-EFIAPI
-LockKeyboards (
-  IN  CHAR16    *Password
-  )
-{
-    return EFI_UNSUPPORTED;
-}
-
-/**
-  This function locks platform flash that is not allowed to be updated during normal boot path.
-  The flash layout is platform specific.
-  **/
-
-VOID
-EFIAPI
-PlatformBdsLockNonUpdatableFlash (
-  VOID
-  )
-{
-  return;
-}
-#endif
