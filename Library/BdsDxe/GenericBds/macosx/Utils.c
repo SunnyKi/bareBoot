@@ -705,26 +705,15 @@ GetNumProperty (
   return def;
 }
 
-// Bizzare property -- FALSE or NUMERIC
-
-typedef enum {
-  xOther,
-  xFalse,
-  xTrue
-} xBool;
-
-xBool
-AsciiStr2xBool (
+BOOLEAN
+AsciiStr2Bool (
   CHAR8* ps
 )
 {
   if (ps[0] == 'y' || ps[0] == 'Y') {
-    return xTrue;
+    return TRUE;
   }
-  if (ps[0] == 'n' || ps[0] == 'N') {
-    return xFalse;
-  }
-  return xOther;
+  return FALSE;
 }
 
 BOOLEAN
@@ -738,14 +727,7 @@ GetBoolProperty (
 
   dentry = GetProperty (dict, key);
   if (dentry != NULL) {
-    switch (AsciiStr2xBool(dentry->string)) {
-      case xFalse:
-        return FALSE;
-      case xTrue:
-        return TRUE;
-      default:
-        return def;
-    }
+    return AsciiStr2Bool (dentry->string);
   }
   return def;
 }
