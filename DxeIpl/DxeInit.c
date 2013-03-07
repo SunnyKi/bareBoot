@@ -141,7 +141,7 @@ Returns:
 
   CopyMem ((VOID*) &HandoffCopy, (VOID*) Handoff, sizeof (EFILDRHANDOFF));
   Handoff = &HandoffCopy;
-/*
+#if 0
   ClearScreen();
 
   PrintString (
@@ -154,25 +154,31 @@ Returns:
     Handoff->DxeIplImageBase, Handoff->DxeIplImageSize,
     Handoff->DxeCoreImageBase, Handoff->DxeCoreImageSize
     );
-*/
+#endif
   //
   // Hob Generation Guild line:
   //   * Don't report FV as physical memory
   //   * MemoryAllocation Hob should only cover physical memory
   //   * Use ResourceDescriptor Hob to report physical memory or Firmware Device and they shouldn't be overlapped
-//  PrintString ("Prepare Cpu HOB information ...\n");
+#if 0
+  PrintString ("Prepare Cpu HOB information ...\n");
+#endif
   PrepareHobCpu ();
 
   //
   // 1. BFV
   //
-//  PrintString ("Prepare BFV HOB information ...\n");
+#if 0
+  PrintString ("Prepare BFV HOB information ...\n");
+#endif
   PrepareHobBfv (Handoff->BfvBase, Handoff->BfvSize);
 
   //
   // 2. Updates Memory information, and get the top free address under 4GB
   //
-//  PrintString ("Prepare Memory HOB information ...\n");
+#if 0
+  PrintString ("Prepare Memory HOB information ...\n");
+#endif
   MemoryTopOnDescriptor = PrepareHobMemory (Handoff->MemDescCount, Handoff->MemDesc);
   
   //
@@ -180,13 +186,19 @@ Returns:
   //
   
   //   3.1 NV data
-//  PrintString ("Prepare NV Storage information ...\n");
+#if 0
+  PrintString ("Prepare NV Storage information ...\n");
+#endif
   NvStorageBase = PrepareHobNvStorage (MemoryTopOnDescriptor);
-//  PrintString ("NV Storage Base = %p\n", NvStorageBase);
+#if 0
+  PrintString ("NV Storage Base = %p\n", NvStorageBase);
+#endif
   //   3.2 Stack
   StackTop = NvStorageBase;
   StackBottom = PrepareHobStack (StackTop);
-//  PrintString ("Stack Top=0x%x, Stack Bottom=0x%x\n", StackTop, StackBottom);
+#if 0
+  PrintString ("Stack Top=0x%x, Stack Bottom=0x%x\n", StackTop, StackBottom);
+#endif
   //   3.3 Page Table
   PageTableBase = PreparePageTable (StackBottom, gHob->Cpu.SizeOfMemorySpace);
   //   3.4 MemDesc (will be used in PlatformBds)
@@ -197,7 +209,9 @@ Returns:
   //
   // 4. Register the memory occupied by DxeCore and DxeIpl together as DxeCore
   //
-//  PrintString ("Prepare DxeCore memory Hob ...\n");
+#if 0
+  PrintString ("Prepare DxeCore memory Hob ...\n");
+#endif
   PrepareHobDxeCore (
     Handoff->DxeCoreEntryPoint,
     (EFI_PHYSICAL_ADDRESS)(UINTN)Handoff->DxeCoreImageBase,
@@ -213,7 +227,8 @@ Returns:
   //
   // Print Hob Info
   //
-/*  ClearScreen();
+#if 0
+  ClearScreen();
   PrintString (
     "HobStart = %p\n"
     "Memory Top = %lx, Bottom = %lx\n"
@@ -257,7 +272,7 @@ Returns:
     "\n\n\n\n\n\n\n\n\n\n"
     "                         WELCOME TO EFI WORLD!\n"
     );
- */ 
+#endif
   EnterDxeMain (StackTop, Handoff->DxeCoreEntryPoint, gHob, PageTableBase);
   PrintString ("Fail to enter DXE main!\n");
  
