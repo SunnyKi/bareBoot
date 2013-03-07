@@ -817,8 +817,7 @@ GetUserSettings (
   TagPtr      dict;
   TagPtr      dictPointer;
   TagPtr      prop;
-  CHAR8       *BA;
-  CHAR16      SystemID[40];
+  CHAR16      cUUID[40];
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
@@ -841,30 +840,19 @@ GetUserSettings (
     ZeroMem (gSettings.Language, 10);
     ZeroMem (gSettings.BootArgs, 120);
     ZeroMem (gSettings.SerialNr, 64);
+    ZeroMem (cUUID, 40);
 
     dictPointer = GetProperty (dict, "SystemParameters");
 
     if (dictPointer != NULL) {
       GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
-
-      prop = GetProperty (dictPointer, "boot-args");
-
-      if (prop != NULL) {
-        AsciiStrCpy (gSettings.BootArgs, prop->string);
-        BA = &gSettings.BootArgs[119];
-        bootArgsLen = 120;
-
-        while ((*BA == ' ') || (*BA == 0)) {
-          BA--;
-          bootArgsLen--;
-        }
-      }
+      GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
 
       prop = GetProperty (dictPointer, "CustomUUID");
 
       if (prop != NULL) {
-        AsciiStrToUnicodeStr (prop->string, SystemID);
-        Status = StrToGuidLE (SystemID, &gUuid);
+        AsciiStrToUnicodeStr (prop->string, cUUID);
+        Status = StrToGuidLE (cUUID, &gUuid);
         //else value from SMBIOS
       }
     }

@@ -524,7 +524,6 @@ typedef struct {
   UINT16            Height;
 } GFX_PROPERTIES;
 
-UINTN                           bootArgsLen;
 MEM_STRUCTURE                   *gRAM;
 DMI                             *gDMI;
 EFI_RUNTIME_SERVICES            *gRS;

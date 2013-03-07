@@ -130,6 +130,7 @@ SetVariablesForOSX (
   UINT32      FwFeaturesMask;
   CHAR8       *None;
   UINT8       SNLen;
+  UINTN       bootArgsLen;
   UINT8       LanguageLen;
   CHAR8*      Addr;
 
@@ -139,7 +140,9 @@ SetVariablesForOSX (
   FwFeaturesMask  = 0xc0007fff;
   None = "none";
   SNLen = 20;
+  bootArgsLen = 120;
   LanguageLen = 11;
+
   Addr = &gSettings.BoardSerialNumber[19];
 
   while ((*Addr == ' ') || (*Addr == 0)) {
@@ -147,11 +150,11 @@ SetVariablesForOSX (
     SNLen--;
   }
 
-  Addr  = &gSettings.Language[10];
-
+  Addr = &gSettings.BootArgs[119];
+  
   while ((*Addr == ' ') || (*Addr == 0)) {
     Addr--;
-    LanguageLen--;
+    bootArgsLen--;
   }
 
   Status = gRS->SetVariable (L"BootNext",  &gEfiAppleNvramGuid, //&gEfiGlobalVarGuid,
@@ -169,9 +172,20 @@ SetVariablesForOSX (
   Status = gRS->SetVariable (L"MLB", &gEfiAppleNvramGuid,
                              /*  EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                              SNLen, &gSettings.BoardSerialNumber);
-  Status = gRS->SetVariable (L"prev-lang:kbd", &gEfiAppleBootGuid,
-                             /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             LanguageLen , &gSettings.Language);
+
+  if (gSettings.Language[0] != 0) {
+
+    Addr  = &gSettings.Language[10];
+    
+    while ((*Addr == ' ') || (*Addr == 0)) {
+      Addr--;
+      LanguageLen--;
+    }
+    Status = gRS->SetVariable (L"prev-lang:kbd", &gEfiAppleBootGuid,
+                               /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                               LanguageLen , &gSettings.Language);
+  }
+
   Status = gRS->SetVariable (L"boot-args", &gEfiAppleBootGuid,
                              /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                              bootArgsLen , &gSettings.BootArgs);
