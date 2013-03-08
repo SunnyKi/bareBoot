@@ -565,15 +565,15 @@ BdsLibEnumerateAllBootOption (
     for (Index = 0; Index < NumberFileSystemHandles; Index++) {
       DevicePath  = DevicePathFromHandle (FileSystemHandles[Index]);
       Status = gBS->HandleProtocol (
-                                    FileSystemHandles[Index],
-                                    &gEfiSimpleFileSystemProtocolGuid,
-                                    (VOID *) &Volume
-                                    );
+                      FileSystemHandles[Index],
+                      &gEfiSimpleFileSystemProtocolGuid,
+                      (VOID *) &Volume
+                      );
       if (!EFI_ERROR (Status)) {
         Status = Volume->OpenVolume (
-                                     Volume,
-                                     &FHandle
-                                     );
+                           Volume,
+                           &FHandle
+                           );
       }
 
       if (FileExists (FHandle, L"\\EFI\\mini\\config.plist")) {

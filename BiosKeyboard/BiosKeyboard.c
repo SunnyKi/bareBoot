@@ -150,7 +150,11 @@ BiosKeyboardDriverBindingSupported (
   //
   // See if the Legacy 8259 Protocol is available
   //
-  Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &Legacy8259);
+  Status = gBS->LocateProtocol (
+                  &gEfiLegacy8259ProtocolGuid,
+                  NULL,
+                  (VOID **) &Legacy8259
+                  );
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -1873,14 +1877,6 @@ BiosKeyboardTimerHandler (
   LegacyBiosInt86 (BiosKeyboardPrivate, 0x16, &Regs);
   KeyData.Key.ScanCode            = (UINT16) Regs.H.AH;
   KeyData.Key.UnicodeChar         = (UINT16) Regs.H.AL;
-#if 0
-  DEBUG ((
-    EFI_D_INFO,
-    "[KBD]INT16 returns EFI_INPUT_KEY.ScanCode - %x, EFI_INPUT_KEY.UnicodeChar - %x\n",
-    KeyData.Key.ScanCode,
-    KeyData.Key.UnicodeChar
-    ));
-#endif
 
   KeyData.KeyState.KeyShiftState  = EFI_SHIFT_STATE_VALID;
   KeyData.KeyState.KeyToggleState = EFI_TOGGLE_STATE_VALID;
@@ -1919,41 +1915,6 @@ BiosKeyboardTimerHandler (
   //
   KbFlag1 = *((UINT8 *) (UINTN) 0x417);  // read the STATUS FLAGS 1
   KbFlag2 = *((UINT8 *) (UINTN) 0x418); // read STATUS FLAGS 2
-#if 0
-  DEBUG_CODE (
-    {
-      if ((KbFlag1 & KB_CAPS_LOCK_BIT) == KB_CAPS_LOCK_BIT) {
-        DEBUG ((EFI_D_INFO, "[KBD]Caps Lock Key is pressed.\n"));
-      }
-      if ((KbFlag1 & KB_NUM_LOCK_BIT) == KB_NUM_LOCK_BIT) {
-        DEBUG ((EFI_D_INFO, "[KBD]Num Lock Key is pressed.\n"));
-      }
-      if ((KbFlag1 & KB_SCROLL_LOCK_BIT) == KB_SCROLL_LOCK_BIT) {
-        DEBUG ((EFI_D_INFO, "[KBD]Scroll Lock Key is pressed.\n"));
-      }
-      if ((KbFlag1 & KB_ALT_PRESSED) == KB_ALT_PRESSED) {
-        if ((KbFlag2 & KB_LEFT_ALT_PRESSED) == KB_LEFT_ALT_PRESSED) {
-          DEBUG ((EFI_D_INFO, "[KBD]Left Alt Key is pressed.\n"));
-        } else {
-          DEBUG ((EFI_D_INFO, "[KBD]Right Alt Key is pressed.\n"));
-        }
-      }
-      if ((KbFlag1 & KB_CTRL_PRESSED) == KB_CTRL_PRESSED) {
-        if ((KbFlag2 & KB_LEFT_CTRL_PRESSED) == KB_LEFT_CTRL_PRESSED) {
-          DEBUG ((EFI_D_INFO, "[KBD]Left Ctrl Key is pressed.\n"));
-        } else {
-          DEBUG ((EFI_D_INFO, "[KBD]Right Ctrl Key is pressed.\n"));
-        }
-      }
-      if ((KbFlag1 & KB_LEFT_SHIFT_PRESSED) == KB_LEFT_SHIFT_PRESSED) {
-        DEBUG ((EFI_D_INFO, "[KBD]Left Shift Key is pressed.\n"));
-      }
-      if ((KbFlag1 & KB_RIGHT_SHIFT_PRESSED) == KB_RIGHT_SHIFT_PRESSED) {
-        DEBUG ((EFI_D_INFO, "[KBD]Right Shift Key is pressed.\n"));
-      }
-    }
-  );
-#endif
   //
   // Record toggle state
   //
@@ -2017,13 +1978,6 @@ BiosKeyboardTimerHandler (
       }
     }
   }
-
-  DEBUG ((
-    EFI_D_INFO,
-    "[KBD]Convert to EFI Scan Code, EFI_INPUT_KEY.ScanCode - %x, EFI_INPUT_KEY.UnicodeChar - %x\n",
-    KeyData.Key.ScanCode,
-    KeyData.Key.UnicodeChar
-    ));
 #endif
   //
   // Need not return associated shift state if a class of printable characters that
@@ -2033,9 +1987,6 @@ BiosKeyboardTimerHandler (
   if ((KeyData.Key.UnicodeChar >= L'A' && KeyData.Key.UnicodeChar <= L'Z') ||
       (KeyData.Key.UnicodeChar >= L'a' && KeyData.Key.UnicodeChar <= L'z')
      ) {
-#if 0
-    DEBUG ((EFI_D_INFO, "[KBD]Shift key with a~z are pressed, remove shift state in EFI_KEY_STATE.\n"));
-#endif
     KeyData.KeyState.KeyShiftState &= ~(EFI_LEFT_SHIFT_PRESSED | EFI_RIGHT_SHIFT_PRESSED);
   }
 
@@ -2276,13 +2227,15 @@ BiosKeyboardSetState (
   //
   // See if the Legacy BIOS Protocol is available
   //
-/*  Status = gBS->LocateProtocol (
+#if 0
+  Status = gBS->LocateProtocol (
                   &gEfiLegacyBiosProtocolGuid,
                   NULL,
                   (VOID **) &LegacyBios
                   );
 
-  ASSERT_EFI_ERROR (Status); */
+  ASSERT_EFI_ERROR (Status);
+#endif
   //
   // Enter critical section
   //

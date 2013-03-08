@@ -227,7 +227,9 @@ CallBootManager (
   CHAR16                      *ExitData;
   UINTN                       ExitDataSize;
   EFI_STRING_ID               Token;
-//  EFI_INPUT_KEY               Key;
+#if 0
+  EFI_INPUT_KEY               Key;
+#endif
   CHAR16                      *HelpString;
   EFI_STRING_ID               HelpToken;
   UINT16                      *TempStr;
@@ -388,13 +390,14 @@ CallBootManager (
   //
   // Will leave browser, check any reset required change is applied? if yes, reset system
   //
-//  SetupResetReminder ();
-
+#if 0
+  SetupResetReminder ();
+#endif
   //
   // parse the selected option
   //
   Status = BdsLibBootViaBootOption (gOption, gOption->LoadOptions, gOption->DevicePath, &ExitDataSize, &ExitData);
-/*
+#if 0
   if (!EFI_ERROR (Status)) {
     gOption->StatusString = GetStringById (STRING_TOKEN (STR_BOOT_SUCCEEDED));
     PlatformBdsBootSuccess (gOption);
@@ -406,5 +409,6 @@ CallBootManager (
                   GetStringById (STRING_TOKEN (STR_ANY_KEY_CONTINUE))
                   );
     gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
-  } */
+  }
+#endif
 }
