@@ -18,7 +18,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "Bds.h"
 #include "FrontPage.h"
-//#include "HwErrRecSupport.h"
+#if 0
+#include "HwErrRecSupport.h"
+#endif
 #include "GenericBds/macosx/macosx.h"
 
 //#include "Hotkey.h"
@@ -60,7 +62,9 @@ BdsInitialize (
 {
   EFI_STATUS    Status;
   
-  //gImageHandle  = ImageHandle;
+#if 0
+  gImageHandle  = ImageHandle;
+#endif
   gRS           = SystemTable->RuntimeServices;
 
   //
@@ -188,7 +192,9 @@ BdsEntry (
   CHAR16                          *FirmwareVendor;
 
   InitializeListHead (&BootOptionList);
-//  InitializeHotkeyService ();
+#if 0
+  InitializeHotkeyService ();
+#endif
   FirmwareVendor = (CHAR16 *)PcdGetPtr (PcdFirmwareVendor);
   gST->FirmwareVendor = AllocateRuntimeCopyPool (StrSize (FirmwareVendor), FirmwareVendor);
   ASSERT (gST->FirmwareVendor != NULL);
@@ -196,7 +202,9 @@ BdsEntry (
   gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);
   PlatformBdsInit ();
   InitializeStringSupport ();
-//  InitializeFrontPage ();
+#if 0
+  InitializeFrontPage ();
+#endif
   InitializeBootManager ();
   mBootNext = BdsLibGetVariableAndSize (
                 L"BootNext",
