@@ -26,6 +26,9 @@ Abstract:
 #include <Library/IoLib.h>
 
 #define IS_PCI_ISA_PDECODE(_p)        IS_CLASS3 (_p, PCI_CLASS_BRIDGE, PCI_CLASS_BRIDGE_ISA_PDECODE, 0)
+#define EFI_LEFT_ALT_PRESSED  0x00000020
+#define SCAN_ESC        0x0017
+#define SCAN_F1         0x000B
 
 extern BOOLEAN  gConnectAllHappened;
 extern USB_CLASS_FORMAT_DEVICE_PATH gUsbClassKeyboardDevicePath;
@@ -1089,9 +1092,10 @@ Returns:
   EFI_STATUS                         Status;
   EFI_BOOT_MODE                      BootMode;
 #if 0
-  UINT8                              ScanCode;
-  
-  ScanCode = 0;
+  EFI_INPUT_KEY                      mKey;
+#else
+  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *SimpleTextInEx;
+  EFI_KEY_DATA                       mKeyData;
 #endif
   
   Status = BdsLibGetBootMode (&BootMode);
@@ -1101,18 +1105,40 @@ Returns:
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
   BdsLibEnumerateAllBootOption (BootOptionList);
-  
-#if 0
-  ScanCode = IoRead8 (0x60);
 
-  if ((ScanCode == 0x38) || (ScanCode == 0x11)) {
-    PlatformBdsEnterFrontPage (0xffff, TRUE);
-  } else {
-#endif
-    PlatformBdsEnterFrontPage (gSettings.BootTimeout, TRUE);
 #if 0
+  Status = gST->ConIn->ReadKeyStroke (gST->ConIn, &mKey);
+  if (!EFI_ERROR (Status)) {
+    if (mKey.ScanCode == SCAN_F1) {
+      Status = gST->ConIn->Reset (gST->ConIn, TRUE);
+      PlatformBdsEnterFrontPage (0xffff, TRUE);
+    }
+  }
+#else
+  Status = gBS->LocateProtocol (
+                  &gEfiSimpleTextInputExProtocolGuid,
+                  NULL,
+                  (VOID **) &SimpleTextInEx
+                  );
+  
+  if (!EFI_ERROR (Status)) {
+    
+    Status = SimpleTextInEx->ReadKeyStrokeEx (
+                               SimpleTextInEx,
+                               &mKeyData
+                               );
+    
+    if (mKeyData.Key.ScanCode == SCAN_F1) {
+      // (mKeyData.KeyState.KeyShiftState & EFI_LEFT_ALT_PRESSED) {
+      Status = SimpleTextInEx->Reset (
+                                 SimpleTextInEx,
+                                 TRUE
+                                 );
+      PlatformBdsEnterFrontPage (0xffff, TRUE);
+    }
   }
 #endif
+  PlatformBdsEnterFrontPage (gSettings.BootTimeout, TRUE);
   return ;
 }
 
