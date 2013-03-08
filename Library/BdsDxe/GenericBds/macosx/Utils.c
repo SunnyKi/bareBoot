@@ -798,7 +798,7 @@ GetBootDefault (
   dictPointer = GetProperty (dict, "SystemParameters");
 
   if (dictPointer != NULL) {
-    gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
+    gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0xFFFF);
     GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
   }
 

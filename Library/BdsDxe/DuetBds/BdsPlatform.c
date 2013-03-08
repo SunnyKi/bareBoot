@@ -1087,36 +1087,32 @@ Returns:
 --*/
 {
   EFI_STATUS                         Status;
-  UINT16                             Timeout;
   EFI_BOOT_MODE                      BootMode;
+#if 0
   UINT8                              ScanCode;
   
   ScanCode = 0;
+#endif
   
   Status = BdsLibGetBootMode (&BootMode);
   ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
   PlatformBdsConnectConsole (gPlatformConsole);
   PlatformBdsDiagnostics (IGNORE, FALSE, BaseMemoryTest);
-  gSettings.BootTimeout = 0xffff;
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
   BdsLibEnumerateAllBootOption (BootOptionList);
   
-  Timeout = gSettings.BootTimeout;
-  
+#if 0
   ScanCode = IoRead8 (0x60);
-  
+
   if ((ScanCode == 0x38) || (ScanCode == 0x11)) {
     PlatformBdsEnterFrontPage (0xffff, TRUE);
   } else {
-    if (Timeout != 0) {
-      if (Timeout < 0xffff) {
-        Print (L".");
-      }
-      PlatformBdsEnterFrontPage (Timeout, TRUE);
-    }
+#endif
+    PlatformBdsEnterFrontPage (gSettings.BootTimeout, TRUE);
+#if 0
   }
-  
+#endif
   return ;
 }
 

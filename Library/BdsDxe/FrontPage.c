@@ -178,7 +178,9 @@ ShowProgress (
   IN UINT16                       TimeoutDefault
   )
 {
+#if 0
   CHAR16                        *TmpStr;
+#endif
   UINT16                        TimeoutRemain;
   EFI_STATUS                    Status;
   EFI_INPUT_KEY                 Key;
@@ -193,11 +195,14 @@ ShowProgress (
   SetMem (&Foreground, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL), 0xff);
   SetMem (&Background, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL), 0x0);
   SetMem (&Color, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL), 0xff);
+  Print(L".");
+#if 0
   TmpStr = GetStringById (STRING_TOKEN (STR_START_BOOT_OPTION));
   TmpStr = NULL;
   if (TmpStr != NULL) {
     PlatformBdsShowProgress (Foreground, Background, TmpStr, Color, 0, 0);
   }
+#endif
   TimeoutRemain = TimeoutDefault;
   while (TimeoutRemain != 0) {
     Status = WaitForSingleEvent (gST->ConIn->WaitForKey, ONE_SECOND);
@@ -206,6 +211,7 @@ ShowProgress (
     }
     Print(L".");
     TimeoutRemain--;
+#if 0
     if (TmpStr != NULL) {
       PlatformBdsShowProgress (
         Foreground,
@@ -216,8 +222,11 @@ ShowProgress (
         0
         );
     }
+#endif
   }
+#if 0
   gBS->FreePool (TmpStr);
+#endif
   if (TimeoutRemain == 0) {
     return EFI_TIMEOUT;
   }
@@ -267,13 +276,13 @@ PlatformBdsEnterFrontPage (
   do {
     gCallbackKey = 0;
     CallBootManager ();
-/*    if (gCallbackKey != 0) {
+#if 0
+    if (gCallbackKey != 0) {
       REPORT_STATUS_CODE (
         EFI_PROGRESS_CODE,
         (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_PC_USER_SETUP)
         );
-    } */
-    
+    }
     //
     // Based on the key that was set, we can determine what to do
     //
@@ -286,6 +295,7 @@ PlatformBdsEnterFrontPage (
       // BdsStartBootMaint ();
       break;
     }
+#endif
 
   } while ((Status == EFI_SUCCESS) && (gCallbackKey != FRONT_PAGE_KEY_CONTINUE));
   SetupResetReminder ();
