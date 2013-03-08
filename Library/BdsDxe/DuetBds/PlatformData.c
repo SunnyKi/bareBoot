@@ -72,7 +72,7 @@ USB_CLASS_FORMAT_DEVICE_PATH gUsbClassKeyboardDevicePath = {
   }
 };
 
-/*
+#if 0
 //
 // Platform specific Dummy ISA keyboard device path
 //
@@ -115,7 +115,7 @@ PLATFORM_DUMMY_PCI_SERIAL_DEVICE_PATH gDummyPciSerialDevicePath = {
   gPcAnsiTerminal,
   gEndEntire
 };
-*/
+#endif
 //
 // Predefined platform default console device path
 //
@@ -123,22 +123,24 @@ BDS_CONSOLE_CONNECT_ENTRY         gPlatformConsole[] = {
   //
   // need update dynamically
   //
-//  {
-//    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyIsaSerialDevicePath,
-//    (CONSOLE_OUT | CONSOLE_IN | STD_ERROR)
-//  },
-//  {
-//    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyIsaKeyboardDevicePath,
-//    (CONSOLE_IN | STD_ERROR)
-//  },
-//  {
-//    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyPciVgaDevicePath,
-//    CONSOLE_OUT
-//  },
-//  {
-//    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyPciSerialDevicePath,
-//    (CONSOLE_OUT | CONSOLE_IN | STD_ERROR)
-//  },
+#if 0
+  {
+    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyIsaSerialDevicePath,
+    (CONSOLE_OUT | CONSOLE_IN | STD_ERROR)
+  },
+  {
+    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyIsaKeyboardDevicePath,
+    (CONSOLE_IN | STD_ERROR)
+  },
+  {
+    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyPciVgaDevicePath,
+    CONSOLE_OUT
+  },
+  {
+    (EFI_DEVICE_PATH_PROTOCOL *) &gDummyPciSerialDevicePath,
+    (CONSOLE_OUT | CONSOLE_IN | STD_ERROR)
+  },
+#endif
   {
     (EFI_DEVICE_PATH_PROTOCOL*) &gUsbClassKeyboardDevicePath, 
     CONSOLE_IN
