@@ -317,7 +317,7 @@ PlatformBdsInit (
 
 Routine Description:
 
-  Platform Bds init. Incude the platform firmware vendor, revision
+  Platform Bds init. Include the platform firmware vendor, revision
   and so crc check.
 
 Arguments:
