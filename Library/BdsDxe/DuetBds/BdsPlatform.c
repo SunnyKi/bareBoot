@@ -1091,15 +1091,17 @@ Returns:
   EFI_BOOT_MODE                      BootMode;
   UINT8                              ScanCode;
   
+  ScanCode = 0;
+  
   Status = BdsLibGetBootMode (&BootMode);
   ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
   PlatformBdsConnectConsole (gPlatformConsole);
   PlatformBdsDiagnostics (IGNORE, FALSE, BaseMemoryTest);
+  gSettings.BootTimeout = 0xffff;
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
   BdsLibEnumerateAllBootOption (BootOptionList);
   
-  gSettings.BootTimeout = 0xffff;
   Timeout = gSettings.BootTimeout;
   
   ScanCode = IoRead8 (0x60);
