@@ -21,8 +21,8 @@
 #define LABEL_BOOT_OPTION        0x00
 #define LABEL_BOOT_OPTION_END    0x01
 
-#define BOOT_MANAGER_CLASS       0x00
-#define BOOT_MANAGER_SUBCLASS    0x00
+#define BOOT_MANAGER_CLASS       0x0000
+#define BOOT_MANAGER_SUBCLASS    0x0002
 
 
 
@@ -37,7 +37,52 @@ formset
   form formid = BOOT_MANAGER_FORM_ID,
        title  = STRING_TOKEN(STR_BM_BANNER);
 
-    subtitle text = STRING_TOKEN(STR_LAST_STRING);
+    banner
+      title = STRING_TOKEN(STR_BM_BANNER),
+      line  1,
+      align center;
+
+    banner
+      title = STRING_TOKEN(STR_BM_BANNER_UL),
+      line  2,
+      align center;
+
+    banner
+      title = STRING_TOKEN(STR_MINI_CLOVER_VERSION),
+      line  1,
+      align right;
+
+    banner
+      title = STRING_TOKEN(STR_MINI_CLOVER_VERSION_UL),
+      line  2,
+      align right;
+
+    banner
+      title = STRING_TOKEN(STR_BOOT_COMPUTER_MODEL),
+      line  3,
+      align left;
+
+    banner
+      title = STRING_TOKEN(STR_BOOT_CPU_MODEL),
+      line  4,
+      align left;
+
+    banner
+      title = STRING_TOKEN(STR_BOOT_CPU_SPEED),
+      line  4,
+      align right;
+
+    banner
+      title = STRING_TOKEN(STR_BOOT_BIOS_VERSION),
+      line  5,
+      align left;
+
+    banner
+      title = STRING_TOKEN(STR_BOOT_MEMORY_SIZE),
+      line  5,
+      align right;
+
+//    subtitle text = STRING_TOKEN(STR_LAST_STRING);
     subtitle text = STRING_TOKEN(STR_BOOT_OPTION_BANNER);
     subtitle text = STRING_TOKEN(STR_LAST_STRING);
 

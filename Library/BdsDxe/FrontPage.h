@@ -50,9 +50,7 @@ extern BOOLEAN  gConnectAllHappened;
 //
 #define FRONT_PAGE_FORM_ID             0x1000
 
-#define FRONT_PAGE_KEY_CONTINUE        0x1000
 #define FRONT_PAGE_KEY_BOOT_MANAGER    0x1064
-#define FRONT_PAGE_KEY_BOOT_MAINTAIN   0x9876
 
 #define FRONT_PAGE_CALLBACK_DATA_SIGNATURE  SIGNATURE_32 ('F', 'P', 'C', 'B')
 

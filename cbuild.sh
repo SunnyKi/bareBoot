@@ -143,7 +143,7 @@ fi
 echo Running edk2 build for miniClover$Processor
 echo "#define FIRMWARE_VERSION \"2.31\"" > $WORKSPACE/miniClover/Version.h
 echo "#define FIRMWARE_BUILDDATE \"`date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $WORKSPACE/miniClover/Version.h
-echo "#define FIRMWARE_REVISION L\"`svnversion miniClover -n | tr -d [:alpha:]`\"" >> $WORKSPACE/miniClover/Version.h
+echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/miniClover; git tag | head -n 1`\"" >> $WORKSPACE/miniClover/Version.h
 
 build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 $*
 

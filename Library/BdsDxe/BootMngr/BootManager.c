@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "BootManager.h"
+#include "../../../Version.h"
 
 UINT16             mKeyInput;
 LIST_ENTRY         mBootOptionsList;
@@ -111,12 +112,6 @@ BootManagerCallback (
     KeyCount = 0;
 
     switch (QuestionId) {
-      case FRONT_PAGE_KEY_BOOT_MAINTAIN:
-        //
-        // Boot Maintenance Manager
-        //
-        break;
-        
       default:
         gCallbackKey = 0;
         break;
@@ -207,6 +202,230 @@ InitializeBootManager (
     Status = EFI_SUCCESS;
   }
   return Status;
+}
+
+/**
+ Convert Memory Size to a string.
+
+ @param MemorySize      The size of the memory to process
+ @param String          The string that is created
+
+ **/
+VOID
+ConvertMemorySizeToString (
+  IN  UINT32          MemorySize,
+  OUT CHAR16          **String
+  )
+{
+  CHAR16  *StringBuffer;
+
+  StringBuffer = AllocateZeroPool (0x20);
+  ASSERT (StringBuffer != NULL);
+  UnicodeValueToString (StringBuffer, LEFT_JUSTIFY, MemorySize, 6);
+  StrCat (StringBuffer, L" MB RAM");
+  
+  *String = (CHAR16 *) StringBuffer;
+  
+  return ;
+}
+
+/**
+ Convert Processor Frequency Data to a string.
+
+ @param ProcessorFrequency The frequency data to process
+ @param Base10Exponent     The exponent based on 10
+ @param String             The string that is created
+
+ **/
+VOID
+ConvertProcessorToString (
+  IN  UINT16                               ProcessorFrequency,
+  IN  UINT16                               Base10Exponent,
+  OUT CHAR16                               **String
+  )
+{
+  CHAR16  *StringBuffer;
+  UINTN   Index;
+  UINT32  FreqMhz;
+
+  if (Base10Exponent >= 6) {
+    FreqMhz = ProcessorFrequency;
+    for (Index = 0; Index < (UINTN) (Base10Exponent - 6); Index++) {
+      FreqMhz *= 10;
+    }
+  } else {
+    FreqMhz = 0;
+  }
+
+  StringBuffer = AllocateZeroPool (0x20);
+  ASSERT (StringBuffer != NULL);
+  Index = UnicodeValueToString (StringBuffer, LEFT_JUSTIFY, FreqMhz / 1000, 3);
+  StrCat (StringBuffer, L".");
+  UnicodeValueToString (StringBuffer + Index + 1, PREFIX_ZERO, (FreqMhz % 1000) / 10, 2);
+  StrCat (StringBuffer, L" GHz");
+  *String = (CHAR16 *) StringBuffer;
+  return ;
+}
+
+/**
+
+ Acquire the string associated with the Index from smbios structure and return it.
+ The caller is responsible for free the string buffer.
+
+ @param    OptionalStrStart  The start position to search the string
+ @param    Index             The index of the string to extract
+ @param    String            The string that is extracted
+
+ @retval   EFI_SUCCESS       The function returns EFI_SUCCESS always.
+
+ **/
+EFI_STATUS
+GetOptionalStringByIndex (
+  IN      CHAR8                   *OptionalStrStart,
+  IN      UINT8                   Index,
+  OUT     CHAR16                  **String
+  )
+{
+  UINTN          StrSize;
+
+  if (Index == 0) {
+    *String = AllocateZeroPool (sizeof (CHAR16));
+    return EFI_SUCCESS;
+  }
+
+  StrSize = 0;
+  do {
+    Index--;
+    OptionalStrStart += StrSize;
+    StrSize           = AsciiStrSize (OptionalStrStart);
+  } while (OptionalStrStart[StrSize] != 0 && Index != 0);
+
+  if ((Index != 0) || (StrSize == 1)) {
+    //
+    // Meet the end of strings set but Index is non-zero, or
+    // Find an empty string
+    //
+    *String = GetStringById (STRING_TOKEN (STR_MISSING_STRING));
+  } else {
+    *String = AllocatePool (StrSize * sizeof (CHAR16));
+    AsciiStrToUnicodeStr (OptionalStrStart, *String);
+  }
+  
+  return EFI_SUCCESS;
+}
+
+VOID
+UpdateBootStrings (
+  VOID
+  )
+{
+  UINT8                             StrIndex;
+  CHAR16                            *NewString;
+  CHAR16                            *TmpString;
+  BOOLEAN                           Find[5];
+  EFI_STATUS                        Status;
+  EFI_STRING_ID                     TokenToUpdate;
+  EFI_SMBIOS_HANDLE                 SmbiosHandle;
+  EFI_SMBIOS_PROTOCOL               *Smbios;
+  SMBIOS_TABLE_TYPE0                *Type0Record;
+  SMBIOS_TABLE_TYPE1                *Type1Record;
+  SMBIOS_TABLE_TYPE4                *Type4Record;
+  SMBIOS_TABLE_TYPE19               *Type19Record;
+  EFI_SMBIOS_TABLE_HEADER           *Record;
+
+  ZeroMem (Find, sizeof (Find));
+
+  //
+  // Update Front Page strings
+  //
+  Status = gBS->LocateProtocol (
+                                &gEfiSmbiosProtocolGuid,
+                                NULL,
+                                (VOID **) &Smbios
+                                );
+  ASSERT_EFI_ERROR (Status);
+
+  NewString = AllocateZeroPool (StrSize (FIRMWARE_REVISION) + StrSize (L"   "));
+  StrCat (NewString, L"   ");
+  StrCat (NewString, FIRMWARE_REVISION);
+  TokenToUpdate = STRING_TOKEN (STR_MINI_CLOVER_VERSION);
+  HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
+  FreePool (NewString);
+
+  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+  do {
+    Status = Smbios->GetNext (Smbios, &SmbiosHandle, NULL, &Record, NULL);
+    if (EFI_ERROR(Status)) {
+      break;
+    }
+
+    if (Record->Type == EFI_SMBIOS_TYPE_BIOS_INFORMATION) {
+      Type0Record = (SMBIOS_TABLE_TYPE0 *) Record;
+      StrIndex = Type0Record->BiosVersion;
+      GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type0Record + Type0Record->Hdr.Length), StrIndex, &TmpString);
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
+      StrCat (NewString, L"  ");
+      StrCat (NewString, TmpString);
+      TokenToUpdate = STRING_TOKEN (STR_BOOT_BIOS_VERSION);
+      HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
+      FreePool (NewString);
+      Find[0] = TRUE;
+    }
+
+    if (Record->Type == EFI_SMBIOS_TYPE_SYSTEM_INFORMATION) {
+      Type1Record = (SMBIOS_TABLE_TYPE1 *) Record;
+      StrIndex = Type1Record->ProductName;
+      GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), StrIndex, &TmpString);
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
+      StrCat (NewString, L"  ");
+      StrCat (NewString, TmpString);
+      TokenToUpdate = STRING_TOKEN (STR_BOOT_COMPUTER_MODEL);
+      HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
+      FreePool (NewString);
+      Find[1] = TRUE;
+    }
+
+    if (Record->Type == EFI_SMBIOS_TYPE_PROCESSOR_INFORMATION) {
+      Type4Record = (SMBIOS_TABLE_TYPE4 *) Record;
+      StrIndex = Type4Record->ProcessorVersion;
+      GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type4Record + Type4Record->Hdr.Length), StrIndex, &TmpString);
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
+      StrCat (NewString, L"  ");
+      StrCat (NewString, TmpString);
+      TokenToUpdate = STRING_TOKEN (STR_BOOT_CPU_MODEL);
+      HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
+      FreePool (NewString);
+      Find[2] = TRUE;
+    }
+
+    if (Record->Type == EFI_SMBIOS_TYPE_PROCESSOR_INFORMATION) {
+      Type4Record = (SMBIOS_TABLE_TYPE4 *) Record;
+      ConvertProcessorToString(Type4Record->CurrentSpeed, 6, &TmpString);
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"   "));
+      StrCat (NewString, L"   ");
+      StrCat (NewString, TmpString);
+      TokenToUpdate = STRING_TOKEN (STR_BOOT_CPU_SPEED);
+      HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
+      FreePool (NewString);
+      Find[3] = TRUE;
+    }
+
+    if ( Record->Type == EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS ) {
+      Type19Record = (SMBIOS_TABLE_TYPE19 *) Record;
+      ConvertMemorySizeToString (
+                                 (UINT32)(RShiftU64((Type19Record->EndingAddress - Type19Record->StartingAddress + 1), 10)),
+                                 &TmpString
+                                 );
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"   "));
+      StrCat (NewString, L"   ");
+      StrCat (NewString, TmpString);
+      TokenToUpdate = STRING_TOKEN (STR_BOOT_MEMORY_SIZE);
+      HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
+      FreePool (NewString);
+      Find[4] = TRUE;
+    }
+  } while ( !(Find[0] && Find[1] && Find[2] && Find[3] && Find[4]));
+  return ;
 }
 
 /**

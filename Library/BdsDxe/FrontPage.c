@@ -273,32 +273,13 @@ PlatformBdsEnterFrontPage (
     if (EFI_ERROR (Status)) goto Exit;
   }
   Status = EFI_SUCCESS;
+  UpdateBootStrings ();
   do {
+
     gCallbackKey = 0;
     CallBootManager ();
-#if 0
-    if (gCallbackKey != 0) {
-      REPORT_STATUS_CODE (
-        EFI_PROGRESS_CODE,
-        (EFI_SOFTWARE_DXE_BS_DRIVER | EFI_SW_PC_USER_SETUP)
-        );
-    }
-    //
-    // Based on the key that was set, we can determine what to do
-    //
-    switch (gCallbackKey) {
-    case FRONT_PAGE_KEY_BOOT_MAINTAIN:
-      //
-      // Display the Boot Maintenance Manager
-      //
-      // Pause(L"Boot Maint!");
-      // BdsStartBootMaint ();
-      break;
-    }
-#endif
 
-  } while ((Status == EFI_SUCCESS) && (gCallbackKey != FRONT_PAGE_KEY_CONTINUE));
-  SetupResetReminder ();
+  } while (Status == EFI_SUCCESS);
 
 Exit:
   //
