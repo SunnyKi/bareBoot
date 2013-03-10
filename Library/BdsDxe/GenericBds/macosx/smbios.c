@@ -186,7 +186,10 @@ UpdateSmbiosString (
 
   if (Once) {
     for (ALength = 0; ALength < Length; ALength++) {
-      if ((ALength & 0xF) == 0);
+#if 0
+      if ((ALength & 0xF) == 0)
+        ;
+#endif
     }
 
     Once = FALSE;
