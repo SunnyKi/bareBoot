@@ -100,9 +100,4 @@ CallBootManager (
   VOID
   );
 
-VOID
-UpdateBootStrings (
-  VOID
-  );
-
 #endif

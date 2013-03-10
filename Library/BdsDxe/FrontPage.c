@@ -14,7 +14,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "Bds.h"
 #include "FrontPage.h"
-#include "BootManager.h"
 #if 0
 #include "Hotkey.h"
 #endif
