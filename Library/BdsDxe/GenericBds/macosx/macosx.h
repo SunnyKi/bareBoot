@@ -2,6 +2,8 @@
 /** @file
  * macosx.h
  */
+#ifndef _MACOSX_H_
+#define _MACOSX_H_
 
 #include <Uefi.h>
 #include <Guid/Acpi.h>
@@ -26,9 +28,6 @@
 #include "DataHubRecords.h"
 #include "boot.h"
 #include "device_inject.h"
-
-extern EFI_GUID gEfiAppleNvramGuid;
-extern EFI_GUID gEfiAppleBootGuid;
 
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))
 #define MAX_NUM_DEVICES 64
@@ -86,9 +85,6 @@ extern EFI_GUID gEfiAppleBootGuid;
 #define ROUND_PAGE(x)  ((((unsigned)(x)) + EFI_PAGE_SIZE - 1) & ~(EFI_PAGE_SIZE - 1))
 
 #define EFI_CPU_DATA_MAXIMUM_LENGTH 0x100
-
-// ??
-#define SAFE_LOG_SIZE 80
 
 #define CPU_MODEL_DOTHAN        0x0D
 #define CPU_MODEL_YONAH         0x0E
@@ -156,10 +152,8 @@ extern EFI_GUID gEfiAppleBootGuid;
 #define CPUID_FEATURE_HTT     _Bit(28)  /* Hyper-Threading Technology */
 #define CPUID_FEATURE_TM      _Bit(29)  /* Thermal Monitor (TM1) */
 #define CPUID_FEATURE_PBE     _Bit(31)  /* Pend Break Enable */
-
 #define CPUID_FEATURE_SSE3    _HBit(0)  /* Streaming SIMD extensions 3 */
 #define CPUID_FEATURE_PCLMULQDQ _HBit(1) /* PCLMULQDQ Instruction */
-
 #define CPUID_FEATURE_MONITOR _HBit(3)  /* Monitor/mwait */
 #define CPUID_FEATURE_DSCPL   _HBit(4)  /* Debug Store CPL */
 #define CPUID_FEATURE_VMX     _HBit(5)  /* VMX */
@@ -168,11 +162,9 @@ extern EFI_GUID gEfiAppleBootGuid;
 #define CPUID_FEATURE_TM2     _HBit(8)  /* Thermal Monitor 2 */
 #define CPUID_FEATURE_SSSE3   _HBit(9)  /* Supplemental SSE3 instructions */
 #define CPUID_FEATURE_CID     _HBit(10) /* L1 Context ID */
-
 #define CPUID_FEATURE_CX16    _HBit(13) /* CmpXchg16b instruction */
 #define CPUID_FEATURE_xTPR    _HBit(14) /* Send Task PRiority msgs */
 #define CPUID_FEATURE_PDCM    _HBit(15) /* Perf/Debug Capability MSR */
-
 #define CPUID_FEATURE_DCA     _HBit(18) /* Direct Cache Access */
 #define CPUID_FEATURE_SSE4_1  _HBit(19) /* Streaming SIMD extensions 4.1 */
 #define CPUID_FEATURE_SSE4_2  _HBit(20) /* Streaming SIMD extensions 4.2 */
@@ -243,7 +235,6 @@ extern EFI_GUID gEfiAppleBootGuid;
 #define PCI_CLASS_MEDIA_HDA         0x03
 
 #define GEN_PMCON_1                 0xA0
-
 
 #define PCIADDR(bus, dev, func) ((1 << 31) | ((bus) << 16) | ((dev) << 11) | ((func) << 8))
 
@@ -347,10 +338,6 @@ typedef struct {
   CHAR8 ProductName[64];
   CHAR8 VersionNr[64];
   CHAR8 SerialNr[64];
-#if 0
-  CHAR8 Uuid[64];
-  CHAR8 SKUNumber[64];
-#endif
   CHAR8 FamilyName[64];
   CHAR8 OEMProduct[64];
   // SMBIOS TYPE2
@@ -398,9 +385,6 @@ typedef struct {
   UINT16  PCIRootUID;
   BOOLEAN ETHInjection;
   BOOLEAN USBInjection;
-#if 0
-  BOOLEAN HDAInjection;
-#endif
   UINT16   HDALayoutId;
 } SETTINGS_DATA;
 
@@ -465,10 +449,6 @@ typedef struct {
   UINT8   MaxDiv;
   UINT8   CurrDiv;
   UINT32  SubDivider;
-#if 0
-  UINT8   BusRatioMax;
-  UINT8   BusRatioMin;
-#endif
   UINT32  MaxRatio;
   UINT32  MinRatio;
 
@@ -527,9 +507,6 @@ typedef struct {
 MEM_STRUCTURE                   *gRAM;
 DMI                             *gDMI;
 EFI_RUNTIME_SERVICES            *gRS;
-#if 0
-EFI_HANDLE                      gImageHandle;
-#endif
 PCI_TYPE00                      gPci;
 EFI_FILE_HANDLE                 gRootFHandle;
 SETTINGS_DATA                   gSettings;
@@ -540,6 +517,8 @@ CPU_STRUCTURE                   gCPUStructure;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
+extern EFI_GUID                 gEfiAppleNvramGuid;
+extern EFI_GUID                 gEfiAppleBootGuid;
 
 // ----------------------------------------
 
@@ -698,3 +677,4 @@ EFIAPI
 EventsInitialize (
   VOID
   );
+#endif
