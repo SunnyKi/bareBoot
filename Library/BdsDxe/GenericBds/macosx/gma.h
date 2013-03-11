@@ -1,6 +1,5 @@
-#ifndef __LIBSAIO_GMA_H
-#define __LIBSAIO_GMA_H
-#include "device_inject.h"
+#ifndef _GMA_H
+#define _GMA_H
 
 BOOLEAN setup_gma_devprop (pci_dt_t *gma_dev);
 
@@ -75,4 +74,4 @@ static struct gma_gpu_t KnownGPUS[] = {
   { 0x80860126, "HD3000"  },
 };
 
-#endif /* !__LIBSAIO_GMA_H */
+#endif /* !_GMA_H */

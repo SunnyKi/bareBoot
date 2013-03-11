@@ -16,9 +16,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with NVidia injector.  If not, see <http://www.gnu.org/licenses/>.
  */
-/*
-* Alternatively you can choose to comply with APSL
-*/
 
 /*
  * DCB-Table parsing is based on software (nouveau driver) originally distributed under following license:
@@ -47,40 +44,24 @@
  * SOFTWARE.
  */
 
-#ifndef __LIBSAIO_NVIDIA_H
-#define __LIBSAIO_NVIDIA_H
-
-#include "device_inject.h"
-
-extern CHAR8* gDeviceProperties;
-
-BOOLEAN setup_nvidia_devprop (pci_dt_t *nvda_dev);
-
-struct nv_chipsets_t {
-  UINT32 device;
-  CHAR8 *name;
-};
+#ifndef _NVIDIA_H
+#define _NVIDIA_H
 
 #define DCB_MAX_NUM_ENTRIES 16
 #define DCB_MAX_NUM_I2C_ENTRIES 16
-
 #define DCB_LOC_ON_CHIP 0
-
-struct bios {
-  UINT16  signature;    /* 0x55AA */
-  UINT8   size;     /* Size in multiples of 512 */
-};
 
 #define NV_PMC_OFFSET             0x000000
 #define NV_PMC_SIZE               0x2ffff
 #define NV_PDISPLAY_OFFSET            0x610000
 #define NV_PDISPLAY_SIZE            0x10000
-
 #define NV_PROM_OFFSET              0x300000
 #define NV_PROM_SIZE              0x0000ffff
 #define NV_PRAMIN_OFFSET            0x00700000
 #define NV_PRAMIN_SIZE              0x00100000
+
 #define NV04_PFB_FIFO_DATA            0x0010020c
+
 #define NV10_PFB_FIFO_DATA_RAM_AMOUNT_MB_MASK 0xfff00000
 #define NV10_PFB_FIFO_DATA_RAM_AMOUNT_MB_SHIFT  20
 #define NVC0_MEM_CTRLR_COUNT          0x00121c74
@@ -89,7 +70,6 @@ struct bios {
 #define NV_PBUS_PCI_NV_20 0x00001850
 #define NV_PBUS_PCI_NV_20_ROM_SHADOW_DISABLED (0 << 0)
 #define NV_PBUS_PCI_NV_20_ROM_SHADOW_ENABLED  (1 << 0)
-
 
 #define NV_ARCH_03  0x03
 #define NV_ARCH_04  0x04
@@ -138,9 +118,6 @@ struct bios {
 #define CHIPSET_C512     0x03D0
 #define CHIPSET_G73_BRIDGED 0x02E0
 
-#endif /* !__LIBSAIO_NVIDIA_H */
-
-
 #define NVIDIA_ROM_SIZE       0x10000
 #define PATCH_ROM_SUCCESS     1
 #define PATCH_ROM_SUCCESS_HAS_LVDS  2
@@ -150,7 +127,20 @@ struct bios {
 #define PCI_BASE_ADDRESS_0          0x10    /* 32 bits */
 #define REG32(base, reg)  ((volatile UINT32 *)(UINTN)base)[(reg) >> 2]
 
-extern UINT32 devices_number;
+#define NVCAP_LEN ( sizeof(default_NVCAP) / sizeof(UINT8) )
+#define NVPM_LEN ( sizeof(default_NVPM) / sizeof(UINT8) )
+#define DCFG0_LEN ( sizeof(default_dcfg_0) / sizeof(UINT8) )
+#define DCFG1_LEN ( sizeof(default_dcfg_1) / sizeof(UINT8) )
+
+struct nv_chipsets_t {
+  UINT32 device;
+  CHAR8 *name;
+};
+
+struct bios {
+  UINT16  signature;    /* 0x55AA */
+  UINT8   size;     /* Size in multiples of 512 */
+};
 
 const CHAR8 *nvidia_compatible_0[]  = { "@0,compatible",  "NVDA,NVMac"   };
 const CHAR8 *nvidia_compatible_1[]  = { "@1,compatible",  "NVDA,NVMac"   };
@@ -167,13 +157,8 @@ static UINT8 default_NVCAP[] = {
   0x00, 0x00, 0x00, 0x00
 };
 
-#define NVCAP_LEN ( sizeof(default_NVCAP) / sizeof(UINT8) )
-
 static UINT8 default_dcfg_0[] = {0x03, 0x01, 0x03, 0x00};
 static UINT8 default_dcfg_1[] = {0xff, 0xff, 0x00, 0x01};
-
-#define DCFG0_LEN ( sizeof(default_dcfg_0) / sizeof(UINT8) )
-#define DCFG1_LEN ( sizeof(default_dcfg_1) / sizeof(UINT8) )
 
 static UINT8 default_NVPM[] = {
   0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -181,8 +166,6 @@ static UINT8 default_NVPM[] = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00
 };
-
-#define NVPM_LEN ( sizeof(default_NVPM) / sizeof(UINT8) )
 
 static struct nv_chipsets_t NVKnownChipsets[] = {
   { 0x00000000, "Unknown" },
@@ -959,3 +942,10 @@ static struct nv_chipsets_t NVKnownChipsets[] = {
   { 0x10DE1245, "GeForce GTS 450" },
   { 0x10DE1251, "GeForce GTX 560M" },
 };
+
+BOOLEAN
+setup_nvidia_devprop (
+  pci_dt_t *nvda_dev
+  );
+
+#endif /* !_NVIDIA_H */
