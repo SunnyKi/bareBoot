@@ -2215,7 +2215,7 @@ typedef struct {
 /// Inactive (Type 126)
 ///
 typedef struct {
-  SMBIOS_STRUCTURE   Hdr;
+  SMBIOS_STRUCTURE    Hdr;
 } SMBIOS_TABLE_TYPE126;
 
 ///
@@ -2240,32 +2240,44 @@ typedef struct {
   UINT32   EndAddress;
 } FW_REGION_INFO;
 
-typedef struct { //kSMBTypeFirmwareVolume
-  SMBIOS_STRUCTURE   Hdr;
-  UINT8           RegionCount;
-  UINT8           Reserved[3];
-  UINT32          FirmwareFeatures;
-  UINT32          FirmwareFeaturesMask;
-  UINT8              RegionType[NUM_FLASHMAP_ENTRIES];
-  FW_REGION_INFO     FlashMap[NUM_FLASHMAP_ENTRIES];
+///
+/// kSMBTypeFirmwareVolume
+///
+typedef struct {
+  SMBIOS_STRUCTURE              Hdr;
+  UINT8                         RegionCount;
+  UINT8                         Reserved[3];
+  UINT32                        FirmwareFeatures;
+  UINT32                        FirmwareFeaturesMask;
+  UINT8                         RegionType[NUM_FLASHMAP_ENTRIES];
+  FW_REGION_INFO                FlashMap[NUM_FLASHMAP_ENTRIES];
 } SMBIOS_TABLE_TYPE128;
 
-typedef struct { //kSMBTypeMemorySPD - as read 128 bytes from SMBus to memInfoData
-  SMBIOS_STRUCTURE   Hdr;
-  UINT16           Type17Handle;
-  UINT16           Offset;
-  UINT16           Size;
-  UINT16             Data[1];
+///
+/// kSMBTypeMemorySPD - as read 128 bytes from SMBus to memInfoData
+///
+typedef struct {
+  SMBIOS_STRUCTURE              Hdr;
+  UINT16                        Type17Handle;
+  UINT16                        Offset;
+  UINT16                        Size;
+  UINT16                        Data[1];
 } SMBIOS_TABLE_TYPE130;
 
-typedef struct { //kSMBTypeOemProcessorType
-  SMBIOS_STRUCTURE   Hdr;
-  UINT16 ProcessorType;
+///
+/// kSMBTypeOemProcessorType
+///
+typedef struct {
+  SMBIOS_STRUCTURE              Hdr;
+  UINT16                        ProcessorType;
 } SMBIOS_TABLE_TYPE131;
 
-typedef struct { //kSMBTypeOemProcessorBusSpeed
-  SMBIOS_STRUCTURE   Hdr;
-  UINT16 ProcessorBusSpeed;   // MT/s unit
+///
+/// kSMBTypeOemProcessorBusSpeed
+///
+typedef struct { 
+  SMBIOS_STRUCTURE              Hdr;
+  UINT16                        ProcessorBusSpeed;
 } SMBIOS_TABLE_TYPE132;
 
 ///
