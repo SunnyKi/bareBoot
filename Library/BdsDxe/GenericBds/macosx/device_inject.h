@@ -1,30 +1,15 @@
 /*
  *  Copyright 2009 Jasmin Fazlic All rights reserved.
- */
-/*
  *  Cleaned and merged by iNDi
  */
-
-#if 0
-#include "macosx.h"
-#endif
+#ifndef _DEVICE_INJECT_H
+#define _DEVICE_INJECT_H
 
 #include <Protocol/PciIo.h>
-
-#ifndef __LIBSAIO_DEVICE_INJECT_H
-#define __LIBSAIO_DEVICE_INJECT_H
 
 #define DP_ADD_TEMP_VAL(dev, val) devprop_add_value(dev, (CHAR8*)val[0], (UINT8*)val[1], (UINT32) AsciiStrLen(val[1]))
 #define DP_ADD_TEMP_VAL_DATA(dev, val) devprop_add_value(dev, (CHAR8*)val.name, (UINT8*)val.data, val.size)
 #define MAX_PCI_DEV_PATHS 4
-
-#if 0
-#define REG8(reg)  ((volatile UINT8 *)regs)[(reg)]
-#define REG16(reg)  ((volatile UINT16 *)regs)[(reg) >> 1]
-#define REG32(reg)  ((volatile UINT32 *)regs)[(reg) >> 2]
-UINT32 REG32 (UINT32 reg);
-VOID WRITEREG32 (UINT32 reg, UINT32 value);
-#endif
 
 typedef struct {
   UINT32    : 2;
@@ -42,14 +27,9 @@ typedef union {
 } pci_dev_t;
 
 typedef struct pci_dt_t {
-#if 0
-  EFI_PCI_IO_PROTOCOL   *PciIo;
-  PCI_TYPE00            Pci;
-#endif
   EFI_HANDLE    DeviceHandle;
   UINT8*        regs;
   pci_dev_t     dev;
-
   UINT16        vendor_id;
   UINT16        device_id;
 
@@ -60,6 +40,7 @@ typedef struct pci_dt_t {
     } subsys;
     UINT32  subsys_id;
   } subsys_id;
+
   UINT8   revision;
   UINT8   subclass;
   UINT16        class_id;
@@ -113,10 +94,6 @@ PCIReadRom (
   pci_dt_t* device
 );
 
-#if 0 //never do this
-extern VOID setupDeviceProperties (Node *node);
-#endif
-
 struct ACPIDevPath {
   UINT8   type;   // = 2 ACPI device-path
   UINT8   subtype;  // = 1 ACPI Device-path
@@ -148,10 +125,8 @@ struct DevPropDevice {
   struct DevicePathEnd path_end;            // = 0x7fff0400
   UINT8 *data;
 
-  // ------------------------
   UINT8  num_pci_devpaths;
   struct DevPropString *string;
-  // ------------------------
 };
 
 typedef struct DevPropDevice  DevPropDevice;
@@ -211,4 +186,4 @@ set_hda_props (
   pci_dt_t *hda_dev
 );
 
-#endif /* !__LIBSAIO_DEVICE_INJECT_H */
+#endif /* !_DEVICE_INJECT_H */
