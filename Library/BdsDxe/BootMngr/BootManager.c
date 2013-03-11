@@ -339,15 +339,24 @@ UpdateBootStrings (
   // Update Front Page strings
   //
   Status = gBS->LocateProtocol (
-                                &gEfiSmbiosProtocolGuid,
-                                NULL,
-                                (VOID **) &Smbios
-                                );
+                  &gEfiSmbiosProtocolGuid,
+                  NULL,
+                  (VOID **) &Smbios
+                  );
   ASSERT_EFI_ERROR (Status);
 
-  NewString = AllocateZeroPool (StrSize (FIRMWARE_REVISION) + StrSize (L"   "));
-  StrCat (NewString, L"   ");
+  NewString = AllocateZeroPool (
+                StrSize (FIRMWARE_REVISION) +
+                StrSize (L"    ") +
+                StrSize (L" (") +
+                StrSize (FIRMWARE_BUILDDATE) +
+                StrSize (L")")
+                );
+  StrCat (NewString, L"    ");
   StrCat (NewString, FIRMWARE_REVISION);
+  StrCat (NewString, L" (");
+  StrCat (NewString, FIRMWARE_BUILDDATE);
+  StrCat (NewString, L")");
   TokenToUpdate = STRING_TOKEN (STR_MINI_CLOVER_VERSION);
   HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
   FreePool (NewString);
@@ -401,8 +410,8 @@ UpdateBootStrings (
     if (Record->Type == EFI_SMBIOS_TYPE_PROCESSOR_INFORMATION) {
       Type4Record = (SMBIOS_TABLE_TYPE4 *) Record;
       ConvertProcessorToString(Type4Record->CurrentSpeed, 6, &TmpString);
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"   "));
-      StrCat (NewString, L"   ");
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"    "));
+      StrCat (NewString, L"    ");
       StrCat (NewString, TmpString);
       TokenToUpdate = STRING_TOKEN (STR_BOOT_CPU_SPEED);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
@@ -413,11 +422,11 @@ UpdateBootStrings (
     if ( Record->Type == EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS ) {
       Type19Record = (SMBIOS_TABLE_TYPE19 *) Record;
       ConvertMemorySizeToString (
-                                 (UINT32)(RShiftU64((Type19Record->EndingAddress - Type19Record->StartingAddress + 1), 10)),
-                                 &TmpString
-                                 );
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"   "));
-      StrCat (NewString, L"   ");
+        (UINT32)(RShiftU64((Type19Record->EndingAddress - Type19Record->StartingAddress + 1), 10)),
+        &TmpString
+        );
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"    "));
+      StrCat (NewString, L"    ");
       StrCat (NewString, TmpString);
       TokenToUpdate = STRING_TOKEN (STR_BOOT_MEMORY_SIZE);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
