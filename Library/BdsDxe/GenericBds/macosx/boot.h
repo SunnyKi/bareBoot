@@ -25,14 +25,8 @@
  * 
  * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
-#ifndef _PEXPERT_I386_BOOT_H
-#define _PEXPERT_I386_BOOT_H
-
-//#include <stdint.h>
-
-/*
- * What the booter leaves behind for the kernel.
- */
+#ifndef _BOOT_H
+#define _BOOT_H
 
 /*
  * Types of boot driver that may be loaded by the booter.
@@ -146,8 +140,6 @@ typedef struct {
   UINT32    __reserved3[2];
 } BootArgs1;
 
-//version2 as used in Lion
-
 typedef struct {
   UINT16      Revision; /* Revision of boot_args structure */
   UINT16      Version;  /* Version of boot_args structure */
@@ -189,4 +181,4 @@ typedef struct {
 } BootArgs2;
 
 
-#endif /* _PEXPERT_I386_BOOT_H */
+#endif /* _BOOT_H */

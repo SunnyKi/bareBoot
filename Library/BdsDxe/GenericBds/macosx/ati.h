@@ -7,9 +7,8 @@
  *  bis thank to Islam M. Ahmed Zaid for the updating the collection
  */
 
-#if 0
-#include "macosx.h"  //this include needed for Uefi types
-#endif
+#ifndef _ATI_H_
+#define _ATI_H_
 
 #include <Uefi.h>
 #include <Library/UefiBootServicesTableLib.h>
@@ -612,3 +611,4 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, FALSE, "VRAM,totalsize", get_vramtotalsize_val, NULVAL },
   { FLAGTRUE, FALSE, NULL, NULL, NULVAL }
 };
+#endif /* _ATI_H_ */
