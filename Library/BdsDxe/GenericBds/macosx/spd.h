@@ -2,12 +2,7 @@
  * Copyright 2010 AsereBLN. All rights reserved. <aserebln@googlemail.com>
  *
  * spd.h
- */
-
-#ifndef __LIBSAIO_SPD_H
-#define __LIBSAIO_SPD_H
-
-/*
+ *
  * Serial Presence Detect (SPD) data stored on SDRAM modules.
  *
  * Datasheet:
@@ -21,6 +16,8 @@
  *   - PDF: http://www.jedec.org/download/search/4_01_02_00R9.PDF
  */
 
+#ifndef _SPD_H
+#define _SPD_H
 
 /* Byte numbers. */
 #define SPD_NUM_MANUFACTURER_BYTES          0  /* Number of bytes used by module manufacturer */
@@ -79,10 +76,10 @@
 #define SPD_MANUFACTURING_DATE              93 /* Manufacturing date (byte 93: year, byte 94: week) */
 #define SPD_ASSEMBLY_SERIAL_NUMBER          95 /* Assembly serial number (bytes 95-98) */
 #define SPD_MANUFACTURER_SPECIFIC_DATA      99 /* Manufacturer specific data (bytes 99-125) */
-#define SPD_INTEL_SPEC_FOR_FREQUENCY       126 /* Intel specification for frequency */
-#define SPD_INTEL_SPEC_100_MHZ             127 /* Intel specification details for 100MHz support */
-#define SPD_DDR3_MEMORY_BANK         0x75
-#define SPD_DDR3_MEMORY_CODE         0x76
+#define SPD_INTEL_SPEC_FOR_FREQUENCY        126 /* Intel specification for frequency */
+#define SPD_INTEL_SPEC_100_MHZ              127 /* Intel specification details for 100MHz support */
+#define SPD_DDR3_MEMORY_BANK                0x75
+#define SPD_DDR3_MEMORY_CODE                0x76
 
 /* DRAM specifications use the following naming conventions for SPD locations */
 #define SPD_tRP                             SPD_MIN_ROW_PRECHARGE_TIME
@@ -91,20 +88,19 @@
 #define SPD_tRAS                            SPD_MIN_ACTIVE_TO_PRECHARGE_DELAY
 #define SPD_BANK_DENSITY                    SPD_DENSITY_OF_EACH_ROW_ON_MODULE
 #define SPD_ADDRESS_CMD_HOLD                SPD_CMD_SIGNAL_INPUT_HOLD_TIME
-#define SPD_tRC               41  /* SDRAM Device Minimum Active to Active/Auto Refresh Time (tRC) */
-#define SPD_tRFC              42  /* SDRAM Device Minimum Auto Refresh to Active/Auto Refresh (tRFC) */
-
+#define SPD_tRC                             41  /* SDRAM Device Minimum Active to Active/Auto Refresh Time (tRC) */
+#define SPD_tRFC                            42  /* SDRAM Device Minimum Auto Refresh to Active/Auto Refresh (tRFC) */
 
 /* SPD_MEMORY_TYPE values. */
-#define SPD_MEMORY_TYPE_FPM_DRAM      1
-#define SPD_MEMORY_TYPE_EDO         2
-#define SPD_MEMORY_TYPE_PIPELINED_NIBBLE  3
-#define SPD_MEMORY_TYPE_SDRAM       4
-#define SPD_MEMORY_TYPE_MULTIPLEXED_ROM   5
-#define SPD_MEMORY_TYPE_SGRAM_DDR     6
-#define SPD_MEMORY_TYPE_SDRAM_DDR     7
-#define SPD_MEMORY_TYPE_SDRAM_DDR2      8
-#define SPD_MEMORY_TYPE_SDRAM_DDR3      0xb
+#define SPD_MEMORY_TYPE_FPM_DRAM            1
+#define SPD_MEMORY_TYPE_EDO                 2
+#define SPD_MEMORY_TYPE_PIPELINED_NIBBLE    3
+#define SPD_MEMORY_TYPE_SDRAM               4
+#define SPD_MEMORY_TYPE_MULTIPLEXED_ROM     5
+#define SPD_MEMORY_TYPE_SGRAM_DDR           6
+#define SPD_MEMORY_TYPE_SDRAM_DDR           7
+#define SPD_MEMORY_TYPE_SDRAM_DDR2          8
+#define SPD_MEMORY_TYPE_SDRAM_DDR3          0xb
 
 /* SPD_MODULE_VOLTAGE values. */
 #define SPD_VOLTAGE_TTL           0 /* 5.0 Volt/TTL */
@@ -144,4 +140,4 @@
 #define MODULE_BUFFERED           1
 #define MODULE_REGISTERED         2
 
-#endif /* !__LIBSAIO_SPD_H */
+#endif /* !_SPD_H */
