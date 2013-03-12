@@ -248,7 +248,6 @@ MacOS:
   InitializeConsoleSim (gImageHandle); 
   PrepatchSmbios ();
   GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
-  GetCPUProperties ();
   ScanSPD ();
   SetDevices ();
   PatchSmbios ();

@@ -917,6 +917,15 @@ GetUserSettings (
     gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
   }
 
+  GetCPUProperties ();
+
+  if (gConfigPtr != NULL) {
+    dictPointer = GetProperty (dict, "CPU");
+    if (dictPointer != NULL) {
+      gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
+    }
+  }
+
   return Status;
 }
 
