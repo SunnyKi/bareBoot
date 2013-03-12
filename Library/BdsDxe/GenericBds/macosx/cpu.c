@@ -177,10 +177,11 @@ GetCPUProperties (
   gCPUStructure.Mobile = FALSE; //not same as gMobile
 
   DoCpuid (0, gCPUStructure.CPUID[CPUID_0]);
-  AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
+  gCPUStructure.Vendor      = gCPUStructure.CPUID[CPUID_0][1];
   DoCpuid (1, gCPUStructure.CPUID[CPUID_1]);
-  msr = AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID);
 
+  AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
+  msr = AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID);
   gCPUStructure.MicroCode = RShiftU64 (msr, 32);
   gCPUStructure.ProcessorFlag = RShiftU64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50) & 3;
 
@@ -190,7 +191,6 @@ GetCPUProperties (
     DoCpuid (0x80000001, gCPUStructure.CPUID[CPUID_81]);
   }
 
-  gCPUStructure.Vendor      = gCPUStructure.CPUID[CPUID_0][1];
   gCPUStructure.Signature   = gCPUStructure.CPUID[CPUID_1][0];
   gCPUStructure.Stepping    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 3, 0);
   gCPUStructure.Model       = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 7, 4);
@@ -225,7 +225,6 @@ GetCPUProperties (
 
   if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 7) {
     DoCpuid (0x80000007, gCPUStructure.CPUID[CPUID_87]);
-
     gCPUStructure.ExtFeatures |= gCPUStructure.CPUID[CPUID_87][EDX] & (UINT32) CPUID_EXTFEATURE_TSCI;
   }
 
@@ -284,11 +283,13 @@ GetCPUProperties (
 
     AsciiStrnCpy (gCPUStructure.BrandString, s, 48);
 
+#if 0
     if (!AsciiStrnCmp ((CONST CHAR8*) gCPUStructure.BrandString,
                        (CONST CHAR8*) CPU_STRING_UNKNOWN,
                        AsciiStrLen (gCPUStructure.BrandString))) {
       gCPUStructure.BrandString[0] = '\0';
     }
+#endif
 
     gCPUStructure.BrandString[47] = '\0';
   }
