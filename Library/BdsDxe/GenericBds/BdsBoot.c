@@ -463,11 +463,17 @@ BdsLibEnumerateAllBootOption (
   )
 {
   EFI_STATUS                    Status;
+#if 0
+  EFI_BLOCK_IO_PROTOCOL         *BlkIo;
   UINT16                        FloppyNumber;
   UINT16                        CdromNumber;
   UINT16                        NonBlockNumber;
-  EFI_BLOCK_IO_PROTOCOL         *BlkIo;
   BOOLEAN                       Removable[2];
+  UINTN                         DevicePathType;
+  CHAR8                         *PlatLang;
+  CHAR8                         *LastLang;
+#endif
+  BOOLEAN                       ConfigNotFound;
   UINTN                         Index;
   UINTN                         FvHandleCount;
   EFI_HANDLE                    *FvHandleBuffer;
@@ -477,32 +483,30 @@ BdsLibEnumerateAllBootOption (
   UINT32                        AuthenticationStatus;
   EFI_FIRMWARE_VOLUME2_PROTOCOL *Fv;
   EFI_DEVICE_PATH_PROTOCOL      *DevicePath;
-  UINTN                         DevicePathType;
   CHAR16                        Buffer[255];
   EFI_HANDLE                    *FileSystemHandles;
   UINTN                         NumberFileSystemHandles;
-  CHAR8                         *PlatLang;
-  CHAR8                         *LastLang;  
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   EFI_FILE_SYSTEM_INFO            *FileSystemInfo;
   UINT32                          BufferSizeVolume;
 
-  FloppyNumber    = 0;
-  CdromNumber     = 0;
-  PlatLang        = NULL;
-  LastLang        = NULL;
   gRootFHandle    = NULL;
   FileSystemInfo  = NULL;
   FileSystemHandles = NULL;
   FHandle         = NULL;
-  BlkIo           = NULL;
+  ConfigNotFound  = TRUE;
 
   NumberFileSystemHandles = 0;
-  DevicePathType          = 0;
-    
-  ZeroMem (Buffer, sizeof (Buffer));
 
+  ZeroMem (Buffer, sizeof (Buffer));
+#if 0
+  PlatLang        = NULL;
+  LastLang        = NULL;
+  BlkIo           = NULL;
+  FloppyNumber    = 0;
+  CdromNumber     = 0;
+  DevicePathType          = 0;
   //
   // If the boot device enumerate happened, just get the boot
   // device from the boot order variable
@@ -555,6 +559,7 @@ BdsLibEnumerateAllBootOption (
 
   if (DevicePathType != BDS_EFI_ACPI_FLOPPY_BOOT) {
     NonBlockNumber = 0;
+#endif
     gBS->LocateHandleBuffer (
           ByProtocol,
           &gEfiSimpleFileSystemProtocolGuid,
@@ -576,8 +581,9 @@ BdsLibEnumerateAllBootOption (
                            );
       }
 
-      if (FileExists (FHandle, L"\\EFI\\mini\\config.plist")) {
+      if ((FileExists (FHandle, L"\\EFI\\mini\\config.plist")) && (ConfigNotFound)) {
         gRootFHandle = FHandle;
+        ConfigNotFound  = FALSE;
       }
         
       BufferSizeVolume = SIZE_OF_EFI_FILE_SYSTEM_INFO + 255;
@@ -653,8 +659,9 @@ BdsLibEnumerateAllBootOption (
       }
     }
     GetBootDefault(gRootFHandle, L"\\EFI\\mini\\config.plist");
+#if 0
   }
-
+#endif
   gBS->LocateHandleBuffer (
         ByProtocol,
         &gEfiFirmwareVolume2ProtocolGuid,
