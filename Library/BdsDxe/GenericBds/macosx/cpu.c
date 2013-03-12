@@ -412,7 +412,7 @@ GetCPUProperties (
         gCPUStructure.Turbo4 = (UINT8)RShiftU64(msr, 24) & 0xff;
 
         if (gCPUStructure.Turbo4 == 0) {
-          gCPUStructure.Turbo4 = (UINT16)gCPUStructure.MaxRatio;
+          gCPUStructure.Turbo4 = (UINT8)gCPUStructure.MaxRatio;
         }
 
         gCPUStructure.MinRatio *= 10;
