@@ -144,7 +144,7 @@ echo Running edk2 build for miniClover$Processor
 VERFILE=$WORKSPACE/miniClover/Version.h
 echo "#define FIRMWARE_VERSION L\"2.31\"" > $VERFILE
 echo "#define FIRMWARE_BUILDDATE L\"`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $VERFILE
-echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/miniClover; git tag | head -n 1`\"" >> $VERFILE
+echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/miniClover; git tag | tail -n 1`\"" >> $VERFILE
 
 build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 $*
 
