@@ -139,32 +139,30 @@ GetCPUProperties (
   VOID
 )
 {
-  UINT8                 index;
-  UINT32                reg[4];
-  UINT64                msr;
-  UINT64                flex_ratio;
   EFI_STATUS            Status;
   EFI_HANDLE            *HandleBuffer;
   EFI_GUID              **ProtocolGuidArray;
   EFI_PCI_IO_PROTOCOL   *PciIo;
   PCI_TYPE00            Pci;
+  UINT64                msr;
+  UINT64                flex_ratio;
   UINTN                 HandleCount;
   UINTN                 ArrayCount;
   UINTN                 HandleIndex;
   UINTN                 ProtocolIndex;
-  UINT16                qpibusspeed; //units=MHz
-  UINT32                qpimult;
-  UINT16                did, vid;
   UINTN                 Segment;
   UINTN                 Bus;
   UINTN                 Device;
   UINTN                 Function;
+  UINT32                reg[4];
+  UINT32                qpimult;
+  UINT32                multiplier;
+  UINT16                qpibusspeed; //units=MHz
+  UINT16                did;
+  UINT16                vid;
+  UINT8                 index;
   CHAR8                 str[128];
   CHAR8                 *s;
-  UINT32                multiplier;
-#if 0
-  UINT8   XE = 0;
-#endif
 
   msr = 0;
   flex_ratio = 0;
@@ -172,9 +170,7 @@ GetCPUProperties (
   multiplier = 0;
   s = NULL;
   gTurboMsr = 0;
-
-  gCPUStructure.MaxDiv = 1;
-  gCPUStructure.CurrDiv = 1;
+  
   gCPUStructure.MaxRatio = 10;
   gCPUStructure.MinRatio = 10;
   gCPUStructure.ProcessorInterconnectSpeed = 0;
@@ -495,12 +491,6 @@ GetCPUProperties (
         gCPUStructure.MaxRatio = (UINT32) MultU64x32 (DivU64x32 (gCPUStructure.TSCFrequency, (UINT32) gCPUStructure.FSBFrequency), 10);
         break;
     }
-#if 0
-    msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-    gCPUStructure.MaxDiv = ((UINT8) RShiftU64 (msr, 46)) & 0x1;
-    gCPUStructure.CurrDiv = ((UINT8) RShiftU64 (msr, 15)) & 0x1;
-#endif
-
   }
 
   if (gCPUStructure.Model >= CPU_MODEL_NEHALEM) {
