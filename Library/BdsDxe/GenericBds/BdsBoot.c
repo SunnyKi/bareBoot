@@ -247,10 +247,10 @@ BdsLibBootViaBootOption (
 MacOS:
   InitializeConsoleSim (gImageHandle); 
   PrepatchSmbios ();
-  GetCPUProperties ();
   ScanSPD ();
   SetPrivateVarProto ();
   GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
+  GetCPUProperties ();
   SetDevices ();
   PatchSmbios ();
   PatchACPI (gRootFHandle);
@@ -260,6 +260,7 @@ MacOS:
   EventsInitialize ();
 #if 0
   DumpCPU ();
+  Pause (NULL);
 #endif
   
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);

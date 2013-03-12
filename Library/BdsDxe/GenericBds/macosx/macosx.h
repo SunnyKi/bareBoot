@@ -587,12 +587,6 @@ ParseXML (
   TagPtr *dict
 );
 
-UINTN
-iStrLen (
-  CHAR8* String,
-  UINTN MaxLen
-);
-
 EFI_FILE_INFO *
 EfiLibFileInfo (
   IN EFI_FILE_HANDLE      FHand

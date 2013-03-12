@@ -612,7 +612,6 @@ SaveSettings (
        (gSettings.BusSpeed > 10 * kilo) &&
        (gSettings.BusSpeed < 500 * kilo)) {
     gCPUStructure.ExternalClock = gSettings.BusSpeed;
-    gCPUStructure.FSBFrequency = MultU64x32 (kilo, gSettings.BusSpeed); //kHz -> Hz
   }
 
   if ((gSettings.CpuFreqMHz != 0) &&
@@ -622,10 +621,11 @@ SaveSettings (
   }
 
   if (gSettings.Turbo) {
+#if 0
     if (gCPUStructure.Turbo4) {
       gCPUStructure.CPUFrequency = DivU64x32 (MultU64x32 (gCPUStructure.FSBFrequency, gCPUStructure.Turbo4), 10);
     }
-
+#endif
     if (gTurboMsr != 0) {
       AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, gTurboMsr);
       gBS->Stall (100);

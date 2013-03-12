@@ -39,7 +39,7 @@
 UINT8             gDefaultType;
 
 VOID
-enable_PIT2 (
+EnablePIT2 (
   VOID
 )
 {
@@ -47,7 +47,7 @@ enable_PIT2 (
 }
 
 VOID
-disable_PIT2 (
+DisablePIT2 (
   VOID
 )
 {
@@ -55,7 +55,7 @@ disable_PIT2 (
 }
 
 VOID
-set_PIT2_mode0 (
+SetPIT2Mode0 (
   IN   UINT64  Value
 )
 {
@@ -64,7 +64,7 @@ set_PIT2_mode0 (
   IoWrite8 (0x42, (UINT8) (((UINT16) Value) >> 8));
 }
 
-UINT32 poll_PIT2_gate (
+UINT32 PollPIT2Gate (
   VOID
 )
 {
@@ -79,7 +79,7 @@ UINT32 poll_PIT2_gate (
 }
 
 UINT64
-measure_tsc_frequency (
+MeasureTSCFrequency (
   VOID
 )
 {
@@ -94,10 +94,10 @@ measure_tsc_frequency (
   retval = 0;
 
   for (i = 0; i < 3; ++i) {
-    enable_PIT2();
-    set_PIT2_mode0 (CALIBRATE_LATCH);
+    EnablePIT2();
+    SetPIT2Mode0 (CALIBRATE_LATCH);
     tscStart = AsmReadTsc();
-    pollCount = poll_PIT2_gate();
+    pollCount = PollPIT2Gate();
     tscEnd = AsmReadTsc();
 
     if (pollCount <= 1) {
@@ -119,7 +119,7 @@ measure_tsc_frequency (
     retval = DivU64x32 (MultU64x32 (tscDelta, 1000), 30);
   }
 
-  disable_PIT2();
+  DisablePIT2();
   return retval;
 }
 
@@ -159,7 +159,8 @@ GetCPUProperties (
   UINTN                 Bus;
   UINTN                 Device;
   UINTN                 Function;
-  CHAR8                 str[128], *s;
+  CHAR8                 str[128];
+  CHAR8                 *s;
   UINT32                multiplier;
 #if 0
   UINT8   XE = 0;
@@ -178,20 +179,15 @@ GetCPUProperties (
   gCPUStructure.MinRatio = 10;
   gCPUStructure.ProcessorInterconnectSpeed = 0;
   gCPUStructure.Mobile = FALSE; //not same as gMobile
-  gCPUStructure.FSBFrequency = gCPUStructure.ExternalClock ? MultU64x32 (1000000ull, gCPUStructure.ExternalClock) : 100000000ull;
-  gCPUStructure.TSCFrequency = gCPUStructure.CurrentSpeed ? MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed) : MultU64x32 (measure_tsc_frequency(), 1000);
-  gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
-#if 0
-  for (i = 0; i < 4; i++) {
-    DoCpuid (i, gCPUStructure.CPUID[i]);
-  }
-#endif
+
   DoCpuid (0, gCPUStructure.CPUID[CPUID_0]);
   AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
   DoCpuid (1, gCPUStructure.CPUID[CPUID_1]);
   msr = AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID);
+
   gCPUStructure.MicroCode = RShiftU64 (msr, 32);
   gCPUStructure.ProcessorFlag = RShiftU64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50) & 3;
+
   DoCpuid (0x80000000, gCPUStructure.CPUID[CPUID_80]);
 
   if ((gCPUStructure.CPUID[CPUID_80][0] & 0x0000000f) >= 1) {
@@ -224,6 +220,7 @@ GetCPUProperties (
   }
 
   DoCpuid (4, gCPUStructure.CPUID[CPUID_4]);
+
   gCPUStructure.CoresPerPackage =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 31, 26) + 1; //Atom330 = 2
 
   if (gCPUStructure.CoresPerPackage == 0) {
@@ -232,11 +229,13 @@ GetCPUProperties (
 
   if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 7) {
     DoCpuid (0x80000007, gCPUStructure.CPUID[CPUID_87]);
+
     gCPUStructure.ExtFeatures |= gCPUStructure.CPUID[CPUID_87][EDX] & (UINT32) CPUID_EXTFEATURE_TSCI;
   }
 
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
     switch (gCPUStructure.Model) {
+
       case CPU_MODEL_NEHALEM:
       case CPU_MODEL_FIELDS:
       case CPU_MODEL_CLARKDALE:
@@ -289,12 +288,24 @@ GetCPUProperties (
 
     AsciiStrnCpy (gCPUStructure.BrandString, s, 48);
 
-    if (!AsciiStrnCmp ((CONST CHAR8*) gCPUStructure.BrandString, (CONST CHAR8*) CPU_STRING_UNKNOWN, iStrLen ((gCPUStructure.BrandString) + 1, 48))) {
+    if (!AsciiStrnCmp ((CONST CHAR8*) gCPUStructure.BrandString,
+                       (CONST CHAR8*) CPU_STRING_UNKNOWN,
+                       AsciiStrLen (gCPUStructure.BrandString))) {
       gCPUStructure.BrandString[0] = '\0';
     }
 
     gCPUStructure.BrandString[47] = '\0';
   }
+
+  gCPUStructure.FSBFrequency = gCPUStructure.ExternalClock ?
+                                MultU64x32 (1000000ull, gCPUStructure.ExternalClock) :
+                                100000000ull;
+
+  gCPUStructure.TSCFrequency = gCPUStructure.CurrentSpeed ?
+                                MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed) :
+                                MeasureTSCFrequency ();
+
+  gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
   //
   // Compute frequency (in MHz) from brand string
@@ -318,12 +329,12 @@ GetCPUProperties (
       // Copy 7 characters (length of “x.xxyHz”)
       // index is at position of y in “x.xxyHz”
       AsciiStrnCpy (s, &gCPUStructure.BrandString[index - 4], 7);
-      s[7] = 0; // null terminate the string
+      s[7] = 0;
       if (gCPUStructure.BrandString[index - 3] == '.') { // If format is “x.xx”
         gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * (UINT16) multiplier;
         gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * (UINT16) (multiplier / 10);
         gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 1] - '0') * (UINT16) (multiplier / 100);
-      } else {                            // If format is xxxx
+      } else {                                           // If format is xxxx
         gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * 1000;
         gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 3] - '0') * 100;
         gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * 10;
@@ -335,7 +346,13 @@ GetCPUProperties (
     }
   }
 
-  if (gCPUStructure.Vendor == CPU_VENDOR_INTEL && gCPUStructure.Family == 0x06 && gCPUStructure.Model >= 0x0c) {
+#if 0
+  gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
+#endif
+
+  if (gCPUStructure.Vendor == CPU_VENDOR_INTEL &&
+      gCPUStructure.Family == 0x06 &&
+      gCPUStructure.Model >= 0x0c) {
     switch (gCPUStructure.Model) {
       case CPU_MODEL_SANDY_BRIDGE:// Sandy Bridge, 32nm
       case CPU_MODEL_JAKETOWN:
@@ -450,13 +467,13 @@ GetCPUProperties (
     }
 
     msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
+#if 0
     gCPUStructure.MaxDiv = ((UINT8) RShiftU64 (msr, 46)) & 0x1;
     gCPUStructure.CurrDiv = ((UINT8) RShiftU64 (msr, 15)) & 0x1;
+#endif
   }
 
-// ----====================================================================----
   if (gCPUStructure.Model >= CPU_MODEL_NEHALEM) {
-    qpimult = 2; //init
     Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
 
     if (!EFI_ERROR (Status)) {
@@ -485,8 +502,10 @@ GetCPUProperties (
                 vid = Pci.Hdr.VendorId & 0xFFFF;
                 did = Pci.Hdr.DeviceId & 0xFF00;
 
-                if ((vid == 0x8086) && (did >= 0x2C00)
-                     && (Device == 2) && (Function == 1)) {
+                if ((vid == 0x8086) &&
+                    (did >= 0x2C00) &&
+                    (Device == 2) &&
+                    (Function == 1)) {
                   Status = PciIo->Mem.Read (
                              PciIo,
                              EfiPciIoWidthUint32,
@@ -519,9 +538,6 @@ GetCPUProperties (
     gCPUStructure.ProcessorInterconnectSpeed = qpibusspeed;
   }
 
-#if 0
-  gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
-#endif
   return gCPUStructure.FSBFrequency;
 }
 
@@ -785,12 +801,12 @@ DumpCPU (
   Print (L"Cores: %d\n", gCPUStructure.Cores);
   Print (L"Threads: %d\n", gCPUStructure.Threads);
   Print (L"ExternalClock: %d MHz\n", gCPUStructure.ExternalClock);
+  Print (L"TSCFreq calculated: %lld Hz\n", MeasureTSCFrequency());
   Print (L"CurrentSpeed:  %d\n", gCPUStructure.CurrentSpeed);
   Print (L"FSB: %lld Hz\n", gCPUStructure.FSBFrequency);
   Print (L"TSC: %lld Hz\n", gCPUStructure.TSCFrequency);
   Print (L"CPU: %lld Hz\n", gCPUStructure.CPUFrequency);
   Print (L"ProcessorInterconnectSpeed: %d MHz\n", gCPUStructure.ProcessorInterconnectSpeed);
-  Print (L"TSCFreq: %lld KHz\n", measure_tsc_frequency());
   Pause (NULL);
   Pause (NULL);
 }
