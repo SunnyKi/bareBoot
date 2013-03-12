@@ -308,23 +308,22 @@ GetCPUProperties (
       // TSC calibration
       //
       gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
-      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
       gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
       break;
 
     case 2:
       //
-      // Get CPU speed from DMI, else TSC calibration
+      // Get CPU speed from DMI, else TSC calibration (we need this 'else'?)
       //
       if (gCPUStructure.CurrentSpeed > 0) {
         gCPUStructure.TSCFrequency = MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed);
-        gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
       } else {
         gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
-        gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
         gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
       }
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
       break;
 
@@ -332,6 +331,11 @@ GetCPUProperties (
       //
       // Get CPU speed (in MHz) from brand string
       //
+      gCPUStructure.TSCFrequency = gCPUStructure.CurrentSpeed ?
+                                    MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed) :
+                                    MeasureTSCFrequency ();
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
+
       s[0] = 0;
       for (index = 0; index < 46; index++) {
         // format is either “x.xxyHz” or “xxxxyHz”, where y=M,G,T and x is digits
@@ -367,11 +371,6 @@ GetCPUProperties (
           break;
         }
       }
-#if 0
-      gCPUStructure.TSCFrequency = MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed);
-#endif
-      gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
-      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
       break;
   }

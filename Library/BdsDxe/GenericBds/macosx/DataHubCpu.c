@@ -204,7 +204,9 @@ SetupDataForOSX (
 )
 {
   EFI_STATUS      Status;
+#if 0
   CHAR16*         CloverVersion;
+#endif
   UINT32          devPathSupportedVal;
   UINT64          FrontSideBus;
   UINT64          CpuSpeed;
@@ -212,6 +214,8 @@ SetupDataForOSX (
   CHAR16*         productName;
   CHAR16*         serialNumber;
 
+  productName     = AllocateZeroPool (64);
+  serialNumber    = AllocateZeroPool (64);
 
   Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &gDataHub);
 
@@ -226,9 +230,6 @@ SetupDataForOSX (
 
     AsciiStrToUnicodeStr (gSettings.ProductName, productName);
     AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
-
-    productName     = AllocateZeroPool (64);
-    serialNumber    = AllocateZeroPool (64);
 
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &FrontSideBus, sizeof (UINT64));
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"TSCFrequency", &TSCFrequency, sizeof (UINT64));
