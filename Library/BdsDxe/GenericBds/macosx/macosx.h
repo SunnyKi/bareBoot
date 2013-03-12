@@ -617,7 +617,7 @@ GetUserSettings (
   IN CHAR16* ConfigPlistPath
 );
 
-UINT64
+VOID
 GetCPUProperties (
   VOID
 );

@@ -134,7 +134,7 @@ DoCpuid (
   AsmCpuid (selector, data, data + 1, data + 2, data + 3);
 }
 
-UINT64
+VOID
 GetCPUProperties (
   VOID
 )
@@ -538,7 +538,22 @@ GetCPUProperties (
     gCPUStructure.ProcessorInterconnectSpeed = qpibusspeed;
   }
 
-  return gCPUStructure.FSBFrequency;
+  if (gSettings.Turbo) {
+#if 0
+    if (gCPUStructure.Turbo4) {
+      gCPUStructure.CPUFrequency = DivU64x32 (MultU64x32 (gCPUStructure.FSBFrequency, gCPUStructure.Turbo4), 10);
+    }
+#endif
+    if (gTurboMsr != 0) {
+      AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, gTurboMsr);
+      gBS->Stall (100);
+      WaitForSts();
+    }
+
+    msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
+  }
+
+  return;
 }
 
 UINT16

@@ -599,46 +599,6 @@ WaitForSts (
   }
 }
 
-EFI_STATUS
-SaveSettings (
-  VOID
-)
-{
-  UINT64  msr;
-
-  gMobile = gSettings.Mobile;
-
-  if ((gSettings.BusSpeed != 0) &&
-       (gSettings.BusSpeed > 10 * kilo) &&
-       (gSettings.BusSpeed < 500 * kilo)) {
-    gCPUStructure.ExternalClock = gSettings.BusSpeed;
-  }
-
-  if ((gSettings.CpuFreqMHz != 0) &&
-       (gSettings.CpuFreqMHz > 100) &&
-       (gSettings.CpuFreqMHz < 20000)) {
-    gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
-  }
-
-  if (gSettings.Turbo) {
-#if 0
-    if (gCPUStructure.Turbo4) {
-      gCPUStructure.CPUFrequency = DivU64x32 (MultU64x32 (gCPUStructure.FSBFrequency, gCPUStructure.Turbo4), 10);
-    }
-#endif
-    if (gTurboMsr != 0) {
-      AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, gTurboMsr);
-      gBS->Stall (100);
-      WaitForSts();
-    }
-
-    msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-  }
-
-  return EFI_SUCCESS;
-}
-
-// ----============================----
 
 UINTN
 AsciiStr2Uintn (
@@ -935,7 +895,20 @@ GetUserSettings (
       gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
     }
 
-    SaveSettings();
+  }
+
+  gMobile = gSettings.Mobile;
+
+  if ((gSettings.BusSpeed != 0) &&
+      (gSettings.BusSpeed > 10 * kilo) &&
+      (gSettings.BusSpeed < 500 * kilo)) {
+    gCPUStructure.ExternalClock = gSettings.BusSpeed;
+  }
+
+  if ((gSettings.CpuFreqMHz != 0) &&
+      (gSettings.CpuFreqMHz > 100) &&
+      (gSettings.CpuFreqMHz < 20000)) {
+    gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
   }
 
   return Status;
