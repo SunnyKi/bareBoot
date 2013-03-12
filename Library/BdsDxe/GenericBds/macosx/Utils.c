@@ -427,37 +427,6 @@ StrToGuidLE (
   return EFI_SUCCESS;
 }
 
-VOID
-GetDefaultSettings (
-  VOID
-)
-{
-  MACHINE_TYPES   Model;
-
-  Model             = GetDefaultModel();
-  gSettings.CpuType = GetAdvancedCpuType();
-  gSettings.PMProfile = 0;
-  gSettings.DefaultBoot[0] = 0;
-  gSettings.BusSpeed = 0;
-  gSettings.CpuFreqMHz = 0; //Hz ->MHz
-  gSettings.ProcessorInterconnectSpeed = 0;
-  AsciiStrCpy (gSettings.VendorName,             BiosVendor);
-  AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[Model]);
-  AsciiStrCpy (gSettings.ReleaseDate,            AppleReleaseDate[Model]);
-  AsciiStrCpy (gSettings.ManufactureName,        BiosVendor);
-  AsciiStrCpy (gSettings.ProductName,            AppleProductName[Model]);
-  AsciiStrCpy (gSettings.VersionNr,              AppleSystemVersion[Model]);
-  AsciiStrCpy (gSettings.SerialNr,               AppleSerialNumber[Model]);
-  AsciiStrCpy (gSettings.FamilyName,             AppleFamilies[Model]);
-  AsciiStrCpy (gSettings.BoardManufactureName,   BiosVendor);
-  AsciiStrCpy (gSettings.BoardSerialNumber,      AppleBoardSN);
-  AsciiStrCpy (gSettings.BoardNumber,            AppleBoardID[Model]);
-  AsciiStrCpy (gSettings.BoardVersion,           AppleSystemVersion[Model]);
-  AsciiStrCpy (gSettings.LocationInChassis,      AppleBoardLocation);
-  AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
-  AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
-}
-
 BOOLEAN
 IsHexDigit (
   CHAR8 c
@@ -778,6 +747,8 @@ GetBootDefault (
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
 
+  ZeroMem (gSettings.DefaultBoot, 40);
+
   if ((RootFileHandle != NULL) && FileExists (RootFileHandle, ConfigPlistPath)) {
     Status = egLoadFile (RootFileHandle, ConfigPlistPath, (UINT8**) &gConfigPtr, &size);
   }
@@ -788,18 +759,18 @@ GetBootDefault (
   }
 
   dict = NULL;
-  if (gConfigPtr) {
+  if (gConfigPtr != NULL) {
     if (ParseXML ((const CHAR8*) gConfigPtr, &dict) != EFI_SUCCESS) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
     }
-  }
 
-  dictPointer = GetProperty (dict, "SystemParameters");
+    dictPointer = GetProperty (dict, "SystemParameters");
 
-  if (dictPointer != NULL) {
-    gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0xFFFF);
-    GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
+    if (dictPointer != NULL) {
+      gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0xFFFF);
+      GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
+    }
   }
 
   return Status;
@@ -818,9 +789,27 @@ GetUserSettings (
   TagPtr      dictPointer;
   TagPtr      prop;
   CHAR16      cUUID[40];
+  MACHINE_TYPES   Model;
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
+
+  Model             = GetDefaultModel();
+  AsciiStrCpy (gSettings.VendorName,             BiosVendor);
+  AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[Model]);
+  AsciiStrCpy (gSettings.ReleaseDate,            AppleReleaseDate[Model]);
+  AsciiStrCpy (gSettings.ManufactureName,        BiosVendor);
+  AsciiStrCpy (gSettings.ProductName,            AppleProductName[Model]);
+  AsciiStrCpy (gSettings.VersionNr,              AppleSystemVersion[Model]);
+  AsciiStrCpy (gSettings.SerialNr,               AppleSerialNumber[Model]);
+  AsciiStrCpy (gSettings.FamilyName,             AppleFamilies[Model]);
+  AsciiStrCpy (gSettings.BoardManufactureName,   BiosVendor);
+  AsciiStrCpy (gSettings.BoardSerialNumber,      AppleBoardSN);
+  AsciiStrCpy (gSettings.BoardNumber,            AppleBoardID[Model]);
+  AsciiStrCpy (gSettings.BoardVersion,           AppleSystemVersion[Model]);
+  AsciiStrCpy (gSettings.LocationInChassis,      AppleBoardLocation);
+  AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
+  AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
 
   if ((RootFileHandle != NULL) && FileExists (RootFileHandle, ConfigPlistPath)) {
     Status = egLoadFile (RootFileHandle, ConfigPlistPath, (UINT8**) &gConfigPtr, &size);

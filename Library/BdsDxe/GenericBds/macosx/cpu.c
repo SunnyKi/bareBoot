@@ -34,15 +34,9 @@
  */
 
 #include "Library/IoLib.h"
-
 #include "macosx.h"
 
 UINT8             gDefaultType;
-UINT64            TurboMsr = 0;
-
-#define CLKNUM          1193182         /* formerly 1193167 1193182 */
-#define CALIBRATE_TIME_MSEC 30 /* 30 msecs */
-#define CALIBRATE_LATCH ((CLKNUM * CALIBRATE_TIME_MSEC + 1000/2)/1000)
 
 VOID
 enable_PIT2 (
@@ -176,6 +170,7 @@ GetCPUProperties (
   qpimult = 2;
   multiplier = 0;
   s = NULL;
+  TurboMsr = 0;
 
   gCPUStructure.MaxDiv = 1;
   gCPUStructure.CurrDiv = 1;

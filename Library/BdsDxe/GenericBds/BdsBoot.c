@@ -250,7 +250,6 @@ MacOS:
   GetCPUProperties ();
   ScanSPD ();
   SetPrivateVarProto ();
-  GetDefaultSettings ();
   GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
   SetDevices ();
   PatchSmbios ();

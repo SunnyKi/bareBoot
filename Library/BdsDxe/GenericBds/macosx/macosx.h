@@ -37,9 +37,10 @@
 #define HPET_OEM_ID        { 'A', 'P', 'P', 'L', 'E', ' ' }
 #define HPET_OEM_TABLE_ID  { 'A', 'p', 'p', 'l', 'e', '0', '0', ' ' }
 #define HPET_CREATOR_ID    { 'L', 'o', 'k', 'i' }
-#if 0
-#define EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE  SIGNATURE_32('S', 'S', 'D', 'T')
-#endif
+
+#define CLKNUM              1193182         /* formerly 1193167 1193182 */
+#define CALIBRATE_TIME_MSEC 30 /* msecs */
+#define CALIBRATE_LATCH     ((CLKNUM * CALIBRATE_TIME_MSEC + 1000/2)/1000)
 
 /* CPUID Index */
 #define CPUID_0   0
@@ -514,6 +515,7 @@ EFI_GUID                        gUuid;
 BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
+UINT64                          TurboMsr;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
