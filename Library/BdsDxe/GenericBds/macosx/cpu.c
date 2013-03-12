@@ -572,36 +572,18 @@ GetCPUProperties (
 }
 
 UINT16
-GetStandardCpuType (
-  VOID
-)
-{
-  if (gCPUStructure.Threads >= 4) {
-    return 0x402;   // Quad-Core Xeon
-  } else if (gCPUStructure.Threads == 1) {
-    return 0x201;   // Core Solo
-  };
-
-  return 0x301;   // Core 2 Duo
-}
-
-UINT16
 GetAdvancedCpuType (
   VOID
 )
 {
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
     switch (gCPUStructure.Family) {
+
       case 0x06: {
         switch (gCPUStructure.Model) {
           case CPU_MODEL_DOTHAN:// Dothan
           case CPU_MODEL_YONAH: // Yonah
             return 0x201;
-
-          case CPU_MODEL_MEROM: // Merom
-          case CPU_MODEL_PENRYN:// Penryn
-          case CPU_MODEL_ATOM:  // Atom (45nm)
-            return GetStandardCpuType();
 
           case CPU_MODEL_NEHALEM_EX: //Xeon 5300
             return 0x402;
@@ -665,12 +647,22 @@ GetAdvancedCpuType (
             }
 
             return 0x704;
+
+          case CPU_MODEL_MEROM: // Merom
+          case CPU_MODEL_PENRYN:// Penryn
+          case CPU_MODEL_ATOM:  // Atom (45nm)
+          default:
+            if (gCPUStructure.Threads >= 4) {
+              return 0x402;   // Quad-Core Xeon
+            } else if (gCPUStructure.Threads == 1) {
+              return 0x201;   // Core Solo
+            };
+            return 0x301;   // Core 2 Duo
         }
       }
     }
   }
-
-  return GetStandardCpuType();
+  return 0x0;
 }
 
 MACHINE_TYPES
