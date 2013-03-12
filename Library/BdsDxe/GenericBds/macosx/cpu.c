@@ -284,9 +284,7 @@ GetCPUProperties (
     AsciiStrnCpy (gCPUStructure.BrandString, s, 48);
 
 #if 0
-    if (!AsciiStrnCmp ((CONST CHAR8*) gCPUStructure.BrandString,
-                       (CONST CHAR8*) CPU_STRING_UNKNOWN,
-                       AsciiStrLen (gCPUStructure.BrandString))) {
+    if (AsciiStrStr (CONST CHAR8*) gCPUStructure.BrandString, (CONST CHAR8*) CPU_STRING_UNKNOWN) != NULL ) {
       gCPUStructure.BrandString[0] = '\0';
     }
 #endif
