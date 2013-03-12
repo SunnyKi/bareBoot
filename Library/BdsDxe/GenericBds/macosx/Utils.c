@@ -24,8 +24,6 @@ EfiGrowBuffer (
   IN UINTN            BufferSize
   );
 
-extern  UINT64  TurboMsr;
-
 CHAR8*  DefaultMemEntry = "N/A";
 CHAR8*  DefaultSerial = "CT288GT9VT6";
 CHAR8*  BiosVendor = "Apple Inc.";
@@ -628,8 +626,8 @@ SaveSettings (
       gCPUStructure.CPUFrequency = DivU64x32 (MultU64x32 (gCPUStructure.FSBFrequency, gCPUStructure.Turbo4), 10);
     }
 
-    if (TurboMsr != 0) {
-      AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, TurboMsr);
+    if (gTurboMsr != 0) {
+      AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, gTurboMsr);
       gBS->Stall (100);
       WaitForSts();
     }

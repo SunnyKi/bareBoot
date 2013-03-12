@@ -170,7 +170,7 @@ GetCPUProperties (
   qpimult = 2;
   multiplier = 0;
   s = NULL;
-  TurboMsr = 0;
+  gTurboMsr = 0;
 
   gCPUStructure.MaxDiv = 1;
   gCPUStructure.CurrDiv = 1;
@@ -214,8 +214,9 @@ GetCPUProperties (
   }
 
   gCPUStructure.Model += (gCPUStructure.Extmodel << 4);
-
-// Cores & Threads count
+  //
+  // Cores & Threads count
+  //
   if (gCPUStructure.Features & CPUID_FEATURE_HTT) {
     gCPUStructure.LogicalPerPackage = bitfield (gCPUStructure.CPUID[CPUID_1][EBX], 23, 16); //Atom330 = 4
   } else {
@@ -268,8 +269,9 @@ GetCPUProperties (
     gCPUStructure.Cores   = (UINT8) (gCPUStructure.CoresPerPackage & 0xff);
     gCPUStructure.Threads = (UINT8) (gCPUStructure.LogicalPerPackage & 0xff);
   }
-
+  //
   // Brand String
+  //
   if (gCPUStructure.CPUID[CPUID_80][0] >= 0x80000004) {
     ZeroMem (str, 128);
     DoCpuid (0x80000002, reg);
@@ -294,8 +296,10 @@ GetCPUProperties (
     gCPUStructure.BrandString[47] = '\0';
   }
 
+  //
+  // Compute frequency (in MHz) from brand string
+  //
   s[0] = 0;
-
   for (index = 0; index < 46; index++) {
     // format is either “x.xxyHz” or “xxxxyHz”, where y=M,G,T and x is digits
     // Search brand string for “yHz” where y is M, G, or T
@@ -315,8 +319,6 @@ GetCPUProperties (
       // index is at position of y in “x.xxyHz”
       AsciiStrnCpy (s, &gCPUStructure.BrandString[index - 4], 7);
       s[7] = 0; // null terminate the string
-
-      // Compute frequency (in MHz) from brand string
       if (gCPUStructure.BrandString[index - 3] == '.') { // If format is “x.xx”
         gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * (UINT16) multiplier;
         gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * (UINT16) (multiplier / 10);
@@ -333,66 +335,6 @@ GetCPUProperties (
     }
   }
 
-#if 0
-  for (Index = 0; Index < 47; Index++) {
-    if (gCPUStructure.BrandString[Index] == '@') {
-      for (i = 0; i < 10; i++) {
-        str[i] = gCPUStructure.BrandString[Index + 2 + i];
-
-        if (gCPUStructure.BrandString[Index + 3 + i] == 'G') {
-          str[i + 1] = '\0';
-          break;
-        }
-      }
-
-      break;
-    }
-  }
-
-  AsciiStrnCpy (s, str, i + 1);
-
-  for (Index = 0; Index < 10; Index++) {
-    if (s[Index] != '.') {
-      str[Index] = s[Index];
-
-      if (s[Index] == '\0') {
-        break;
-      }
-    } else {
-      for (i = 1; i < 10; i++) {
-        str[Index + i - 1] = s[Index + i];
-
-        if (s[Index + 1] == '\0') {
-          break;
-        }
-      }
-
-      break;
-    }
-  }
-
-  switch (AsciiStrLen (str)) {
-    case 0:
-      break;
-
-    case 1:
-      gCPUStructure.CurrentSpeed = AsciiStrDecimalToUintn (str) * 1000;
-      break;
-
-    case 2:
-      gCPUStructure.CurrentSpeed = AsciiStrDecimalToUintn (str) * 100;
-      break;
-
-    case 3:
-      gCPUStructure.CurrentSpeed = AsciiStrDecimalToUintn (str) * 10;
-      break;
-
-    default:
-      gCPUStructure.CurrentSpeed = AsciiStrDecimalToUintn (str);
-      break;
-  }
-#endif
-
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL && gCPUStructure.Family == 0x06 && gCPUStructure.Model >= 0x0c) {
     switch (gCPUStructure.Model) {
       case CPU_MODEL_SANDY_BRIDGE:// Sandy Bridge, 32nm
@@ -405,7 +347,7 @@ GetCPUProperties (
         gCPUStructure.MaxRatio = (UINT8) RShiftU64 (msr, 8);
 #endif
         msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-        TurboMsr = msr + 0x100;
+        gTurboMsr = msr + 0x100;
         gCPUStructure.MaxRatio = (UINT8) RShiftU64 (msr, 8);
         msr = AsmReadMsr64 (MSR_FLEX_RATIO);
 
@@ -446,7 +388,7 @@ GetCPUProperties (
         gCPUStructure.MinRatio = (UINT8) RShiftU64 (msr, 40);
         msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
         gCPUStructure.MaxRatio = (UINT8) msr;
-        TurboMsr = msr + 1;
+        gTurboMsr = msr + 1;
 #if 0
         if (gCPUStructure.MaxRatio) {
           gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
@@ -485,7 +427,7 @@ GetCPUProperties (
         }
 
         msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-        TurboMsr = msr + 0x100;
+        gTurboMsr = msr + 0x100;
         gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
         gCPUStructure.SubDivider = ((UINT32) RShiftU64 (msr, 14)) & 0x1;
 #if 0
