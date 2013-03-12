@@ -756,6 +756,7 @@ GetUserSettings (
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
+  dict = NULL;
 
   Model             = GetDefaultModel();
   AsciiStrCpy (gSettings.VendorName,             BiosVendor);
