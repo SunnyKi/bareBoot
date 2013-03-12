@@ -473,7 +473,7 @@ GetCPUProperties (
         gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
         
         if ((gCPUStructure.MaxRatio != 0) && (gSettings.CPUSpeedDetectiond == 1)) {
-          gCPUStructure.FSBFrequency = DivU64x32 ((gCPUStructure.TSCFrequency * 10), gCPUStructure.MaxRatio);
+          gCPUStructure.FSBFrequency = DivU64x32 (MultU64x32 (gCPUStructure.TSCFrequency, 10), gCPUStructure.MaxRatio);
         }
 
         gCPUStructure.Turbo4 = (UINT8) (gCPUStructure.MaxRatio + 10);
