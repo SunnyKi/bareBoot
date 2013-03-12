@@ -354,6 +354,7 @@ typedef struct {
   // SMBIOS TYPE4
   UINT16  CpuFreqMHz;
   UINT32  BusSpeed; //in kHz
+  UINT8   CPUSpeedDetectiond;
   BOOLEAN Turbo;
   // SMBIOS TYPE17
   CHAR8 MemoryManufacturer[64];

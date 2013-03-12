@@ -21,9 +21,9 @@
 
 #include "macosx.h"
 
-static EFI_GUID           *gTableGuidArray[] = {&gEfiSmbiosTableGuid};
+static EFI_GUID             *gTableGuidArray[] = {&gEfiSmbiosTableGuid};
 
-VOID                            *Smbios;  //pointer to SMBIOS data
+VOID                        *Smbios;  //pointer to SMBIOS data
 SMBIOS_TABLE_ENTRY_POINT    *EntryPoint; //SmbiosEps original
 SMBIOS_TABLE_ENTRY_POINT    *SmbiosEpsNew; //new SmbiosEps
 //for patching
@@ -629,6 +629,7 @@ GetTableType4 (
     gCPUStructure.ExternalClock = SmbiosTable.Type4->ExternalClock;  //MHz
   }
 
+  gCPUStructure.CurrentSpeed = 0;
   gCPUStructure.CurrentSpeed = SmbiosTable.Type4->CurrentSpeed; //MHz
   gCPUStructure.MaxSpeed = SmbiosTable.Type4->MaxSpeed; //MHz
   return;

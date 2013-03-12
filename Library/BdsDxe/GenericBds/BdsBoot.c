@@ -247,15 +247,15 @@ BdsLibBootViaBootOption (
 MacOS:
   InitializeConsoleSim (gImageHandle); 
   PrepatchSmbios ();
-  ScanSPD ();
-  SetPrivateVarProto ();
   GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
   GetCPUProperties ();
+  ScanSPD ();
   SetDevices ();
   PatchSmbios ();
+  FinalizeSmbios ();
   PatchACPI (gRootFHandle);
   SetVariablesForOSX ();
-  FinalizeSmbios ();
+  SetPrivateVarProto ();
   SetupDataForOSX ();
   EventsInitialize ();
 #if 0

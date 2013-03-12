@@ -301,54 +301,80 @@ GetCPUProperties (
                                 MultU64x32 (1000000ull, gCPUStructure.ExternalClock) :
                                 100000000ull;
 
-  gCPUStructure.TSCFrequency = gCPUStructure.CurrentSpeed ?
-                                MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed) :
-                                MeasureTSCFrequency ();
+  switch (gSettings.CPUSpeedDetectiond) {
 
-  gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
+    case 1:
+      //
+      // TSC calibration
+      //
+      gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
+      gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
 
-  //
-  // Compute frequency (in MHz) from brand string
-  //
-  s[0] = 0;
-  for (index = 0; index < 46; index++) {
-    // format is either “x.xxyHz” or “xxxxyHz”, where y=M,G,T and x is digits
-    // Search brand string for “yHz” where y is M, G, or T
-    // Set multiplier so frequency is in MHz
-    if (gCPUStructure.BrandString[index + 1] == 'H' && gCPUStructure.BrandString[index + 2] == 'z') {
-      if (gCPUStructure.BrandString[index] == 'M') {
-        multiplier = 1;
-      } else if (gCPUStructure.BrandString[index] == 'G') {
-        multiplier = 1000;
-      } else if (gCPUStructure.BrandString[index] == 'T') {
-        multiplier = 1000000;
-      }
-    }
+      break;
 
-    if (multiplier > 0) {
-      // Copy 7 characters (length of “x.xxyHz”)
-      // index is at position of y in “x.xxyHz”
-      AsciiStrnCpy (s, &gCPUStructure.BrandString[index - 4], 7);
-      s[7] = 0;
-      if (gCPUStructure.BrandString[index - 3] == '.') { // If format is “x.xx”
-        gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * (UINT16) multiplier;
-        gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * (UINT16) (multiplier / 10);
-        gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 1] - '0') * (UINT16) (multiplier / 100);
-      } else {                                           // If format is xxxx
-        gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * 1000;
-        gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 3] - '0') * 100;
-        gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * 10;
-        gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 1] - '0');
-        gCPUStructure.CurrentSpeed *= (UINT16) multiplier;
+    case 2:
+      //
+      // Get CPU speed from DMI, else TSC calibration
+      //
+      if (gCPUStructure.CurrentSpeed > 0) {
+        gCPUStructure.TSCFrequency = MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed);
+        gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
+      } else {
+        gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
+        gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
+        gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
       }
 
       break;
-    }
-  }
 
+    default:
+      //
+      // Get CPU speed (in MHz) from brand string
+      //
+      s[0] = 0;
+      for (index = 0; index < 46; index++) {
+        // format is either “x.xxyHz” or “xxxxyHz”, where y=M,G,T and x is digits
+        // Search brand string for “yHz” where y is M, G, or T
+        // Set multiplier so frequency is in MHz
+        if (gCPUStructure.BrandString[index + 1] == 'H' && gCPUStructure.BrandString[index + 2] == 'z') {
+          if (gCPUStructure.BrandString[index] == 'M') {
+            multiplier = 1;
+          } else if (gCPUStructure.BrandString[index] == 'G') {
+            multiplier = 1000;
+          } else if (gCPUStructure.BrandString[index] == 'T') {
+            multiplier = 1000000;
+          }
+        }
+
+        if (multiplier > 0) {
+          // Copy 7 characters (length of “x.xxyHz”)
+          // index is at position of y in “x.xxyHz”
+          AsciiStrnCpy (s, &gCPUStructure.BrandString[index - 4], 7);
+          s[7] = 0;
+          if (gCPUStructure.BrandString[index - 3] == '.') { // If format is “x.xx”
+            gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * (UINT16) multiplier;
+            gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * (UINT16) (multiplier / 10);
+            gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 1] - '0') * (UINT16) (multiplier / 100);
+          } else {                                           // If format is xxxx
+            gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * 1000;
+            gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 3] - '0') * 100;
+            gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * 10;
+            gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 1] - '0');
+            gCPUStructure.CurrentSpeed *= (UINT16) multiplier;
+          }
+          
+          break;
+        }
+      }
 #if 0
-  gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
+      gCPUStructure.TSCFrequency = MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed);
 #endif
+      gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
+
+      break;
+  }
 
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL &&
       gCPUStructure.Family == 0x06 &&

@@ -212,32 +212,33 @@ SetupDataForOSX (
   CHAR16*         productName;
   CHAR16*         serialNumber;
 
-  CloverVersion = L"2.0";
-  devPathSupportedVal = 1;
-  FrontSideBus    = gCPUStructure.FSBFrequency;
-  CpuSpeed        = gCPUStructure.CPUFrequency;
-  TSCFrequency    = gCPUStructure.TSCFrequency;
-  productName     = AllocateZeroPool (64);
-  serialNumber    = AllocateZeroPool (64);
 
   Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &gDataHub);
 
   if (!EFI_ERROR (Status)) {
-
-    if ((FrontSideBus < (50 * Mega)) || (FrontSideBus > (500 * Mega))) {
-      FrontSideBus = 100 * Mega;
-    }
+#if 0
+    CloverVersion = L"1.0";
+#endif
+    devPathSupportedVal = 1;
+    FrontSideBus    = gCPUStructure.FSBFrequency;
+    CpuSpeed        = gCPUStructure.CPUFrequency;
+    TSCFrequency    = gCPUStructure.TSCFrequency;
 
     AsciiStrToUnicodeStr (gSettings.ProductName, productName);
     AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
+
+    productName     = AllocateZeroPool (64);
+    serialNumber    = AllocateZeroPool (64);
+
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &FrontSideBus, sizeof (UINT64));
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"TSCFrequency", &TSCFrequency, sizeof (UINT64));
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"CPUFrequency", &CpuSpeed, sizeof (UINT64));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"DevicePathsSupported", &devPathSupportedVal, sizeof (UINT32));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
+#if 0
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Clover", CloverVersion, (UINT32) StrSize (CloverVersion));
-
+#endif
     return Status;
   } else {
     return EFI_NOT_FOUND;
