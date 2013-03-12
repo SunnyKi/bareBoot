@@ -331,8 +331,8 @@ GetCPUProperties (
 
       s[0] = 0;
       for (index = 0; index < 46; index++) {
-        // format is either “x.xxyHz” or “xxxxyHz”, where y=M,G,T and x is digits
-        // Search brand string for “yHz” where y is M, G, or T
+        // format is either "x.xxyHz" or "xxxxyHz", where y=M,G,T and x is digits
+        // Search brand string for "yHz" where y is M, G, or T
         // Set multiplier so frequency is in MHz
         if (gCPUStructure.BrandString[index + 1] == 'H' && gCPUStructure.BrandString[index + 2] == 'z') {
           if (gCPUStructure.BrandString[index] == 'M') {
@@ -345,11 +345,11 @@ GetCPUProperties (
         }
 
         if (multiplier > 0) {
-          // Copy 7 characters (length of “x.xxyHz”)
-          // index is at position of y in “x.xxyHz”
+          // Copy 7 characters (length of "x.xxyHz")
+          // index is at position of y in "x.xxyHz"
           AsciiStrnCpy (s, &gCPUStructure.BrandString[index - 4], 7);
           s[7] = 0;
-          if (gCPUStructure.BrandString[index - 3] == '.') { // If format is “x.xx”
+          if (gCPUStructure.BrandString[index - 3] == '.') { // If format is "x.xx"
             gCPUStructure.CurrentSpeed  = (UINT16) (gCPUStructure.BrandString[index - 4] - '0') * (UINT16) multiplier;
             gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 2] - '0') * (UINT16) (multiplier / 10);
             gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 1] - '0') * (UINT16) (multiplier / 100);
