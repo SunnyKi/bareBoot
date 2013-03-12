@@ -673,7 +673,7 @@ GetAsciiProperty (
   }
 }
 
-VOID
+BOOLEAN
 GetUnicodeProperty (
   TagPtr dict,
   CHAR8* key,
@@ -685,6 +685,9 @@ GetUnicodeProperty (
   dentry = GetProperty (dict, key);
   if (dentry != NULL) {
     AsciiStrToUnicodeStr (dentry->string, uptr);
+    return TRUE;
+  } else {
+    return FALSE;
   }
 }
 
@@ -727,7 +730,9 @@ GetBootDefault (
 
     if (dictPointer != NULL) {
       gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
-      GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot);
+      if (!GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot)) {
+        gSettings.BootTimeout = 0xFFFF;
+      };
     }
   }
 
