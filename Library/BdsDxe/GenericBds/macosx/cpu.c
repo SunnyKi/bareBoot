@@ -541,7 +541,7 @@ GetCPUProperties (
       }
     }
 
-    qpibusspeed = (UINT16) (qpimult * 2 * (gCPUStructure.FSBFrequency / 1000000));
+    qpibusspeed = (UINT16) (qpimult * 2 * (UINT32) DivU64x32 (gCPUStructure.FSBFrequency, 1000000));
 
     if (qpibusspeed % 100 != 0) {
       qpibusspeed = ((qpibusspeed + 50) / 100) * 100;
