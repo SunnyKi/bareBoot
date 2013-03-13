@@ -362,6 +362,11 @@ TagPtr
 GetProperty (TagPtr dict, const CHAR8* key) {
   TagPtr tagList, tag;
 
+  // No more shots to leg ;-)
+  if (dict == NULL) {
+    return NULL;
+  }
+
   if (dict->type != kTagTypeDict) {
     return NULL;
   }
