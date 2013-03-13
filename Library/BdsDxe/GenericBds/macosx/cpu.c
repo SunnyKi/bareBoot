@@ -36,8 +36,6 @@
 #include "Library/IoLib.h"
 #include "macosx.h"
 
-UINT8             gDefaultType;
-
 VOID
 EnablePIT2 (
   VOID
@@ -123,8 +121,6 @@ MeasureTSCFrequency (
   return retval;
 }
 
-// ----=========================================----
-
 VOID
 DoCpuid (
   UINT32 selector,
@@ -146,6 +142,7 @@ GetCPUProperties (
   PCI_TYPE00            Pci;
   UINT64                msr;
   UINT64                flex_ratio;
+  UINT64                TurboMsr;
   UINTN                 HandleCount;
   UINTN                 ArrayCount;
   UINTN                 HandleIndex;
@@ -169,63 +166,59 @@ GetCPUProperties (
   qpimult = 2;
   multiplier = 0;
   s = NULL;
-  gTurboMsr = 0;
+  TurboMsr = 0;
   
   gCPUStructure.MaxRatio = 10;
   gCPUStructure.MinRatio = 10;
   gCPUStructure.ProcessorInterconnectSpeed = 0;
+#if 0
   gCPUStructure.Mobile = FALSE; //not same as gMobile
-
-  DoCpuid (0, gCPUStructure.CPUID[CPUID_0]);
-  gCPUStructure.Vendor      = gCPUStructure.CPUID[CPUID_0][1];
-  DoCpuid (1, gCPUStructure.CPUID[CPUID_1]);
-
+#endif
   AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
-  msr = AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID);
-  gCPUStructure.MicroCode = RShiftU64 (msr, 32);
+  gCPUStructure.MicroCode = RShiftU64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32);
   gCPUStructure.ProcessorFlag = RShiftU64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50) & 3;
 
+  DoCpuid (0x00000000, gCPUStructure.CPUID[CPUID_0]);
+  DoCpuid (0x00000001, gCPUStructure.CPUID[CPUID_1]);
+  DoCpuid (0x00000004, gCPUStructure.CPUID[CPUID_4]);
   DoCpuid (0x80000000, gCPUStructure.CPUID[CPUID_80]);
 
-  if ((gCPUStructure.CPUID[CPUID_80][0] & 0x0000000f) >= 1) {
+  if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 1) {
     DoCpuid (0x80000001, gCPUStructure.CPUID[CPUID_81]);
   }
 
-  gCPUStructure.Signature   = gCPUStructure.CPUID[CPUID_1][0];
-  gCPUStructure.Stepping    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 3, 0);
-  gCPUStructure.Model       = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 7, 4);
-  gCPUStructure.Family      = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 11, 8);
-  gCPUStructure.Type        = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 13, 12);
-  gCPUStructure.Extmodel    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 19, 16);
-  gCPUStructure.Extfamily   = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][0], 27, 20);
-  gCPUStructure.Features    = quad (gCPUStructure.CPUID[CPUID_1][2], gCPUStructure.CPUID[CPUID_1][3]);
-  gCPUStructure.ExtFeatures = quad (gCPUStructure.CPUID[CPUID_81][2], gCPUStructure.CPUID[CPUID_81][3]);
+  gCPUStructure.Vendor      = gCPUStructure.CPUID[CPUID_0][EBX];
+  gCPUStructure.Signature   = gCPUStructure.CPUID[CPUID_1][EAX];
+  gCPUStructure.Stepping    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 3, 0);
+  gCPUStructure.Model       = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 7, 4);
+  gCPUStructure.Family      = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 11, 8);
+  gCPUStructure.Type        = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 13, 12);
+  gCPUStructure.Extmodel    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 19, 16);
+  gCPUStructure.Extfamily   = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 27, 20);
+  gCPUStructure.Features    = quad (gCPUStructure.CPUID[CPUID_1][ECX], gCPUStructure.CPUID[CPUID_1][EDX]);
+  gCPUStructure.ExtFeatures = quad (gCPUStructure.CPUID[CPUID_81][ECX], gCPUStructure.CPUID[CPUID_81][EDX]);
+  gCPUStructure.Model       += (gCPUStructure.Extmodel << 4);
 
   if (gCPUStructure.Family == 0x0f) {
     gCPUStructure.Family += gCPUStructure.Extfamily;
   }
 
-  gCPUStructure.Model += (gCPUStructure.Extmodel << 4);
+  if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 7) {
+    DoCpuid (0x80000007, gCPUStructure.CPUID[CPUID_87]);
+    gCPUStructure.ExtFeatures |= gCPUStructure.CPUID[CPUID_87][EDX] & (UINT32) CPUID_EXTFEATURE_TSCI;
+  }
   //
   // Cores & Threads count
   //
   if (gCPUStructure.Features & CPUID_FEATURE_HTT) {
-    gCPUStructure.LogicalPerPackage = bitfield (gCPUStructure.CPUID[CPUID_1][EBX], 23, 16); //Atom330 = 4
+    gCPUStructure.LogicalPerPackage = bitfield (gCPUStructure.CPUID[CPUID_1][EBX], 23, 16); 
   } else {
     gCPUStructure.LogicalPerPackage = 1;
   }
 
-  DoCpuid (4, gCPUStructure.CPUID[CPUID_4]);
-
-  gCPUStructure.CoresPerPackage =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 31, 26) + 1; //Atom330 = 2
-
+  gCPUStructure.CoresPerPackage =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 31, 26) + 1;
   if (gCPUStructure.CoresPerPackage == 0) {
     gCPUStructure.CoresPerPackage = 1;
-  }
-
-  if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 7) {
-    DoCpuid (0x80000007, gCPUStructure.CPUID[CPUID_87]);
-    gCPUStructure.ExtFeatures |= gCPUStructure.CPUID[CPUID_87][EDX] & (UINT32) CPUID_EXTFEATURE_TSCI;
   }
 
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
@@ -253,15 +246,10 @@ GetCPUProperties (
         break;
 
       default:
-        gCPUStructure.Cores   = (UINT8) (bitfield (gCPUStructure.CPUID[CPUID_1][EBX], 23, 16));
+        gCPUStructure.Cores   = (UINT8) (gCPUStructure.CoresPerPackage & 0xff);
         gCPUStructure.Threads = (UINT8) (gCPUStructure.LogicalPerPackage & 0xff);
         break;
     }
-  }
-
-  if (gCPUStructure.Cores == 0) {
-    gCPUStructure.Cores   = (UINT8) (gCPUStructure.CoresPerPackage & 0xff);
-    gCPUStructure.Threads = (UINT8) (gCPUStructure.LogicalPerPackage & 0xff);
   }
   //
   // Brand String
@@ -277,7 +265,7 @@ GetCPUProperties (
 
     for (s = str; *s != '\0'; s++) {
       if (*s != ' ') {
-        break;  //remove leading spaces
+        break;
       }
     }
 
@@ -374,20 +362,21 @@ GetCPUProperties (
 
     switch (gCPUStructure.Model) {
 
-      case CPU_MODEL_SANDY_BRIDGE:// Sandy Bridge, 32nm
+      case CPU_MODEL_SANDY_BRIDGE:
       case CPU_MODEL_JAKETOWN:
       case CPU_MODEL_IVY_BRIDGE:
       case CPU_MODEL_IVY_BRIDGE_E5:
         msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
         gCPUStructure.MinRatio = (UINT8) (RShiftU64 (msr, 40) & 0xff);
-#if 1
         gCPUStructure.MaxRatio = (UINT8) (RShiftU64 (msr, 8) & 0xff);
-#else
-        msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-        gCPUStructure.MaxRatio = (UINT8) (RShiftU64 (msr, 8) & 0xff);
+#if 0
+        TurboMsr = msr + 0x100;
 #endif
+        if ((gCPUStructure.MaxRatio != 0) && (gSettings.CPUSpeedDetectiond == 1)) {
+          gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
+        }
+
         msr = AsmReadMsr64 (MSR_FLEX_RATIO);
-    
         if ((msr & 0x10000) != 0) {
           flex_ratio = (UINT8) RShiftU64 (msr, 8);
 
@@ -398,18 +387,12 @@ GetCPUProperties (
           }
         }
 
-        if ((gCPUStructure.MaxRatio) && (gSettings.CPUSpeedDetectiond == 1)) {
-          gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
-        }
-
-        gTurboMsr = msr + 0x100;
-
         msr = AsmReadMsr64(MSR_TURBO_RATIO_LIMIT);   //0x1AD
         
-        gCPUStructure.Turbo1 = (UINT8)RShiftU64(msr, 0) & 0xff;
-        gCPUStructure.Turbo2 = (UINT8)MultU64x32(RShiftU64(msr, 8) & 0xff, 10);
-        gCPUStructure.Turbo3 = (UINT8)MultU64x32(RShiftU64(msr, 16) & 0xff, 10);
-        gCPUStructure.Turbo4 = (UINT8)RShiftU64(msr, 24) & 0xff;
+        gCPUStructure.Turbo1 = (UINT8) MultU64x32((RShiftU64(msr, 0) & 0xff), 10);
+        gCPUStructure.Turbo2 = (UINT8) MultU64x32((RShiftU64(msr, 8) & 0xff), 10);
+        gCPUStructure.Turbo3 = (UINT8) MultU64x32((RShiftU64(msr, 16) & 0xff), 10);
+        gCPUStructure.Turbo4 = (UINT8) RShiftU64(msr, 24) & 0xff;
 
         if (gCPUStructure.Turbo4 == 0) {
           gCPUStructure.Turbo4 = (UINT8)gCPUStructure.MaxRatio;
@@ -417,32 +400,25 @@ GetCPUProperties (
 
         gCPUStructure.MinRatio *= 10;
         gCPUStructure.MaxRatio *= 10;
-        gCPUStructure.Turbo1 *= 10;
         gCPUStructure.Turbo4 *= 10;
 
         break;
     
-      case CPU_MODEL_NEHALEM:// Core i7 LGA1366, Xeon 5500, "Bloomfield", "Gainstown", 45nm
-      case CPU_MODEL_FIELDS:// Core i7, i5 LGA1156, "Clarksfield", "Lynnfield", "Jasper", 45nm
-      case CPU_MODEL_DALES:// Core i7, i5, Nehalem
-      case CPU_MODEL_CLARKDALE:// Core i7, i5, i3 LGA1156, "Westmere", "Clarkdale", , 32nm
-      case CPU_MODEL_WESTMERE:// Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
-      case CPU_MODEL_NEHALEM_EX:// Core i7, Nehalem-Ex Xeon, "Beckton"
-      case CPU_MODEL_WESTMERE_EX:// Core i7, Nehalem-Ex Xeon, "Eagleton"
+      case CPU_MODEL_NEHALEM:     // Core i7 LGA1366, Xeon 5500, "Bloomfield", "Gainstown", 45nm
+      case CPU_MODEL_FIELDS:      // Core i7, i5 LGA1156, "Clarksfield", "Lynnfield", "Jasper", 45nm
+      case CPU_MODEL_DALES:       // Core i7, i5, Nehalem
+      case CPU_MODEL_CLARKDALE:   // Core i7, i5, i3 LGA1156, "Westmere", "Clarkdale", , 32nm
+      case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
+      case CPU_MODEL_NEHALEM_EX:  // Core i7, Nehalem-Ex Xeon, "Beckton"
+      case CPU_MODEL_WESTMERE_EX: // Core i7, Nehalem-Ex Xeon, "Eagleton"
         msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
         gCPUStructure.MinRatio = (UINT8) (RShiftU64 (msr, 40) & 0xff);
-#if 1
         gCPUStructure.MaxRatio = (UINT8) (RShiftU64(msr, 8) & 0xff);
-#else
-        msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-        gCPUStructure.MaxRatio = (UINT8) msr;
-#endif
+        TurboMsr = msr + 1;
 
-        if ((gCPUStructure.MaxRatio) && (gSettings.CPUSpeedDetectiond == 1)) {
+        if ((gCPUStructure.MaxRatio != 0) && (gSettings.CPUSpeedDetectiond == 1)) {
           gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
         }
-
-        gTurboMsr = msr + 1;
 
         msr = AsmReadMsr64(MSR_TURBO_RATIO_LIMIT);
 
@@ -461,22 +437,22 @@ GetCPUProperties (
       case CPU_MODEL_YONAH:// Core Duo/Solo, Pentium M DC
       case CPU_MODEL_MEROM:// Core Xeon, Core 2 DC, 65nm
       case CPU_MODEL_PENRYN:// Core 2 Duo/Extreme, Xeon, 45nm
-        if (AsmReadMsr64 (MSR_IA32_PLATFORM_ID) & (1 << 28)) {
-          gCPUStructure.Mobile = TRUE;
-        }
-
         msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-        gTurboMsr = msr + 0x100;
         gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
         gCPUStructure.SubDivider = ((UINT32) RShiftU64 (msr, 14)) & 0x1;
         gCPUStructure.MinRatio = 60;
         gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
-        
+        TurboMsr = msr + 0x100;
+
         if ((gCPUStructure.MaxRatio != 0) && (gSettings.CPUSpeedDetectiond == 1)) {
-          gCPUStructure.FSBFrequency = DivU64x32 (MultU64x32 (gCPUStructure.TSCFrequency, 10), gCPUStructure.MaxRatio);
+          gCPUStructure.FSBFrequency = DivU64x32 (
+                                         MultU64x32 (gCPUStructure.TSCFrequency, 10),
+                                         gCPUStructure.MaxRatio
+                                       );
         }
 
         gCPUStructure.Turbo4 = (UINT8) (gCPUStructure.MaxRatio + 10);
+        
         break;
 
       case CPU_MODEL_CELERON:// Celeron, Core 2 SC, 65nm
@@ -485,9 +461,21 @@ GetCPUProperties (
       case 0x2b:// SNB Xeon //XXX
       default:
         gCPUStructure.MinRatio = 60;
-        gCPUStructure.MaxRatio = (UINT32) MultU64x32 (DivU64x32 (gCPUStructure.TSCFrequency, (UINT32) gCPUStructure.FSBFrequency), 10);
+        gCPUStructure.MaxRatio = (UINT32) MultU64x32 (
+                                            DivU64x32 (
+                                              gCPUStructure.TSCFrequency,
+                                              (UINT32) gCPUStructure.FSBFrequency
+                                            ),
+                                            10
+                                          );
+        
         break;
     }
+#if 0
+    if (AsmReadMsr64 (MSR_IA32_PLATFORM_ID) & (1 << 28)) {
+      gCPUStructure.Mobile = TRUE;
+    }
+#endif
   }
 
   if (gCPUStructure.Model >= CPU_MODEL_NEHALEM) {
@@ -500,7 +488,14 @@ GetCPUProperties (
         if (!EFI_ERROR (Status)) {
           for (ProtocolIndex = 0; ProtocolIndex < ArrayCount; ProtocolIndex++) {
             if (CompareGuid (&gEfiPciIoProtocolGuid, ProtocolGuidArray[ProtocolIndex])) {
-              Status = gBS->OpenProtocol (HandleBuffer[HandleIndex], &gEfiPciIoProtocolGuid, (VOID **) &PciIo, gImageHandle, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+              Status = gBS->OpenProtocol (
+                              HandleBuffer[HandleIndex],
+                              &gEfiPciIoProtocolGuid,
+                              (VOID **) &PciIo,
+                              gImageHandle,
+                              NULL,
+                              EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                            );
 
               if (!EFI_ERROR (Status)) {
                 Status = PciIo->GetLocation (PciIo, &Segment, &Bus, &Device, &Function);
@@ -546,7 +541,7 @@ GetCPUProperties (
       }
     }
 
-    qpibusspeed = (UINT16) (qpimult * 2 * gCPUStructure.ExternalClock * 1000);
+    qpibusspeed = (UINT16) (qpimult * 2 * (gCPUStructure.FSBFrequency / 1000000));
 
     if (qpibusspeed % 100 != 0) {
       qpibusspeed = ((qpibusspeed + 50) / 100) * 100;
@@ -556,8 +551,8 @@ GetCPUProperties (
   }
 
   if (gSettings.Turbo) {
-    if (gTurboMsr != 0) {
-      AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, gTurboMsr);
+    if (TurboMsr != 0) {
+      AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, TurboMsr);
       gBS->Stall (100);
       WaitForSts();
     }
@@ -722,7 +717,7 @@ GetDefaultModel (
 
         break;
     }
-  } else { // if(gMobile==FALSE)
+  } else { 
     switch (gCPUStructure.Model) {
       case CPU_MODEL_CELERON:
         DefaultType = MacMini21;

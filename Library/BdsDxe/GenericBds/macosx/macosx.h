@@ -516,7 +516,6 @@ EFI_GUID                        gUuid;
 BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
-UINT64                          gTurboMsr;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;

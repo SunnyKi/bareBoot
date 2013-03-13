@@ -906,14 +906,12 @@ GetUserSettings (
 
   gMobile = gSettings.Mobile;
 
-  if ((gSettings.BusSpeed != 0) &&
-      (gSettings.BusSpeed > 10 * kilo) &&
+  if ((gSettings.BusSpeed > 10 * kilo) &&
       (gSettings.BusSpeed < 500 * kilo)) {
     gCPUStructure.ExternalClock = gSettings.BusSpeed;
   }
 
-  if ((gSettings.CpuFreqMHz != 0) &&
-      (gSettings.CpuFreqMHz > 100) &&
+  if ((gSettings.CpuFreqMHz > 100) &&
       (gSettings.CpuFreqMHz < 20000)) {
     gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
   }
