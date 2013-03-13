@@ -322,16 +322,6 @@ GetCPUProperties (
 
   switch (gSettings.CPUSpeedDetectiond) {
 
-    case 1:
-      //
-      // TSC calibration
-      //
-      gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
-      gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
-      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
-
-      break;
-
     case 2:
       //
       // Get CPU speed from DMI, else TSC calibration (we need this 'else'?)
@@ -345,14 +335,14 @@ GetCPUProperties (
       gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
       break;
-
-    default:
+      
+    case 3:
       //
       // Get CPU speed (in MHz) from brand string
       //
       gCPUStructure.TSCFrequency = gCPUStructure.CurrentSpeed ?
-                                    MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed) :
-                                    MeasureTSCFrequency ();
+      MultU64x32 (1000000ull, gCPUStructure.CurrentSpeed) :
+      MeasureTSCFrequency ();
       gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
       s[0] = 0;
@@ -386,10 +376,20 @@ GetCPUProperties (
             gCPUStructure.CurrentSpeed += (UINT16) (gCPUStructure.BrandString[index - 1] - '0');
             gCPUStructure.CurrentSpeed *= (UINT16) multiplier;
           }
-          
+
           break;
         }
       }
+
+      break;
+
+    default:
+      //
+      // TSC calibration
+      //
+      gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
+      gCPUStructure.CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.TSCFrequency, 1000000);
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
       break;
   }
@@ -410,7 +410,9 @@ GetCPUProperties (
 #if 0
         TurboMsr = msr + 0x100;
 #endif
-        if ((gCPUStructure.MaxRatio != 0) && (gSettings.CPUSpeedDetectiond == 1)) {
+        if ((gCPUStructure.MaxRatio != 0) &&
+            (gSettings.CPUSpeedDetectiond != 2) &&
+            (gSettings.CPUSpeedDetectiond != 3)) {
           gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
         }
 
@@ -454,7 +456,9 @@ GetCPUProperties (
         gCPUStructure.MaxRatio = (UINT8) (RShiftU64(msr, 8) & 0xff);
         TurboMsr = msr + 1;
 
-        if ((gCPUStructure.MaxRatio != 0) && (gSettings.CPUSpeedDetectiond == 1)) {
+        if ((gCPUStructure.MaxRatio != 0) &&
+            (gSettings.CPUSpeedDetectiond != 2) &&
+            (gSettings.CPUSpeedDetectiond != 3)) {
           gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
         }
 
@@ -482,7 +486,9 @@ GetCPUProperties (
         gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
         TurboMsr = msr + 0x100;
 
-        if ((gCPUStructure.MaxRatio != 0) && (gSettings.CPUSpeedDetectiond == 1)) {
+        if ((gCPUStructure.MaxRatio != 0) &&
+            (gSettings.CPUSpeedDetectiond != 2) &&
+            (gSettings.CPUSpeedDetectiond != 3)) {
           gCPUStructure.FSBFrequency = DivU64x32 (
                                          MultU64x32 (gCPUStructure.TSCFrequency, 10),
                                          gCPUStructure.MaxRatio
@@ -516,7 +522,7 @@ GetCPUProperties (
 #endif
   }
 
-  if (gCPUStructure.Model >= CPU_MODEL_NEHALEM) {
+  if (gCPUStructure.Model = CPU_MODEL_NEHALEM) {
     Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
 
     if (!EFI_ERROR (Status)) {
