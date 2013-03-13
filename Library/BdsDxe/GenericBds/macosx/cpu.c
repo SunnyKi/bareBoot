@@ -663,7 +663,7 @@ GetAdvancedCpuType (
             return 0x704;
 
           case CPU_MODEL_MEROM: // Merom
-            if (gCPUStructure.Threads >= 2) {
+            if (gCPUStructure.Cores >= 2) {
               return 0x402;   // Quad-Core Xeon
             } else {
               return 0x201;   // Core Solo
@@ -672,9 +672,9 @@ GetAdvancedCpuType (
           case CPU_MODEL_PENRYN:// Penryn
           case CPU_MODEL_ATOM:  // Atom (45nm)
           default:
-            if (gCPUStructure.Core >= 4) {
+            if (gCPUStructure.Cores >= 4) {
               return 0x402;   // Quad-Core Xeon
-            } else if (gCPUStructure.Core == 1) {
+            } else if (gCPUStructure.Cores == 1) {
               return 0x201;   // Core Solo
             };
             return 0x301;   // Core 2 Duo
