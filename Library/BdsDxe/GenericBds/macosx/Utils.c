@@ -583,23 +583,6 @@ egLoadFile (
   return EFI_SUCCESS;
 }
 
-VOID
-WaitForSts (
-  VOID
-)
-{
-  UINT32 inline_timeout;
-
-  inline_timeout = 100000;
-
-  while (AsmReadMsr64 (MSR_IA32_PERF_STATUS) & (1 << 21)) {
-    if (!inline_timeout--) {
-      break;
-    }
-  }
-}
-
-
 UINTN
 AsciiStr2Uintn (
   CHAR8* ps

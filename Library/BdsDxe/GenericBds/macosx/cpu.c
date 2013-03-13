@@ -141,6 +141,22 @@ DoCpuidEx (
 }
 
 VOID
+WaitForSts (
+  VOID
+)
+{
+  UINT32 inline_timeout;
+
+  inline_timeout = 100000;
+
+  while (AsmReadMsr64 (MSR_IA32_PERF_STATUS) & (1 << 21)) {
+    if (!inline_timeout--) {
+      break;
+    }
+  }
+}
+
+VOID
 GetCPUProperties (
   VOID
 )

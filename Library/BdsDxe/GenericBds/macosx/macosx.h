@@ -673,9 +673,4 @@ EFIAPI
 EventsInitialize (
   VOID
   );
-
-VOID
-WaitForSts (
-  VOID
-);
 #endif
