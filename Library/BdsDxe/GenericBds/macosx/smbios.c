@@ -851,6 +851,7 @@ PatchTableTypeSome (
 )
 {
   //some unused but interesting tables. Just log as is
+  //
   UINT8 tableTypes[13] = {8, 10, 11, 18, 21, 22, 27, 28, 32, 33, 129, 217, 219};
   UINTN IndexType;
 
@@ -889,7 +890,7 @@ GetTableType16 (
 
   TotalCount = newSmbiosTable.Type16->NumberOfMemoryDevices;
 
-  if (!TotalCount) {
+  if (TotalCount == 0) {
     TotalCount = MAX_SLOT_COUNT;
   }
 
@@ -1040,6 +1041,7 @@ PatchTableType17 (
       newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[map].Frequency;
     }
 #endif
+
     mHandle17[Index] = LogSmbiosTable (newSmbiosTable);
   }
 
@@ -1091,6 +1093,7 @@ PatchTableType19 (
   newSmbiosTable.Type19->StartingAddress = 0;
   newSmbiosTable.Type19->EndingAddress = TotalEnd;
   newSmbiosTable.Type19->PartitionWidth = PartWidth;
+
   mHandle19 = LogSmbiosTable (newSmbiosTable);
   return;
 }
@@ -1120,11 +1123,8 @@ PatchTableType20 (
         newSmbiosTable.Type20->MemoryDeviceHandle = mHandle17[j];
       }
     }
-
     newSmbiosTable.Type20->MemoryArrayMappedAddressHandle = mHandle19;
-    //
-    // Record Smbios Type 20
-    //
+
     LogSmbiosTable (newSmbiosTable);
   }
 
@@ -1155,6 +1155,7 @@ PatchTableType128 (
 )
 {
     ZeroMem ((VOID*) newSmbiosTable.Type128, MAX_TABLE_SIZE);
+  
     newSmbiosTable.Type128->Hdr.Type = 128;
     newSmbiosTable.Type128->Hdr.Length = sizeof (SMBIOS_TABLE_TYPE128);
     newSmbiosTable.Type128->Hdr.Handle = 0x8000; //common rule
@@ -1169,7 +1170,6 @@ PatchTableType128 (
     //    FW_REGION_CONFIG     = 4,
     //    FW_REGION_DIAGVAULT  = 5,
 
-    //TODO - Slice - I have an idea that region should be the same as Efivar.bin
     newSmbiosTable.Type128->RegionCount = 2;
     newSmbiosTable.Type128->RegionType[0] = FW_REGION_MAIN;
     newSmbiosTable.Type128->FlashMap[0].StartAddress = 0xFFE00000; //0xF0000;
@@ -1178,6 +1178,7 @@ PatchTableType128 (
     newSmbiosTable.Type128->FlashMap[1].StartAddress = 0x15000; //0xF0000;
     newSmbiosTable.Type128->FlashMap[1].EndAddress = 0x1FFFF;
     //region type=1 also present in mac
+
     LogSmbiosTable (newSmbiosTable);
     return;
 }
@@ -1189,7 +1190,7 @@ PatchTableType130 (
 {
   //
   // MemorySPD (TYPE 130)
-  // TODO:  read SPD and place here. But for a what?
+  // TODO:  read SPD and place here.
   //
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, 130, 0);
 
@@ -1197,9 +1198,6 @@ PatchTableType130 (
     return;
   }
 
-  //
-  // Log Smbios Record Type130
-  //
   LogSmbiosTable (SmbiosTable);
   return;
 }
@@ -1215,6 +1213,7 @@ PatchTableType131 (
   newSmbiosTable.Type131->Hdr.Length = sizeof (SMBIOS_STRUCTURE) + 2;
   newSmbiosTable.Type131->Hdr.Handle = 0x8300;
   newSmbiosTable.Type131->ProcessorType = gSettings.CpuType;
+
   Handle = LogSmbiosTable (newSmbiosTable);
   return;
 }
@@ -1258,27 +1257,37 @@ PrepatchSmbios (
   EFI_PHYSICAL_ADDRESS     BufferPtr;
 
   Status = EFI_SUCCESS;
-  // Get SMBIOS Tables
+
   Smbios = GetSmbiosTablesFromHob ();
 
   if (!Smbios) {
     Print (L"SMBIOS System Table not found! Exiting...\n");
     return EFI_NOT_FOUND;
   }
-
+  //
   //original EPS and tables
   EntryPoint = (SMBIOS_TABLE_ENTRY_POINT*) Smbios; //yes, it is old SmbiosEPS
+  //
   //how many we need to add for tables 128, 130, 131, 132 and for strings?
   BufferLen = 0x20 + EntryPoint->TableLength + 64 * 10;
+  //
   //new place for EPS and tables. Allocated once for both
   BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
-  Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIMemoryNVS, /*EfiACPIReclaimMemory,  */
-                               EFI_SIZE_TO_PAGES (BufferLen), &BufferPtr);
+  Status = gBS->AllocatePages (
+                  AllocateMaxAddress,
+                  EfiACPIMemoryNVS,
+                  EFI_SIZE_TO_PAGES (BufferLen),
+                  &BufferPtr
+                );
 
   if (EFI_ERROR (Status)) {
     Print (L"There is error allocating pages in EfiACPIMemoryNVS!\n");
-    Status = gBS->AllocatePages (AllocateMaxAddress,  /*EfiACPIMemoryNVS,*/ EfiACPIReclaimMemory,
-                                 ROUND_PAGE (BufferLen) / EFI_PAGE_SIZE, &BufferPtr);
+    Status = gBS->AllocatePages (
+                    AllocateMaxAddress,
+                    EfiACPIReclaimMemory,
+                    ROUND_PAGE (BufferLen) / EFI_PAGE_SIZE,
+                    &BufferPtr
+                  );
 
     if (EFI_ERROR (Status)) {
       Print (L"There is error allocating pages in EfiACPIReclaimMemory!\n");
@@ -1294,25 +1303,30 @@ PrepatchSmbios (
   ZeroMem (SmbiosEpsNew, BufferLen);
   NumberOfRecords = 0;
   MaxStructureSize = 0;
+  //
   //preliminary fill EntryPoint with some data
   CopyMem ((VOID*) SmbiosEpsNew, (VOID *) EntryPoint, sizeof (SMBIOS_TABLE_ENTRY_POINT));
-  Smbios = (VOID*) (SmbiosEpsNew + 1); //this is a C-language trick. I hate it but use. +1 means +sizeof(SMBIOS_TABLE_ENTRY_POINT)
-  Current = (UINT8*) Smbios; //begin fill tables from here
+  
+  Smbios = (VOID*) (SmbiosEpsNew + 1);  //this is a C-language trick. I hate it but use. +1 means +sizeof(SMBIOS_TABLE_ENTRY_POINT)
+  Current = (UINT8*) Smbios;            //begin fill tables from here
   SmbiosEpsNew->TableAddress = (UINT32) (UINTN) Current;
   SmbiosEpsNew->EntryPointLength = sizeof (SMBIOS_TABLE_ENTRY_POINT); // no matter on other versions
   SmbiosEpsNew->MajorVersion = 2;
   SmbiosEpsNew->MinorVersion = 6;
   SmbiosEpsNew->SmbiosBcdRevision = 0x26; //Slice - we want to have v2.6
+  //
   //Create space for SPD
   gRAM = AllocateZeroPool (sizeof (MEM_STRUCTURE));
   gDMI = AllocateZeroPool (sizeof (DMI));
+  //
   //Collect information for use in menu
   GetTableType1();
   GetTableType3();
   GetTableType4();
   GetTableType16();
   GetTableType17();
-  GetTableType32(); //get BootStatus here to decide what to do
+  GetTableType32();
+  
   return  Status;
 }
 
@@ -1322,6 +1336,7 @@ PatchSmbios (
 )
 {
   newSmbiosTable.Raw = (UINT8*) AllocateZeroPool (MAX_TABLE_SIZE);
+  //
   //Slice - order of patching is significant
   PatchTableType0();
   PatchTableType1();
@@ -1345,6 +1360,7 @@ PatchSmbios (
   if (MaxStructureSize > MAX_TABLE_SIZE) {
     Print (L"Too long SMBIOS!\n");
   }
+  
   // there is no need to keep all tables in numeric order. It is not needed
   // neither by specs nor by AppleSmbios.kext
   FreePool ((VOID*) newSmbiosTable.Raw);
