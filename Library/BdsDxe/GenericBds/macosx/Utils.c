@@ -904,18 +904,17 @@ GetUserSettings (
       gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
     }
 
-  }
+    gMobile = gSettings.Mobile;
 
-  gMobile = gSettings.Mobile;
+    if ((gSettings.BusSpeed > 10 * kilo) &&
+        (gSettings.BusSpeed < 500 * kilo)) {
+      gCPUStructure.ExternalClock = gSettings.BusSpeed;
+    }
 
-  if ((gSettings.BusSpeed > 10 * kilo) &&
-      (gSettings.BusSpeed < 500 * kilo)) {
-    gCPUStructure.ExternalClock = gSettings.BusSpeed;
-  }
-
-  if ((gSettings.CpuFreqMHz > 100) &&
-      (gSettings.CpuFreqMHz < 20000)) {
-    gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
+    if ((gSettings.CpuFreqMHz > 100) &&
+        (gSettings.CpuFreqMHz < 20000)) {
+      gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
+    }
   }
 
   GetCPUProperties ();

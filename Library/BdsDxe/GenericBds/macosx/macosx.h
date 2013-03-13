@@ -51,7 +51,8 @@
 #define CPUID_80  5
 #define CPUID_81  6
 #define CPUID_87  7
-#define CPUID_MAX 8
+#define CPUID_0B  8
+#define CPUID_MAX 9
 
 #define EAX 0
 #define EBX 1
@@ -443,6 +444,10 @@ typedef struct {
 
   UINT8   Cores;
   UINT8   Threads;
+#if 0
+  UINT8   ThreadsPerCache;
+  BOOLEAN HTTEnabled;
+#endif
   UINT32  CoresPerPackage;
   UINT32  LogicalPerPackage;
 

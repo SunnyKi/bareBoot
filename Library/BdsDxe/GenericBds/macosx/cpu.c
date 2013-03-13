@@ -131,6 +131,16 @@ DoCpuid (
 }
 
 VOID
+DoCpuidEx (
+  UINT32 selector1,
+  UINT32 selector2,
+  UINT32 *data
+)
+{
+  AsmCpuidEx (selector1, selector2, data, data + 1, data + 2, data + 3);
+}
+
+VOID
 GetCPUProperties (
   VOID
 )
@@ -180,7 +190,6 @@ GetCPUProperties (
 
   DoCpuid (0x00000000, gCPUStructure.CPUID[CPUID_0]);
   DoCpuid (0x00000001, gCPUStructure.CPUID[CPUID_1]);
-  DoCpuid (0x00000004, gCPUStructure.CPUID[CPUID_4]);
   DoCpuid (0x80000000, gCPUStructure.CPUID[CPUID_80]);
 
   if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 1) {
@@ -210,16 +219,29 @@ GetCPUProperties (
   //
   // Cores & Threads count
   //
-  if (gCPUStructure.Features & CPUID_FEATURE_HTT) {
-    gCPUStructure.LogicalPerPackage = bitfield (gCPUStructure.CPUID[CPUID_1][EBX], 23, 16); 
+  // Number of logical processors per physical processor package
+  gCPUStructure.LogicalPerPackage = bitfield (gCPUStructure.CPUID[CPUID_1][EBX], 23, 16);
+#if 0
+  if ( gCPUStructure.LogicalPerPackage > 1) {
+    gCPUStructure.HTTEnabled = TRUE;
   } else {
-    gCPUStructure.LogicalPerPackage = 1;
+    gCPUStructure.HTTEnabled = FALSE;
   }
-
+#endif
+  // Number of APIC IDs reserved per package
+  DoCpuidEx (0x00000004, 0, gCPUStructure.CPUID[CPUID_4]);
   gCPUStructure.CoresPerPackage =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 31, 26) + 1;
-  if (gCPUStructure.CoresPerPackage == 0) {
-    gCPUStructure.CoresPerPackage = 1;
-  }
+  
+#if 0
+  // Total number of threads serviced by this cache
+  gCPUStructure.ThreadsPerCache =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 25, 14) + 1;
+
+  DoCpuidEx (0x0000000B, 0, gCPUStructure.CPUID[CPUID_0B]);
+  gCPUStructure.Threads = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_4][EBX], 15, 0);
+
+  DoCpuidEx (0x0000000B, 1, gCPUStructure.CPUID[CPUID_0B]);
+  gCPUStructure.Cores = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_4][EBX], 15, 0);
+#endif
 
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
     switch (gCPUStructure.Model) {
@@ -641,12 +663,18 @@ GetAdvancedCpuType (
             return 0x704;
 
           case CPU_MODEL_MEROM: // Merom
+            if (gCPUStructure.Threads >= 2) {
+              return 0x402;   // Quad-Core Xeon
+            } else {
+              return 0x201;   // Core Solo
+            };
+            
           case CPU_MODEL_PENRYN:// Penryn
           case CPU_MODEL_ATOM:  // Atom (45nm)
           default:
-            if (gCPUStructure.Threads >= 4) {
+            if (gCPUStructure.Core >= 4) {
               return 0x402;   // Quad-Core Xeon
-            } else if (gCPUStructure.Threads == 1) {
+            } else if (gCPUStructure.Core == 1) {
               return 0x201;   // Core Solo
             };
             return 0x301;   // Core 2 Duo
@@ -812,8 +840,19 @@ DumpCPU (
   Print (L"Vendor/Model/ExtModel: 0x%x/0x%x/0x%x\n", gCPUStructure.Vendor,  gCPUStructure.Model, gCPUStructure.Extmodel);
   Print (L"Family/ExtFamily:      0x%x/0x%x\n", gCPUStructure.Family,  gCPUStructure.Extfamily);
   Print (L"Features: 0x%08x\n", gCPUStructure.Features);
+
   Print (L"Cores: %d\n", gCPUStructure.Cores);
   Print (L"Threads: %d\n", gCPUStructure.Threads);
+#if 0
+  if (gCPUStructure.HTTEnabled) {
+    Print (L"HTT enabled\n");
+  } else {
+    Print (L"HTT disabled\n");
+  }
+#endif
+  Print (L"Number of logical processors per physical processor package: %d\n", gCPUStructure.LogicalPerPackage);
+  Print (L"Number of APIC IDs reserved per package: %d\n", gCPUStructure.CoresPerPackage);
+
   Print (L"ExternalClock: %d MHz\n", gCPUStructure.ExternalClock);
   Print (L"TSCFreq calculated: %lld Hz\n", MeasureTSCFrequency());
   Print (L"CurrentSpeed:  %d\n", gCPUStructure.CurrentSpeed);
