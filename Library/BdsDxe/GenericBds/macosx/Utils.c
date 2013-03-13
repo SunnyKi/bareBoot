@@ -710,13 +710,10 @@ GetBootDefault (
     }
 
     dictPointer = GetProperty (dict, "SystemParameters");
-
-    if (dictPointer != NULL) {
-      gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
-      if (!GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot)) {
-        gSettings.BootTimeout = 0xFFFF;
-      };
-    }
+    gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
+    if (!GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot)) {
+      gSettings.BootTimeout = 0xFFFF;
+    };
   }
 
   return Status;
@@ -782,10 +779,10 @@ GetUserSettings (
 
     dictPointer = GetProperty (dict, "SystemParameters");
 
-    if (dictPointer != NULL) {
-      GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
-      GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
+    GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
+    GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
 
+    if (dictPointer != NULL) {
       prop = GetProperty (dictPointer, "CustomUUID");
 
       if (prop != NULL) {
@@ -796,13 +793,14 @@ GetUserSettings (
     }
 
     dictPointer = GetProperty (dict, "Graphics");
+    
+    gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", TRUE);
+    gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
+    gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
+    gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
+    GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
 
     if (dictPointer != NULL) {
-      gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", TRUE);
-      gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
-      gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
-      gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
-      GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
 
       prop = GetProperty (dictPointer, "NVCAP");
 
@@ -827,65 +825,57 @@ GetUserSettings (
     }
 
     dictPointer = GetProperty (dict, "PCI");
+    
+    gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
+    gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
+    gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
+    gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
+
 
     if (dictPointer != NULL) {
-      gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
-
       prop = GetProperty (dictPointer, "DeviceProperties");
 
       if (prop != NULL) {
         cDevProp = AllocateZeroPool (AsciiStrLen (prop->string) + 1);
         AsciiStrCpy (cDevProp, prop->string);
       }
-
-      gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
-      gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-      gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
-
     }
 
     dictPointer = GetProperty (dict, "ACPI");
 
-    if (dictPointer != NULL) {
-      gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
-      // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
-      gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
-      gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
-      gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
-    }
+    gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
+    // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
+    gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
+    gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
+    gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
 
     dictPointer = GetProperty (dict, "SMBIOS");
 
-    if (dictPointer != NULL) {
-      gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
-
-      GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
-      GetAsciiProperty (dictPointer, "BiosVersion", gSettings.RomVersion);
-      GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
-      GetAsciiProperty (dictPointer, "Manufacturer", gSettings.ManufactureName);
-      GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
-      GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
-      GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
-      GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
-      GetAsciiProperty (dictPointer, "BoardManufacturer", gSettings.BoardManufactureName);
-      GetAsciiProperty (dictPointer, "BoardSerialNumber", gSettings.BoardSerialNumber);
-      GetAsciiProperty (dictPointer, "Board-ID", gSettings.BoardNumber);
-      GetAsciiProperty (dictPointer, "BoardVersion", gSettings.BoardVersion);
-      GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
-      GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
-      GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
-    }
+    gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
+    GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
+    GetAsciiProperty (dictPointer, "BiosVersion", gSettings.RomVersion);
+    GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
+    GetAsciiProperty (dictPointer, "Manufacturer", gSettings.ManufactureName);
+    GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
+    GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
+    GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
+    GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
+    GetAsciiProperty (dictPointer, "BoardManufacturer", gSettings.BoardManufactureName);
+    GetAsciiProperty (dictPointer, "BoardSerialNumber", gSettings.BoardSerialNumber);
+    GetAsciiProperty (dictPointer, "Board-ID", gSettings.BoardNumber);
+    GetAsciiProperty (dictPointer, "BoardVersion", gSettings.BoardVersion);
+    GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
+    GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
+    GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
 
     dictPointer = GetProperty (dict, "CPU");
 
-    if (dictPointer != NULL) {
-      gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
-      gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
-      gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
-      gSettings.BusSpeed = (UINT32) GetNumProperty (dictPointer, "BusSpeedkHz", 0);
-      gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
-      gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
-    }
+    gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
+    gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
+    gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
+    gSettings.BusSpeed = (UINT32) GetNumProperty (dictPointer, "BusSpeedkHz", 0);
+    gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
+    gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
 
     gMobile = gSettings.Mobile;
 
@@ -904,9 +894,7 @@ GetUserSettings (
 
   if (gConfigPtr != NULL) {
     dictPointer = GetProperty (dict, "CPU");
-    if (dictPointer != NULL) {
-      gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
-    }
+    gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
   }
 
   return Status;
