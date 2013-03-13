@@ -777,6 +777,9 @@ GetUserSettings (
   AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
   AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
 
+  gSettings.BusSpeed   = 0;
+  gSettings.CpuFreqMHz = 0;
+
   if ((RootFileHandle != NULL) && FileExists (RootFileHandle, ConfigPlistPath)) {
     Status = egLoadFile (RootFileHandle, ConfigPlistPath, (UINT8**) &gConfigPtr, &size);
   }
