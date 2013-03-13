@@ -246,7 +246,6 @@ BdsLibBootViaBootOption (
 
 MacOS:
   InitializeConsoleSim (gImageHandle); 
-  PrepatchSmbios ();
   GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
   ScanSPD ();
   SetDevices ();

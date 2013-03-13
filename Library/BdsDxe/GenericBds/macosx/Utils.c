@@ -758,7 +758,9 @@ GetUserSettings (
   gConfigPtr = NULL;
   dict = NULL;
 
+  PrepatchSmbios ();
   Model             = GetDefaultModel();
+
   AsciiStrCpy (gSettings.VendorName,             BiosVendor);
   AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[Model]);
   AsciiStrCpy (gSettings.ReleaseDate,            AppleReleaseDate[Model]);
