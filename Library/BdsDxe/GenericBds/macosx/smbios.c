@@ -662,7 +662,7 @@ PatchTableType4 (
     newSmbiosTable.Type4->MaxSpeed = gCPUStructure.CurrentSpeed;
     newSmbiosTable.Type4->CurrentSpeed = gCPUStructure.CurrentSpeed;
 
-    if (gCPUStructure.Model >= CPU_MODEL_NEHALEM) {
+    if (gCPUStructure.Model < CPU_MODEL_NEHALEM) {
       if (newSmbiosTable.Type4->ExternalClock > 1000) {
         newSmbiosTable.Type4->ExternalClock = (UINT16) DivU64x32 (newSmbiosTable.Type4->ExternalClock, 4);
       }
