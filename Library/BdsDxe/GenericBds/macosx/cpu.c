@@ -522,7 +522,7 @@ GetCPUProperties (
 #endif
   }
 
-  if (gCPUStructure.Model = CPU_MODEL_NEHALEM) {
+  if (gCPUStructure.Model == CPU_MODEL_NEHALEM) {
     Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
 
     if (!EFI_ERROR (Status)) {

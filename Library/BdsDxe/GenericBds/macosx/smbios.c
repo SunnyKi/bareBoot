@@ -662,8 +662,12 @@ PatchTableType4 (
     newSmbiosTable.Type4->MaxSpeed = gCPUStructure.CurrentSpeed;
     newSmbiosTable.Type4->CurrentSpeed = gCPUStructure.CurrentSpeed;
 
-    if (newSmbiosTable.Type4->ExternalClock > 1000) {
-      newSmbiosTable.Type4->ExternalClock = (UINT16) DivU64x32 (newSmbiosTable.Type4->ExternalClock, 4);
+    if (gCPUStructure.Model >= CPU_MODEL_NEHALEM) {
+      if (newSmbiosTable.Type4->ExternalClock > 1000) {
+        newSmbiosTable.Type4->ExternalClock = (UINT16) DivU64x32 (newSmbiosTable.Type4->ExternalClock, 4);
+      }
+    } else {
+      newSmbiosTable.Type4->ExternalClock = 0;
     }
 
     newSmbiosTable.Type4->L1CacheHandle = L1;
@@ -1209,20 +1213,22 @@ PatchTableType132 (
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, 132, 0);
 
   if (SmbiosTable.Raw == NULL) {
-    ZeroMem ((VOID*) newSmbiosTable.Type132, MAX_TABLE_SIZE);
-    newSmbiosTable.Type132->Hdr.Type = 132;
-    newSmbiosTable.Type132->Hdr.Length = sizeof (SMBIOS_STRUCTURE) + 2;
-    newSmbiosTable.Type132->Hdr.Handle = 0x8400; //ugly
+    if (gCPUStructure.Model == CPU_MODEL_NEHALEM) {
+      ZeroMem ((VOID*) newSmbiosTable.Type132, MAX_TABLE_SIZE);
+      newSmbiosTable.Type132->Hdr.Type = 132;
+      newSmbiosTable.Type132->Hdr.Length = sizeof (SMBIOS_STRUCTURE) + 2;
+      newSmbiosTable.Type132->Hdr.Handle = 0x8400; //ugly
 
-    if (gCPUStructure.ProcessorInterconnectSpeed) {
-      newSmbiosTable.Type132->ProcessorBusSpeed = (UINT16) gCPUStructure.ProcessorInterconnectSpeed;
+      if (gCPUStructure.ProcessorInterconnectSpeed) {
+        newSmbiosTable.Type132->ProcessorBusSpeed = (UINT16) gCPUStructure.ProcessorInterconnectSpeed;
+      }
+
+      if (gSettings.ProcessorInterconnectSpeed) {
+        newSmbiosTable.Type132->ProcessorBusSpeed = (UINT16) gSettings.ProcessorInterconnectSpeed;
+      }
+
+      Handle = LogSmbiosTable (newSmbiosTable);
     }
-
-    if (gSettings.ProcessorInterconnectSpeed) {
-      newSmbiosTable.Type132->ProcessorBusSpeed = (UINT16) gSettings.ProcessorInterconnectSpeed;
-    }
-
-    Handle = LogSmbiosTable (newSmbiosTable);
   } else {
     LogSmbiosTable (SmbiosTable);
   }
