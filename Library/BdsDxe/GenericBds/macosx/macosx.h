@@ -643,11 +643,6 @@ PatchSmbios (
 );
 
 VOID
-FinalizeSmbios (
-  VOID
-);
-
-VOID
 ScanSPD (
   VOID
 );

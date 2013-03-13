@@ -319,24 +319,7 @@ GetSmbiosString (
   return AString; //return pointer to Ascii string
 }
 
-VOID
-AddSmbiosEndOfTable (
-  VOID
-)
-{
-  SMBIOS_STRUCTURE* StructurePtr;
-
-  StructurePtr = (SMBIOS_STRUCTURE*) Current;
-  StructurePtr->Type    = SMBIOS_TYPE_END_OF_TABLE;
-  StructurePtr->Length  = sizeof (SMBIOS_STRUCTURE);
-  StructurePtr->Handle  = SMBIOS_TYPE_INACTIVE; //spec 2.7 p.120
-  Current += sizeof (SMBIOS_STRUCTURE);
-  *Current++ = 0;
-  *Current++ = 0; //double 0 at the end
-  NumberOfRecords++;
-}
-
-/** 
+/**
  Patching Functions 
 **/
 
@@ -1335,6 +1318,12 @@ PatchSmbios (
   VOID
 )
 {
+  SMBIOS_STRUCTURE* StructurePtr;
+  EFI_PEI_HOB_POINTERS  GuidHob;
+  EFI_PEI_HOB_POINTERS  HobStart;
+  EFI_PHYSICAL_ADDRESS    *Table;
+  UINTN         TableLength;
+
   newSmbiosTable.Raw = (UINT8*) AllocateZeroPool (MAX_TABLE_SIZE);
   //
   //Slice - order of patching is significant
@@ -1355,7 +1344,16 @@ PatchSmbios (
   PatchTableType130();
   PatchTableType131();
   PatchTableType132();
-  AddSmbiosEndOfTable();
+
+  StructurePtr = (SMBIOS_STRUCTURE*) Current;
+  StructurePtr->Type    = SMBIOS_TYPE_END_OF_TABLE;
+  StructurePtr->Length  = sizeof (SMBIOS_STRUCTURE);
+  StructurePtr->Handle  = SMBIOS_TYPE_INACTIVE; // spec 2.7 p.120
+  
+  Current += sizeof (SMBIOS_STRUCTURE);
+  *Current++ = 0;
+  *Current++ = 0; //double 0 at the end
+  NumberOfRecords++;
 
   if (MaxStructureSize > MAX_TABLE_SIZE) {
     Print (L"Too long SMBIOS!\n");
@@ -1364,22 +1362,10 @@ PatchSmbios (
   // there is no need to keep all tables in numeric order. It is not needed
   // neither by specs nor by AppleSmbios.kext
   FreePool ((VOID*) newSmbiosTable.Raw);
-  return;
-}
-
-VOID
-FinalizeSmbios (
-  VOID
-)
-{
-  EFI_PEI_HOB_POINTERS  GuidHob;
-  EFI_PEI_HOB_POINTERS  HobStart;
-  EFI_PHYSICAL_ADDRESS    *Table;
-  UINTN         TableLength;
-
+  //
   // Get Hob List
   HobStart.Raw = GetHobList ();
-
+  //
   // Iteratively add Smbios Table to EFI System Table
   for (Index = 0; Index < sizeof (gTableGuidArray) / sizeof (*gTableGuidArray); ++Index) {
     GuidHob.Raw = GetNextGuidHob (gTableGuidArray[Index], HobStart.Raw);
@@ -1403,5 +1389,6 @@ FinalizeSmbios (
       }
     }
   }
+
   return;
 }

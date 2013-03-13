@@ -251,7 +251,6 @@ MacOS:
   ScanSPD ();
   SetDevices ();
   PatchSmbios ();
-  FinalizeSmbios ();
   PatchACPI (gRootFHandle);
   SetVariablesForOSX ();
   SetPrivateVarProto ();
