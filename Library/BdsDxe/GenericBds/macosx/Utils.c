@@ -776,6 +776,7 @@ GetUserSettings (
     ZeroMem (gSettings.BootArgs, 120);
     ZeroMem (gSettings.SerialNr, 64);
     ZeroMem (cUUID, 40);
+    gSystemID.Data1 = 0;
 
     dictPointer = GetProperty (dict, "SystemParameters");
 
@@ -789,6 +790,13 @@ GetUserSettings (
         AsciiStrToUnicodeStr (prop->string, cUUID);
         Status = StrToGuidLE (cUUID, &gUuid);
         //else value from SMBIOS
+      }
+
+      prop = GetProperty (dictPointer, "SystemID");
+
+      if (prop != NULL) {
+        AsciiStrToUnicodeStr (prop->string, cUUID);
+        Status = StrToGuidLE (cUUID, &gSystemID);
       }
     }
 

@@ -192,9 +192,15 @@ SetVariablesForOSX (
   Status = gRS->SetVariable (L"security-mode", &gEfiAppleBootGuid,
                              /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                              5 , (VOID*) None);
-  Status = gRS->SetVariable (L"platform-uuid", &gEfiAppleBootGuid,
-                             /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             16 , &gUuid);
+  if (gSystemID.Data1 == 0) {
+    Status = gRS->SetVariable (
+                    L"platform-uuid",
+                    &gEfiAppleBootGuid,
+                    EFI_VARIABLE_BOOTSERVICE_ACCESS |  EFI_VARIABLE_RUNTIME_ACCESS,
+                    16,
+                    &gUuid
+                  );
+  }
   return Status;
 }
 
@@ -237,6 +243,10 @@ SetupDataForOSX (
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"DevicePathsSupported", &devPathSupportedVal, sizeof (UINT32));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
+    if (gSystemID.Data1 != 0) {
+      Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
+    }
+
 #if 0
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Clover", CloverVersion, (UINT32) StrSize (CloverVersion));
 #endif

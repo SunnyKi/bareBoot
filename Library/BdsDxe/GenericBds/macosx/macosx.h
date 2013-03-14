@@ -518,6 +518,7 @@ PCI_TYPE00                      gPci;
 EFI_FILE_HANDLE                 gRootFHandle;
 SETTINGS_DATA                   gSettings;
 EFI_GUID                        gUuid;
+EFI_GUID                        gSystemID;
 BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
