@@ -776,7 +776,7 @@ GetUserSettings (
     ZeroMem (gSettings.BootArgs, 120);
     ZeroMem (gSettings.SerialNr, 64);
     ZeroMem (cUUID, 40);
-    gSystemID.Data1 = 0;
+    SystemIDStatus = EFI_UNSUPPORTED;
 
     dictPointer = GetProperty (dict, "SystemParameters");
 
@@ -796,7 +796,7 @@ GetUserSettings (
 
       if (prop != NULL) {
         AsciiStrToUnicodeStr (prop->string, cUUID);
-        Status = StrToGuidLE (cUUID, &gSystemID);
+        SystemIDStatus = StrToGuidLE (cUUID, &gSystemID);
       }
     }
 

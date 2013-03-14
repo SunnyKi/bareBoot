@@ -192,7 +192,7 @@ SetVariablesForOSX (
   Status = gRS->SetVariable (L"security-mode", &gEfiAppleBootGuid,
                              /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                              5 , (VOID*) None);
-  if (gSystemID.Data1 == 0) {
+  if (EFI_ERROR (SystemIDStatus)) {
     Status = gRS->SetVariable (
                     L"platform-uuid",
                     &gEfiAppleBootGuid,
@@ -243,7 +243,7 @@ SetupDataForOSX (
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"DevicePathsSupported", &devPathSupportedVal, sizeof (UINT32));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
-    if (gSystemID.Data1 != 0) {
+    if (!EFI_ERROR (SystemIDStatus)) {
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
     }
 
