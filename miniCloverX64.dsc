@@ -147,7 +147,7 @@
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom1Enable|FALSE
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|FALSE
   gPcAtChipsetPkgTokenSpaceGuid.Pcd8259LegacyModeMask|0xFFFC
-#  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|0xF0000000
+  gEfiMdePkgTokenSpaceGuid.PcdPciExpressBaseAddress|0xF0000000
   
 [PcdsPatchableInModule]
   gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|0
