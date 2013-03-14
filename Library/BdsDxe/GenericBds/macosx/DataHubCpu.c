@@ -184,7 +184,7 @@ SetVariablesForOSX (
 
   if (gSettings.Language[0] != 0) {
 
-    Addr  = &gSettings.Language[10];
+    Addr  = &gSettings.Language[9];
     while ((*Addr == ' ') || (*Addr == 0)) {
       Addr--;
       LanguageLen--;
