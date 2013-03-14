@@ -5,7 +5,6 @@
 #include "macosx.h"
 #include "DataHubRecords.h"
 
-//EFI_GUID gEfiConsoleControlProtocolGuid         = {0xF42F7782, 0x012E, 0x4C12, {0x99, 0x56, 0x49, 0xF9, 0x43, 0x04, 0xF7, 0x21}};
 EFI_GUID gEfiAppleFirmwarePasswordProtocolGuid  = {0x8FFEEB3A, 0x4C98, 0x4630, {0x80, 0x3F, 0x74, 0x0F, 0x95, 0x67, 0x09, 0x1D}};
 EFI_GUID gEfiGlobalVarGuid                      = {0x8BE4DF61, 0x93CA, 0x11D2, {0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B, 0x8C}};
 EFI_GUID AppleDevicePropertyProtocolGuid        = {0x91BD12FE, 0xF6C3, 0x44FB, {0xA5, 0xB7, 0x51, 0x22, 0xAB, 0x30, 0x3A, 0xE0}};
@@ -25,21 +24,10 @@ EFI_GUID gEfiProcessorSubClassGuid              = {0x26fdeb7e, 0xb8af, 0x4ccf, {
 EFI_GUID gEfiMemorySubClassGuid                 = {0x4E8F4EBB, 0x64B9, 0x4e05, {0x9B, 0x18, 0x4C, 0xFE, 0x49, 0x23, 0x50, 0x97}};
 EFI_GUID gMsgLogProtocolGuid                    = {0x511CE018, 0x0018, 0x4002, {0x20, 0x12, 0x17, 0x38, 0x05, 0x01, 0x02, 0x03}};
 EFI_GUID gEfiLegacy8259ProtocolGuid             = {0x38321dba, 0x4fe0, 0x4e17, {0x8a, 0xec, 0x41, 0x30, 0x55, 0xea, 0xed, 0xc1}};
-#if 0
-EFI_GUID GPT_EFI_SYSTEM_PARTITION               = { 0xC12A7328, 0xF81F, 0x11D2, {0xBA, 0x4B, 0x00, 0xA0, 0xC9, 0x3E, 0xC9, 0x3B }};
-#endif
 EFI_GUID GPT_MSDOS_PARTITION                    = { 0xEBD0A0A2, 0xB9E5, 0x4433, { 0x87, 0xC0, 0x68, 0xB6, 0xB7, 0x26, 0x99, 0xC7 }};
 EFI_GUID GPT_HFSPLUS_PARTITION                  = { 0x48465300, 0x0000, 0x11AA, {0xAA, 0x11, 0x00, 0x30, 0x65, 0x43, 0xEC, 0xAC }};
 EFI_GUID GPT_EMPTY_PARTITION                    = { 0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }};
-
-// turbo - Apple Boot Partition - 426F6F74-0000-11AA-AA11-00306543ECAC
-// Microsoft Reserved Partition - E3C9E316-0B5C-4DB8-817DF92DF00215AE
-//EFI_PART_TYPE_LEGACY_MBR_GUID {0x024DEE41, 0x33E7, 0x11D3, {0x9D, 0x69, 0x00, 0x08, 0xC7, 0x81, 0xF3, 0x9F }};
-//gEfiAppleFrameBufferInfoGuid == gEfiAppleScreenInfoGuid -realized in VBoxVgaClasDxe
-//TODO - discover the follow guids
-//gBS->LocateProtocol(8ECE08D8-A6D4-430B-A7B0-2DF318E7884A)
-//efi/configuration-table/5751DA6E-1376-4E02-BA92-D294FDD30901
-//efi/configuration-table/F76761DC-FF89-44E4-9C0C-CD0ADA4EF983
+EFI_GUID gDataHubPlatformGuid                   = {0x64517cc8, 0x6561, 0x4051, {0xb0, 0x3c, 0x59, 0x64, 0xb6, 0x0f, 0x4c, 0x7a}};
 
 typedef union {
   EFI_CPU_DATA_RECORD *DataRecord;
@@ -63,8 +51,7 @@ typedef struct {
 } PLATFORM_DATA;
 #pragma pack()
 
-EFI_DATA_HUB_PROTOCOL         *gDataHub;
-EFI_GUID gDataHubPlatformGuid = {0x64517cc8, 0x6561, 0x4051, {0xb0, 0x3c, 0x59, 0x64, 0xb6, 0x0f, 0x4c, 0x7a}};
+EFI_DATA_HUB_PROTOCOL         *mDataHub;
 
 UINT32
 CopyRecord (
@@ -102,14 +89,15 @@ LogDataHub (
   }
 
   RecordSize = CopyRecord (PlatformData, Name, Data, DataSize);
-  Status = gDataHub->LogData (
-             gDataHub,
-             TypeGuid,       /* DataRecordGuid */
-             &gDataHubPlatformGuid,   /* ProducerName */  //always
+  Status = mDataHub->LogData (
+             mDataHub,
+             TypeGuid,                /* DataRecordGuid */
+             &gDataHubPlatformGuid,   /* ProducerName */  
              EFI_DATA_RECORD_CLASS_DATA,
              PlatformData,
              RecordSize
            );
+  
   ASSERT_EFI_ERROR (Status);
   FreePool (PlatformData);
   return Status;
@@ -255,7 +243,7 @@ SetupDataForOSX (
   productName     = AllocateZeroPool (64);
   serialNumber    = AllocateZeroPool (64);
 
-  Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &gDataHub);
+  Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &mDataHub);
 
   if (!EFI_ERROR (Status)) {
     devPathSupportedVal = 1;
