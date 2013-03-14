@@ -27,9 +27,6 @@ initial concept of DSDT patching by mackerintel
 #define TAMG_SIGN           SIGNATURE_32('T','A','M','G')
 #define ASF_SIGN            SIGNATURE_32('A','S','F','!')
 #define APIC_SIGN           SIGNATURE_32('A','P','I','C')
-#define HPET_OEM_ID         { 'A', 'P', 'P', 'L', 'E', ' ' }
-#define HPET_OEM_TABLE_ID   { 'A', 'p', 'p', 'l', 'e', '0', '0', ' ' }
-#define HPET_CREATOR_ID     { 'L', 'o', 'k', 'i' }
 #define NUM_TABLES          19
 
 CONST CHAR8 oemID[6]       = HPET_OEM_ID;
@@ -60,7 +57,7 @@ CHAR16* ACPInames[NUM_TABLES] = {
   L"SRAT.aml",
   L"UEFI.aml"
 };
-
+#if 0
 UINT32*
 ScanRSDT (
   UINT32 Signature
@@ -84,7 +81,7 @@ ScanRSDT (
 
   return NULL;
 }
-
+#endif
 UINT64*
 ScanXSDT (
   UINT32 Signature
@@ -255,7 +252,6 @@ PatchACPI (
   EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER      *RsdPointer;
   EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE         *FadtPointer;
   EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE         *newFadt;
-  EFI_ACPI_HIGH_PRECISION_EVENT_TIMER_TABLE_HEADER  *Hpet;
   EFI_ACPI_4_0_FIRMWARE_ACPI_CONTROL_STRUCTURE      *Facs;
   EFI_PHYSICAL_ADDRESS                              dsdt;
   EFI_PHYSICAL_ADDRESS                              BufferPtr;
@@ -278,7 +274,6 @@ PatchACPI (
   dsdt = EFI_SYSTEM_TABLE_MAX_ADDRESS; //0xFE000000;
   Facs = NULL;
   FadtPointer = NULL;
-  Hpet    = NULL;
   newFadt   = NULL;
   PathDsdt      = L"DSDT.aml";
   PathPatched   = L"\\EFI\\mini\\acpi\\patched\\";
@@ -498,6 +493,7 @@ PatchACPI (
     } else {
       newFadt->PreferredPmProfile = gMobile ? 2 : 1;
     }
+    
     if ((gSettings.ResetAddr != 0) &&
         (gSettings.ResetVal != 0)) {
       newFadt->Flags |= 0x400;
@@ -567,48 +563,12 @@ PatchACPI (
     }
   }
 
-  xf = ScanXSDT (HPET_SIGN);
-
-  if (xf == NULL) { //we want to make the new table if OEM is not found
-    BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
-    Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
-
-    if (!EFI_ERROR (Status)) {
-      Hpet = (EFI_ACPI_HIGH_PRECISION_EVENT_TIMER_TABLE_HEADER*) (UINTN) BufferPtr;
-      Hpet->Header.Signature = EFI_ACPI_3_0_HIGH_PRECISION_EVENT_TIMER_TABLE_SIGNATURE;
-      Hpet->Header.Length = sizeof (EFI_ACPI_HIGH_PRECISION_EVENT_TIMER_TABLE_HEADER);
-      Hpet->Header.Revision = EFI_ACPI_HIGH_PRECISION_EVENT_TIMER_TABLE_REVISION;
-      CopyMem (&Hpet->Header.OemId, oemID, 6);
-      CopyMem (&Hpet->Header.OemTableId, oemTableID, sizeof (oemTableID));
-      Hpet->Header.OemRevision = 0x00000001;
-      CopyMem (&Hpet->Header.CreatorId, creatorID, sizeof (creatorID));
-      Hpet->EventTimerBlockId = 0x8086A201; // we should remember LPC VendorID to place here
-      Hpet->BaseAddressLower32Bit.AddressSpaceId = EFI_ACPI_2_0_SYSTEM_IO;
-      Hpet->BaseAddressLower32Bit.RegisterBitWidth = 0x40; //64bit
-      Hpet->BaseAddressLower32Bit.RegisterBitOffset = 0x00;
-      Hpet->BaseAddressLower32Bit.Address = 0xFED00000; //Physical Addr.
-      Hpet->HpetNumber = 0;
-      Hpet->MainCounterMinimumClockTickInPeriodicMode = 0x0080;
-      Hpet->PageProtectionAndOemAttribute = EFI_ACPI_64KB_PAGE_PROTECTION;
-      // Flags |= EFI_ACPI_4KB_PAGE_PROTECTION , EFI_ACPI_64KB_PAGE_PROTECTION
-      // verify checksum
-      Hpet->Header.Checksum = 0;
-      Hpet->Header.Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) Hpet, Hpet->Header.Length));
-
-      //then we have to install new table into Xsdt
-      if (Xsdt != NULL) {
-        eCntR = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-        xf = (UINT64*) (&(Xsdt->Entry)) + eCntR;
-        Xsdt->Header.Length += sizeof (UINT64);
-        *xf = (UINT64) (UINTN) Hpet;
-      }
-    }
-  }
   // DropSSDT = Yes
   if (gSettings.DropSSDT) {
     DropTableFromRSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE);
     DropTableFromXSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE);
   }
+  
   // Load SSDTs
   for (Index = 0; Index < NUM_TABLES; Index++) {
     UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathPatched, ACPInames[Index]);
@@ -636,7 +596,7 @@ PatchACPI (
   }
 
 #if 0
-  Pause (L"Press Any Key.....\r\n");
+  Pause (NULL);
 #endif
   return EFI_SUCCESS;
 }
