@@ -63,9 +63,6 @@ typedef struct {
 } PLATFORM_DATA;
 #pragma pack()
 
-#if 0
-extern EFI_GUID               gDataHubPlatformGuid;
-#endif
 EFI_DATA_HUB_PROTOCOL         *gDataHub;
 EFI_GUID gDataHubPlatformGuid = {0x64517cc8, 0x6561, 0x4051, {0xb0, 0x3c, 0x59, 0x64, 0xb6, 0x0f, 0x4c, 0x7a}};
 
@@ -157,41 +154,79 @@ SetVariablesForOSX (
     bootArgsLen--;
   }
 
-  Status = gRS->SetVariable (L"BootNext",  &gEfiAppleNvramGuid, //&gEfiGlobalVarGuid,
-                             /* EFI_VARIABLE_NON_VOLATILE | */EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             sizeof (BootNext) , &BootNext);
-  Status = gRS->SetVariable (L"BackgroundClear", &gEfiAppleNvramGuid,
-                             /* EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             sizeof (BackgroundClear), &BackgroundClear);
-  Status = gRS->SetVariable (L"FirmwareFeatures", &gEfiAppleNvramGuid,
-                             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             sizeof (FwFeatures), &FwFeatures);
-  Status = gRS->SetVariable (L"FirmwareFeaturesMask", &gEfiAppleNvramGuid,
-                             EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             sizeof (FwFeaturesMask), &FwFeaturesMask);
-  Status = gRS->SetVariable (L"MLB", &gEfiAppleNvramGuid,
-                             /*  EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             SNLen, &gSettings.BoardSerialNumber);
+  Status = gRS->SetVariable (
+                  L"BootNext",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  sizeof (BootNext),
+                  &BootNext
+                );
+
+  Status = gRS->SetVariable (
+                  L"BackgroundClear",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  sizeof (BackgroundClear),
+                  &BackgroundClear
+                );
+
+  Status = gRS->SetVariable (
+                  L"FirmwareFeatures",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  sizeof (FwFeatures),
+                  &FwFeatures
+                );
+
+  Status = gRS->SetVariable (
+                  L"FirmwareFeaturesMask",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  sizeof (FwFeaturesMask),
+                  &FwFeaturesMask
+                );
+
+  Status = gRS->SetVariable (
+                  L"MLB",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  SNLen,
+                  &gSettings.BoardSerialNumber
+                );
 
   if (gSettings.Language[0] != 0) {
 
     Addr  = &gSettings.Language[10];
-    
     while ((*Addr == ' ') || (*Addr == 0)) {
       Addr--;
       LanguageLen--;
     }
-    Status = gRS->SetVariable (L"prev-lang:kbd", &gEfiAppleBootGuid,
-                               /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                               LanguageLen , &gSettings.Language);
+
+    Status = gRS->SetVariable (
+                    L"prev-lang:kbd",
+                    &gEfiAppleBootGuid,
+                    EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                    LanguageLen,
+                    &gSettings.Language
+                  );
   }
 
-  Status = gRS->SetVariable (L"boot-args", &gEfiAppleBootGuid,
-                             /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             bootArgsLen , &gSettings.BootArgs);
-  Status = gRS->SetVariable (L"security-mode", &gEfiAppleBootGuid,
-                             /*   EFI_VARIABLE_NON_VOLATILE |*/ EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                             5 , (VOID*) None);
+  Status = gRS->SetVariable (
+                  L"boot-args",
+                  &gEfiAppleBootGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  bootArgsLen ,
+                  &gSettings.BootArgs
+                );
+
+  Status = gRS->SetVariable (
+                  L"security-mode",
+                  &gEfiAppleBootGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  5,
+                  (VOID*) None
+                );
+
   if (EFI_ERROR (SystemIDStatus)) {
     Status = gRS->SetVariable (
                     L"platform-uuid",
@@ -210,9 +245,6 @@ SetupDataForOSX (
 )
 {
   EFI_STATUS      Status;
-#if 0
-  CHAR16*         CloverVersion;
-#endif
   UINT32          devPathSupportedVal;
   UINT64          FrontSideBus;
   UINT64          CpuSpeed;
@@ -226,9 +258,6 @@ SetupDataForOSX (
   Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &gDataHub);
 
   if (!EFI_ERROR (Status)) {
-#if 0
-    CloverVersion = L"1.0";
-#endif
     devPathSupportedVal = 1;
     FrontSideBus    = gCPUStructure.FSBFrequency;
     CpuSpeed        = gCPUStructure.CPUFrequency;
@@ -246,10 +275,6 @@ SetupDataForOSX (
     if (!EFI_ERROR (SystemIDStatus)) {
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
     }
-
-#if 0
-    Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Clover", CloverVersion, (UINT32) StrSize (CloverVersion));
-#endif
     return Status;
   } else {
     return EFI_NOT_FOUND;
