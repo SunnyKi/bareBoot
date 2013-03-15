@@ -12,6 +12,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
+#include "macosx/macosx.h"
 #include "InternalBdsLib.h"
 
 #define EFI_HANDLE_TYPE_UNKNOWN                     0x000
@@ -438,12 +439,12 @@ ConnectEFIDevices (
   VOID
   )
 {
-  EFI_STATUS        Status;
+  EFI_STATUS              Status;
   UINTN                   AllHandleCount;
-  EFI_HANDLE        *AllHandleBuffer;
+  EFI_HANDLE              *AllHandleBuffer;
   UINTN                   Index;
   UINTN                   HandleCount;
-  EFI_HANDLE        *HandleBuffer;
+  EFI_HANDLE              *HandleBuffer;
   UINT32                  *HandleType;
   UINTN                   HandleIndex;
   BOOLEAN                 Parent;
@@ -458,7 +459,7 @@ ConnectEFIDevices (
     if (EFI_ERROR (Status))  goto Done;
 
     Device = TRUE;
-        if (!HandleType[Index])                                         Device = FALSE;
+    if (!HandleType[Index])                                         Device = FALSE;
     if (HandleType[Index] & EFI_HANDLE_TYPE_DRIVER_BINDING_HANDLE)  Device = FALSE;
     if (HandleType[Index] & EFI_HANDLE_TYPE_IMAGE_HANDLE)           Device = FALSE;
 
@@ -475,6 +476,9 @@ ConnectEFIDevices (
       {
         if (HandleType[Index] & EFI_HANDLE_TYPE_DEVICE_HANDLE)
         {
+#ifdef BOOT_DEBUG
+          Print(L"  4.%d. attempt connecting  HandleType = 0x%x\n", Index + 1, HandleType[Index]);
+#endif
           Status = gBS->ConnectController(AllHandleBuffer[Index],NULL,NULL,TRUE);
         }
       }

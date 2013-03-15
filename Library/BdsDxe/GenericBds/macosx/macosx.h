@@ -29,6 +29,8 @@
 #include "boot.h"
 #include "device_inject.h"
 
+#define BOOT_DEBUG
+
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))
 #define MAX_NUM_DEVICES 64
 
