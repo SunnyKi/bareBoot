@@ -713,7 +713,7 @@ GetBootDefault (
     gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
     if (!GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot)) {
       gSettings.BootTimeout = 0xFFFF;
-    };
+    }
   }
 
   return Status;

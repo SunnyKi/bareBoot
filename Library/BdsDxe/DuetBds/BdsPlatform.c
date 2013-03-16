@@ -41,9 +41,6 @@ Abstract:
 #define KB_RIGHT_SHIFT_PRESSED    (0x1 << 0)
 #define KB_LEFT_ALT_PRESSED       (0x1 << 1)
 #define KB_LEFT_CTRL_PRESSED      (0x1 << 0)
-#if 0
-#define SERIAL_CON_OUT
-#endif
 
 extern BOOLEAN  gConnectAllHappened;
 extern USB_CLASS_FORMAT_DEVICE_PATH gUsbClassKeyboardDevicePath;
@@ -243,6 +240,7 @@ DisableUsbLegacySupport(
   UINT32                                HcCapParams;
   UINT32                                ExtendCap;
   UINT32                                Value;
+  UINT32                                SaveValue;
   UINT32                                TimeOut;
 
   //
@@ -293,8 +291,8 @@ DisableUsbLegacySupport(
               //
               // Disable the SMI in USBLEGCTLSTS firstly
               //
-              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
-              Value &= 0xFFFF0000;
+              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
+              Value = SaveValue & 0xFFFF0000;
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
 
               //
@@ -314,6 +312,7 @@ DisableUsbLegacySupport(
                   break;
                 }
               }
+              PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
             }
           }
         }
@@ -533,12 +532,10 @@ Returns:
   // Register COM1
   //
   DevicePath = TempDevicePath;
-#ifdef SERIAL_CON_OUT
   gPnp16550ComPortDeviceNode.UID = 0;
 
   DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gPnp16550ComPortDeviceNode);
   DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gUartDeviceNode);
-#endif
   DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gTerminalTypeDeviceNode);
 
   BdsLibUpdateConsoleVariable (VarConsoleOut, DevicePath, NULL);
@@ -549,12 +546,10 @@ Returns:
   // Register COM2
   //
   DevicePath = TempDevicePath;
-#ifdef SERIAL_CON_OUT
   gPnp16550ComPortDeviceNode.UID = 1;
 
   DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gPnp16550ComPortDeviceNode);
   DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gUartDeviceNode);
-#endif
   DevicePath = AppendDevicePathNode (DevicePath, (EFI_DEVICE_PATH_PROTOCOL *)&gTerminalTypeDeviceNode);
 
   BdsLibUpdateConsoleVariable (VarConsoleOut, DevicePath, NULL);
@@ -693,7 +688,6 @@ Returns:
   return EFI_SUCCESS;
 }
 
-#ifdef SERIAL_CON_OUT
 EFI_STATUS
 PreparePciSerialDevicePath (
   IN EFI_HANDLE                DeviceHandle
@@ -738,7 +732,6 @@ Returns:
 
   return EFI_SUCCESS;
 }
-#endif
 
 EFI_STATUS
 DetectAndPreparePlatformPciDevicePath (
@@ -821,7 +814,6 @@ Returns:
       //
       // Here we decide which Serial device to enable in PCI bus
       //
-#ifdef SERIAL_CON_OUT
       if (IS_PCI_16550SERIAL (&Pci)) {
         //
         // Add them to ConOut, ConIn, ErrOut.
@@ -830,7 +822,6 @@ Returns:
         PreparePciSerialDevicePath (HandleBuffer[Index]);
         continue;
       }
-#endif
     }
 
     //
@@ -938,7 +929,6 @@ Returns:
   // ConnectRootBridge() will create all the PciIo protocol, it's safe here now
   //
   Status = DisableUsbLegacySupport();
-
   //
   // Connect the all the default console with current cosole variable
   //
