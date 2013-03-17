@@ -113,7 +113,9 @@ SetVariablesForOSX (
   UINT32      BackgroundClear;
   UINT32      FwFeatures;
   UINT32      FwFeaturesMask;
+#if 0
   CHAR8       *None;
+#endif
   UINT8       SNLen;
   UINTN       bootArgsLen;
   UINT8       LanguageLen;
@@ -123,10 +125,12 @@ SetVariablesForOSX (
   BackgroundClear = 0x00000000;
   FwFeatures      = 0xc0007417;
   FwFeaturesMask  = 0xc0007fff;
+#if 0
   None = "none";
+#endif
   SNLen = 20;
   bootArgsLen = 120;
-  LanguageLen = 11;
+  LanguageLen = 10;
 
   Addr = &gSettings.BoardSerialNumber[19];
 
@@ -206,7 +210,7 @@ SetVariablesForOSX (
                   bootArgsLen ,
                   &gSettings.BootArgs
                 );
-
+#if 0
   Status = gRS->SetVariable (
                   L"security-mode",
                   &gEfiAppleBootGuid,
@@ -214,7 +218,7 @@ SetVariablesForOSX (
                   5,
                   (VOID*) None
                 );
-
+#endif
   if (EFI_ERROR (SystemIDStatus)) {
     Status = gRS->SetVariable (
                     L"platform-uuid",
