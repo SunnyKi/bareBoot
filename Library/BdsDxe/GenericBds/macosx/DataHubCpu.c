@@ -255,8 +255,10 @@ SetupDataForOSX (
     AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
 
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &FrontSideBus, sizeof (UINT64));
+#if 0
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"TSCFrequency", &TSCFrequency, sizeof (UINT64));
     Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"CPUFrequency", &CpuSpeed, sizeof (UINT64));
+#endif
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"DevicePathsSupported", &devPathSupportedVal, sizeof (UINT32));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
