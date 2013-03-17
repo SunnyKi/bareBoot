@@ -88,12 +88,6 @@ INF  MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
 INF  MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF  MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
-#INF  Clover/SataControllerDxe/SataControllerDxe.inf
-#INF  Clover/AtaAtapi/AtaAtapiPassThru.inf
-#INF  Clover/AtaBus/AtaBusDxe.inf
-#INF  Clover/DVDBus/ScsiBusDxe.inf
-#INF  Clover/DVDDisk/ScsiDiskDxe.inf
-
   # Usb Support
 INF  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
 INF  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
