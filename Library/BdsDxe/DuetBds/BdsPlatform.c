@@ -50,6 +50,9 @@ EFI_GUID    *gTableGuidArray[] = {&gEfiAcpi20TableGuid,
                                   &gEfiSmbiosTableGuid,
                                   &gEfiMpsTableGuid};
 
+UINT32                            mNewValue;
+UINT32                            mSaveValue;
+
 //
 // BDS Platform Functions
 //
@@ -240,7 +243,6 @@ DisableUsbLegacySupport(
   UINT32                                HcCapParams;
   UINT32                                ExtendCap;
   UINT32                                Value;
-  UINT32                                SaveValue;
   UINT32                                TimeOut;
 
   //
@@ -291,8 +293,8 @@ DisableUsbLegacySupport(
               //
               // Disable the SMI in USBLEGCTLSTS firstly
               //
-              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
-              Value = SaveValue & 0xFFFF0000;
+              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &mSaveValue);
+              Value = mSaveValue & 0xFFFF0000;
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
 
               //
@@ -312,7 +314,8 @@ DisableUsbLegacySupport(
                   break;
                 }
               }
-              PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
+              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &mNewValue);
+              PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &mSaveValue);
             }
           }
         }
@@ -1155,26 +1158,19 @@ Returns:
   EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *SimpleTextInEx;
   EFI_KEY_DATA                       mKeyData;
 #endif
-#ifdef BOOT_DEBUG
-  Print(L"  1.\n");
-#endif
+
   Status = BdsLibGetBootMode (&BootMode);
   ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
-#ifdef BOOT_DEBUG
-  Print(L"  2.\n");
-#endif
+  // very long function:
   PlatformBdsConnectConsole (gPlatformConsole);
-#ifdef BOOT_DEBUG
-  Print(L"  3.\n");
-#endif
+
   PlatformBdsDiagnostics (IGNORE, TRUE, BaseMemoryTest);
-#ifdef BOOT_DEBUG
-  Print(L"  4.\n");
-#endif
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
 #ifdef BOOT_DEBUG
-  Print(L"  5.\n");
+  Print (L" New USBLEGCTLSTS = 0x%x\n", mNewValue);
+  Print (L" Old USBLEGCTLSTS = 0x%x\n", mSaveValue);
+  Pause (NULL);
 #endif
   BdsLibEnumerateAllBootOption (BootOptionList);
 

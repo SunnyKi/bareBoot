@@ -29,7 +29,7 @@
 #include "boot.h"
 #include "device_inject.h"
 
-#if 0
+#if 1
 #define BOOT_DEBUG
 #endif
 
