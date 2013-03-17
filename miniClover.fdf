@@ -81,7 +81,7 @@ INF  miniClover/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 
   # IDE/AHCI Support
 #INF  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
-#INF  miniClover/BlockIoDxe/BlockIoDxe.inf
+INF  miniClover/BlockIoDxe/BlockIoDxe.inf
 INF  miniClover/SataControllerDxe/SataControllerDxe.inf
 INF  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
 INF  MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf

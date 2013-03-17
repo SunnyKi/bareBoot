@@ -742,7 +742,7 @@ BuildEdd30DevicePath (
   IN  EFI_DEVICE_PATH_PROTOCOL  **DevicePath
   )
 {
-#endif
+#if 0
   // AVL
   UINT64                  Address;
   EFI_HANDLE              Handle;

@@ -211,7 +211,7 @@
 
   # IDE/AHCI Support
 #  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
-#  miniClover/BlockIoDxe/BlockIoDxe.inf
+  miniClover/BlockIoDxe/BlockIoDxe.inf
   miniClover/SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf

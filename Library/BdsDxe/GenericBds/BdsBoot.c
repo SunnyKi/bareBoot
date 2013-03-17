@@ -461,12 +461,9 @@ BdsLibEnumerateAllBootOption (
 {
   EFI_STATUS                    Status;
 #if 0
-  EFI_BLOCK_IO_PROTOCOL         *BlkIo;
   UINT16                        FloppyNumber;
-  UINT16                        CdromNumber;
   UINT16                        NonBlockNumber;
   BOOLEAN                       Removable[2];
-  UINTN                         DevicePathType;
   CHAR8                         *PlatLang;
   CHAR8                         *LastLang;
 #endif
@@ -487,6 +484,13 @@ BdsLibEnumerateAllBootOption (
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   EFI_FILE_SYSTEM_INFO            *FileSystemInfo;
   UINT32                          BufferSizeVolume;
+  UINTN                         NumberBlockIoHandles;
+  EFI_HANDLE                    *BlockIoHandles;
+  EFI_BLOCK_IO_PROTOCOL         *BlkIo;
+  UINTN                         DevicePathType;
+  UINT16                        CdromNumber;
+  BOOLEAN                       Removable[2];
+  UINTN                         RemovableIndex;
 
   gRootFHandle    = NULL;
   FileSystemInfo  = NULL;
@@ -497,13 +501,16 @@ BdsLibEnumerateAllBootOption (
   NumberFileSystemHandles = 0;
 
   ZeroMem (Buffer, sizeof (Buffer));
+  CdromNumber     = 0;
+  DevicePathType  = 0;
+  BlkIo           = NULL;
+  Removable[0]    = FALSE;
+  Removable[1]    = TRUE;
+
 #if 0
   PlatLang        = NULL;
   LastLang        = NULL;
-  BlkIo           = NULL;
   FloppyNumber    = 0;
-  CdromNumber     = 0;
-  DevicePathType          = 0;
   //
   // If the boot device enumerate happened, just get the boot
   // device from the boot order variable
@@ -551,12 +558,57 @@ BdsLibEnumerateAllBootOption (
   // The Removable[] array is used by the for-loop below to create removable media boot options 
   // at first, and then to create fixed media boot options.
   //
-  Removable[0]  = FALSE;
-  Removable[1]  = TRUE;
 
   if (DevicePathType != BDS_EFI_ACPI_FLOPPY_BOOT) {
     NonBlockNumber = 0;
 #endif
+
+    gBS->LocateHandleBuffer (
+                             ByProtocol,
+                             &gEfiBlockIoProtocolGuid,
+                             NULL,
+                             &NumberBlockIoHandles,
+                             &BlockIoHandles
+                             );
+
+    for (RemovableIndex = 0; RemovableIndex < 2; RemovableIndex++) {
+      for (Index = 0; Index < NumberBlockIoHandles; Index++) {
+
+        Status = gBS->HandleProtocol (
+                        BlockIoHandles[Index],
+                        &gEfiBlockIoProtocolGuid,
+                        (VOID **) &BlkIo
+                      );
+
+        if (EFI_ERROR (Status) || (BlkIo->Media->RemovableMedia == Removable[RemovableIndex])) {
+          continue;
+        }
+        
+        DevicePath  = DevicePathFromHandle (BlockIoHandles[Index]);
+        DevicePathType = BdsGetBootTypeFromDevicePath (DevicePath);
+
+        switch (DevicePathType) {
+          case BDS_EFI_MESSAGE_ATAPI_BOOT:
+          case BDS_EFI_MESSAGE_SATA_BOOT:
+            if (BlkIo->Media->RemovableMedia) {
+              if (CdromNumber != 0) {
+                UnicodeSPrint (Buffer, 255, L"%s %d", L"DVD/CDROM", CdromNumber);
+              } else {
+                UnicodeSPrint (Buffer, 255, L"%s", L"DVD/CDROM");
+              }
+              CdromNumber++;
+            } else {
+              break;
+            }
+            BdsLibBuildOptionFromHandle (BlockIoHandles[Index], L"All", BdsBootOptionList, Buffer, FALSE);
+            break;
+            
+          default:
+            break;
+        }
+      }
+    }
+
     gBS->LocateHandleBuffer (
           ByProtocol,
           &gEfiSimpleFileSystemProtocolGuid,
