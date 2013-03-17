@@ -110,10 +110,10 @@ SetVariablesForOSX (
 {
   EFI_STATUS  Status;
   UINT16      *BootNext;
-  UINT32      BackgroundClear;
   UINT32      FwFeatures;
   UINT32      FwFeaturesMask;
 #if 0
+  UINT32      BackgroundClear;
   CHAR8       *None;
 #endif
   UINT8       SNLen;
@@ -122,10 +122,10 @@ SetVariablesForOSX (
   CHAR8*      Addr;
 
   BootNext = NULL; //it already presents in EFI FW. First GetVariable ?
-  BackgroundClear = 0x00000000;
   FwFeatures      = 0xc0007417;
   FwFeaturesMask  = 0xc0007fff;
 #if 0
+  BackgroundClear = 0x00000000;
   None = "none";
 #endif
   SNLen = 20;
@@ -152,14 +152,6 @@ SetVariablesForOSX (
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                   sizeof (BootNext),
                   &BootNext
-                );
-
-  Status = gRS->SetVariable (
-                  L"BackgroundClear",
-                  &gEfiAppleNvramGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  sizeof (BackgroundClear),
-                  &BackgroundClear
                 );
 
   Status = gRS->SetVariable (
@@ -203,22 +195,6 @@ SetVariablesForOSX (
                   );
   }
 
-  Status = gRS->SetVariable (
-                  L"boot-args",
-                  &gEfiAppleBootGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  bootArgsLen ,
-                  &gSettings.BootArgs
-                );
-#if 0
-  Status = gRS->SetVariable (
-                  L"security-mode",
-                  &gEfiAppleBootGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  5,
-                  (VOID*) None
-                );
-#endif
   if (EFI_ERROR (SystemIDStatus)) {
     Status = gRS->SetVariable (
                     L"platform-uuid",
@@ -228,6 +204,32 @@ SetVariablesForOSX (
                     &gUuid
                   );
   }
+
+  Status = gRS->SetVariable (
+                  L"boot-args",
+                  &gEfiAppleBootGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  bootArgsLen ,
+                  &gSettings.BootArgs
+                );
+#if 0
+  Status = gRS->SetVariable (
+                  L"BackgroundClear",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  sizeof (BackgroundClear),
+                  &BackgroundClear
+                );
+
+  Status = gRS->SetVariable (
+                  L"security-mode",
+                  &gEfiAppleBootGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  5,
+                  (VOID*) None
+                );
+#endif
+
   return Status;
 }
 
