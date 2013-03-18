@@ -636,11 +636,16 @@ ParseTagInteger (CHAR8* buffer, TagPtr * tag, UINT32* lenPtr) {
 // ParseTagData
 
 EFI_STATUS
-ParseTagData (CHAR8* buffer, TagPtr * tag, UINT32* lenPtr) {
+ParseTagData (CHAR8* buffer, TagPtr * tag, UINT32* lenPtr)
+{
   EFI_STATUS  Status;
   UINT32    length;
+  UINTN     len;
   TagPtr    tmpTag;
-  CHAR8* string;
+  CHAR8*    string;
+
+  len = 0;
+  length = 0;
 
   Status = FixDataMatchingTag (buffer, kXMLTagData, &length);
 
@@ -658,6 +663,8 @@ ParseTagData (CHAR8* buffer, TagPtr * tag, UINT32* lenPtr) {
   string = NewSymbol (buffer);
   tmpTag->type = kTagTypeData;
   tmpTag->string = string;
+	tmpTag->data = (UINT8 *) Base64Decode(tmpTag->string, &len);
+  tmpTag->dataLen = len;
   tmpTag->tag = NULL;
   tmpTag->offset = (UINT32)(buffer_start ? buffer - buffer_start : 0);
   tmpTag->tagNext = NULL;

@@ -22,6 +22,7 @@
 #include <IndustryStandard/Acpi40.h>
 #endif
 #include <IndustryStandard/HighPrecisionEventTimerTable.h>
+#include <Protocol/EdidDiscovered.h>
 
 #include "InternalBdsLib.h"
 #include "SmBios.h"
@@ -413,6 +414,8 @@ typedef enum {
 typedef struct {
   UINT32    type;
   CHAR8     *string;
+  UINT8			*data;
+  UINTN			dataLen;
   UINT32    offset;
   VOID      *tag;
   VOID      *tagNext;
@@ -530,6 +533,8 @@ BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
 
+extern UINT8                    *gEDID;
+extern EFI_EDID_DISCOVERED_PROTOCOL*            EdidDiscovered;
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
 extern EFI_GUID                 gEfiAppleNvramGuid;
@@ -681,4 +686,11 @@ EFIAPI
 EventsInitialize (
   VOID
   );
+
+UINT8*
+Base64Decode(
+  IN CHAR8 *EncodedData,
+  OUT UINTN *DecodedSize
+);
+
 #endif

@@ -562,6 +562,7 @@ typedef struct {
 
 BOOLEAN get_binimage_val (value_t *val);
 BOOLEAN get_bootdisplay_val (value_t *val);
+BOOLEAN get_edid_val(value_t *val);
 BOOLEAN get_conntype_val (value_t *val);
 BOOLEAN get_deviceid_val (value_t *val);
 BOOLEAN get_mclk_val (value_t *val);
@@ -578,6 +579,7 @@ BOOLEAN get_vramtotalsize_val (value_t *val);
 
 AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, FALSE, "@0,AAPL,boot-display", get_bootdisplay_val, NULVAL },
+  { FLAGTRUE, TRUE, "AAPL00,override-no-connect", get_edid_val, NULVAL },
 #if 0
   { FLAGTRUE, FALSE, "@0,ATY,EFIDisplay", NULL, STRVAL ("TMDSA") },
   { FLAGTRUE, TRUE, "@0,AAPL,vram-memory", get_vrammemory_val, NULVAL },

@@ -251,7 +251,6 @@ CHAR8* AppleBoardLocation = "Part Component";
 
 //---------------------------------------------------------------------------------
 
-#if 0
 VOID *
 GetDataSetting (
   IN TagPtr dict,
@@ -302,7 +301,6 @@ GetDataSetting (
 
   return data;
 }
-#endif
 
 EFI_STATUS
 StrToBuf (
@@ -822,14 +820,12 @@ GetUserSettings (
         hex2bin (prop->string, (UINT8*) &gSettings.Dcfg[0], 8);
       }
 
-#if 0
       prop = GetProperty (dictPointer, "CustomEDID");
 
       if (prop != NULL) {
         UINTN j = 128;
         gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &j);
       }
-#endif
     }
 
     dictPointer = GetProperty (dict, "PCI");

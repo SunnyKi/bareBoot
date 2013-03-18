@@ -17,6 +17,8 @@ UINT32 builtin_set = 0;
 DevPropString *string = NULL;
 UINT8 *stringdata = NULL;
 UINT32 stringlength = 0;
+EFI_EDID_DISCOVERED_PROTOCOL    *EdidDiscovered;
+UINT8                           *gEDID;
 
 #if 0
 pci_dt_t* nvdevice;
@@ -327,6 +329,33 @@ devprop_free_string (
   FreePool (pstring->entries);
   FreePool (pstring);
   pstring = NULL;
+}
+
+EFI_STATUS
+GetEdid(
+  VOID
+)
+{
+	EFI_STATUS						Status;
+  UINTN                 N;
+
+  gEDID = NULL;
+
+	Status = gBS->LocateProtocol (&gEfiEdidDiscoveredProtocolGuid, NULL, (VOID **)&EdidDiscovered);
+
+	if (!EFI_ERROR (Status))
+    {
+		N = EdidDiscovered->SizeOfEdid;
+		if (N == 0) {
+			return EFI_NOT_FOUND;
+		}
+    gEDID = AllocateAlignedPages(EFI_SIZE_TO_PAGES(N), 128);
+    if (!gSettings.CustomEDID) {
+      gSettings.CustomEDID = gEDID;
+    }
+    CopyMem(gEDID, EdidDiscovered->Edid, N);
+  }
+  return Status;
 }
 
 // ---------------============== Ethernet built-in device injection
@@ -1091,6 +1120,27 @@ get_bootdisplay_val (
   val->type = kCst;
   val->size = 4;
   val->data = (UINT8 *) &v;
+  return TRUE;
+}
+
+BOOLEAN
+get_edid_val(
+  value_t *val
+)
+{
+  static UINT32 v = 0;
+
+	if (v) {
+		return FALSE;
+  }
+
+  if (!gSettings.CustomEDID) {
+    return FALSE;
+  }
+  v = 1;
+  val->type = kPtr;
+  val->size = 128;
+  val->data = AllocateCopyPool(val->size, gSettings.CustomEDID);
   return TRUE;
 }
 
@@ -1912,6 +1962,7 @@ SetDevices (
   BOOLEAN       StringDirty = FALSE;
   BOOLEAN       TmpDirty = FALSE;
 
+  GetEdid ();
   /* Read Pci Bus for GFX */
   Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
 
