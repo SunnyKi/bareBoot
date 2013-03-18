@@ -547,9 +547,10 @@ PatchACPI (
             break;
         }
       }
-      
+      *(UINT32 *)(UINTN) (0xfee00000 + 0x360) = 0x400;
       ApicTable->Checksum = 0;
       ApicTable->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) ApicTable, ApicTable->Length));
+      
 #ifdef ACPI_DEBUG
       Print (L" Checksum = 0x%x\r\n", ApicTable->Checksum);
 #endif
