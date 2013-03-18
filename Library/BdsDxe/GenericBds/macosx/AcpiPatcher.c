@@ -269,6 +269,27 @@ PatchACPI (
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
 
+  EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
+  EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER   *ApicHeader;
+  EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE           *ProcLocalApic;
+  EFI_ACPI_2_0_IO_APIC_STRUCTURE                        *IoAPIC;
+  EFI_ACPI_2_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE      *ISOverride;
+  EFI_ACPI_2_0_NON_MASKABLE_INTERRUPT_SOURCE_STRUCTURE  *NMISource;
+  EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE                 *LocalApicNMI;
+  EFI_ACPI_2_0_LOCAL_APIC_ADDRESS_OVERRIDE_STRUCTURE    *LocalApicAdrrOverride;
+  EFI_ACPI_2_0_IO_SAPIC_STRUCTURE                       *IoSapic;
+  EFI_ACPI_2_0_PROCESSOR_LOCAL_SAPIC_STRUCTURE          *ProcessorLocalSapic;
+  EFI_ACPI_2_0_PLATFORM_INTERRUPT_SOURCES_STRUCTURE     *PlatformIntSource;
+
+  UINT64                                                AddrApic;
+  UINT32                                                TableLength;
+  UINT32                                                ApicLength;
+  UINT8                                                 ProcCount;
+  UINT8                                                 Type;
+
+  ProcCount = 0;
+  ApicLength = 0;
+
   buffer = NULL;
   bufferLen = 0;
   dsdt = EFI_SYSTEM_TABLE_MAX_ADDRESS; //0xFE000000;
@@ -373,39 +394,179 @@ PatchACPI (
   }
   
   // -===== APIC =====-
-#if 0
-  EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
-  EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER   *ApicHeader;
-  EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE           *ProcLocalApic;
-  xf = ScanXSDT (APIC_SIGN);
+  if (gSettings.PatchAPIC) {
+    xf = ScanXSDT (APIC_SIGN);
+    if (xf != NULL) {
+      ApicTable = (EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) (*xf);
+      TableLength = ApicTable->Length;
 
-  if (xf != NULL) {
-    ApicTable = (EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) (*xf);
-    ApicHeader = (EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER *) (*xf + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
-    ProcLocalApic = (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE *) (*xf + sizeof (EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER));
-    Print (L"ApicTable = 0x%x, ApicHeader = 0x%x, ProcLocalApic = 0x%x\r\n", ApicTable, ApicHeader, ProcLocalApic);
+      ApicHeader = (EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER *) (*xf + sizeof (EFI_ACPI_DESCRIPTION_HEADER));
 
-    while ((ProcLocalApic->Type == 0)) { // && (ProcLocalApic->Flags == 1)) {
-      Print (L" ProcId = %d, ApicId = %d, Flags = %d\r\n", ProcLocalApic->AcpiProcessorId, ProcLocalApic->ApicId, ProcLocalApic->Flags);
+      ProcLocalApic = (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE *) (*xf + sizeof (EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER));
 
-      if ((ProcLocalApic->AcpiProcessorId) != ProcLocalApic->ApicId) {
-        ProcLocalApic->AcpiProcessorId = ProcLocalApic->ApicId;
-#if 0
-        ProcLocalApic->ApicId = ProcLocalApic->AcpiProcessorId;
+      ApicLength += (sizeof (EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER) +
+                     sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE));
+      AddrApic = (UINT64) ProcLocalApic;
+      Type = ProcLocalApic->Type;
+#ifdef ACPI_DEBUG
+      Print (L" TableLength = 0x%x, ApicTable = 0x%x, ApicHeader = 0x%x\r\n", TableLength, ApicTable, ApicHeader);
+      Print (L"AddrApic = 0x%x\r\n", AddrApic);
+      Print (L"Next Type = %d\r\n", Type);
 #endif
-        Pause (L"Found (ProcId ) != ApicId !!!\r\n");
+      while (ApicLength <= TableLength) {
+        switch (Type) {
+          case EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC:
+            ProcLocalApic = (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE *) (AddrApic);
+#ifdef ACPI_DEBUG
+            Print (L" ProcId = %d, ApicId = %d, Flags = %d\r\n", ProcLocalApic->AcpiProcessorId, ProcLocalApic->ApicId, ProcLocalApic->Flags);
+#endif
+            ProcCount++;
+
+            ProcLocalApic++;
+            AddrApic = (UINT64) ProcLocalApic;
+            Type = ProcLocalApic->Type;
+            ApicLength += ProcLocalApic->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_IO_APIC:
+            IoAPIC = (EFI_ACPI_2_0_IO_APIC_STRUCTURE *) (AddrApic);
+#ifdef ACPI_DEBUG
+            Print (L"IoApicId = %d, Address = 0x%x, Interrupt = %d, Length = 0x%x\r\n",  IoAPIC->IoApicId, IoAPIC->IoApicAddress, IoAPIC->GlobalSystemInterruptBase, IoAPIC->Length);
+#endif
+            IoAPIC++;
+            AddrApic = (UINT64) IoAPIC;
+            Type = IoAPIC->Type;
+            ApicLength += IoAPIC->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_INTERRUPT_SOURCE_OVERRIDE:
+            ISOverride = (EFI_ACPI_2_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE *) (AddrApic);
+#ifdef ACPI_DEBUG
+            Print (L" Source = 0x%x, Interrupt = %d, Flags = 0x%x, Length = %d\r\n", ISOverride->Source, ISOverride->GlobalSystemInterrupt, ISOverride->Flags, ISOverride->Length);
+#endif
+            ISOverride++;
+            AddrApic = (UINT64) ISOverride;
+            Type = ISOverride->Type;
+            ApicLength += ISOverride->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_NON_MASKABLE_INTERRUPT_SOURCE:
+            NMISource = (EFI_ACPI_2_0_NON_MASKABLE_INTERRUPT_SOURCE_STRUCTURE *) (AddrApic);
+
+            NMISource++;
+            AddrApic = (UINT64) NMISource;
+            Type = NMISource->Type;
+            ApicLength += NMISource->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_LOCAL_APIC_NMI:
+            LocalApicNMI = (EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE *) (AddrApic);
+#ifdef ACPI_DEBUG
+            Print (L" AcpiProcessorId = 0x%x, Flags = 0x%x, Length = %d\r\n", LocalApicNMI->AcpiProcessorId, LocalApicNMI->Flags, LocalApicNMI->Length);
+#endif
+            LocalApicNMI++;
+            AddrApic = (UINT64) LocalApicNMI;
+            Type = LocalApicNMI->Type;
+            ApicLength += sizeof (EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE);
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_LOCAL_APIC_ADDRESS_OVERRIDE:
+            LocalApicAdrrOverride = (EFI_ACPI_2_0_LOCAL_APIC_ADDRESS_OVERRIDE_STRUCTURE *) (AddrApic);
+
+            LocalApicAdrrOverride++;
+            AddrApic = (UINT64) LocalApicAdrrOverride;
+            Type = LocalApicAdrrOverride->Type;
+            ApicLength += LocalApicAdrrOverride->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_IO_SAPIC:
+            IoSapic = (EFI_ACPI_2_0_IO_SAPIC_STRUCTURE *) (AddrApic);
+
+            IoSapic++;
+            AddrApic = (UINT64) &IoSapic;
+            Type = IoSapic->Type;
+            ApicLength += IoSapic->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_PROCESSOR_LOCAL_SAPIC:
+            ProcessorLocalSapic = (EFI_ACPI_2_0_PROCESSOR_LOCAL_SAPIC_STRUCTURE *) (AddrApic);
+
+            ProcessorLocalSapic++;
+            AddrApic = (UINT64) &ProcessorLocalSapic;
+            Type = ProcessorLocalSapic->Type;
+            ApicLength += ProcessorLocalSapic->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          case EFI_ACPI_2_0_PLATFORM_INTERRUPT_SOURCES:
+            PlatformIntSource = (EFI_ACPI_2_0_PLATFORM_INTERRUPT_SOURCES_STRUCTURE *) (AddrApic);
+
+            PlatformIntSource++;
+            AddrApic = (UINT64) &PlatformIntSource;
+            Type = PlatformIntSource->Type;
+            ApicLength += PlatformIntSource->Length;
+#ifdef ACPI_DEBUG
+            Print (L"AddrApic = 0x%x\r\n", AddrApic);
+            Print (L"Next Type = %d\r\n", Type);
+#endif
+            break;
+
+          default:
+            goto Error;
+            break;
+        }
       }
-
-      ProcLocalApic++;
-      Print (L"ProcLocalApic = 0x%x (ProcLocalApic->Length = %d)\r\n", ProcLocalApic, ProcLocalApic->Length);
-    }
-
-    ApicTable->Checksum = 0;
-    ApicTable->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) ApicTable, ApicTable->Length));
-  } else {
-    Pause (L"No APIC table Found !!!\r\n");
-  }
+      
+      ApicTable->Checksum = 0;
+      ApicTable->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) ApicTable, ApicTable->Length));
+#ifdef ACPI_DEBUG
+      Print (L" Checksum = 0x%x\r\n", ApicTable->Checksum);
 #endif
+    } else {
+    Error:
+      Print (L"No APIC table Found or parse error !!!\r\n");
+    }  
+#ifdef ACPI_DEBUG
+    Pause (NULL);
+    Pause (NULL);
+    Pause (NULL);
+    Pause (NULL);
+    Pause (NULL);
+    Pause (NULL);
+#endif
+  }
+  
   // --------------------
   
   BiosDsdt = FadtPointer->XDsdt;
@@ -429,7 +590,7 @@ PatchACPI (
       newFadt->Reserved0 = 0; //ACPIspec said it should be 0, while 1 is possible, but no more
       newFadt->IaPcBootArch = 0x3;
       // Reset Register Supported
-      newFadt->Flags |= 0x400; 
+      newFadt->Flags |= EFI_ACPI_2_0_RESET_REG_SUP; 
       newFadt->ResetReg.AddressSpaceId     = 1;
       newFadt->ResetReg.RegisterBitWidth   = 8;
       newFadt->ResetReg.RegisterBitOffset  = 0;

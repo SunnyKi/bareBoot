@@ -32,6 +32,7 @@
 #if 0
 #define BOOT_DEBUG
 #endif
+#define ACPI_DEBUG
 
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))
 #define MAX_NUM_DEVICES 64
@@ -378,6 +379,7 @@ typedef struct {
   UINT64  ResetAddr;
   UINT8   ResetVal;
   BOOLEAN DropSSDT;
+  BOOLEAN PatchAPIC;
   UINT8   PMProfile;
   // Graphics
   BOOLEAN GraphicsInjector;
