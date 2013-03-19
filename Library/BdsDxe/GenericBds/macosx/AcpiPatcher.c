@@ -403,8 +403,11 @@ PatchACPI (
       Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
       if (!EFI_ERROR (Status)) {
         NewApicTable = (EFI_ACPI_DESCRIPTION_HEADER *) (UINTN) BufferPtr;
+        Print (L"ApicTable = 0x%x, ApicTable->Length = 0x%x\r\n", ApicTable, ApicTable->Length );
         CopyMem ((UINT8*) NewApicTable, (UINT8*) ApicTable, ApicTable->Length);
         NewApicTable->Length = (ApicTable->Length + 6);
+        Print (L"NewApicTable = 0x%x, NewApicTable->Length = 0x%x\r\n", NewApicTable, NewApicTable->Length);
+        Print (L"NewApicTable->Signature = 0x%x\r\n", NewApicTable->Signature);
         AddrApic = (UINT64) NewApicTable;
         LocalApicNMI = (EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE *) (AddrApic + ApicTable->Length);
         LocalApicNMI->Type = 4;
@@ -415,6 +418,9 @@ PatchACPI (
         NewApicTable->Checksum = 0;
         NewApicTable->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) NewApicTable, NewApicTable->Length));
         *xf = (UINT64) NewApicTable;
+        Print (L"xf = 0x%x,\r\n", *xf);
+      } else {
+        Print (L"error AllocatePages \r\n");
       }
       
       xf = ScanXSDT (APIC_SIGN);
@@ -566,7 +572,7 @@ PatchACPI (
               break;
               
             default:
-              goto Error;
+              Print (L"subtable type error\r\n");
               break;
           }
         }
@@ -578,7 +584,6 @@ PatchACPI (
       Print (L" Checksum = 0x%x\r\n", ApicTable->Checksum);
 #endif
     } else {
-    Error:
       Print (L"No APIC table Found or parse error !!!\r\n");
     }  
 #ifdef ACPI_DEBUG

@@ -270,6 +270,7 @@ SetupDataForOSX (
     Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
     if (!EFI_ERROR (SystemIDStatus)) {
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
+      Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
     }
     return Status;
   } else {
