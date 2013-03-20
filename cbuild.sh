@@ -11,6 +11,15 @@ echo "CHAINLOAD: GCC46"
 export TARGET_TOOLS=GCC46
 }
 
+fnGCC47 ()
+# Function: Xcode chainload
+{
+[ ! -f /usr/bin/xcodebuild ] && \
+echo "ERROR: Install Xcode Tools from Apple before using this script." && exit
+echo "CHAINLOAD: GCC47"
+export TARGET_TOOLS=GCC47
+}
+
 fnArchIA32 ()
 # Function: IA32 Arch function
 {
@@ -49,13 +58,27 @@ fnHelpArgument ()
 {
 echo "ERROR!"
 echo "Example: ./cbuild.sh -xcode -ia32 -release"
-echo "Example: ./cbuild.sh -gcc46 -x64 -release"
+echo "Example: ./cbuild.sh -gcc47 -x64 -release"
 }
 
 ## MAIN ARGUMENT PART##
 
-    fnGCC46
     case "$1" in
+        '')
+        fnGCC47
+        ;;
+        '-gcc46')
+         fnGCC46
+        ;;
+        '-gcc47')
+         fnGCC47
+        ;;
+        *)
+         echo $"ERROR!"
+         echo $"TARGET_TOOLS: {-gcc46|-gcc47}"
+        exit 1
+    esac
+    case "$2" in
         '')
         fnArchX64
         ;;
@@ -70,7 +93,7 @@ echo "Example: ./cbuild.sh -gcc46 -x64 -release"
          echo $"ARCH: {-ia32|-x64}"
         exit 1
     esac
-    case "$2" in
+    case "$3" in
         '')
          fnRelease
         ;;
@@ -85,7 +108,7 @@ echo "Example: ./cbuild.sh -gcc46 -x64 -release"
          echo $"TYPE: {-debug|-release}"
         exit 1
     esac
-    case "$3" in
+    case "$4" in
         '-clean')
         export ARG=clean
         ;;
@@ -178,8 +201,9 @@ then
 $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
 $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/DUETEFIMAINFV.z
 
-cat $BOOTSECTOR_BIN_DIR/start32.com $BOOTSECTOR_BIN_DIR/efi32.com3 $BUILD_DIR/FV/Efildr32 > $BUILD_DIR/FV/Efildr20	
-cat $BOOTSECTOR_BIN_DIR/start32H.com2 $BOOTSECTOR_BIN_DIR/efi32.com3 $BUILD_DIR/FV/Efildr32 > $BUILD_DIR/FV/boot
+cat $BOOTSECTOR_BIN_DIR/Start32.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32 > $BUILD_DIR/FV/Efildr20	
+#cat $BOOTSECTOR_BIN_DIR/Start32.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32 > $BUILD_DIR/FV/boot
+dd if=$BUILD_DIR/FV/Efildr20 of=$BUILD_DIR/FV/boot bs=512 skip=1
 echo Done!
 fi
 
