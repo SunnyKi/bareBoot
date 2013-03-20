@@ -17,9 +17,10 @@ UINT32 builtin_set = 0;
 DevPropString *string = NULL;
 UINT8 *stringdata = NULL;
 UINT32 stringlength = 0;
+#if 0
 EFI_EDID_DISCOVERED_PROTOCOL    *EdidDiscovered;
 UINT8                           *gEDID;
-
+#endif
 #if 0
 pci_dt_t* nvdevice;
 #endif
@@ -330,7 +331,7 @@ devprop_free_string (
   FreePool (pstring);
   pstring = NULL;
 }
-
+#if 0
 EFI_STATUS
 GetEdid(
   VOID
@@ -357,7 +358,7 @@ GetEdid(
   }
   return Status;
 }
-
+#endif
 // ---------------============== Ethernet built-in device injection
 
 BOOLEAN
@@ -1961,8 +1962,9 @@ SetDevices (
   UINTN         Function;
   BOOLEAN       StringDirty = FALSE;
   BOOLEAN       TmpDirty = FALSE;
-
+#if 0
   GetEdid ();
+#endif
   /* Read Pci Bus for GFX */
   Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
 

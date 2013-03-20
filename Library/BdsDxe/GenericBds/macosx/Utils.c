@@ -775,7 +775,8 @@ GetUserSettings (
     ZeroMem (gSettings.SerialNr, 64);
     ZeroMem (cUUID, 40);
     SystemIDStatus = EFI_UNSUPPORTED;
-
+    gSettings.CustomEDID = NULL;
+    
     dictPointer = GetProperty (dict, "SystemParameters");
 
     GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);

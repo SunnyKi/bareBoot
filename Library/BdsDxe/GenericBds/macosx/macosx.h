@@ -532,9 +532,10 @@ EFI_STATUS                      SystemIDStatus;
 BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
-
+#if 0
 extern UINT8                    *gEDID;
 extern EFI_EDID_DISCOVERED_PROTOCOL*            EdidDiscovered;
+#endif
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
 extern EFI_GUID                 gEfiAppleNvramGuid;
