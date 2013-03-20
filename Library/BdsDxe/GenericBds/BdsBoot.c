@@ -563,6 +563,8 @@ BdsLibEnumerateAllBootOption (
     NonBlockNumber = 0;
 #endif
 
+    BdsDeleteAllInvalidEfiBootOption ();
+
     gBS->LocateHandleBuffer (
                              ByProtocol,
                              &gEfiBlockIoProtocolGuid,
@@ -610,24 +612,25 @@ BdsLibEnumerateAllBootOption (
     }
 
     gBS->LocateHandleBuffer (
-          ByProtocol,
-          &gEfiSimpleFileSystemProtocolGuid,
-          NULL,
-          &NumberFileSystemHandles,
-          &FileSystemHandles
-          );
+           ByProtocol,
+           &gEfiSimpleFileSystemProtocolGuid,
+           NULL,
+           &NumberFileSystemHandles,
+           &FileSystemHandles
+         );
+    
     for (Index = 0; Index < NumberFileSystemHandles; Index++) {
       DevicePath  = DevicePathFromHandle (FileSystemHandles[Index]);
       Status = gBS->HandleProtocol (
                       FileSystemHandles[Index],
                       &gEfiSimpleFileSystemProtocolGuid,
                       (VOID *) &Volume
-                      );
+                    );
       if (!EFI_ERROR (Status)) {
         Status = Volume->OpenVolume (
                            Volume,
                            &FHandle
-                           );
+                         );
       }
 
       if ((FileExists (FHandle, L"\\EFI\\mini\\config.plist")) && (ConfigNotFound)) {
@@ -640,9 +643,12 @@ BdsLibEnumerateAllBootOption (
       Status = FHandle->GetInfo(FHandle, &gEfiFileSystemInfoGuid,(UINTN*)&BufferSizeVolume, FileSystemInfo);
 
       if (!EFI_ERROR(Status)) {
-        if (FileSystemInfo->VolumeLabel) 
+        if (FileSystemInfo->VolumeLabel) {
           UnicodeSPrint (Buffer, BufferSizeVolume, L"%s", FileSystemInfo->VolumeLabel);
-      }
+        } else {
+          UnicodeSPrint (Buffer, BufferSizeVolume, L"%s %d", L"Unnamed Volume ", Index);
+        }
+      } 
 
       if (FileExists(FHandle, MACOSX_LOADER_PATH))
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
