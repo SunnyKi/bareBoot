@@ -146,6 +146,8 @@ SetVariablesForOSX (
     bootArgsLen--;
   }
 
+  Status = gRS->SetVariable(L"ROM", &gEfiAppleNvramGuid, 0, 0, NULL);
+
   Status = gRS->SetVariable (
                   L"BootNext",
                   &gEfiAppleNvramGuid,
@@ -176,6 +178,14 @@ SetVariablesForOSX (
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                   SNLen,
                   &gSettings.BoardSerialNumber
+                );
+
+  Status = gRS->SetVariable (
+                  L"ROM",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  sizeof (UINT64),
+                  &gEthMacAddr
                 );
 
   if (gSettings.Language[0] != 0) {

@@ -463,7 +463,7 @@ hexstrtouint8 (
   return i;
 }
 
-BOOLEAN
+UINT32
 hex2bin (
   IN CHAR8 *hex,
   OUT UINT8 *bin,
@@ -475,23 +475,30 @@ hex2bin (
   CHAR8 buf[3];
 
   if (hex == NULL || bin == NULL || len <= 0 || (INT32) AsciiStrLen (hex) != len * 2) {
-    return FALSE;
+    return 0;
   }
 
   buf[2] = '\0';
   p = (CHAR8 *) hex;
 
   for (i = 0; i < len; i++) {
+		while ((*p == 0x20) || (*p == ',')) {
+			p++;
+		}
+		if (*p == 0) {
+			break;
+		}
     if (!IsHexDigit (p[0]) || !IsHexDigit (p[1])) {
-      return FALSE;
+      return 0;
     }
 
     buf[0] = *p++;
     buf[1] = *p++;
     bin[i] = hexstrtouint8 (buf);
+    outlen++;
   }
-
-  return TRUE;
+	bin[outlen] = 0;
+	return outlen;
 }
 
 VOID

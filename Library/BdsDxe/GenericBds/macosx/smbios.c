@@ -368,9 +368,12 @@ GetTableType1 (
 )
 {
   CHAR8* s;
-  CHAR16                        Buffer[255];
+#if 0
+  CHAR16  Buffer[40];
+  CHAR8   Buffer1[12];
 
   ZeroMem (Buffer, sizeof (Buffer));
+#endif
 
   // System Information
   //
@@ -386,8 +389,23 @@ GetTableType1 (
   
 //  CopyMem (&gUuid, (VOID*) &SmbiosTable.Type1->Uuid, 16);
   gUuid = SmbiosTable.Type1->Uuid;
+  gEthMacAddr = (LShiftU64 (SmbiosTable.Type1->Uuid.Data4[3], 40) +
+                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[4], 32) +
+                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[5], 24) +
+                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[6], 16) +
+                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[7], 8) +
+                           (SmbiosTable.Type1->Uuid.Data4[8])
+                );
 #if 0
-  UnicodeSPrint (Buffer, 255, L"%x-%x-%x-%x%x-%x%x%x%x%x%x",
+  AsciiSPrint (Buffer1, 12, "%x%x%x%x%x%x",
+    SmbiosTable.Type1->Uuid.Data4[3],
+    SmbiosTable.Type1->Uuid.Data4[4],
+    SmbiosTable.Type1->Uuid.Data4[5],
+    SmbiosTable.Type1->Uuid.Data4[6],
+    SmbiosTable.Type1->Uuid.Data4[7],
+    SmbiosTable.Type1->Uuid.Data4[8]
+  );
+  UnicodeSPrint (Buffer, 40, L"%x-%x-%x-%x%x-%x%x%x%x%x%x",
     SmbiosTable.Type1->Uuid.Data1,
     SmbiosTable.Type1->Uuid.Data2,
     SmbiosTable.Type1->Uuid.Data3,
@@ -400,7 +418,7 @@ GetTableType1 (
     SmbiosTable.Type1->Uuid.Data4[7],
     SmbiosTable.Type1->Uuid.Data4[8]
   );
-  Print (L"%s", &Buffer);
+  Print (L"%s\n", &Buffer);
   Pause (NULL);
   Pause (NULL);
   Pause (NULL);

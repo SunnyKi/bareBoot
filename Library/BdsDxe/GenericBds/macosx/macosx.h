@@ -531,6 +531,7 @@ EFI_GUID                        gSystemID;
 EFI_GUID                        gPlatformUuid;
 EFI_STATUS                      SystemIDStatus;
 EFI_STATUS                      PlatformUuidStatus;
+UINT64                          gEthMacAddr;
 BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
