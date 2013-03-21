@@ -677,10 +677,13 @@ PatchACPI (
 
     if (gSettings.PMProfile != 0) {
       newFadt->PreferredPmProfile = gSettings.PMProfile;
-    } else {
+    }
+#if 0
+    else {
       newFadt->PreferredPmProfile = gMobile ? 2 : 1;
     }
-    
+#endif
+
     if ((gSettings.ResetAddr != 0) &&
         (gSettings.ResetVal != 0)) {
       newFadt->Flags |= 0x400;

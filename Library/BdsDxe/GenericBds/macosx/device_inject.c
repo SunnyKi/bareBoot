@@ -1453,7 +1453,7 @@ load_vbios_file (
     return FALSE;
   }
 
-  UnicodeSPrint (FileName, 24, L"\\EFI\\rom\\%04x_%04x.rom", vendor_id, device_id);
+  UnicodeSPrint (FileName, 24, L"\\EFI\\mini\\rom\\%04x_%04x.rom", vendor_id, device_id);
 
   if (!FileExists (gRootFHandle, FileName)) {
     return FALSE;

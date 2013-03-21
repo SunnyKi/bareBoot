@@ -783,7 +783,7 @@ GetUserSettings (
     GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
 
     if (dictPointer != NULL) {
-      prop = GetProperty (dictPointer, "CustomUUID");
+      prop = GetProperty (dictPointer, "PlatformUUID");
 
       if (prop != NULL) {
         AsciiStrToUnicodeStr (prop->string, cUUID);
@@ -801,7 +801,7 @@ GetUserSettings (
 
     dictPointer = GetProperty (dict, "Graphics");
     
-    gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", TRUE);
+    gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
     gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
     gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
     gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
