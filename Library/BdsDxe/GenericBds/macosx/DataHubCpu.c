@@ -195,13 +195,14 @@ SetVariablesForOSX (
                   );
   }
 
-  if (EFI_ERROR (SystemIDStatus)) {
+  if (EFI_ERROR (SystemIDStatus) &&
+      !EFI_ERROR (PlatformUuidStatus)) {
     Status = gRS->SetVariable (
                     L"platform-uuid",
                     &gEfiAppleBootGuid,
                     EFI_VARIABLE_BOOTSERVICE_ACCESS |  EFI_VARIABLE_RUNTIME_ACCESS,
                     16,
-                    &gUuid
+                    &gPlatformUuid
                   );
   }
 
@@ -271,6 +272,11 @@ SetupDataForOSX (
     if (!EFI_ERROR (SystemIDStatus)) {
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
+    } else {
+      if (EFI_ERROR (PlatformUuidStatus)) {
+        Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
+        Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
+      }
     }
     return Status;
   } else {
