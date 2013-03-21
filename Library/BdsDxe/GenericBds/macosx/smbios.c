@@ -368,6 +368,10 @@ GetTableType1 (
 )
 {
   CHAR8* s;
+  CHAR16                        Buffer[255];
+
+  ZeroMem (Buffer, sizeof (Buffer));
+
   // System Information
   //
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_SYSTEM_INFORMATION, 0);
@@ -379,15 +383,36 @@ GetTableType1 (
 
   s = GetSmbiosString (SmbiosTable, SmbiosTable.Type1->ProductName);
   CopyMem (gSettings.OEMProduct, s, iStrLen (s, 64));
-  CopyMem (&gUuid, (VOID*) &SmbiosTable.Type1->Uuid, 16);
-
+  
+//  CopyMem (&gUuid, (VOID*) &SmbiosTable.Type1->Uuid, 16);
+  gUuid = SmbiosTable.Type1->Uuid;
+#if 0
+  UnicodeSPrint (Buffer, 255, L"%x-%x-%x-%x%x-%x%x%x%x%x%x",
+    SmbiosTable.Type1->Uuid.Data1,
+    SmbiosTable.Type1->Uuid.Data2,
+    SmbiosTable.Type1->Uuid.Data3,
+    SmbiosTable.Type1->Uuid.Data4[1],
+    SmbiosTable.Type1->Uuid.Data4[2],
+    SmbiosTable.Type1->Uuid.Data4[3],
+    SmbiosTable.Type1->Uuid.Data4[4],
+    SmbiosTable.Type1->Uuid.Data4[5],
+    SmbiosTable.Type1->Uuid.Data4[6],
+    SmbiosTable.Type1->Uuid.Data4[7],
+    SmbiosTable.Type1->Uuid.Data4[8]
+  );
+  Print (L"%s", &Buffer);
+  Pause (NULL);
+  Pause (NULL);
+  Pause (NULL);
+#endif
+#if 0
   if ((gUuid.Data3 & 0xF000) == 0) {
     CopyMem (&gUuid, (VOID*) &gEfiSmbiosTableGuid, 16); //gPlatformUuid
     gUuid.Data1 ^= 0x1234; //random
     gUuid.Data2 ^= 0x2341;
     gUuid.Data3 ^= 0x3412;
   }
-
+#endif
   return;
 }
 
@@ -416,8 +441,14 @@ PatchTableType1 (
   newSmbiosTable.Type1->WakeUpType = SystemWakeupTypePowerSwitch;
   Once = TRUE;
 
-  if ((gUuid.Data3 & 0xF000) != 0) {
-    CopyMem ((VOID*) &newSmbiosTable.Type1->Uuid, &gUuid, 16);
+  if (!EFI_ERROR (SystemIDStatus)) {
+    newSmbiosTable.Type1->Uuid = gSystemID;
+  } else {
+    if (!EFI_ERROR (PlatformUuidStatus)) {
+    newSmbiosTable.Type1->Uuid = gPlatformUuid;
+    } else {
+      newSmbiosTable.Type1->Uuid = gUuid;
+    }
   }
 
   if (iStrLen (gSettings.ManufactureName, 64) > 0) {
