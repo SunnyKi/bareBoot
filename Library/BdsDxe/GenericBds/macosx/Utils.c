@@ -471,8 +471,11 @@ hex2bin (
 )
 {
   CHAR8 *p;
-  INT32 i;
+  UINT32 i;
+  UINT32 outlen;
   CHAR8 buf[3];
+
+  outlen = 0;
 
   if (hex == NULL || bin == NULL || len <= 0 || (INT32) AsciiStrLen (hex) != len * 2) {
     return 0;

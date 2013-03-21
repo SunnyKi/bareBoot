@@ -551,7 +551,7 @@ GetAdvancedCpuType (
   VOID
 );
 
-BOOLEAN
+UINT32
 hex2bin (
   IN CHAR8 *hex,
   OUT UINT8 *bin,
