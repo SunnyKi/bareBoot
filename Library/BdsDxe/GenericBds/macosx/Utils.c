@@ -484,7 +484,7 @@ hex2bin (
   buf[2] = '\0';
   p = (CHAR8 *) hex;
 
-  for (i = 0; i < len; i++) {
+  for (i = 0; i < (UINT32) len; i++) {
 		while ((*p == 0x20) || (*p == ',')) {
 			p++;
 		}
