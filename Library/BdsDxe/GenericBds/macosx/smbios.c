@@ -1390,6 +1390,7 @@ PatchSmbios (
   PatchTableType130();
   PatchTableType131();
   if ((gCPUStructure.Model == CPU_MODEL_NEHALEM) ||
+      (gCPUStructure.Model == CPU_MODEL_NEHALEM_EX) ||
       (gSettings.ProcessorInterconnectSpeed != 0)) {
     PatchTableType132();
   }

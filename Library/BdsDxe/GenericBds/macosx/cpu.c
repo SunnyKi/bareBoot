@@ -526,7 +526,8 @@ GetCPUProperties (
 #endif
   }
 
-  if (gCPUStructure.Model == CPU_MODEL_NEHALEM) {
+  if ((gCPUStructure.Model == CPU_MODEL_NEHALEM) ||
+      (gCPUStructure.Model == CPU_MODEL_NEHALEM_EX)) {
     Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
 
     if (!EFI_ERROR (Status)) {
@@ -864,6 +865,8 @@ DumpCPU (
 {
   Print (L"\nCPU:\tBrandString - %a\n", gCPUStructure.BrandString);
   Print (L"Vendor/Model/ExtModel: 0x%x/0x%x/0x%x\n", gCPUStructure.Vendor,  gCPUStructure.Model, gCPUStructure.Extmodel);
+  Print (L"Signature: 0x%x\n", gCPUStructure.Signature);
+  
   Print (L"Family/ExtFamily:      0x%x/0x%x\n", gCPUStructure.Family,  gCPUStructure.Extfamily);
   Print (L"Features: 0x%08x\n", gCPUStructure.Features);
 
