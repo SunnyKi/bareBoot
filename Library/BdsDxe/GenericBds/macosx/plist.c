@@ -106,7 +106,7 @@ XMLDecode (const CHAR8* src) {
 
       s++;
 
-      for (i = 0; i < sizeof (ents); i++) {
+      for (i = 0; i < sizeof (ents) / sizeof (XMLEntity); i++) {
         if (AsciiStrnCmp (s, ents[i].name, ents[i].nameLen) == 0) {
           entFound = TRUE;
           break;
