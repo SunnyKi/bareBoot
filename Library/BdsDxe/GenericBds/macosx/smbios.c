@@ -400,10 +400,10 @@ GetTableType1 (
   );
 
   gSettings.EthMacAddr = AllocateZeroPool ((AsciiStrLen(Buffer) >> 1));
-  gSettings.MacAddrLen = hex2bin (Buffer1, gSettings.EthMacAddr, (AsciiStrLen(Buffer) >> 1));
+  gSettings.MacAddrLen = hex2bin (Buffer, gSettings.EthMacAddr, (AsciiStrLen(Buffer) >> 1));
 
 #if 0
-  UnicodeSPrint (Buffer, 100, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+  UnicodeSPrint (Buffer1, 100, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
     SmbiosTable.Type1->Uuid.Data1,
     SmbiosTable.Type1->Uuid.Data2,
     SmbiosTable.Type1->Uuid.Data3,
@@ -416,21 +416,14 @@ GetTableType1 (
     SmbiosTable.Type1->Uuid.Data4[6],
     SmbiosTable.Type1->Uuid.Data4[7]
   );
-  Print (L"%s\n", &Buffer);
-  AsciiStrToUnicodeStr (Buffer1, Buffer);
-  Print (L"%s\n", &Buffer);
+  Print (L"%s\n", &Buffer1);
+  AsciiStrToUnicodeStr (Buffer, Buffer1);
+  Print (L"%s\n", &Buffer1);
   Pause (NULL);
   Pause (NULL);
   Pause (NULL);
 #endif
-#if 0
-  if ((gUuid.Data3 & 0xF000) == 0) {
-    CopyMem (&gUuid, (VOID*) &gEfiSmbiosTableGuid, 16); //gPlatformUuid
-    gUuid.Data1 ^= 0x1234; //random
-    gUuid.Data2 ^= 0x2341;
-    gUuid.Data3 ^= 0x3412;
-  }
-#endif
+
   return;
 }
 
