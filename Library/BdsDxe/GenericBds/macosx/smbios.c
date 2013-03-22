@@ -1255,22 +1255,20 @@ PatchTableType132 (
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, 132, 0);
 
   if (SmbiosTable.Raw == NULL) {
-    if (gCPUStructure.Model == CPU_MODEL_NEHALEM) {
       ZeroMem ((VOID*) newSmbiosTable.Type132, MAX_TABLE_SIZE);
       newSmbiosTable.Type132->Hdr.Type = 132;
       newSmbiosTable.Type132->Hdr.Length = sizeof (SMBIOS_STRUCTURE) + 2;
       newSmbiosTable.Type132->Hdr.Handle = 0x8400; //ugly
 
-      if (gCPUStructure.ProcessorInterconnectSpeed) {
+      if (gCPUStructure.ProcessorInterconnectSpeed != 0) {
         newSmbiosTable.Type132->ProcessorBusSpeed = (UINT16) gCPUStructure.ProcessorInterconnectSpeed;
       }
 
-      if (gSettings.ProcessorInterconnectSpeed) {
+      if (gSettings.ProcessorInterconnectSpeed != 0) {
         newSmbiosTable.Type132->ProcessorBusSpeed = (UINT16) gSettings.ProcessorInterconnectSpeed;
       }
-
+    
       Handle = LogSmbiosTable (newSmbiosTable);
-    }
   } else {
     LogSmbiosTable (SmbiosTable);
   }
@@ -1391,8 +1389,10 @@ PatchSmbios (
   PatchTableType128();
   PatchTableType130();
   PatchTableType131();
-  PatchTableType132();
-
+  if ((gCPUStructure.Model == CPU_MODEL_NEHALEM) ||
+      (gSettings.ProcessorInterconnectSpeed != 0)) {
+    PatchTableType132();
+  }
   StructurePtr = (SMBIOS_STRUCTURE*) Current;
   StructurePtr->Type    = SMBIOS_TYPE_END_OF_TABLE;
   StructurePtr->Length  = sizeof (SMBIOS_STRUCTURE);

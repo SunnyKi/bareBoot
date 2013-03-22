@@ -787,6 +787,7 @@ GetUserSettings (
     SystemIDStatus = EFI_UNSUPPORTED;
     PlatformUuidStatus = EFI_UNSUPPORTED;
     gSettings.CustomEDID = NULL;
+    gSettings.ProcessorInterconnectSpeed = 0;
     
     dictPointer = GetProperty (dict, "SystemParameters");
 
