@@ -395,7 +395,9 @@ typedef struct {
   UINT16  PCIRootUID;
   BOOLEAN ETHInjection;
   BOOLEAN USBInjection;
-  UINT16   HDALayoutId;
+  UINT16  HDALayoutId;
+  UINT8   *EthMacAddr;
+  UINTN   MacAddrLen;
 } SETTINGS_DATA;
 
 typedef enum {
@@ -531,7 +533,6 @@ EFI_GUID                        gSystemID;
 EFI_GUID                        gPlatformUuid;
 EFI_STATUS                      SystemIDStatus;
 EFI_STATUS                      PlatformUuidStatus;
-UINT64                          gEthMacAddr;
 BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;

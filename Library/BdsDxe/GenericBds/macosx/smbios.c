@@ -368,12 +368,13 @@ GetTableType1 (
 )
 {
   CHAR8* s;
+  CHAR8   Buffer[50];
 #if 0
-  CHAR16  Buffer[40];
-  CHAR8   Buffer1[12];
+  CHAR16  Buffer1[100];
 
-  ZeroMem (Buffer, sizeof (Buffer));
+  ZeroMem (Buffer1, sizeof (Buffer1));
 #endif
+  ZeroMem (Buffer, sizeof (Buffer));
 
   // System Information
   //
@@ -387,37 +388,36 @@ GetTableType1 (
   s = GetSmbiosString (SmbiosTable, SmbiosTable.Type1->ProductName);
   CopyMem (gSettings.OEMProduct, s, iStrLen (s, 64));
   
-//  CopyMem (&gUuid, (VOID*) &SmbiosTable.Type1->Uuid, 16);
   gUuid = SmbiosTable.Type1->Uuid;
-  gEthMacAddr = (LShiftU64 (SmbiosTable.Type1->Uuid.Data4[3], 40) +
-                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[4], 32) +
-                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[5], 24) +
-                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[6], 16) +
-                 LShiftU64 (SmbiosTable.Type1->Uuid.Data4[7], 8) +
-                           (SmbiosTable.Type1->Uuid.Data4[8])
-                );
-#if 0
-  AsciiSPrint (Buffer1, 12, "%x%x%x%x%x%x",
+
+  AsciiSPrint (Buffer, 50, "%02x%02x%02x%02x%02x%02x",
+    SmbiosTable.Type1->Uuid.Data4[2],
     SmbiosTable.Type1->Uuid.Data4[3],
     SmbiosTable.Type1->Uuid.Data4[4],
     SmbiosTable.Type1->Uuid.Data4[5],
     SmbiosTable.Type1->Uuid.Data4[6],
-    SmbiosTable.Type1->Uuid.Data4[7],
-    SmbiosTable.Type1->Uuid.Data4[8]
+    SmbiosTable.Type1->Uuid.Data4[7]
   );
-  UnicodeSPrint (Buffer, 40, L"%x-%x-%x-%x%x-%x%x%x%x%x%x",
+
+  gSettings.EthMacAddr = AllocateZeroPool ((AsciiStrLen(Buffer) >> 1));
+  gSettings.MacAddrLen = hex2bin (Buffer1, gSettings.EthMacAddr, (AsciiStrLen(Buffer) >> 1));
+
+#if 0
+  UnicodeSPrint (Buffer, 100, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
     SmbiosTable.Type1->Uuid.Data1,
     SmbiosTable.Type1->Uuid.Data2,
     SmbiosTable.Type1->Uuid.Data3,
+    SmbiosTable.Type1->Uuid.Data4[0],
     SmbiosTable.Type1->Uuid.Data4[1],
     SmbiosTable.Type1->Uuid.Data4[2],
     SmbiosTable.Type1->Uuid.Data4[3],
     SmbiosTable.Type1->Uuid.Data4[4],
     SmbiosTable.Type1->Uuid.Data4[5],
     SmbiosTable.Type1->Uuid.Data4[6],
-    SmbiosTable.Type1->Uuid.Data4[7],
-    SmbiosTable.Type1->Uuid.Data4[8]
+    SmbiosTable.Type1->Uuid.Data4[7]
   );
+  Print (L"%s\n", &Buffer);
+  AsciiStrToUnicodeStr (Buffer1, Buffer);
   Print (L"%s\n", &Buffer);
   Pause (NULL);
   Pause (NULL);

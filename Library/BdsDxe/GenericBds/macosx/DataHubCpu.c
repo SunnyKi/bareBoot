@@ -184,8 +184,8 @@ SetVariablesForOSX (
                   L"ROM",
                   &gEfiAppleNvramGuid,
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  sizeof (UINT64),
-                  &gEthMacAddr
+                  gSettings.MacAddrLen,
+                  gSettings.EthMacAddr
                 );
 
   if (gSettings.Language[0] != 0) {
