@@ -442,11 +442,11 @@ typedef struct {
   CHAR8   BrandString[48];
   UINT32  Vendor;
   UINT32  Family;
+  UINT32  Extfamily;
   UINT32  Model;
+  UINT32  Extmodel;
   UINT32  Stepping;
   UINT32  Type;
-  UINT32  Extmodel;
-  UINT32  Extfamily;
   UINT32  Signature;
   UINT64  Features;
   UINT64  ExtFeatures;

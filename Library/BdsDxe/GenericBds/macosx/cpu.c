@@ -208,10 +208,6 @@ GetCPUProperties (
   DoCpuid (0x00000001, gCPUStructure.CPUID[CPUID_1]);
   DoCpuid (0x80000000, gCPUStructure.CPUID[CPUID_80]);
 
-  if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 1) {
-    DoCpuid (0x80000001, gCPUStructure.CPUID[CPUID_81]);
-  }
-
   gCPUStructure.Vendor      = gCPUStructure.CPUID[CPUID_0][EBX];
   gCPUStructure.Signature   = gCPUStructure.CPUID[CPUID_1][EAX];
   gCPUStructure.Stepping    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 3, 0);
@@ -221,17 +217,25 @@ GetCPUProperties (
   gCPUStructure.Extmodel    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 19, 16);
   gCPUStructure.Extfamily   = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 27, 20);
   gCPUStructure.Features    = quad (gCPUStructure.CPUID[CPUID_1][ECX], gCPUStructure.CPUID[CPUID_1][EDX]);
-  gCPUStructure.ExtFeatures = quad (gCPUStructure.CPUID[CPUID_81][ECX], gCPUStructure.CPUID[CPUID_81][EDX]);
-  gCPUStructure.Model       += (gCPUStructure.Extmodel << 4);
 
   if (gCPUStructure.Family == 0x0f) {
     gCPUStructure.Family += gCPUStructure.Extfamily;
   }
 
-  if ((gCPUStructure.CPUID[CPUID_80][EAX] & 0x0000000f) >= 7) {
+  if ((gCPUStructure.Family == 0x0f) ||
+      (gCPUStructure.Family == 0x06)) {
+    gCPUStructure.Model       += (gCPUStructure.Extmodel << 4);
+  }
+
+  if (gCPUStructure.CPUID[CPUID_80][EAX] >= 0x80000001) {
+    DoCpuid (0x80000001, gCPUStructure.CPUID[CPUID_81]);
+    gCPUStructure.ExtFeatures = quad (gCPUStructure.CPUID[CPUID_81][ECX], gCPUStructure.CPUID[CPUID_81][EDX]);
+  }
+
+  if (gCPUStructure.CPUID[CPUID_80][EAX] >= 0x80000007) {
     DoCpuid (0x80000007, gCPUStructure.CPUID[CPUID_87]);
     gCPUStructure.ExtFeatures |= gCPUStructure.CPUID[CPUID_87][EDX] & (UINT32) CPUID_EXTFEATURE_TSCI;
-  }
+  }  
   //
   // Cores & Threads count
   //
@@ -882,6 +886,7 @@ DumpCPU (
   Print (L"TSC: %lld Hz\n", gCPUStructure.TSCFrequency);
   Print (L"CPU: %lld Hz\n", gCPUStructure.CPUFrequency);
   Print (L"ProcessorInterconnectSpeed: %d MHz\n", gCPUStructure.ProcessorInterconnectSpeed);
+  Pause (NULL);
   Pause (NULL);
   Pause (NULL);
 }
