@@ -416,8 +416,9 @@ typedef enum {
 typedef struct {
   UINT32    type;
   CHAR8     *string;
-  UINT8			*data;
-  UINTN			dataLen;
+  UINT8      *data;
+  UINTN      dataLen;
+  INT32     intval;
   UINT32    offset;
   VOID      *tag;
   VOID      *tagNext;
