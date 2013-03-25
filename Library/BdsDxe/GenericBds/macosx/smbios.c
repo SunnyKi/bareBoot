@@ -361,9 +361,9 @@ GetTableType1 (
   VOID
 )
 {
-  CHAR8* s;
   CHAR8   Buffer[50];
 #if 0
+  CHAR8* s;
   CHAR16  Buffer1[100];
 
   ZeroMem (Buffer1, sizeof (Buffer1));
@@ -379,9 +379,11 @@ GetTableType1 (
     return;
   }
 
+#if 0
   s = GetSmbiosString (SmbiosTable, SmbiosTable.Type1->ProductName);
   CopyMem (gSettings.OEMProduct, s, iStrLen (s, 64));
-  
+#endif
+
   gUuid = SmbiosTable.Type1->Uuid;
 
   AsciiSPrint (Buffer, 50, "%02x%02x%02x%02x%02x%02x",

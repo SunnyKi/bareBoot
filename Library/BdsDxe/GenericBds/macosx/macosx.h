@@ -347,7 +347,9 @@ typedef struct {
   CHAR8 VersionNr[64];
   CHAR8 SerialNr[64];
   CHAR8 FamilyName[64];
+#if 0
   CHAR8 OEMProduct[64];
+#endif
   // SMBIOS TYPE2
   CHAR8 BoardManufactureName[64];
   CHAR8 BoardSerialNumber[64];
