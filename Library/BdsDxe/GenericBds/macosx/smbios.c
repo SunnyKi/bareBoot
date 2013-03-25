@@ -40,7 +40,7 @@ BOOLEAN             Once;
 
 UINT16              CoreCache = 0;
 UINT16              L1, L2, L3;
-UINT16              mHandle16 = 0xFFFE;;
+UINT16              mHandle16;
 UINT16              mHandle17[MAX_SLOT_COUNT];
 UINT16              mHandle19;
 UINT16              mHandle3;
