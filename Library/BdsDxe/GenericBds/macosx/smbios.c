@@ -48,9 +48,6 @@ UINT16              mHandle19;
 UINT16              TotalCount;
 UINT32              mTotalSystemMemory;
 
-UINT64              mEnabled[MAX_SLOT_COUNT];
-UINT64              mInstalled[MAX_SLOT_COUNT];
-
 UINT8               gBootStatus;
 
 UINTN       Index, Size, NewSize, MaxSize;
@@ -764,8 +761,6 @@ PatchTableType6 (
       continue;
     }
 
-    mInstalled[Index] = MultU64x32 (LShiftU64 (1ULL, (SmbiosTable.Type6->InstalledSize.InstalledOrEnabledSize & 0x7F)), (1024 * 1024));
-    mEnabled[Index]   = MultU64x32 (LShiftU64 (1ULL, (SmbiosTable.Type6->EnabledSize.InstalledOrEnabledSize & 0x7F)), (1024 * 1024));
     LogSmbiosTable (SmbiosTable);
   }
 
