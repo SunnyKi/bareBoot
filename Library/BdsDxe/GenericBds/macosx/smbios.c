@@ -917,7 +917,7 @@ GetTableType16 (
     return;
   }
 
-  TotalCount = newSmbiosTable.Type16->NumberOfMemoryDevices;
+  TotalCount = SmbiosTable.Type16->NumberOfMemoryDevices;
 
   if (TotalCount == 0) {
     TotalCount = MAX_SLOT_COUNT;
@@ -945,12 +945,9 @@ PatchTableType16 (
   TableSize = SmbiosTableLength (SmbiosTable);
   ZeroMem ((VOID*) newSmbiosTable.Type16, MAX_TABLE_SIZE);
   CopyMem ((VOID*) newSmbiosTable.Type16, (VOID*) SmbiosTable.Type16, TableSize);
-  TotalCount = newSmbiosTable.Type16->NumberOfMemoryDevices;
-
-  if (!TotalCount) {
-    TotalCount = MAX_SLOT_COUNT;
-  }
-
+#if 0
+	newSmbiosTable.Type16->NumberOfMemoryDevices = gDMI->MemoryModules;
+#endif
   mHandle16 = LogSmbiosTable (newSmbiosTable);
   return;
 }
@@ -981,6 +978,11 @@ GetTableType17 (
     if (SmbiosTable.Type17->Speed > 0) {
       gRAM->DIMM[Index].Frequency = SmbiosTable.Type17->Speed;
     }
+
+		if ((SmbiosTable.Type17->Size & 0x8000) == 0) {
+			mTotalSystemMemory += SmbiosTable.Type17->Size; //Mb
+			mMemory17[Index] = (UINT16)(SmbiosTable.Type17->Size > 0 ? mTotalSystemMemory : 0);
+		}
   }
 }
 
@@ -1005,8 +1007,11 @@ PatchTableType17 (
     CopyMem ((VOID*) newSmbiosTable.Type17, (VOID*) SmbiosTable.Type17, TableSize);
     Once = TRUE;
     newSmbiosTable.Type17->MemoryArrayHandle = mHandle16;
+#if 0
     mMemory17[Index] = (UINT16) (mTotalSystemMemory + newSmbiosTable.Type17->Size);
     mTotalSystemMemory = mMemory17[Index];
+#endif
+
 #if NOTSPD
     switch (gCPUStructure.Family) {
       case 0x06: {
@@ -1056,7 +1061,7 @@ PatchTableType17 (
 
     if (iStrLen (gRAM->DIMM[map].Vendor, 64) > 0 && gRAM->DIMM[map].InUse) {
       UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gRAM->DIMM[map].Vendor);
-    }
+    } 
 
     if (iStrLen (gRAM->DIMM[map].SerialNo, 64) > 0 && gRAM->DIMM[map].InUse) {
       UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, gRAM->DIMM[map].SerialNo);
@@ -1148,13 +1153,15 @@ PatchTableType20 (
     CopyMem ((VOID*) newSmbiosTable.Type20, (VOID*) SmbiosTable.Type20, TableSize);
 
     for (j = 0; j < TotalCount; j++) {
-      if (((UINT32) mMemory17[j]  << 20) < newSmbiosTable.Type20->EndingAddress) {
+      if ((((UINT32) mMemory17[j]  << 20) - 1) <= newSmbiosTable.Type20->EndingAddress) {
         newSmbiosTable.Type20->MemoryDeviceHandle = mHandle17[j];
+				mMemory17[j] = 0;
+        break;
       }
     }
     newSmbiosTable.Type20->MemoryArrayMappedAddressHandle = mHandle19;
 
-    LogSmbiosTable (newSmbiosTable);
+    LogSmbiosTable (newSmbiosTable); 
   }
 
   return;
