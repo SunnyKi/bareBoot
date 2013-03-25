@@ -48,7 +48,6 @@ UINT16              mHandle19;
 UINT16              TotalCount;
 UINT32              mTotalSystemMemory;
 
-UINT64              gTotalMemory;
 UINT64              mEnabled[MAX_SLOT_COUNT];
 UINT64              mInstalled[MAX_SLOT_COUNT];
 
@@ -1116,7 +1115,6 @@ PatchTableType19 (
     TotalEnd =  (mTotalSystemMemory << 10) - 1;
   }
 
-  gTotalMemory = LShiftU64 (mTotalSystemMemory, 20);
   ZeroMem ((VOID*) newSmbiosTable.Type19, MAX_TABLE_SIZE);
   newSmbiosTable.Type19->Hdr.Type = EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS;
   newSmbiosTable.Type19->Hdr.Length = sizeof (SMBIOS_TABLE_TYPE19);
