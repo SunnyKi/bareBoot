@@ -750,6 +750,7 @@ PatchTableType4 (
   return;
 }
 
+#if 0
 VOID
 PatchTableType6 (
   VOID
@@ -773,6 +774,7 @@ PatchTableType6 (
 
   return;
 }
+#endif
 
 VOID
 PatchTableType7 (
@@ -839,6 +841,7 @@ PatchTableType7 (
   return;
 }
 
+#if 0
 VOID
 PatchTableType9 (
   VOID
@@ -874,6 +877,7 @@ PatchTableType9 (
 
   return;
 }
+#endif
 
 VOID
 PatchTableTypeSome (
@@ -882,11 +886,11 @@ PatchTableTypeSome (
 {
   //some unused but interesting tables. Just log as is
   //
-  UINT8 tableTypes[13] = {8, 10, 11, 18, 21, 22, 27, 28, 32, 33, 129, 217, 219};
+  UINT8 tableTypes[15] = {6, 8, 9, 10, 11, 18, 21, 22, 27, 28, 32, 33, 129, 217, 219};
   UINTN IndexType;
 
   // Different types
-  for (IndexType = 0; IndexType < 13; IndexType++) {
+  for (IndexType = 0; IndexType < 15; IndexType++) {
     for (Index = 0; Index < 16; Index++) {
       SmbiosTable = GetSmbiosTableFromType (EntryPoint, tableTypes[IndexType], Index);
 
@@ -1373,8 +1377,10 @@ PatchSmbios (
   PatchTableType3();
   PatchTableType7(); //we should know handles before patch Table4
   PatchTableType4();
+#if 0
   PatchTableType6();
   PatchTableType9();
+#endif
   PatchTableTypeSome();
   PatchTableType16();
   PatchTableType17();
