@@ -40,14 +40,12 @@ BOOLEAN             Once;
 
 UINT16              CoreCache = 0;
 UINT16              L1, L2, L3;
+UINT16              mHandle3;
 UINT16              mHandle16;
 UINT16              mHandle17[MAX_SLOT_COUNT];
-UINT16              mHandle19;
-UINT16              mHandle3;
 UINT16              mMemory17[MAX_SLOT_COUNT];
-UINT16              TotalCount = 0;
-
-UINT32              MaxMemory = 0;
+UINT16              mHandle19;
+UINT16              TotalCount;
 UINT32              mTotalSystemMemory;
 
 UINT64              gTotalMemory;
