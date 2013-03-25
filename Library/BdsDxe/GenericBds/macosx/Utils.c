@@ -889,7 +889,6 @@ GetUserSettings (
     dictPointer = GetProperty (dict, "CPU");
 
     gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
-    gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
     gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
     gSettings.BusSpeed = (UINT32) GetNumProperty (dictPointer, "BusSpeedkHz", 0);
     gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);

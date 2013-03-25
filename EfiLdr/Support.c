@@ -225,6 +225,7 @@ GenMemoryMap (
   //
   // Update MemoryMap according to Ceiling
   //
+#if 0
   for (Index = 0; Index < *NumberOfMemoryMapEntries; Index++) {
     if ((EfiMemoryDescriptor[Index].Type == EfiConventionalMemory) &&
         (EfiMemoryDescriptor[Index].PhysicalStart > 0x100000) && 
@@ -234,4 +235,5 @@ GenMemoryMap (
       }
     }
   }
+#endif
 }
