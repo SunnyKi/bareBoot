@@ -315,6 +315,7 @@ typedef struct {
   CHAR8*  SerialNo;
   UINT8   *spd;
   BOOLEAN InUse;
+  UINT16   SpdSize;
 } RAM_SLOT_INFO;
 
 typedef struct {

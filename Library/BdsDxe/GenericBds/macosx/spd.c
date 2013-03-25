@@ -358,6 +358,7 @@ read_smb_intel (
   for (i = 0; i <  MAX_RAM_SLOTS; i++) {
     slot = &gRAM->DIMM[i];
     spd_size = smb_read_byte_intel (base, (UINT8) (0x50 + i), 0);
+    slot->SpdSize = spd_size;
 
     // Check spd is present
     if (spd_size && (spd_size != 0xff)) {

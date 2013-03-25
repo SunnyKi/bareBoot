@@ -1035,6 +1035,26 @@ PatchTableType17 (
     }
     
     mHandle17[Index] = LogSmbiosTable (newSmbiosTable);
+
+    if (gRAM->DIMM[map].InUse) {
+      ZeroMem ((VOID*) newSmbiosTable.Type130, MAX_TABLE_SIZE);
+      newSmbiosTable.Type130->Hdr.Type = 130;
+      newSmbiosTable.Type130->Hdr.Length = 10 + (gRAM->DIMM[map].SpdSize);
+      newSmbiosTable.Type130->Hdr.Handle = 0x1301 + Index;
+      newSmbiosTable.Type130->Type17Handle = mHandle17[Index];
+      newSmbiosTable.Type130->Offset = 0;
+      newSmbiosTable.Type130->Size = (gRAM->DIMM[map].SpdSize);
+      CopyMem (newSmbiosTable.Type130->Data, gRAM->DIMM[map].spd, gRAM->DIMM[map].SpdSize);
+      Print (L"Type130 Lenght = 0x%x, Handle = 0x%x, Size = 0x%x",
+              newSmbiosTable.Type130->Hdr.Length,
+              newSmbiosTable.Type130->Hdr.Handle,
+              newSmbiosTable.Type130->Size
+            );
+      Handle = LogSmbiosTable (newSmbiosTable);
+      Print (L" LogHandle = 0x%x\n", Handle);
+      Pause (NULL);
+      Pause (NULL);
+    }
     
   }
 
@@ -1163,6 +1183,7 @@ PatchTableType128 (
     return;
 }
 
+#if 0
 VOID
 PatchTableType130 (
   VOID
@@ -1181,8 +1202,7 @@ PatchTableType130 (
   LogSmbiosTable (SmbiosTable);
   return;
 }
-
-
+#endif
 
 VOID
 PatchTableType131 (
@@ -1332,6 +1352,7 @@ PatchSmbios (
 #if 0
   PatchTableType6();
   PatchTableType9();
+  PatchTableType130();
 #endif
   PatchTableTypeSome();
   PatchTableType16();
@@ -1339,7 +1360,6 @@ PatchSmbios (
   PatchTableType19();
   PatchTableType20();
   PatchTableType128();
-  PatchTableType130();
   PatchTableType131();
   if ((gCPUStructure.Model == CPU_MODEL_NEHALEM) ||
       (gCPUStructure.Model == CPU_MODEL_NEHALEM_EX) ||
