@@ -36,7 +36,9 @@ EFI_SMBIOS_TABLE_HEADER*    Record;
 EFI_SMBIOS_HANDLE           Handle;
 EFI_SMBIOS_TYPE             Type;
 
+#if 0
 BOOLEAN             Once;
+#endif
 
 UINT16              CoreCache = 0;
 UINT16              L1, L2, L3;
@@ -176,16 +178,16 @@ UpdateSmbiosString (
     return EFI_NOT_FOUND;
   }
 
+#if 0
   if (Once) {
     for (ALength = 0; ALength < Length; ALength++) {
-#if 0
       if ((ALength & 0xF) == 0)
         ;
-#endif
     }
 
     Once = FALSE;
   }
+#endif
 
   AString = (CHAR8*) (LSmbiosTable.Raw + LSmbiosTable.Hdr->Length); //first string
 
@@ -336,9 +338,9 @@ PatchTableType0 (
   newSmbiosTable.Type0->SystemBiosMajorRelease = 0;
   newSmbiosTable.Type0->SystemBiosMinorRelease = 1;
   newSmbiosTable.Type0->BiosCharacteristics.BiosCharacteristicsNotSupported = 0;
-
+#if 0
   Once = TRUE;
-
+#endif
   if (iStrLen (gSettings.VendorName, 64) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type0->Vendor, gSettings.VendorName);
   }
@@ -442,8 +444,9 @@ PatchTableType1 (
   CopyMem ((CHAR8*) newSmbiosTable.Type1 + NewSize, (CHAR8*) SmbiosTable.Type1 + Size, TableSize - Size); //copy strings
   newSmbiosTable.Type1->Hdr.Length = (UINT8) NewSize;
   newSmbiosTable.Type1->WakeUpType = SystemWakeupTypePowerSwitch;
+#if 0
   Once = TRUE;
-
+#endif
   if (!EFI_ERROR (SystemIDStatus)) {
     newSmbiosTable.Type1->Uuid = gSystemID;
   } else {
@@ -514,8 +517,9 @@ PatchTableType2 (
   ZeroMem ((VOID*) &newSmbiosTable.Type2->FeatureFlag, sizeof (BASE_BOARD_FEATURE_FLAGS));
   newSmbiosTable.Type2->FeatureFlag.Motherboard = 1;
   newSmbiosTable.Type2->FeatureFlag.Replaceable = 1;
+#if 0
   Once = TRUE;
-
+#endif
   if (iStrLen (gSettings.BoardManufactureName, 64) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->Manufacturer, gSettings.BoardManufactureName);
   }
@@ -603,8 +607,9 @@ PatchTableType3 (
   newSmbiosTable.Type3->NumberofPowerCords = 1;
   newSmbiosTable.Type3->ContainedElementCount = 0;
   newSmbiosTable.Type3->ContainedElementRecordLength = 0;
+#if 0
   Once = TRUE;
-
+#endif
   if (iStrLen (gSettings.ChassisManufacturer, 64) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type3->Manufacturer, gSettings.ChassisManufacturer);
   }
@@ -692,7 +697,9 @@ PatchTableType4 (
     CopyMem ((CHAR8*) newSmbiosTable.Type4 + NewSize, (CHAR8*) SmbiosTable.Type4 + Size, TableSize - Size); //copy strings
     newSmbiosTable.Type4->Hdr.Length = (UINT8) NewSize;
     // new data
+#if 0
     Once = TRUE;
+#endif
     newSmbiosTable.Type4->MaxSpeed = gCPUStructure.CurrentSpeed;
     newSmbiosTable.Type4->CurrentSpeed = gCPUStructure.CurrentSpeed;
 
@@ -797,7 +804,9 @@ PatchTableType7 (
     CopyMem ((VOID*) newSmbiosTable.Type7, (VOID*) SmbiosTable.Type7, TableSize);
     correctSD = (newSmbiosTable.Type7->SocketDesignation == 0);
     CoreCache = newSmbiosTable.Type7->CacheConfiguration & 7;
+#if 0
     Once = TRUE;
+#endif
     SSocketD = "L1-Cache";
 
     if (correctSD) {
@@ -995,7 +1004,9 @@ PatchTableType17 (
     TableSize = SmbiosTableLength (SmbiosTable);
     ZeroMem ((VOID*) newSmbiosTable.Type17, MAX_TABLE_SIZE);
     CopyMem ((VOID*) newSmbiosTable.Type17, (VOID*) SmbiosTable.Type17, TableSize);
+#if 0
     Once = TRUE;
+#endif
     newSmbiosTable.Type17->MemoryArrayHandle = mHandle16;
 #if 0
     mMemory17[Index] = (UINT16) (mTotalSystemMemory + newSmbiosTable.Type17->Size);
