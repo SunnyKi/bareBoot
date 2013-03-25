@@ -1122,7 +1122,7 @@ PatchTableType19 (
   }
 
   if (TotalEnd == 0) {
-    TotalEnd =  (mTotalSystemMemory << 10) - 1;
+    TotalEnd =  (mTotalSystemMemory << 20) - 1;
   }
 
   ZeroMem ((VOID*) newSmbiosTable.Type19, MAX_TABLE_SIZE);
