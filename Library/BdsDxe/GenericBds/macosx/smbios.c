@@ -1010,80 +1010,32 @@ PatchTableType17 (
     TableSize = SmbiosTableLength (SmbiosTable);
     ZeroMem ((VOID*) newSmbiosTable.Type17, MAX_TABLE_SIZE);
     CopyMem ((VOID*) newSmbiosTable.Type17, (VOID*) SmbiosTable.Type17, TableSize);
-#if 0
-    Once = TRUE;
-#endif
     newSmbiosTable.Type17->MemoryArrayHandle = mHandle16;
-#if 0
-    mMemory17[Index] = (UINT16) (mTotalSystemMemory + newSmbiosTable.Type17->Size);
-    mTotalSystemMemory = mMemory17[Index];
-#endif
 
-#if NOTSPD
-    switch (gCPUStructure.Family) {
-      case 0x06: {
-        switch (gCPUStructure.Model) {
-          case CPU_MODEL_CLARKDALE:
-          case CPU_MODEL_FIELDS:
-          case CPU_MODEL_DALES:
-          case CPU_MODEL_NEHALEM:
-          case CPU_MODEL_NEHALEM_EX:
-          case CPU_MODEL_WESTMERE:
-          case CPU_MODEL_WESTMERE_EX:
-          case CPU_MODEL_XEON_MP:
-          case CPU_MODEL_LINCROFT:
-          case CPU_MODEL_SANDY_BRIDGE:
-          case CPU_MODEL_IVY_BRIDGE:
-          case CPU_MODEL_IVY_BRIDGE_E5:
-          case CPU_MODEL_ATOM_2000:
-          case CPU_MODEL_HASWELL:
-          case CPU_MODEL_JAKETOWN:
-            newSmbiosTable.Type17->MemoryType = MemoryTypeDdr3;
-            break;
-
-          default:
-            newSmbiosTable.Type17->MemoryType = MemoryTypeDdr2;
-            break;
-        }
-      }
-    }
-
-    if (iStrLen (gSettings.MemoryManufacturer, 64) > 0) {
-      UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gSettings.MemoryManufacturer);
-    }
-
-    if (iStrLen (gSettings.MemorySerialNumber, 64) > 0) {
-      UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, gSettings.MemorySerialNumber);
-    }
-
-    if (iStrLen (gSettings.MemoryPartNumber, 64) > 0) {
-      UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, gSettings.MemoryPartNumber);
-    }
-#else
     map = gDMI->DIMM[Index];
 
     if (gRAM->DIMM[map].InUse) {
       newSmbiosTable.Type17->MemoryType = gRAM->DIMM[map].Type;
+
+      if (iStrLen (gRAM->DIMM[map].Vendor, 64) > 0) {
+        UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gRAM->DIMM[map].Vendor);
+      } 
+
+      if (iStrLen (gRAM->DIMM[map].SerialNo, 64) > 0) {
+        UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, gRAM->DIMM[map].SerialNo);
+      }
+
+      if (iStrLen (gRAM->DIMM[map].PartNo, 64) > 0) {
+        UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, gRAM->DIMM[map].PartNo);
+      }
+
+      if (gRAM->DIMM[map].Frequency > 0) {
+        newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[map].Frequency;
+      }
     }
-
-    if (iStrLen (gRAM->DIMM[map].Vendor, 64) > 0 && gRAM->DIMM[map].InUse) {
-      UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gRAM->DIMM[map].Vendor);
-    } 
-
-    if (iStrLen (gRAM->DIMM[map].SerialNo, 64) > 0 && gRAM->DIMM[map].InUse) {
-      UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, gRAM->DIMM[map].SerialNo);
-    }
-
-    if (iStrLen (gRAM->DIMM[map].PartNo, 64) > 0 && gRAM->DIMM[map].InUse) {
-      UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, gRAM->DIMM[map].PartNo);
-    }
-
-    if (gRAM->DIMM[map].Frequency > 0 && gRAM->DIMM[map].InUse) {
-      newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[map].Frequency;
-    }
-#endif
-
+    
     mHandle17[Index] = LogSmbiosTable (newSmbiosTable);
+    
   }
 
   return;
