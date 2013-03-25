@@ -571,7 +571,7 @@ GetTableType3 (
 
   mHandle3 = SmbiosTable.Type3->Hdr.Handle;
   gMobile = FALSE; //default value
-  gMobile = ((SmbiosTable.Type3->Type) >= 8);
+  gMobile = ((SmbiosTable.Type3->Type) >= 8) && (SmbiosTable.Type3->Type != 0x0D);
   return;
 }
 
