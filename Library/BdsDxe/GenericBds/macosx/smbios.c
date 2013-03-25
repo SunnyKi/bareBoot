@@ -48,8 +48,6 @@ UINT16              mHandle19;
 UINT16              TotalCount;
 UINT32              mTotalSystemMemory;
 
-UINT8               gBootStatus;
-
 UINTN       Index, Size, NewSize, MaxSize;
 UINTN       stringNumber;
 UINTN       TableSize;
@@ -1158,20 +1156,6 @@ PatchTableType20 (
   return;
 }
 
-VOID
-GetTableType32 (
-  VOID
-)
-{
-  SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_SYSTEM_BOOT_INFORMATION, 0);
-
-  if (SmbiosTable.Raw == NULL) {
-    return;
-  }
-
-  gBootStatus = SmbiosTable.Type32->BootStatus;
-}
-
 /** 
  Apple Specific Structures
 **/
@@ -1352,7 +1336,6 @@ PrepatchSmbios (
   GetTableType4();
   GetTableType16();
   GetTableType17();
-  GetTableType32();
   
   return  Status;
 }
