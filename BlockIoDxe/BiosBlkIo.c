@@ -20,6 +20,21 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "BiosBlkIo.h"
 
+#ifndef DEBUG_ALL
+#define DEBUG_BB 1
+#else
+#define DEBUG_BB DEBUG_ALL
+#endif
+
+#if DEBUG_BB==0
+#define DBG(...)
+#elif DEBUG_BB == 1
+#define DBG(...) MemLog(TRUE, 1, __VA_ARGS__)
+#else
+#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
+#endif
+
+
 //
 // Global data declaration
 //
@@ -103,24 +118,19 @@ BiosBlockIoDriverEntryPoint (
              &gBiosBlockIoComponentName,
              &gBiosBlockIoComponentName2
              );
-#if 0
-  if (EFI_ERROR (Status)) {
+ // if (EFI_ERROR (Status)) {
     return Status;
-  }
-#else
-    return Status;
-#endif
+//  }
   //
   // Install Legacy BIOS GUID to mark this driver as a BIOS Thunk Driver
   //
-#if 0
-  return gBS->InstallMultipleProtocolInterfaces (
+/*  return gBS->InstallMultipleProtocolInterfaces (
                 &ImageHandle,
                 &gEfiLegacyBiosGuid,
                 NULL,
                 NULL
                 );
-#endif
+ */
 }
 
 /**
@@ -143,13 +153,11 @@ BiosBlockIoDriverBindingSupported (
   )
 {
   EFI_STATUS                Status;
-  EFI_LEGACY_8259_PROTOCOL  *Legacy8259; //temporary
+//  EFI_LEGACY_BIOS_PROTOCOL  *LegacyBios;
+  EFI_LEGACY_8259_PROTOCOL                  *Legacy8259; //temporary
   EFI_PCI_IO_PROTOCOL       *PciIo;
   EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
   PCI_TYPE00                Pci;
-#if 0
-  EFI_LEGACY_BIOS_PROTOCOL  *LegacyBios;
-#endif
 
   //
   //Check if BIOS drives are already enumerated
@@ -160,17 +168,15 @@ BiosBlockIoDriverBindingSupported (
   //
   // See if the Legacy BIOS Protocol is available
   //
-#if 0
-  Status = gBS->LocateProtocol (&gEfiLegacyBiosProtocolGuid, NULL, (VOID **) &LegacyBios);
+/*  Status = gBS->LocateProtocol (&gEfiLegacyBiosProtocolGuid, NULL, (VOID **) &LegacyBios);
   if (EFI_ERROR (Status)) {
     return Status;
-  }
-#endif
-   Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &Legacy8259);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
+  } */
+ 	Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &Legacy8259);
+	if (EFI_ERROR (Status)) {
+		return Status;
+	}
+ 
 
   Status = gBS->OpenProtocol (
                   Controller,
@@ -183,14 +189,14 @@ BiosBlockIoDriverBindingSupported (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
+  
   gBS->CloseProtocol (
         Controller,
         &gEfiDevicePathProtocolGuid,
         This->DriverBindingHandle,
         Controller
-        );
-
+        );      
+  
   //
   // Open the IO Abstraction(s) needed to perform the supported test
   //
@@ -219,6 +225,8 @@ BiosBlockIoDriverBindingSupported (
   if (Pci.Hdr.ClassCode[2] == PCI_CLASS_MASS_STORAGE ||
       (Pci.Hdr.ClassCode[2] == PCI_BASE_CLASS_INTELLIGENT && Pci.Hdr.ClassCode[1] == PCI_SUB_CLASS_INTELLIGENT)
       ) {
+    DBG("Found supported controller for BiosBlockIO class=%02x%02x%02x\n",
+        Pci.Hdr.ClassCode[2], Pci.Hdr.ClassCode[1], Pci.Hdr.ClassCode[0]);
     Status = EFI_SUCCESS;
   }
 
@@ -254,45 +262,41 @@ BiosBlockIoDriverBindingStart (
   )
 {
   EFI_STATUS                Status;
+//  EFI_LEGACY_BIOS_PROTOCOL  *LegacyBios;
   EFI_PCI_IO_PROTOCOL       *PciIo;
   UINT8                     DiskStart = 0x80;
   UINT8                     DiskEnd = 0x88;
   BIOS_BLOCK_IO_DEV         *BiosBlockIoPrivate;
   EFI_DEVICE_PATH_PROTOCOL  *PciDevPath;
   UINTN                     Index;
+//  UINTN                     Flags;
   UINTN                     TmpAddress;
   BOOLEAN                   DeviceEnable;
-#if 0
-  EFI_LEGACY_BIOS_PROTOCOL  *LegacyBios;
-  UINTN                     Flags;
-#endif
 
   //
   // Initialize variables
   //
   PciIo      = NULL;
   PciDevPath = NULL;
-
-  DeviceEnable = FALSE;
+  
+  DeviceEnable = FALSE; 
 
   //
   // See if the Legacy BIOS Protocol is available
   //
-#if 0
-  Status = gBS->LocateProtocol (&gEfiLegacyBiosProtocolGuid, NULL, (VOID **) &LegacyBios);
+/*  Status = gBS->LocateProtocol (&gEfiLegacyBiosProtocolGuid, NULL, (VOID **) &LegacyBios);
   if (EFI_ERROR (Status)) {
     goto Error;
-  }
-#endif
+  } */
   if (mLegacy8259 == NULL) {
-    Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &mLegacy8259);
-    if (EFI_ERROR (Status)) {
-      goto Error;
-    }
-
-    InitializeBiosIntCaller(&mThunkContext);
-    InitializeInterruptRedirection(mLegacy8259);
-  }
+		Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &mLegacy8259);
+		if (EFI_ERROR (Status)) {
+			goto Error;
+		}
+		
+		InitializeBiosIntCaller(&mThunkContext);
+		InitializeInterruptRedirection(mLegacy8259);
+	}
 
   //
   // Open the IO Abstraction(s) needed
@@ -333,15 +337,14 @@ BiosBlockIoDriverBindingStart (
   if (EFI_ERROR (Status)) {
     goto Error;
   }
-
+  
   DeviceEnable = TRUE;
-
+  
   //
   // Check to see if there is a legacy option ROM image associated with this PCI device
   //
-#if 0
   //Slice - something for replacement?
-  Status = LegacyBios->CheckPciRom (
+/*  Status = LegacyBios->CheckPciRom (
                         LegacyBios,
                         Controller,
                         NULL,
@@ -367,8 +370,8 @@ BiosBlockIoDriverBindingStart (
   if (EFI_ERROR (Status)) {
     goto Error;
   }
-#endif
-
+ */
+  
   //
   // All instances share a buffer under 1MB to put real mode thunk code in
   // If it has not been allocated, then we allocate it.
@@ -405,9 +408,7 @@ BiosBlockIoDriverBindingStart (
       //
       // In checked builds we want to assert if the allocate failed.
       //
-#if 0
-      ASSERT_EFI_ERROR (Status);
-#endif
+   //   ASSERT_EFI_ERROR (Status);
       Status          = EFI_OUT_OF_RESOURCES;
       mBufferUnder1Mb = 0;
       goto Error;
@@ -454,12 +455,10 @@ BiosBlockIoDriverBindingStart (
     //
     BiosBlockIoPrivate->Signature                 = BIOS_CONSOLE_BLOCK_IO_DEV_SIGNATURE;
     BiosBlockIoPrivate->ControllerHandle          = Controller;
-#if 0
-    BiosBlockIoPrivate->LegacyBios                = LegacyBios;
-#endif
+ //   BiosBlockIoPrivate->LegacyBios                = LegacyBios;
     BiosBlockIoPrivate->Legacy8259   = mLegacy8259;
     BiosBlockIoPrivate->ThunkContext = &mThunkContext;
-
+    
 
     BiosBlockIoPrivate->PciIo                     = PciIo;
 
@@ -501,7 +500,7 @@ BiosBlockIoDriverBindingStart (
       gBS->FreePool (BiosBlockIoPrivate);
     }
   }
-
+  
   mBiosDrivesEnumerated = TRUE;
 
 Error:
@@ -597,9 +596,7 @@ BiosBlockIoDriverBindingStop (
     // Free our global buffer
     //
     Status = gBS->FreePages (mBufferUnder1Mb, BLOCK_IO_BUFFER_PAGE_SIZE);
-#if 0
-    ASSERT_EFI_ERROR (Status);
-#endif
+//    ASSERT_EFI_ERROR (Status);
     if (EFI_ERROR (Status)) {
       return Status;
     }
@@ -697,9 +694,9 @@ SetBiosInitBlockIoDevicePath (
 {
   EFI_STATUS                  Status;
   BLOCKIO_VENDOR_DEVICE_PATH  VendorNode;
-
+  
   Status = EFI_UNSUPPORTED;
-
+  
   //
   // BugBug: Check for memory leaks!
   //
@@ -709,7 +706,7 @@ SetBiosInitBlockIoDevicePath (
     //
     Status = BuildEdd30DevicePath (BaseDevicePath, Drive, DevicePath);
   }
-
+  
   if (EFI_ERROR (Status)) {
     //
     // EDD 1.1 device case or it is unrecognized EDD 3.0 device
@@ -742,12 +739,10 @@ BuildEdd30DevicePath (
   IN  EFI_DEVICE_PATH_PROTOCOL  **DevicePath
   )
 {
-#if 0
-  // AVL
-  UINT64                  Address;
-  EFI_HANDLE              Handle;
-#endif
- 
+  //
+  // AVL    UINT64                  Address;
+  // AVL    EFI_HANDLE              Handle;
+  //
   EFI_DEV_PATH  Node;
   UINT32        Controller;
 
@@ -824,13 +819,21 @@ BuildEdd30DevicePath (
       Node.FibreChannel.WWN = Drive->Parameters.DevicePath.FibreChannel.Wwn;
       Node.FibreChannel.Lun = Drive->Parameters.DevicePath.FibreChannel.Lun;
 
+    } else {
+      DEBUG (
+        (
+        DEBUG_BLKIO, "It is unrecognized EDD 3.0 device, Drive Number = %x, InterfaceType = %s\n",
+        Drive->Number,
+        Drive->Parameters.InterfaceType
+        )
+        );      
     }
   }
 
   if (Node.DevPath.Type == 0) {
     return EFI_UNSUPPORTED;
   }
-
+  
   *DevicePath = AppendDevicePathNode (BaseDevicePath, &Node.DevPath);
   return EFI_SUCCESS;
 }

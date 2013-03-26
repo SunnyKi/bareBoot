@@ -34,6 +34,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/DevicePathLib.h>
 #include <Library/MemoryAllocationLib.h>
 
+#include <Library/MemLogLib.h>
 #include <Library/PrintLib.h>
 
 #include <IndustryStandard/Pci.h>
@@ -176,7 +177,7 @@ BiosInitBlockIo (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid,
+  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid, 
                                 or the buffer is not on proper alignment.
 
 **/
@@ -206,7 +207,7 @@ Edd30BiosReadBlocks (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid,
+  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid, 
                                 or the buffer is not on proper alignment.
 
 **/
@@ -269,7 +270,7 @@ BiosBlockIoReset (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid,
+  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid, 
                                 or the buffer is not on proper alignment.
 
 **/
@@ -299,7 +300,7 @@ Edd11BiosReadBlocks (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid,
+  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid, 
                                 or the buffer is not on proper alignment.
 
 **/
@@ -328,7 +329,7 @@ Edd11BiosWriteBlocks (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHANGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid,
+  @retval EFI_INVALID_PARAMETER The read request contains LBAs that are not valid, 
                                 or the buffer is not on proper alignment.
 
 **/
@@ -358,7 +359,7 @@ BiosReadLegacyDrive (
   @retval EFI_NO_MEDIA          There is no media in the device.
   @retval EFI_MEDIA_CHNAGED     The MediaId does not matched the current device.
   @retval EFI_BAD_BUFFER_SIZE   The Buffer was not a multiple of the block size of the device.
-  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid,
+  @retval EFI_INVALID_PARAMETER The write request contains LBAs that are not valid, 
                                 or the buffer is not on proper alignment.
 
 **/
@@ -379,7 +380,7 @@ BiosWriteLegacyDrive (
   @param  Drive          Legacy drive.
 
   @return  Result of device parameter retrieval.
-
+ 
 **/
 UINTN
 Int13GetDeviceParameters (
@@ -394,7 +395,7 @@ Int13GetDeviceParameters (
   @param  Drive          Legacy drive.
 
   @return  Result of this extension.
-
+ 
 **/
 UINTN
 Int13Extensions (
@@ -409,7 +410,7 @@ Int13Extensions (
   @param  Drive          Legacy drive.
 
   @return  Result of drive parameter retrieval.
-
+ 
 **/
 UINTN
 GetDriveParameters (
@@ -434,7 +435,7 @@ SetBiosInitBlockIoDevicePath (
 
 /**
  Initialize legacy environment for BIOS INI caller.
-
+ 
  @param ThunkContext   the instance pointer of THUNK_CONTEXT
  **/
 VOID
@@ -448,9 +449,9 @@ InitializeBiosIntCaller (
  Or the interrupt will lost when we do thunk.
  NOTE: We do not reset 8259 vector base, because it will cause pending
  interrupt lost.
-
+ 
  @param Legacy8259  Instance pointer for EFI_LEGACY_8259_PROTOCOL.
-
+ 
  **/
 VOID
 InitializeInterruptRedirection (
@@ -461,11 +462,11 @@ InitializeInterruptRedirection (
  Thunk to 16-bit real mode and execute a software interrupt with a vector
  of BiosInt. Regs will contain the 16-bit register context on entry and
  exit.
-
+ 
  @param  This    Protocol instance pointer.
  @param  BiosInt Processor interrupt vector to invoke
  @param  Reg     Register contexted passed into (and returned) from thunk to 16-bit mode
-
+ 
  @retval TRUE   Thunk completed, and there were no BIOS errors in the target code.
  See Regs for status.
  @retval FALSE  There was a BIOS erro in the target code.
@@ -475,7 +476,8 @@ EFIAPI
 LegacyBiosInt86 (
                  IN  BIOS_BLOCK_IO_DEV               *BiosDev,
                  IN  UINT8                           BiosInt,
-                 IN  IA32_REGISTER_SET        *Regs
-                 );
+                 IN  IA32_REGISTER_SET				*Regs
+                 );    
+
 
 #endif

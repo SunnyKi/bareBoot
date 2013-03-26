@@ -39,13 +39,15 @@
   UefiLib
   DevicePathLib
   MemoryAllocationLib
+    MemLogLib
+
 
 [Protocols]
   gEfiBlockIoProtocolGuid
   gEfiDevicePathProtocolGuid
   gEfiPciIoProtocolGuid
 //  gEfiLegacyBiosProtocolGuid
-  gEfiLegacy8259ProtocolGuid           # PROTOCOL TO_START
+     gEfiLegacy8259ProtocolGuid					 # PROTOCOL TO_START
 
 
 [Guids]
@@ -53,7 +55,8 @@
   gBlockIoVendorGuid
 
 [Packages]
+  Clover/CloverPkg.dec
   MdePkg/MdePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
-#  Duet/Duet.dec
+
