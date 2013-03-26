@@ -233,6 +233,11 @@ UpdateMemoryMap (
       }
     }
   }
+  /**
+  *
+  *  thanks for this fix dmazar! 
+  *
+  **/
   for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
     if (MemoryDescHob.MemDesc[Index].PhysicalStart < 0x100000) {
       continue;
