@@ -1160,6 +1160,7 @@ ShiftKeyPressed (
   return KeyShiftState;
 }
 
+#if 0
 VOID
 EnableSmbus (
              VOID
@@ -1238,6 +1239,7 @@ EnableSmbus (
     }
   }
 }
+#endif
 
 VOID
 EFIAPI

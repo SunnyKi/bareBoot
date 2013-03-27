@@ -195,6 +195,8 @@ Returns:
   UINT8               SecBus;
   PCI_IO_DEVICE       *PciIoDevice;
   EFI_PCI_IO_PROTOCOL *PciIo;
+  UINT32                rcba;
+  UINT32                *fdr;
 
   Status  = EFI_SUCCESS;
   SecBus  = 0;
@@ -228,6 +230,26 @@ Returns:
                   Func,
                   &PciIoDevice
                   );
+
+        PciIo   = &(PciIoDevice->PciIo);
+
+        if ((StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
+          /**
+           *
+           * if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
+           *
+           **/
+          Status = PciIo->Pci.Read (
+                                PciIo,
+                                EfiPciIoWidthUint32,
+                                (UINT64) (0xF0 & ~3),
+                                1,
+                                &rcba
+                              );
+          rcba &= ~1;
+          fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
+          *fdr &= ~0x8;
+        }
 
         //
         // Recursively scan PCI busses on the other side of PCI-PCI bridges

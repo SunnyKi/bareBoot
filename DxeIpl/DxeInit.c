@@ -138,17 +138,18 @@ Returns:
   VOID                  *MemoryDescriptor;
   VOID                  *NvStorageBase;
   EFILDRHANDOFF         HandoffCopy;
-	UINT32                rcba;
-  UINT32                *fdr;
 
   CopyMem ((VOID*) &HandoffCopy, (VOID*) Handoff, sizeof (EFILDRHANDOFF));
   Handoff = &HandoffCopy;
+
+#if 0
+	UINT32                rcba;
+  UINT32                *fdr;
 
   rcba = 0xFED1C000;
   fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
   *fdr &= ~0x8;
 
-#if 0
   ClearScreen();
 
   PrintString (
