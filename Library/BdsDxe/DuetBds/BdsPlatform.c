@@ -1161,6 +1161,85 @@ ShiftKeyPressed (
 }
 
 VOID
+EnableSmbus (
+             VOID
+             )
+{
+  EFI_STATUS            Status;
+  EFI_HANDLE            *HandleBuffer;
+  EFI_GUID              **ProtocolGuidArray;
+  EFI_PCI_IO_PROTOCOL   *PciIo;
+  UINTN                 HandleCount;
+  UINTN                 ArrayCount;
+  UINTN                 HandleIndex;
+  UINTN                 ProtocolIndex;
+  UINTN                 Segment;
+  UINTN                 Bus;
+  UINTN                 Device;
+  UINTN                 Function;
+	UINT32                rcba;
+  UINT32                *fdr;
+
+  Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
+
+  if (!EFI_ERROR (Status)) {
+    for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++) {
+      Status = gBS->ProtocolsPerHandle (HandleBuffer[HandleIndex], &ProtocolGuidArray, &ArrayCount);
+
+      if (!EFI_ERROR (Status)) {
+        for (ProtocolIndex = 0; ProtocolIndex < ArrayCount; ProtocolIndex++) {
+          if (CompareGuid (&gEfiPciIoProtocolGuid, ProtocolGuidArray[ProtocolIndex])) {
+            Status = gBS->OpenProtocol (HandleBuffer[HandleIndex],
+                                        &gEfiPciIoProtocolGuid,
+                                        (VOID **) &PciIo,
+                                        gImageHandle,
+                                        NULL,
+                                        EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                                        );
+
+            if (!EFI_ERROR (Status)) {
+              /* Read PCI BUS */
+              Status = PciIo->Pci.Read (
+                                        PciIo,
+                                        EfiPciIoWidthUint32,
+                                        0,
+                                        sizeof (gPci) / sizeof (UINT32),
+                                        &gPci
+                                        );
+
+              if (gPci.Hdr.VendorId == 0x8086) {
+                Status = PciIo->GetLocation (PciIo, &Segment, &Bus, &Device, &Function);
+                /**
+                 *
+                 * if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
+                 *
+                 **/
+                if ((Bus == 0) && (Device == 0x1F) && (Function == 0)) {
+                  Status = PciIo->Pci.Read (
+                                            PciIo,
+                                            EfiPciIoWidthUint32,
+                                            (UINT64) (0xF0 & ~3),
+                                            1,
+                                            &rcba
+                                            );
+                  rcba &= ~1;
+                  Print (L"RCBA = 0x%x\n", rcba);
+                  fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
+                  Print (L"fdr = 0x%x\n", *((UINT32 *) (UINTN) (rcba + 0x3418)));
+                  *fdr &= ~0x8;
+                  Print (L"fdr = 0x%x\n", *((UINT32 *) (UINTN) (rcba + 0x3418)));
+                  Pause (NULL);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+VOID
 EFIAPI
 PlatformBdsPolicyBehavior (
   IN OUT LIST_ENTRY              *BootOptionList,
@@ -1201,6 +1280,9 @@ Returns:
   PlatformBdsConnectConsole (gPlatformConsole);
 
   PlatformBdsDiagnostics (IGNORE, TRUE, BaseMemoryTest);
+#if 0
+  EnableSmbus ();
+#endif
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
 #ifdef BOOT_DEBUG
