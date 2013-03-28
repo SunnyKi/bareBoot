@@ -319,15 +319,12 @@ typedef struct {
 } RAM_SLOT_INFO;
 
 typedef struct {
+  UINT8     MaxMemorySlots;         // number of memory slots polulated by SMBIOS
+  UINT8     CntMemorySlots;         // number of memory slots counted
+  UINT16    MemoryModules;          // number of memory modules installed
+  UINT16    Map[MAX_RAM_SLOTS];     // Information and SPD mapping for each slot
   RAM_SLOT_INFO DIMM[MAX_RAM_SLOTS];
 } MEM_STRUCTURE;
-
-typedef struct {
-  UINT8     MaxMemorySlots;     // number of memory slots polulated by SMBIOS
-  UINT8     CntMemorySlots;     // number of memory slots counted
-  UINT16    MemoryModules;      // number of memory modules installed
-  UINT16    DIMM[MAX_RAM_SLOTS];  // Information and SPD mapping for each slot
-} DMI;
 
 typedef struct {
   // SMBIOS TYPE0
@@ -519,7 +516,6 @@ typedef struct {
 } GFX_PROPERTIES;
 
 MEM_STRUCTURE                   *gRAM;
-DMI                             *gDMI;
 EFI_RUNTIME_SERVICES            *gRS;
 PCI_TYPE00                      gPci;
 EFI_FILE_HANDLE                 gRootFHandle;

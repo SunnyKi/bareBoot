@@ -367,7 +367,7 @@ read_smb_intel (
              1,
              &hostc
            );
-  fullBanks = (gDMI->MemoryModules == gDMI->CntMemorySlots);
+  fullBanks = (gRAM->MemoryModules == gRAM->CntMemorySlots);
 
   // Search MAX_RAM_SLOTS slots
   for (i = 0; i <  MAX_RAM_SLOTS; i++) {
@@ -408,10 +408,10 @@ read_smb_intel (
     }
     // laptops sometimes show slot 0 and 2 with slot 1 empty when only 2 slots are presents so:
     // for laptops case, mapping setup would need to be more generic than this
-    gDMI->DIMM[i] = (UINT16) ((i > 0 &&
+    gRAM->Map[i] = (UINT16) ((i > 0 &&
                                gRAM->DIMM[1].InUse == FALSE &&
                                fullBanks &&
-                               gDMI->CntMemorySlots == 2) ? mapping[i] : i);
+                               gRAM->CntMemorySlots == 2) ? mapping[i] : i);
   }
 }
 

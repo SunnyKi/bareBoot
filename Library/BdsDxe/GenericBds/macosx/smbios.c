@@ -47,7 +47,6 @@ UINT16              mHandle16;
 UINT16              mHandle17[MAX_SLOT_COUNT];
 UINT16              mMemory17[MAX_SLOT_COUNT];
 UINT16              mHandle19;
-UINT16              TotalCount;
 UINT32              mTotalSystemMemory;
 
 UINTN       Index, Size, NewSize, MaxSize;
@@ -913,7 +912,6 @@ GetTableType16 (
   // Physical Memory Array
   //
   mTotalSystemMemory = 0; //later we will add to the value, here initialize it
-  TotalCount = 0;
   // Get Table Type16 and set Device Count
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_PHYSICAL_MEMORY_ARRAY, 0);
 
@@ -922,13 +920,12 @@ GetTableType16 (
     return;
   }
 
-  TotalCount = SmbiosTable.Type16->NumberOfMemoryDevices;
+  gRAM->MaxMemorySlots = SmbiosTable.Type16->NumberOfMemoryDevices;
 
-  if (TotalCount == 0) {
-    TotalCount = MAX_SLOT_COUNT;
+  if (gRAM->MaxMemorySlots == 0) {
+    gRAM->MaxMemorySlots = MAX_SLOT_COUNT;
   }
 
-  gDMI->MaxMemorySlots = (UINT8) TotalCount;
   return;
 }
 
@@ -951,7 +948,7 @@ PatchTableType16 (
   ZeroMem ((VOID*) newSmbiosTable.Type16, MAX_TABLE_SIZE);
   CopyMem ((VOID*) newSmbiosTable.Type16, (VOID*) SmbiosTable.Type16, TableSize);
 #if 0
-	newSmbiosTable.Type16->NumberOfMemoryDevices = gDMI->MemoryModules;
+	newSmbiosTable.Type16->NumberOfMemoryDevices = gRAM->MemoryModules;
 #endif
   mHandle16 = LogSmbiosTable (newSmbiosTable);
   return;
@@ -964,20 +961,20 @@ GetTableType17 (
 {
   // Memory Device
   //
-  gDMI->CntMemorySlots = 0;
-  gDMI->MemoryModules = 0;
+  gRAM->CntMemorySlots = 0;
+  gRAM->MemoryModules = 0;
 
-  for (Index = 0; Index < TotalCount; Index++) {
+  for (Index = 0; Index < gRAM->MaxMemorySlots; Index++) {
     SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_MEMORY_DEVICE, Index);
 
     if (SmbiosTable.Raw == NULL) {
       continue;
     }
 
-    gDMI->CntMemorySlots++;
+    gRAM->CntMemorySlots++;
 
     if (SmbiosTable.Type17->Size > 0) {
-      gDMI->MemoryModules++;
+      gRAM->MemoryModules++;
     }
 
     if (SmbiosTable.Type17->Speed > 0) {
@@ -1000,7 +997,7 @@ PatchTableType17 (
 
   // Memory Device
   //
-  for (Index = 0; Index < TotalCount; Index++) {
+  for (Index = 0; Index < gRAM->MaxMemorySlots; Index++) {
     SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_MEMORY_DEVICE, Index);
 
     if (SmbiosTable.Raw == NULL) {
@@ -1012,7 +1009,7 @@ PatchTableType17 (
     CopyMem ((VOID*) newSmbiosTable.Type17, (VOID*) SmbiosTable.Type17, TableSize);
     newSmbiosTable.Type17->MemoryArrayHandle = mHandle16;
 
-    map = gDMI->DIMM[Index];
+    map = gRAM->Map[Index];
 
     if (gRAM->DIMM[map].InUse) {
       newSmbiosTable.Type17->MemoryType = gRAM->DIMM[map].Type;
@@ -1082,7 +1079,7 @@ PatchTableType19 (
   PartWidth = 1;
   SomeHandle = 0x1300; //as a common rule handle=(type<<8 + index)
 
-  for (Index = 0; Index < (UINTN) (TotalCount + 1); Index++) {
+  for (Index = 0; Index < (UINTN) (gRAM->MaxMemorySlots + 1); Index++) {
     SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_MEMORY_ARRAY_MAPPED_ADDRESS, Index);
 
     if (SmbiosTable.Raw == NULL) {
@@ -1133,7 +1130,7 @@ PatchTableType20 (
     ZeroMem ((VOID*) newSmbiosTable.Type20, MAX_TABLE_SIZE);
     CopyMem ((VOID*) newSmbiosTable.Type20, (VOID*) SmbiosTable.Type20, TableSize);
 
-    for (j = 0; j < TotalCount; j++) {
+    for (j = 0; j < gRAM->MaxMemorySlots; j++) {
       if ((((UINT32) mMemory17[j]  << 20) - 1) <= newSmbiosTable.Type20->EndingAddress) {
         newSmbiosTable.Type20->MemoryDeviceHandle = mHandle17[j];
 				mMemory17[j] = 0;
@@ -1320,7 +1317,6 @@ PrepatchSmbios (
   //
   //Create space for SPD
   gRAM = AllocateZeroPool (sizeof (MEM_STRUCTURE));
-  gDMI = AllocateZeroPool (sizeof (DMI));
   //
   //Collect information for use in menu
   GetTableType1();
