@@ -481,9 +481,6 @@ ScanSPD (
   UINTN                 ArrayCount;
   UINTN                 HandleIndex;
   UINTN                 ProtocolIndex;
-#if 0
-  UINT16                SmbusCReg;
-#endif
   UINTN                 Segment;
   UINTN                 Bus;
   UINTN                 Device;
@@ -518,35 +515,14 @@ ScanSPD (
                          sizeof (gPci) / sizeof (UINT32),
                          &gPci
                        );
-              // SmBus controller has class = 0x0c0500
 #if 0
+              // SmBus controller has class = 0x0c0500
               if ((gPci.Hdr.ClassCode[2] == 0x0c) && (gPci.Hdr.ClassCode[1] == 5)
                    && (gPci.Hdr.ClassCode[0] == 0) && (gPci.Hdr.VendorId == 0x8086)) {
 #endif
               if (gPci.Hdr.VendorId == 0x8086) {
                 Status = PciIo->GetLocation (PciIo, &Segment, &Bus, &Device, &Function);
                 if ((Bus == 0) && (Device == 0x1F) && (Function == 3)) {
-#if 0
-                  Status = PciIo->Pci.Read (
-                                            PciIo,
-                                            EfiPciIoWidthUint16,
-                                            PCI_COMMAND_OFFSET,
-                                            1,
-                                            &SmbusCReg
-                                            );
-
-                  Print (L"SmbusCReg = 0x%x\n", SmbusCReg);
-                  SmbusCReg |= 1;
-                  Print (L"SmbusCReg = 0x%x\n", SmbusCReg);
-                  Pause (NULL);
-                  Status = PciIo->Pci.Write (
-                                             PciIo,
-                                             EfiPciIoWidthUint16,
-                                             PCI_COMMAND_OFFSET,
-                                             1,
-                                             &SmbusCReg
-                                             );
-#endif
                   read_smb_intel (PciIo);
                 }
               }
