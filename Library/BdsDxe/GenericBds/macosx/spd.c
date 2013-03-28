@@ -438,7 +438,7 @@ read_smb_intel (
 
       slot->spd = AllocateZeroPool (MAX_SPD_SIZE);
       for (i2 = 0; i2 < slot->SpdSize; i2++) {
-        slot->spd[i2] = smb_read_byte_intel(base, 0x50 + i, i2);
+        slot->spd[i2] = smb_read_byte_intel(base, (UINT8) (0x50 + i), (UINT8) i2);
       }
 
       switch (slot->spd[SPD_MEMORY_TYPE])  {

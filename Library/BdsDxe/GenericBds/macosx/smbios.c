@@ -920,7 +920,7 @@ GetTableType16 (
     return;
   }
 
-  gRAM->MaxMemorySlots = SmbiosTable.Type16->NumberOfMemoryDevices;
+  gRAM->MaxMemorySlots = (UINT8) SmbiosTable.Type16->NumberOfMemoryDevices;
 
   if (gRAM->MaxMemorySlots == 0) {
     gRAM->MaxMemorySlots = MAX_SLOT_COUNT;
@@ -1038,8 +1038,8 @@ PatchTableType17 (
     if (gRAM->DIMM[map].InUse) {
       ZeroMem ((VOID*) newSmbiosTable.Type130, MAX_TABLE_SIZE);
       newSmbiosTable.Type130->Hdr.Type = 130;
-      newSmbiosTable.Type130->Hdr.Length = 10 + (gRAM->DIMM[map].SpdSize);
-      newSmbiosTable.Type130->Hdr.Handle = 0x1301 + Index;
+      newSmbiosTable.Type130->Hdr.Length = (UINT8) (10 + (gRAM->DIMM[map].SpdSize));
+      newSmbiosTable.Type130->Hdr.Handle = (UINT16) (0x1301 + Index);
       newSmbiosTable.Type130->Type17Handle = mHandle17[Index];
       newSmbiosTable.Type130->Offset = 0;
       newSmbiosTable.Type130->Size = (gRAM->DIMM[map].SpdSize);
