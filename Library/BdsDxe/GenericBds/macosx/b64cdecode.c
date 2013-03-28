@@ -88,9 +88,9 @@ int base64_decode_block(const char* code_in, const int length_in, char* plaintex
 }
 
 
-/** UEFI interface to base54 decode.
+/** UEFI interface to base64 decode.
  * Decodes EncodedData into a new allocated buffer and returns it. Caller is responsible to FreePool() it.
- * If DecodedSize != NULL, then size od decoded data is put there.
+ * If DecodedSize != NULL, then size of decoded data is put there.
  */
 UINT8 *Base64Decode(IN CHAR8 *EncodedData, OUT UINTN *DecodedSize)
 {
