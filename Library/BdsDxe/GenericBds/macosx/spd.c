@@ -320,7 +320,7 @@ read_smb_intel (
 )
 {
   EFI_STATUS      Status;
-  INTN            i, i2, speed;
+  INTN            i, i2;
   UINT8           spd_type;
   UINT32          base, mmio, hostc;
   UINT16          Command;
@@ -404,42 +404,7 @@ read_smb_intel (
       slot->PartNo = getDDRPartNum (slot->spd, base, (UINT8) i);
       slot->Vendor = getVendorName (slot, base, (UINT8) i);
       slot->SerialNo = getDDRSerial (slot->spd);
-      speed = getDDRspeedMhz (slot->spd);
-
-      if (slot->Frequency < (UINT32) speed) {
-        slot->Frequency = (UINT32) speed;
-      }
-
-      // pci memory controller if available, is more reliable
-      if (gRAM->Frequency > 0) {
-        UINT32 freq = (UINT32) DivU64x32 (gRAM->Frequency, 500000);
-        // now round off special cases
-        UINT32 fmod100 = freq % 100;
-
-        switch (fmod100) {
-          case  1:
-            freq--;
-            break;
-
-          case 32:
-            freq++;
-            break;
-
-          case 65:
-            freq++;
-            break;
-
-          case 98:
-            freq += 2;
-            break;
-
-          case 99:
-            freq++;
-            break;
-        }
-
-        slot->Frequency = freq;
-      }
+      slot->Frequency = getDDRspeedMhz (slot->spd);
     }
     // laptops sometimes show slot 0 and 2 with slot 1 empty when only 2 slots are presents so:
     // for laptops case, mapping setup would need to be more generic than this
@@ -449,24 +414,6 @@ read_smb_intel (
                                gDMI->CntMemorySlots == 2) ? mapping[i] : i);
   }
 }
-
-#if 0
-static struct smbus_controllers_t smbus_controllers[] = {
-  {0x8086, 0x269B, "ESB2",    read_smb_intel },
-  {0x8086, 0x25A4, "6300ESB",   read_smb_intel },
-  {0x8086, 0x24C3, "ICH4",    read_smb_intel },
-  {0x8086, 0x24D3, "ICH5",    read_smb_intel },
-  {0x8086, 0x266A, "ICH6",    read_smb_intel },
-  {0x8086, 0x27DA, "ICH7",    read_smb_intel },
-  {0x8086, 0x283E, "ICH8",    read_smb_intel },
-  {0x8086, 0x2930, "ICH9",    read_smb_intel },
-  {0x8086, 0x3A30, "ICH10R",    read_smb_intel },
-  {0x8086, 0x3A60, "ICH10B",    read_smb_intel },
-  {0x8086, 0x3B30, "5 Series",  read_smb_intel },
-  {0x8086, 0x1C22, "6 Series",  read_smb_intel },
-  {0x8086, 0x5032, "EP80579",   read_smb_intel }
-};
-#endif
 
 VOID
 ScanSPD (

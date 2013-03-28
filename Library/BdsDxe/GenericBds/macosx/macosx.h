@@ -319,14 +319,6 @@ typedef struct {
 } RAM_SLOT_INFO;
 
 typedef struct {
-  UINT64    Frequency;
-  UINT32    Divider;
-  UINT8     TRC;
-  UINT8     TRP;
-  UINT8     RAS;
-  UINT8     Channels;
-  UINT8     Slots;
-  UINT8     Type;
   RAM_SLOT_INFO DIMM[MAX_RAM_SLOTS];
 } MEM_STRUCTURE;
 
