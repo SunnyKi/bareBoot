@@ -334,7 +334,7 @@ typedef struct {
   UINT8     MaxMemorySlots;     // number of memory slots polulated by SMBIOS
   UINT8     CntMemorySlots;     // number of memory slots counted
   UINT16    MemoryModules;      // number of memory modules installed
-  UINT32    DIMM[MAX_RAM_SLOTS];  // Information and SPD mapping for each slot
+  UINT16    DIMM[MAX_RAM_SLOTS];  // Information and SPD mapping for each slot
 } DMI;
 
 typedef struct {

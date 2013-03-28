@@ -26,12 +26,11 @@
 #define SMBHSTADD 4
 #define SMBHSTDAT 5
 #define SBMBLKDAT 7
-#define SPD_INDEXES_SIZE (sizeof(spd_indexes) / sizeof(INT8))
 #define SPD_TO_SMBIOS_SIZE (sizeof(spd_mem_to_smbios)/sizeof(UINT8))
 #define READ_SPD(spd, base, slot, x) spd[x] = smb_read_byte_intel(base, 0x50 + slot, x)
 #define SMST(a) ((UINT8)((spd[a] & 0xf0) >> 4))
 #define SLST(a) ((UINT8)(spd[a] & 0x0f))
-#define PCI_COMMAND_OFFSET                          0x04
+#define PCI_COMMAND_OFFSET 0x04
 
 CHAR8 *spd_memory_types[] = {
   "RAM",          /* 00h  Undefined */
@@ -40,12 +39,12 @@ CHAR8 *spd_memory_types[] = {
   "",             /* 03h  PIPELINE NIBBLE */
   "SDRAM",        /* 04h  SDRAM */
   "",             /* 05h  MULTIPLEXED ROM */
-  "DDR SGRAM",  /* 06h  SGRAM DDR */
-  "DDR SDRAM",  /* 07h  SDRAM DDR */
+  "DDR SGRAM",    /* 06h  SGRAM DDR */
+  "DDR SDRAM",    /* 07h  SDRAM DDR */
   "DDR2 SDRAM",   /* 08h  SDRAM DDR 2 */
-  "",       /* 09h  Undefined */
-  "",       /* 0Ah  Undefined */
-  "DDR3 SDRAM"  /* 0Bh  SDRAM DDR 3 */
+  "",             /* 09h  Undefined */
+  "",             /* 0Ah  Undefined */
+  "DDR3 SDRAM"    /* 0Bh  SDRAM DDR 3 */
 };
 
 UINT8 spd_mem_to_smbios[] = {
@@ -61,18 +60,6 @@ UINT8 spd_mem_to_smbios[] = {
   UNKNOWN_MEM_TYPE,   /* 09h  Undefined */
   UNKNOWN_MEM_TYPE,   /* 0Ah  Undefined */
   SMB_MEM_TYPE_DDR3   /* 0Bh  SDRAM DDR 3 */
-};
-
-UINT8 spd_indexes[] = {
-  SPD_MEMORY_TYPE,
-  SPD_DDR3_MEMORY_BANK,
-  SPD_DDR3_MEMORY_CODE,
-  SPD_NUM_ROWS,
-  SPD_NUM_COLUMNS,
-  SPD_NUM_DIMM_BANKS,
-  SPD_NUM_BANKS_PER_SDRAM,
-  4, 7, 8, 9, 12, 64, /* TODO: give names to these values */
-  95, 96, 97, 98, 122, 123, 124, 125 /* UIS */
 };
 
 INTN mapping [] = {0, 2, 1, 3, 4, 6, 5, 7, 8, 10, 9, 11};
@@ -119,22 +106,6 @@ smb_read_byte_intel (
   }
 
   return IoRead8 (base + SMBHSTDAT);
-}
-
-/** Read from spd *used* values only*/
-
-VOID
-init_spd (
-  UINT8* spd,
-  UINT32 base,
-  UINT8 slot
-)
-{
-  INTN i;
-
-  for (i = 0; i < SPD_INDEXES_SIZE; i++) {
-    READ_SPD (spd, base, slot, spd_indexes[i]);
-  }
 }
 
 /** Get Vendor Name from spd, 2 cases handled DDR3 and DDR2,
@@ -302,15 +273,14 @@ read_smb_intel (
   EFI_PCI_IO_PROTOCOL *PciIo
 )
 {
-  EFI_STATUS    Status;
-  INTN      i, speed;
-  UINT8     spd_size, spd_type;
-  UINT32      base, mmio, hostc;
-  UINT16      Command;
+  EFI_STATUS      Status;
+  INTN            i, i2, speed;
+  UINT8           spd_type;
+  UINT32          base, mmio, hostc;
+  UINT16          Command;
   RAM_SLOT_INFO*  slot;
-  BOOLEAN     fullBanks;
-  UINT8*      spdbuf;
-  UINT16      vid, did;
+  BOOLEAN         fullBanks;
+  UINT16          vid, did;
 
   vid = gPci.Hdr.VendorId;
   did = gPci.Hdr.DeviceId;
@@ -352,25 +322,28 @@ read_smb_intel (
              &hostc
            );
   fullBanks = (gDMI->MemoryModules == gDMI->CntMemorySlots);
-  spdbuf = AllocateZeroPool (MAX_SPD_SIZE);
 
   // Search MAX_RAM_SLOTS slots
   for (i = 0; i <  MAX_RAM_SLOTS; i++) {
     slot = &gRAM->DIMM[i];
-    spd_size = smb_read_byte_intel (base, (UINT8) (0x50 + i), 0);
-    slot->SpdSize = spd_size;
+    slot->SpdSize = smb_read_byte_intel (base, (UINT8) (0x50 + i), 0);
+    slot->InUse = FALSE;
 
     // Check spd is present
-    if (spd_size && (spd_size != 0xff)) {
-      slot->spd = spdbuf;
+    if ((slot->SpdSize != 0) && (slot->SpdSize != 0xff)) {
       slot->InUse = TRUE;
-      ZeroMem (slot->spd, spd_size);
-      // Copy spd data into buffer
-      init_spd (slot->spd, base, (UINT8) i);
+
+      slot->spd = AllocateZeroPool (slot->SpdSize);
+      for (i2 = 0; i2 < slot->SpdSize; i2++) {
+        slot->spd[i2] = smb_read_byte_intel(base, 0x50 + i, i2);
+      }
 
       switch (slot->spd[SPD_MEMORY_TYPE])  {
         case SPD_MEMORY_TYPE_SDRAM_DDR2:
-          slot->ModuleSize = ((1 << ((slot->spd[SPD_NUM_ROWS] & 0x0f) + (slot->spd[SPD_NUM_COLUMNS] & 0x0f) - 17)) * ((slot->spd[SPD_NUM_DIMM_BANKS] & 0x7) + 1) * slot->spd[SPD_NUM_BANKS_PER_SDRAM]);
+          slot->ModuleSize = ((1 << ((slot->spd[SPD_NUM_ROWS] & 0x0f) +
+                                     (slot->spd[SPD_NUM_COLUMNS] & 0x0f) - 17)) *
+                                     ((slot->spd[SPD_NUM_DIMM_BANKS] & 0x7) + 1) *
+                                     slot->spd[SPD_NUM_BANKS_PER_SDRAM]);
           break;
 
         case SPD_MEMORY_TYPE_SDRAM_DDR3:
@@ -421,13 +394,14 @@ read_smb_intel (
 
         slot->Frequency = freq;
       }
-
-      // laptops sometimes show slot 0 and 2 with slot 1 empty when only 2 slots are presents so:
-      // for laptops case, mapping setup would need to be more generic than this
-      gDMI->DIMM[i] = (UINT32) ((i > 0 && gRAM->DIMM[1].InUse == FALSE && fullBanks && gDMI->CntMemorySlots == 2) ? mapping[i] : i);
-      slot->spd = NULL;
     }
-  } // for
+    // laptops sometimes show slot 0 and 2 with slot 1 empty when only 2 slots are presents so:
+    // for laptops case, mapping setup would need to be more generic than this
+    gDMI->DIMM[i] = (UINT16) ((i > 0 &&
+                               gRAM->DIMM[1].InUse == FALSE &&
+                               fullBanks &&
+                               gDMI->CntMemorySlots == 2) ? mapping[i] : i);
+  }
 }
 
 #if 0
