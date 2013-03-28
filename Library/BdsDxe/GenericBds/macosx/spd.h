@@ -92,6 +92,19 @@
 #define SPD_DDR3_MEMORY_BANK                0x75
 #define SPD_DDR3_MEMORY_CODE                0x76
 
+// XMP memory profile
+#define SPD_XMP_SIG1 176
+#define SPD_XMP_SIG1_VALUE 0x0C
+#define SPD_XMP_SIG2 177
+#define SPD_XMP_SIG2_VALUE 0x4A
+#define SPD_XMP_PROFILES 178
+#define SPD_XMP_PROF1_DIVISOR 180
+#define SPD_XMP_PROF1_DIVIDEND 181
+#define SPD_XMP_PROF2_DIVISOR 182
+#define SPD_XMP_PROF2_DIVIDEND 183
+#define SPD_XMP_PROF1_RATIO 186
+#define SPD_XMP_PROF2_RATIO 221
+
 /* DRAM specifications use the following naming conventions for SPD locations */
 #define SPD_tRP                             SPD_MIN_ROW_PRECHARGE_TIME
 #define SPD_tRRD                            SPD_MIN_ROWACTIVE_TO_ROWACTIVE

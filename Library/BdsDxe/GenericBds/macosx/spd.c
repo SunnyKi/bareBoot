@@ -164,21 +164,60 @@ getDDRspeedMhz (
   UINT8 * spd
 )
 {
-  if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR3) {
-    switch (spd[12])  {
-      case 0x0f:
-        return 1066;
+  UINT16 divisor = spd[10];
+  UINT16 dividend = spd[11];
+  UINT16 ratio = spd[12];
 
-      case 0x0c:
-        return 1333;
+  divisor = 0;
+  dividend = 0;
+  ratio = 0;
 
-      case 0x0a:
-        return 1600;
-
-      case 0x14:
-      default:
-        return 800;
+  // Check if an XMP profile is enabled
+  // thnx to apianti!
+  if ((spd[SPD_XMP_SIG1] == SPD_XMP_SIG1_VALUE) &&
+      (spd[SPD_XMP_SIG2] == SPD_XMP_SIG2_VALUE) &&
+      ((spd[SPD_XMP_PROFILES] & 3) != 0)) {
+    if ((spd[SPD_XMP_PROFILES] & 3) == 1) {
+      // Use first profile
+      divisor = spd[SPD_XMP_PROF1_DIVISOR];
+      dividend = spd[SPD_XMP_PROF1_DIVIDEND];
+      ratio = spd[SPD_XMP_PROF1_RATIO];
+      } else {
+      // Use second profile
+      divisor = spd[SPD_XMP_PROF2_DIVISOR];
+      dividend = spd[SPD_XMP_PROF2_DIVIDEND];
+      ratio = spd[SPD_XMP_PROF2_RATIO];
+      }
+    // Check values are sane
+    if ((dividend != 0) && (divisor != 0) && (ratio != 0)) {
+      // Convert to MHz from nanoseconds - 2 * (1000 / nanoseconds)
+      return ((2000 * dividend) / (divisor * ratio));
     }
+  } else if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR3) {
+    divisor = spd[10];
+    dividend = spd[11];
+    ratio = spd[12];
+    // Check values are sane
+    if ((dividend != 0) && (divisor != 0) && (ratio != 0)) {
+      // Convert to MHz from nanoseconds - 2 * (1000 / nanoseconds)
+      return ((2000 * dividend) / (divisor * ratio));
+    } else {
+      switch (spd[12])  {
+        case 0x0f:
+          return 1066;
+
+        case 0x0c:
+          return 1333;
+
+        case 0x0a:
+          return 1600;
+
+        case 0x14:
+        default:
+          return 800;
+      }
+    }
+
   } else if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR2)  {
     switch (spd[9]) {
       case 0x50:
@@ -340,7 +379,7 @@ read_smb_intel (
     if ((slot->SpdSize != 0) && (slot->SpdSize != 0xff)) {
       slot->InUse = TRUE;
 
-      slot->spd = AllocateZeroPool (slot->SpdSize);
+      slot->spd = AllocateZeroPool (MAX_SPD_SIZE);
       for (i2 = 0; i2 < slot->SpdSize; i2++) {
         slot->spd[i2] = smb_read_byte_intel(base, 0x50 + i, i2);
       }
