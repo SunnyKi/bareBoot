@@ -105,6 +105,22 @@
 #define SPD_XMP_PROF1_RATIO 186
 #define SPD_XMP_PROF2_RATIO 221
 
+// EPP memory profile
+#define EPP_IDENTIFIER_STRING               99  /* 99-101 4E566Dh EPP SPD Support */
+#define EPP_PROFILE_TYPE_IDENTIFIER         102 /* A1h Abbreviated Profiles B1h Full Profiles */
+#define PROFILE_FOR_OPTIMAL_PERFORMANCE     103 /* (1:0) */
+#define ENABLED_PROFILES                    103 /* (7:4) */
+// Abbreviated Performance Profile support
+#define CYCLE_TIME_ABBR_PF0                 105 /* 25h  2.50 ns (200.0 MHz) */
+#define CYCLE_TIME_ABBR_PF1                 111 /* 1Eh  1.875 ns (266.7 MHz) */
+#define CYCLE_TIME_ABBR_PF2                 117 /* 25h  2.50 ns (200.0 MHz) */
+#define CYCLE_TIME_ABBR_PF3                 123 /* 1Eh  1.875 ns (266.7 MHz) */
+// Full Performance Profile support
+#define CYCLE_TIME_FULL_PF0                 109 /* 25h  2.50 ns (200.0 MHz) */
+#define CYCLE_TIME_FULL_PF1                 121 /* 1Eh  1.875 ns (266.7 MHz) */
+
+
+
 /* DRAM specifications use the following naming conventions for SPD locations */
 #define SPD_tRP                             SPD_MIN_ROW_PRECHARGE_TIME
 #define SPD_tRRD                            SPD_MIN_ROWACTIVE_TO_ROWACTIVE

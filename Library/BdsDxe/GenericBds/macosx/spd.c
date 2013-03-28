@@ -164,39 +164,44 @@ getDDRspeedMhz (
   UINT8 * spd
 )
 {
-  UINT16 divisor = spd[10];
-  UINT16 dividend = spd[11];
-  UINT16 ratio = spd[12];
+  UINT16  divisor = spd[10];
+  UINT16  dividend = spd[11];
+  UINT16  ratio = spd[12];
+  UINT32  EppIdentifierString;
+  UINT8   ProfileForOptimal;
+  UINT8   CycleTime;
 
   divisor = 0;
   dividend = 0;
   ratio = 0;
+  CycleTime = 0;
 
   // Check if an XMP profile is enabled
   // thnx to apianti!
-  if ((spd[SPD_XMP_SIG1] == SPD_XMP_SIG1_VALUE) &&
-      (spd[SPD_XMP_SIG2] == SPD_XMP_SIG2_VALUE) &&
-      ((spd[SPD_XMP_PROFILES] & 3) != 0)) {
-    if ((spd[SPD_XMP_PROFILES] & 3) == 1) {
-      // Use first profile
-      divisor = spd[SPD_XMP_PROF1_DIVISOR];
-      dividend = spd[SPD_XMP_PROF1_DIVIDEND];
-      ratio = spd[SPD_XMP_PROF1_RATIO];
-      } else {
-      // Use second profile
-      divisor = spd[SPD_XMP_PROF2_DIVISOR];
-      dividend = spd[SPD_XMP_PROF2_DIVIDEND];
-      ratio = spd[SPD_XMP_PROF2_RATIO];
-      }
-    // Check values are sane
-    if ((dividend != 0) && (divisor != 0) && (ratio != 0)) {
-      // Convert to MHz from nanoseconds - 2 * (1000 / nanoseconds)
-      return ((2000 * dividend) / (divisor * ratio));
-    }
-  } else if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR3) {
+  if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR3) {
     divisor = spd[10];
     dividend = spd[11];
     ratio = spd[12];
+    if ((spd[SPD_XMP_SIG1] == SPD_XMP_SIG1_VALUE) &&
+       (spd[SPD_XMP_SIG2] == SPD_XMP_SIG2_VALUE) &&
+       ((spd[SPD_XMP_PROFILES] & 3) != 0)) {
+     if ((spd[SPD_XMP_PROFILES] & 3) == 1) {
+       // Use first profile
+       divisor = spd[SPD_XMP_PROF1_DIVISOR];
+       dividend = spd[SPD_XMP_PROF1_DIVIDEND];
+       ratio = spd[SPD_XMP_PROF1_RATIO];
+     } else {
+       // Use second profile
+       divisor = spd[SPD_XMP_PROF2_DIVISOR];
+       dividend = spd[SPD_XMP_PROF2_DIVIDEND];
+       ratio = spd[SPD_XMP_PROF2_RATIO];
+     }
+     // Check values are sane
+     if ((dividend != 0) && (divisor != 0) && (ratio != 0)) {
+       // Convert to MHz from nanoseconds - 2 * (1000 / nanoseconds)
+       return ((2000 * dividend) / (divisor * ratio));
+     }
+   }
     // Check values are sane
     if ((dividend != 0) && (divisor != 0) && (ratio != 0)) {
       // Convert to MHz from nanoseconds - 2 * (1000 / nanoseconds)
@@ -219,6 +224,59 @@ getDDRspeedMhz (
     }
 
   } else if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR2)  {
+    EppIdentifierString = (spd[EPP_IDENTIFIER_STRING + 2] << 16) +
+                          (spd[EPP_IDENTIFIER_STRING + 1] << 8) +
+                          spd[EPP_IDENTIFIER_STRING];
+    if (EppIdentifierString == 0x4E566D) {
+      ProfileForOptimal = spd[PROFILE_FOR_OPTIMAL_PERFORMANCE] & 0x3;
+      if (spd[EPP_PROFILE_TYPE_IDENTIFIER] == 0xB1) {
+        switch (ProfileForOptimal) {
+          case 0:
+            CycleTime = spd[CYCLE_TIME_FULL_PF0];
+            break;
+          case 1:
+            CycleTime = spd[CYCLE_TIME_FULL_PF1];
+            break;
+
+          default:
+            break;
+        }
+        switch (CycleTime) {
+          case 0x1E:
+            return 1066;
+
+          case 0x25:
+          default:
+            return 800;
+        }
+      } else if (spd[EPP_PROFILE_TYPE_IDENTIFIER] == 0xA1) {
+        switch (ProfileForOptimal) {
+          case 0:
+            CycleTime = spd[CYCLE_TIME_ABBR_PF0];
+            break;
+          case 1:
+            CycleTime = spd[CYCLE_TIME_ABBR_PF1];
+            break;
+          case 2:
+            CycleTime = spd[CYCLE_TIME_ABBR_PF2];
+            break;
+          case 3:
+            CycleTime = spd[CYCLE_TIME_ABBR_PF3];
+            break;
+
+          default:
+            break;
+        }
+        switch (CycleTime) {
+          case 0x1E:
+            return 1066;
+
+          case 0x25:
+          default:
+            return 800;
+        }
+      }
+    }
     switch (spd[9]) {
       case 0x50:
         return 400;
@@ -234,7 +292,6 @@ getDDRspeedMhz (
         return 800;
     }
   }
-
   return 800; // default freq for unknown types //shit! DDR1 = 533
 }
 
