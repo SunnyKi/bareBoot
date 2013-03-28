@@ -1,0 +1,5 @@
+-- XML en/decode for strings
+
+-- DATE stuff
+
+-- memory management (leaks, ....)
