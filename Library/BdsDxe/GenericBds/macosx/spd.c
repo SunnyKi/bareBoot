@@ -19,13 +19,6 @@
 #include "memvendors.h"
 #include "Library/IoLib.h"
 
-#define UNKNOWN_MEM_TYPE 2
-#define SMBHSTSTS 0
-#define SMBHSTCNT 2
-#define SMBHSTCMD 3
-#define SMBHSTADD 4
-#define SMBHSTDAT 5
-#define SBMBLKDAT 7
 #define SPD_TO_SMBIOS_SIZE (sizeof(spd_mem_to_smbios)/sizeof(UINT8))
 #define READ_SPD(spd, base, slot, x) spd[x] = smb_read_byte_intel(base, 0x50 + slot, x)
 #define SMST(a) ((UINT8)((spd[a] & 0xf0) >> 4))
@@ -215,12 +208,30 @@ getDDRSerial (
 {
   CHAR8* asciiSerial; //[16];
 
-  asciiSerial = AllocatePool (16);
+  asciiSerial = AllocateZeroPool (16);
 
-  if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR3) { // DDR3
-    AsciiSPrint (asciiSerial, 16, "%X%X%X%X%X%X%X%X", SMST (122) /*& 0x7*/, SLST (122), SMST (123), SLST (123), SMST (124), SLST (124), SMST (125), SLST (125));
-  } else if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR2) { // DDR2 or DDR
-    AsciiSPrint (asciiSerial, 16, "%X%X%X%X%X%X%X%X", SMST (95) /*& 0x7*/, SLST (95), SMST (96), SLST (96), SMST (97), SLST (97), SMST (98), SLST (98));
+  if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR3) { 
+    AsciiSPrint (asciiSerial, 16, "%X%X%X%X%X%X%X%X",
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3),
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3 + 1),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3 + 1),
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3 + 2),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3 + 2),
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3 + 3),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR3 + 3)
+                 );
+  } else if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR2) {
+    AsciiSPrint (asciiSerial, 16, "%X%X%X%X%X%X%X%X",
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2),
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2 + 1),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2 + 1),
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2 + 2),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2 + 2),
+                 SMST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2 + 3),
+                 SLST (SPD_ASSEMBLY_SERIAL_NUMBER_DDR2 + 3)
+                 );
   }
 
   return asciiSerial;
@@ -241,22 +252,18 @@ getDDRPartNum (
 
   start = 0;
   index = 0;
-  asciiPartNo = AllocatePool (32);
+  asciiPartNo = AllocateZeroPool (32);
 
   if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR3) {
-    start = 128;
+    start = SPD_MANUFACTURER_PART_NUMBER_DDR3;
   } else if (spd[SPD_MEMORY_TYPE] == SPD_MEMORY_TYPE_SDRAM_DDR2) {
-    start = 73;
+    start = SPD_MANUFACTURER_PART_NUMBER_DDR2;
   }
 
-  // Check that the spd part name is zero terminated and that it is ascii:
-  ZeroMem (asciiPartNo, 32); //sizeof(asciiPartNo));
-
   for (i = start; i < start + 32; i++) {
-    READ_SPD (spd, base, (UINT8) slot, (UINT8) i); // only read once the corresponding model part (ddr3 or ddr2)
+    READ_SPD (spd, base, (UINT8) slot, (UINT8) i);
     c = spd[i];
-
-    if (IS_ALPHA (c) || IS_DIGIT (c) || IS_PUNCT (c)) { // It seems that System Profiler likes only letters and digits...
+    if (IS_ALPHA (c) || IS_DIGIT (c) || IS_PUNCT (c)) {
       asciiPartNo[index++] = c;
     } else if (c < 0x20) {
       break;

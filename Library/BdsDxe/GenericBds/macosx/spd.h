@@ -19,6 +19,15 @@
 #ifndef _SPD_H
 #define _SPD_H
 
+#define UNKNOWN_MEM_TYPE 2
+
+#define SMBHSTSTS 0
+#define SMBHSTCNT 2
+#define SMBHSTCMD 3
+#define SMBHSTADD 4
+#define SMBHSTDAT 5
+#define SBMBLKDAT 7
+
 /* Byte numbers. */
 #define SPD_NUM_MANUFACTURER_BYTES          0  /* Number of bytes used by module manufacturer */
 #define SPD_TOTAL_SPD_MEMORY_SIZE           1  /* Total SPD memory size */
@@ -71,13 +80,15 @@
 #define SPD_CHECKSUM_FOR_BYTES_0_TO_62      63 /* Checksum for bytes 0-62 */
 #define SPD_MANUFACTURER_JEDEC_ID_CODE      64 /* Manufacturer's JEDEC ID code, per EIA/JEP106 (bytes 64-71) */
 #define SPD_MANUFACTURING_LOCATION          72 /* Manufacturing location */
-#define SPD_MANUFACTURER_PART_NUMBER        73 /* Manufacturer's part number, in 6-bit ASCII (bytes 73-90) */
+#define SPD_MANUFACTURER_PART_NUMBER_DDR2   73 /* Manufacturer's part number, in 6-bit ASCII (bytes 73-90) */
 #define SPD_REVISION_CODE                   91 /* Revision code (bytes 91-92) */
 #define SPD_MANUFACTURING_DATE              93 /* Manufacturing date (byte 93: year, byte 94: week) */
-#define SPD_ASSEMBLY_SERIAL_NUMBER          95 /* Assembly serial number (bytes 95-98) */
+#define SPD_ASSEMBLY_SERIAL_NUMBER_DDR2     95 /* Assembly serial number (bytes 95-98) */
 #define SPD_MANUFACTURER_SPECIFIC_DATA      99 /* Manufacturer specific data (bytes 99-125) */
+#define SPD_ASSEMBLY_SERIAL_NUMBER_DDR3     122 /* Assembly serial number (bytes 122-125) */
 #define SPD_INTEL_SPEC_FOR_FREQUENCY        126 /* Intel specification for frequency */
 #define SPD_INTEL_SPEC_100_MHZ              127 /* Intel specification details for 100MHz support */
+#define SPD_MANUFACTURER_PART_NUMBER_DDR3   128 /* Manufacturer's part number, in 6-bit ASCII (bytes 128-145) */
 #define SPD_DDR3_MEMORY_BANK                0x75
 #define SPD_DDR3_MEMORY_CODE                0x76
 
