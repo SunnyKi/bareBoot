@@ -110,7 +110,7 @@ _plBagToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 
 int
 _plStrToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
-	unsigned char* bp;
+	char* bp;
 	unsigned int bsize;
 
 	bsize = plGetSize(ipl);
@@ -132,7 +132,7 @@ int
 _plBytesToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 	unsigned int bsize;
 	unsigned int osize;
-	unsigned char* odat;
+	char* odat;
 	int rc;
 
 	bsize = plGetSize(ipl);

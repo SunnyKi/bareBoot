@@ -47,5 +47,5 @@ int _plint2str(long val, char* vbuf, unsigned int bsz);
 void* _plzalloc(unsigned int sz);
 void _plfree(void* ptr);
 
-char* _plb64encode(unsigned char* idat, unsigned int ilen, unsigned int* olen);
-unsigned char* _plb64decode(char* idat, unsigned int ilen, unsigned int* olen);
+char* _plb64encode(char* idat, unsigned int ilen, unsigned int* olen);
+char* _plb64decode(char* idat, unsigned int ilen, unsigned int* olen);

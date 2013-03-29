@@ -27,8 +27,8 @@
 
 #include "plist.h"
 
-unsigned char ibig[32768];
-unsigned char obig[32768];
+char ibig[32768];
+char obig[32768];
 
 plbuf_t ibuf = {ibig, 0, 0 };
 plbuf_t obuf = {obig, sizeof(obig), 0 };

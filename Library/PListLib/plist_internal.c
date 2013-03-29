@@ -38,7 +38,7 @@ struct _plnode {
 	plkind_t kind;
 
 	long val; /* int64 */
-	unsigned char* datval;
+	char* datval;
 	unsigned int datlen;
 };
 
@@ -131,7 +131,7 @@ plNewArray(void) {
 }
 
 void*
-plNewData(unsigned char* datum, unsigned int dlen) {
+plNewData(char* datum, unsigned int dlen) {
 	_plnode_t* node;
 
 	if (datum == NULL || dlen == 0) { return NULL; }
@@ -148,7 +148,7 @@ plNewData(unsigned char* datum, unsigned int dlen) {
 }
 
 void*
-plNewKey(unsigned char* key, unsigned int klen, void* datum) {
+plNewKey(char* key, unsigned int klen, void* datum) {
 	_plnode_t* node;
 
 	node = plNewData(key, klen);
@@ -159,7 +159,7 @@ plNewKey(unsigned char* key, unsigned int klen, void* datum) {
 }
 
 void*
-plNewDate(unsigned char* datum, unsigned int dlen) {
+plNewDate(char* datum, unsigned int dlen) {
 	_plnode_t* node;
 
 	node = plNewData(datum, dlen);
@@ -169,7 +169,7 @@ plNewDate(unsigned char* datum, unsigned int dlen) {
 }
 
 void*
-plNewString(unsigned char* datum, unsigned int dlen) {
+plNewString(char* datum, unsigned int dlen) {
 	_plnode_t* node;
 
 	node = plNewData(datum, dlen);
@@ -204,7 +204,7 @@ plGetSize(void* pn) {
 	return 0;
 }
 
-unsigned char*
+char*
 plGetBytes(void* pn) {
 	switch (plGetKind(pn)) {
 	case plKindKey:
@@ -284,7 +284,7 @@ plGetKind(void* node) {
 }
 
 void*
-plFind(void* dict, unsigned char* key, unsigned int klen, plkind_t kind) {
+plFind(void* dict, char* key, unsigned int klen, plkind_t kind) {
 	unsigned int dsz;
 	unsigned int i;
 
@@ -352,7 +352,7 @@ _plGrowTree(TagPtr ipl, void* pn) {
 			}
 			break;
 		case kTagTypeData:
-			wn = plNewData(ipl->data, ipl->dataLen);
+			wn = plNewData((char*)(ipl->data), ipl->dataLen);
 			if (wn != NULL) {
 				plAdd(pn, wn);
 			} else {

@@ -75,11 +75,11 @@ _plzalloc(unsigned int sz) {
 /* Following sources heavily inspired by SunnyKi */
 
 char*
-_plb64encode(unsigned char* idat, unsigned int ilen, unsigned int* olen) {
+_plb64encode(char* idat, unsigned int ilen, unsigned int* olen) {
 	unsigned int osiz;
 	unsigned int csiz;
 	unsigned int tsiz;
-	unsigned char* odat;
+	char* odat;
 	base64_encodestate b64state;
 
 	if (idat == NULL || ilen == 0) { return NULL; }
@@ -93,10 +93,10 @@ _plb64encode(unsigned char* idat, unsigned int ilen, unsigned int* olen) {
 	return odat;
 }
 
-unsigned char*
+char*
 _plb64decode(char* idat, unsigned int ilen, unsigned int* olen) {
 	unsigned int binsz;
-	unsigned char* odat;
+	char* odat;
 	base64_decodestate b64state;
 	
 	if (idat == NULL || ilen == 0) { return NULL; }
@@ -104,7 +104,7 @@ _plb64decode(char* idat, unsigned int ilen, unsigned int* olen) {
 	odat = _plzalloc(ilen);
 	if (odat == NULL) { return NULL; }
 	base64_init_decodestate(&b64state);
-	binsz = base64_decode_block(idat, (const int)ilen, (char*)odat, &b64state);
+	binsz = base64_decode_block(idat, (const int)ilen, odat, &b64state);
 	if (olen != NULL) { *olen = binsz; }
 	return odat;
 }

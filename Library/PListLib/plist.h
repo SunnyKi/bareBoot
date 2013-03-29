@@ -43,7 +43,7 @@ typedef enum _plkind {
 } plkind_t;
 
 typedef struct _plbuf {
-	unsigned char* dat;
+	char* dat;
 	unsigned int len; 
 	unsigned int pos;
 } plbuf_t;
@@ -55,7 +55,7 @@ int plToXml(void*, plbuf_t*);
 plkind_t plGetKind(void*);
 
 unsigned int plGetSize(void*); /* Applied to any node where size has meaning */
-unsigned char* plGetBytes(void*);
+char* plGetBytes(void*);
 
 void* plNewBool(int);
 int plGetBool(void*);
@@ -63,18 +63,18 @@ int plGetBool(void*);
 void* plNewInteger(long);
 long plGetIntValue(void*);
 
-void* plNewDate(unsigned char*, unsigned int);
+void* plNewDate(char*, unsigned int);
 
 int plAdd(void* bag, void* elem);
 
 void* plNewArray(void);
 void* plNewDict(void);
 void* plGetItem(void*, unsigned int);
-void* plNewKey(unsigned char*, unsigned int, void*);
-void* plFind(void* dict, unsigned char* key, unsigned int klen, plkind_t kind); /* kind can be Any */
+void* plNewKey(char*, unsigned int, void*);
+void* plFind(void* dict, char* key, unsigned int klen, plkind_t kind); /* kind can be Any */
 
-void* plNewData(unsigned char*, unsigned int);
+void* plNewData(char*, unsigned int);
 
-void* plNewString(unsigned char*, unsigned int);
+void* plNewString(char*, unsigned int);
 
 void plDeleteNode(void*);

@@ -686,7 +686,7 @@ ParseTagData (char* buffer, TagPtr * tag, unsigned int* lenPtr)
   string = NewSymbol (buffer);
   tmpTag->type = kTagTypeData;
   tmpTag->string = string;
-  tmpTag->data = _plb64decode(tmpTag->string, length, &len);
+  tmpTag->data = (unsigned char*)_plb64decode(tmpTag->string, length, &len);
   tmpTag->dataLen = len;
   tmpTag->tag = NULL;
   tmpTag->offset = (unsigned int)(buffer_start ? buffer - buffer_start : 0);
