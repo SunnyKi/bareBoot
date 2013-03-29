@@ -1037,7 +1037,9 @@ PatchTableType17 (
     
     mHandle17[Index] = LogSmbiosTable (newSmbiosTable);
 
-    if (gRAM->DIMM[map].InUse) {
+    if ((gRAM->DIMM[map].InUse) &&
+        (gRAM->DIMM[map].spd[0] != 0) &&
+        (gRAM->DIMM[map].spd[0] != 0xFF)) {
       ZeroMem ((VOID*) newSmbiosTable.Type130, MAX_TABLE_SIZE);
       newSmbiosTable.Type130->Hdr.Type = 130;
       newSmbiosTable.Type130->Hdr.Length = (UINT8) (10 + (gRAM->DIMM[map].SpdSize));
