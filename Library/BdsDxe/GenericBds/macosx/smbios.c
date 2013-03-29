@@ -1012,7 +1012,11 @@ PatchTableType17 (
     map = gRAM->Map[Index];
 
     if (gRAM->DIMM[map].InUse) {
-      newSmbiosTable.Type17->MemoryType = gRAM->DIMM[map].Type;
+      if ((gRAM->DIMM[map].Type != MemoryTypeUnknown) &&
+          (gRAM->DIMM[map].Type != MemoryTypeOther)  &&
+          (gRAM->DIMM[map].Type != 0)) {
+        newSmbiosTable.Type17->MemoryType = gRAM->DIMM[map].Type;
+      }
 
       if (iStrLen (gRAM->DIMM[map].Vendor, 64) > 0) {
         UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gRAM->DIMM[map].Vendor);
@@ -1029,8 +1033,6 @@ PatchTableType17 (
       if (gRAM->DIMM[map].Frequency > 0) {
         newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[map].Frequency;
       }
-    } else {
-      newSmbiosTable.Type17->MemoryType = MemoryTypeUnknown;
     }
     
     mHandle17[Index] = LogSmbiosTable (newSmbiosTable);
