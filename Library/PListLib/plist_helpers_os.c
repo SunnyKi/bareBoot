@@ -30,6 +30,7 @@
 #include <b64/cencode.h>
 #include <b64/cdecode.h>
 
+#include "plist.h"
 #include "plist_helpers.h"
 
 char*
@@ -38,8 +39,8 @@ _plstrcpy(char* dst, const char* src) {
 }
 
 int
-_plint2str(long val, char* vbuf, unsigned int bsz) {
-	return snprintf(vbuf, bsz, "%ld", val);
+_plint2str(vlong val, char* vbuf, unsigned int bsz) {
+	return snprintf(vbuf, bsz, "%lld", val);
 }
 
 int

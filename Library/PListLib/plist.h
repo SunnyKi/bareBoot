@@ -42,6 +42,8 @@ typedef enum _plkind {
   plKindString /* string? */
 } plkind_t;
 
+typedef long long vlong;
+
 typedef struct _plbuf {
 	char* dat;
 	unsigned int len; 
@@ -60,8 +62,8 @@ char* plGetBytes(void*);
 void* plNewBool(int);
 int plGetBool(void*);
 
-void* plNewInteger(long);
-long plGetIntValue(void*);
+void* plNewInteger(vlong);
+vlong plGetIntValue(void*);
 
 void* plNewDate(char*, unsigned int);
 

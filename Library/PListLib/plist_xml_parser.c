@@ -32,6 +32,7 @@
 
 // nms -- made less environment dependent
 
+#include "plist.h"
 #include "plist_xml_parser.h"
 #include "plist_helpers.h"
 

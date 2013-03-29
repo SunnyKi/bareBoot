@@ -52,7 +52,7 @@ typedef struct {
   char*          string;
   unsigned char* data;
   unsigned int   dataLen;
-  long           intval;
+  vlong           intval;
   unsigned int   offset;
   void*          tag;
   void*          tagNext;

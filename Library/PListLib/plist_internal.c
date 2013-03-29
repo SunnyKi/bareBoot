@@ -36,7 +36,7 @@ struct _plnode {
 	struct _plnode* child;
 
 	char* datval;
-	long intval; /* int64 */
+	vlong intval; /* int64 */
 	unsigned int datlen;
 	plkind_t kind;
 };
@@ -261,11 +261,11 @@ plGetBool(void* pn) {
 	_plnode_t* wn;
 
 	wn = (_plnode_t*) pn;
-	return wn->intval;
+	return (wn->intval != 0 ? 1 : 0);
 }
 
 void*
-plNewInteger(long val) {
+plNewInteger(vlong val) {
 	_plnode_t* node;
 
 	node = _plNewNode(plKindInteger);
@@ -273,7 +273,7 @@ plNewInteger(long val) {
 	return node;
 }
 
-long
+vlong
 plGetIntValue(void* pn) {
 	_plnode_t* wn;
 
