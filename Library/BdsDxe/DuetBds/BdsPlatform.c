@@ -1267,13 +1267,14 @@ Returns:
 
 --*/
 {
-  EFI_STATUS                         Status;
-  EFI_BOOT_MODE                      BootMode;
+  EFI_STATUS                          Status;
+  EFI_BOOT_MODE                       BootMode;
 #if 0
-  EFI_INPUT_KEY                      mKey;
+  CHAR16                              *TmpUStr;
+  EFI_INPUT_KEY                       mKey;
 #else
-  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *SimpleTextInEx;
-  EFI_KEY_DATA                       mKeyData;
+  EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL   *SimpleTextInEx;
+  EFI_KEY_DATA                        mKeyData;
 #endif
 
   Status = BdsLibGetBootMode (&BootMode);
@@ -1294,12 +1295,24 @@ Returns:
 #endif
   BdsLibEnumerateAllBootOption (BootOptionList);
 
+  AddBootArgs = "\0";
+  if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
+    AsciiStrCat (AddBootArgs, " -v");
+    //    AsciiStrCpy (AddBootArgs, "-v");
+  }
+  if (ShiftKeyPressed () & EFI_LEFT_CONTROL_PRESSED) {
+    AsciiStrCat (AddBootArgs, " -s");
+  }
+  if (ShiftKeyPressed () & EFI_RIGHT_CONTROL_PRESSED) {
+    AsciiStrCat (AddBootArgs, " -x");
+  }
   if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) {
 #if 0
     Status = gST->ConIn->Reset (gST->ConIn, TRUE);
 #endif
     PlatformBdsEnterFrontPage (0xffff, TRUE);
   }
+
 #if 0
   Status = gST->ConIn->ReadKeyStroke (gST->ConIn, &mKey);
   if (!EFI_ERROR (Status)) {

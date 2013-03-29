@@ -793,7 +793,13 @@ GetUserSettings (
 
     GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
     GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
-
+    if (AsciiStrLen (AddBootArgs) != 0) {
+      AsciiStrCat (gSettings.BootArgs, AddBootArgs);
+    }
+#if 0
+    if (AsciiStrStr(gSettings.BootArgs, AddBootArgs) == 0) {
+    }
+#endif
     if (dictPointer != NULL) {
       prop = GetProperty (dictPointer, "PlatformUUID");
 
