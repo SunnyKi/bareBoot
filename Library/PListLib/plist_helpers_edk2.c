@@ -23,7 +23,91 @@
  * SUCH DAMAGE.
  */
 
+#include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/PrintLib.h>
+
+#include <b64/cencode.h>
+#include <b64/cdecode.h>
+
 #include "plist.h"
 #include "plist_helpers.h"
 
-/* TBD */
+char*
+_plstrcpy(char* dst, const char* src) {
+	return AsciiStrCpy(dst, src);
+}
+
+int
+_plint2str(vlong val, char* vbuf, unsigned int bsz) {
+	return (int)AsciiValueToString(vbuf, 0x00, val, bsz);
+}
+
+int
+_plstrcmp(const char* s1, const char* s2) {
+	return (int)AsciiStrCmp(s1, s2);
+}
+
+unsigned int
+_plstrlen(const char* str) {
+	return (unsigned int)AsciiStrLen(str);
+}
+
+void
+_plfree(void* ptr) {
+	FreePool(ptr);
+}
+
+int
+_plmemcmp(const void* s1, const void* s2, unsigned int sz) {
+	return (int)CompareMem(s1, s2, sz);
+}
+
+void*
+_plmemcpy(void* dst, const void* src, unsigned int sz) {
+	return CopyMem(dst, src, sz);
+}
+
+void*
+_plzalloc(unsigned int sz) {
+	if (sz == 0) { return NULL; }
+	return AllocateZeroPool(sz);
+}
+
+/* Following sources heavily inspired by SunnyKi ;-) */
+
+char*
+_plb64encode(char* idat, unsigned int ilen, unsigned int* olen) {
+	unsigned int osiz;
+	unsigned int csiz;
+	unsigned int tsiz;
+	char* odat;
+	base64_encodestate b64state;
+
+	if (idat == NULL || ilen == 0) { return NULL; }
+	osiz = (((ilen + 2) / 3) + 1 ) * 4; 
+	odat = _plzalloc(osiz);
+	if (odat == NULL) { return NULL; }
+	base64_init_encodestate(&b64state);
+	csiz = base64_encode_block(idat, ilen, odat, &b64state);
+	tsiz = base64_encode_blockend(&odat[csiz], &b64state);
+	if (olen != NULL) { *olen = csiz + tsiz; }
+	return odat;
+}
+
+char*
+_plb64decode(char* idat, unsigned int ilen, unsigned int* olen) {
+	unsigned int binsz;
+	char* odat;
+	base64_decodestate b64state;
+	
+	if (idat == NULL || ilen == 0) { return NULL; }
+	// to simplify, we'll allocate the same size, although smaller size is needed
+	odat = _plzalloc(ilen);
+	if (odat == NULL) { return NULL; }
+	base64_init_decodestate(&b64state);
+	binsz = base64_decode_block(idat, (const int)ilen, odat, &b64state);
+	if (olen != NULL) { *olen = binsz; }
+	return odat;
+}

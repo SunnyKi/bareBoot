@@ -36,16 +36,23 @@
 #  VALID_ARCHITECTURES           = IA32 X64
 
 [Sources]
+  b64/cdecode.c
+  b64/cdecode.h
+  b64/cencode.c
+  b64/cencode.h
+  plist.h
+  plist_helpers.h
   plist_helpers_edk2.c
   plist_internal.c
   plist_xml_out.c
   plist_xml_parser.c
-  b64/cdecode.c
-  b64/cencode.c
+  plist_xml_parser.h
 
 [Packages]
+  MdePkg/MdePkg.dec
 
 [LibraryClasses]
   BaseLib
-  PrintLib
+  BaseMemoryLib
   MemoryAllocationLib
+  PrintLib
