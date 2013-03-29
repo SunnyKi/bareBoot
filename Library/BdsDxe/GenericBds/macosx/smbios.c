@@ -395,7 +395,7 @@ GetTableType1 (
   );
 
   gSettings.EthMacAddr = AllocateZeroPool ((AsciiStrLen(Buffer) >> 1));
-  gSettings.MacAddrLen = hex2bin (Buffer, gSettings.EthMacAddr, (AsciiStrLen(Buffer) >> 1));
+  gSettings.MacAddrLen = hex2bin (Buffer, gSettings.EthMacAddr, (INT32)(AsciiStrLen(Buffer) >> 1));
 
 #if 0
   UnicodeSPrint (Buffer1, 100, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",

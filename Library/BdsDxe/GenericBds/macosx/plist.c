@@ -623,7 +623,7 @@ ParseTagInteger (CHAR8* buffer, TagPtr * tag, UINT32* lenPtr) {
   }
 
   tmpTag->type = kTagTypeInteger;
-  tmpTag->intval = integer;
+  tmpTag->intval = (INT32)integer;
   tmpTag->tag = NULL;
   tmpTag->offset = (UINT32)(buffer_start ? buffer - buffer_start : 0);
   tmpTag->tagNext = NULL;
