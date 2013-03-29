@@ -528,6 +528,7 @@ EFI_STATUS                      PlatformUuidStatus;
 BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
+CHAR8                           AddBootArgs[3];
 #if 0
 extern UINT8                    *gEDID;
 extern EFI_EDID_DISCOVERED_PROTOCOL*            EdidDiscovered;
