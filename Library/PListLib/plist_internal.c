@@ -64,13 +64,6 @@ plDeleteNode(void* node) {
 	if (node == NULL) { return; }
 	pn = (_plnode_t*)node;
 
-#if 0
-	if (pn->child != NULL) {
-		plDeleteNode(pn->child);
-		pn->child = NULL;
-	}
-#endif
-
 	wn = pn->child;
 	while (wn != NULL) {
 		_plnode_t* nn;
