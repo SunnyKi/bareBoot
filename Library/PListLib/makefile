@@ -6,4 +6,4 @@ pltest:
 	${CC} ${CFLAGS} -I. ${SRCS}
 
 clean:
-	/bin/rm a.out
+	/bin/rm -f a.out
