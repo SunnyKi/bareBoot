@@ -1,5 +1,7 @@
 -- XML en/decode for strings
 
--- DATE stuff
+-- DATE stuff. Is it needed?
 
 -- memory management (leaks, ....)
+
+-- parsing of <string/>, <data/>?
