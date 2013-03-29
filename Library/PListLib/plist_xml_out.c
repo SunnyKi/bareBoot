@@ -122,8 +122,10 @@ _plStrToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 	}
 #endif
 	if (!_plNodeTagToXml(obuf, indent, name, nlen, 0, 0)) { return 0; }
-	bp = plGetBytes(ipl);
-	if (bp == NULL || !_plAppendBytes(obuf, (char*)bp, bsize)) { return 0; }
+	if (bsize > 0) {
+		bp = plGetBytes(ipl);
+		if (bp == NULL || !_plAppendBytes(obuf, bp, bsize)) { return 0; }
+	}
 	if (!_plNodeTagToXml(obuf, 0, name, nlen, 1, 1)) { return 0; }
 	return 1;
 }

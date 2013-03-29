@@ -23,6 +23,7 @@
  * SUCH DAMAGE.
  */
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "plist.h"
@@ -58,16 +59,21 @@ int main(int argc, char* argv[]) {
 	obuf.pos = 0;
 
 	pl = plNewDict();
-	plAdd(pl, plNewKey("dkey", 4, plNewData("789", 3)));
+
+	plAdd(pl, plNewKey("dkey", 4, plNewData("7890", 4)));
+
 	ap = plNewArray();
 	plAdd(ap, plNewInteger(4));
 	plAdd(ap, plNewInteger(5));
 	plAdd(ap, plNewBool(0));
 	plAdd(ap, plNewBool(1));
 	plAdd(ap, plNewString("abcdef", 6));
+
 	plAdd(pl, plNewKey("akey", 4, ap));
 
 	(void) plToXml(pl, &obuf);
+
+	plDeleteNode(pl);
 
 	fwrite(obig, 1, obuf.pos, stdout);
 	fflush(stdout);

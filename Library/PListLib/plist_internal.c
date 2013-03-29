@@ -35,14 +35,15 @@ struct _plnode {
 	struct _plnode* last;
 	struct _plnode* child;
 
-	plkind_t kind;
-
-	long val; /* int64 */
 	char* datval;
+	long intval; /* int64 */
 	unsigned int datlen;
+	plkind_t kind;
 };
 
 typedef struct _plnode _plnode_t;
+
+int _plGrowTree(TagPtr ipl, void* pn);
 
 _plnode_t*
 _plNewNode(plkind_t nk) {
@@ -57,20 +58,32 @@ _plNewNode(plkind_t nk) {
 
 void
 plDeleteNode(void* node) {
-	_plnode_t* nn;
 	_plnode_t* pn;
 	_plnode_t* wn;
 
 	if (node == NULL) { return; }
 	pn = (_plnode_t*)node;
-	if (pn->datval != NULL) { _plfree(pn->datval); }
-	if (pn->child != NULL) { plDeleteNode(pn->child); }
-	wn = pn->next;
+
+#if 0
+	if (pn->child != NULL) {
+		plDeleteNode(pn->child);
+		pn->child = NULL;
+	}
+#endif
+
+	wn = pn->child;
 	while (wn != NULL) {
+		_plnode_t* nn;
+
 		nn = wn->next;
 		plDeleteNode(wn);
 		wn = nn;
 	}
+
+	if (pn->datval != NULL) {
+		_plfree(pn->datval);
+	}
+
 	_plfree(node);
 }
 
@@ -106,7 +119,6 @@ plAdd(void* bag, void* node) {
 		if (bn->child != NULL) {
 			return 0;
 		}
-		bn->last = node;
 		bn->child = node;
 		return 1;
 	default:
@@ -134,7 +146,7 @@ void*
 plNewData(char* datum, unsigned int dlen) {
 	_plnode_t* node;
 
-	if (datum == NULL || dlen == 0) { return NULL; }
+	if (datum == NULL && dlen == 0) { return NULL; }
 	node = _plNewNode(plKindData);
 	if (node == NULL) { return NULL; }
 	node->datval = _plzalloc(dlen + 1);
@@ -142,7 +154,7 @@ plNewData(char* datum, unsigned int dlen) {
 		plDeleteNode(node);
 		return NULL;
 	}
-	_plmemcpy(node->datval, datum, dlen);
+	if (dlen > 0) { _plmemcpy(node->datval, datum, dlen); }
 	node->datlen = dlen;
 	return node;
 }
@@ -187,12 +199,7 @@ plGetSize(void* pn) {
 	switch(plGetKind(pn)) {
 	case plKindArray:
 	case plKindDict:
-		sz = 0;
-		wn = wn->child;
-		while (wn != NULL) {
-			sz++;
-			wn = wn->next;
-		}
+		for (sz = 0, wn = wn->child; wn != NULL; wn = wn->next) { sz++; }
 		return sz;
 	case plKindKey:
 	case plKindData:
@@ -245,7 +252,7 @@ plNewBool(int bval) {
 	_plnode_t* node;
 
 	node = _plNewNode(plKindBool);
-	node->val = (bval != 0);
+	node->intval = (bval != 0);
 	return node;
 }
 
@@ -254,7 +261,7 @@ plGetBool(void* pn) {
 	_plnode_t* wn;
 
 	wn = (_plnode_t*) pn;
-	return wn->val;
+	return wn->intval;
 }
 
 void*
@@ -262,7 +269,7 @@ plNewInteger(long val) {
 	_plnode_t* node;
 
 	node = _plNewNode(plKindInteger);
-	node->val = val;
+	node->intval = val;
 	return node;
 }
 
@@ -271,7 +278,7 @@ plGetIntValue(void* pn) {
 	_plnode_t* wn;
 
 	wn = (_plnode_t*) pn;
-	return wn->val;
+	return wn->intval;
 }
 
 plkind_t
@@ -304,8 +311,17 @@ plFind(void* dict, char* key, unsigned int klen, plkind_t kind) {
 }
 
 int
+_plGrowBag(TagPtr ipl, void* parn, void* bagn) {
+	if (bagn == NULL) { return 0; }
+	if (!_plGrowTree(ipl->tag, bagn) || !plAdd(parn, bagn)) {
+		plDeleteNode(bagn);
+		return 0;
+	}
+	return 1;
+}
+
+int
 _plGrowTree(TagPtr ipl, void* pn) {
-	int rc;
 	void* wn;
 
 	while(ipl != NULL) {
@@ -313,83 +329,39 @@ _plGrowTree(TagPtr ipl, void* pn) {
 		switch (ipl->type) {
 		case kTagTypeArray:
 			wn = plNewArray();
-			if (wn == NULL) { return 0; }
-			/* FALLTHROUGH */
+			if (!_plGrowBag(ipl, pn, wn)) { return 0; }
+			break;
 		case kTagTypeDict:
-			if (wn == NULL) { wn = plNewDict(); }
-			if (wn != NULL) {
-				rc = _plGrowTree(ipl->tag, wn);
-				if (rc) {
-					plAdd(pn, wn);
-				} else {
-					plDeleteNode(wn);
-					return 0;
-				}
-			} else {
-				return 0;
-			}
+			wn = plNewDict();
+			if (!_plGrowBag(ipl, pn, wn)) { return 0; }
 			break;
 		case kTagTypeKey:
 			wn = plNewKey(ipl->string, ipl->dataLen, NULL);
-			if (wn != NULL) {
-				rc = _plGrowTree(ipl->tag, wn);
-				if (rc) {
-					plAdd(pn, wn);
-				} else {
-					plDeleteNode(wn);
-					return 0;
-				}
-			} else {
-				return 0;
-			}
+			if (!_plGrowBag(ipl, pn, wn)) { return 0; }
 			break;
 		case kTagTypeString:
 			wn = plNewString(ipl->string, ipl->dataLen);
-			if (wn != NULL) {
-				plAdd(pn, wn);
-			} else {
-				return 0;
-			}
+			if (wn == NULL || !plAdd(pn, wn)) { return 0; }
 			break;
 		case kTagTypeData:
 			wn = plNewData((char*)(ipl->data), ipl->dataLen);
-			if (wn != NULL) {
-				plAdd(pn, wn);
-			} else {
-				return 0;
-			}
+			if (wn == NULL || !plAdd(pn, wn)) { return 0; }
 			break;
 		case kTagTypeTrue:
 			wn = plNewBool(1);
-			if (wn != NULL) {
-				plAdd(pn, wn);
-			} else {
-				return 0;
-			}
+			if (wn == NULL || !plAdd(pn, wn)) { return 0; }
 			break;
 		case kTagTypeFalse:
 			wn = plNewBool(0);
-			if (wn != NULL) {
-				plAdd(pn, wn);
-			} else {
-				return 0;
-			}
+			if (wn == NULL || !plAdd(pn, wn)) { return 0; }
 			break;
 		case kTagTypeInteger:
 			wn = plNewInteger(ipl->intval);
-			if (wn != NULL) {
-				plAdd(pn, wn);
-			} else {
-				return 0;
-			}
+			if (wn == NULL || !plAdd(pn, wn)) { return 0; }
 			break;
 		case kTagTypeDate:
 			wn = plNewDate(ipl->string, ipl->dataLen);
-			if (wn != NULL) {
-				plAdd(pn, wn);
-			} else {
-				return 0;
-			}
+			if (wn == NULL || !plAdd(pn, wn)) { return 0; }
 			break;
 		default:
 			return 0;
@@ -409,14 +381,13 @@ plFromXml(plbuf_t* ibuf) {
 	rc = 0;
 	pn = NULL;
 
-	if(PListParseXML(ibuf->dat, ibuf->len, &plist) == 0) {
+	rc = PListParseXML(ibuf->dat, ibuf->len, &plist);
+	if(rc == 0) {
 		switch(plist->type) {
 		case kTagTypeDict:
 			pn = plNewDict();
 			rc = _plGrowTree(plist->tag, pn);
-			if (rc == 0) {
-				plDeleteNode(pn);
-			}
+			if (rc == 0) { plDeleteNode(pn); }
 			break;
 		default:
 			rc = 0;

@@ -24,8 +24,8 @@
  */
 
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <b64/cencode.h>
 #include <b64/cdecode.h>
@@ -69,10 +69,11 @@ _plmemcpy(void* dst, const void* src, unsigned int sz) {
 
 void*
 _plzalloc(unsigned int sz) {
+	if (sz == 0) { return NULL; }
 	return (void*)calloc(sz, 1);
 }
 
-/* Following sources heavily inspired by SunnyKi */
+/* Following sources heavily inspired by SunnyKi ;-) */
 
 char*
 _plb64encode(char* idat, unsigned int ilen, unsigned int* olen) {
