@@ -39,7 +39,7 @@ _plstrcpy(char* dst, const char* src) {
 
 int
 _plint2str(long val, char* vbuf, unsigned int bsz) {
-	return _snprintf(vbuf, bsz, "%ld", val);
+	return snprintf(vbuf, bsz, "%ld", val);
 }
 
 int
