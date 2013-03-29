@@ -4,3 +4,6 @@ SRCS = main.c plist_helpers_os.c plist_internal.c plist_xml_out.c plist_xml_pars
 
 pltest:
 	${CC} ${CFLAGS} -I. ${SRCS}
+
+clean:
+	/bin/rm a.out
