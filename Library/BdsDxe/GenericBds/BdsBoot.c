@@ -270,9 +270,7 @@ MacOS:
     ImageInfo->LoadOptions      = buffer;
   }
 
-  if ((AsciiStrStr(gSettings.BootArgs, "-v") == 0) &&
-      (AsciiStrStr(gSettings.BootArgs, "-x") == 0) &&
-      (gST->ConOut != NULL)) {
+  if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
     gST->ConOut = NULL; 
   } 
 

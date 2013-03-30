@@ -1295,15 +1295,15 @@ Returns:
 #endif
   BdsLibEnumerateAllBootOption (BootOptionList);
 
-  AddBootArgs = "\0";
+  AddBootArgs = "";
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
     AsciiStrCat (AddBootArgs, " -v");
-    //    AsciiStrCpy (AddBootArgs, "-v");
   }
   if (ShiftKeyPressed () & EFI_LEFT_CONTROL_PRESSED) {
     AsciiStrCat (AddBootArgs, " -s");
   }
-  if (ShiftKeyPressed () & EFI_RIGHT_CONTROL_PRESSED) {
+  if ((ShiftKeyPressed () & EFI_RIGHT_ALT_PRESSED) ||
+      (ShiftKeyPressed () & EFI_RIGHT_CONTROL_PRESSED)) {
     AsciiStrCat (AddBootArgs, " -x");
   }
   if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) {
