@@ -744,7 +744,7 @@ GetUserSettings (
   MACHINE_TYPES   Model;
   CHAR8       ANum[4];
   UINTN       len;
-  UINTN       i;
+  UINT32      i;
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
@@ -994,7 +994,7 @@ GetUserSettings (
         }
       } while (TRUE);
 
-      gSettings.NrKexts = (INT32) i;
+      gSettings.NrKexts = i;
       
       //there is one moment. This data is allocated in BS memory but will be used
       // after OnExitBootServices. This is wrong and these arrays should be reallocated
