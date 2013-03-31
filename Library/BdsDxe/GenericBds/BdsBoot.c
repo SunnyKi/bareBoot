@@ -82,6 +82,7 @@ BdsLibBootViaBootOption (
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
+  FHandle       = NULL;
 
   BdsSetMemoryTypeInformationVariable ();
   ASSERT (Option->DevicePath != NULL);
