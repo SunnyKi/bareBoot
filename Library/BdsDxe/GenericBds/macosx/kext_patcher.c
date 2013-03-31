@@ -450,7 +450,7 @@ PatchKext (
     //
     //others
     //
-    for (i = 0; i < gSettings.NrKexts; i++) {
+    for (i = 0; i < (UINT32) gSettings.NrKexts; i++) {
       if ((gSettings.AnyKextDataLen[i] > 0) && (AsciiStrStr(InfoPlist, gSettings.AnyKext[i]) != NULL)) {
         AnyKextPatch(Driver, DriverSize, InfoPlist, InfoPlistSize, i);
       }
