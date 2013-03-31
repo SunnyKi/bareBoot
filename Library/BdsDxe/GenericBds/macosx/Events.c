@@ -265,48 +265,11 @@ OnExitBootServices (
   IN VOID       *Context
 )
 {
-#if 0
-  UINT8             *DTptr = (UINT8*) (UINTN) 0x100000;
-  BootArgs1         *bootArgs;
-  EFI_STATUS                      Status;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL    *GraphicsOutput = NULL;
-
-  Status = gBS->HandleProtocol (gST->ConsoleOutHandle, &gEfiGraphicsOutputProtocolGuid, (VOID **) &GraphicsOutput);
-
-  if (EFI_ERROR (Status)) {
-    Print (L"Cannot Find Graphics Output Protocol\n");
-    gBS->Stall (2000000);
-    return;
-  }
-
-  while (TRUE) {
-    bootArgs = (BootArgs1*) DTptr;
-
-    if ((bootArgs->Revision == 6 || bootArgs->Revision == 5 || bootArgs->Revision == 4) &&
-    (bootArgs->Version == 1) && ((UINTN) bootArgs->efiMode == 32 || (UINTN) bootArgs->efiMode == 64)) {
-      dtRoot = (CHAR8*) (UINTN) bootArgs->deviceTreeP;
-      bootArgs->efiMode = archMode;
-      break;
-    }
-
-    DTptr += 0x1000;
-
-    if ((UINT32) (UINTN) DTptr > 0x3000000) {
-      Print (L"bootArgs not found!\n");
-      gBS->Stall (2000000);
-      return;
-    }
-  }
-
-  DisableUsbLegacySupport();
-#endif
-  gST->ConOut->OutputString (gST->ConOut, L"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+  USBOwnerFix();
 	//
 	// Patch kernel and kexts if needed
 	//
 	KernelAndKextsPatcherStart ();
-
-  USBOwnerFix();
 }
 
 VOID
