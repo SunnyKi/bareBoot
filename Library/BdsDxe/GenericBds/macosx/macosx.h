@@ -408,7 +408,7 @@ typedef struct {
   UINTN   AnyKextDataLen[100];
   UINT8   *AnyKextData[100];
   UINT8   *AnyKextPatch[100];
-  INT32   NrKexts;
+  UINT32   NrKexts;
 } SETTINGS_DATA;
 
 typedef enum {
