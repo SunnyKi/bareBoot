@@ -76,7 +76,9 @@ BdsLibBootViaBootOption (
   EFI_HANDLE                ImageHandle;
   EFI_DEVICE_PATH_PROTOCOL  *FilePath;
   EFI_LOADED_IMAGE_PROTOCOL *ImageInfo;
-  UINT16 buffer[255];
+  UINT16                    buffer[255];
+  EFI_FILE_HANDLE                 FHandle;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
@@ -92,7 +94,7 @@ BdsLibBootViaBootOption (
                   NULL,
                   0,
                   &ImageHandle
-                  );
+                );
     if (EFI_ERROR (Status)) {
       Handle = BdsLibGetBootableHandle(DevicePath);
       if (Handle == NULL) {
@@ -105,13 +107,13 @@ BdsLibBootViaBootOption (
             FilePath = FileDevicePath (Handle, LoadOptions);
             if (FilePath != NULL) {
               Status = gBS->LoadImage (
-                                       TRUE,
-                                       gImageHandle,
-                                       FilePath,
-                                       NULL,
-                                       0,
-                                       &ImageHandle
-                                       );      
+                              TRUE,
+                              gImageHandle,
+                              FilePath,
+                              NULL,
+                              0,
+                              &ImageHandle
+                            );      
               if (!EFI_ERROR (Status)) goto MacOS;
             }
       } else {
@@ -245,7 +247,21 @@ BdsLibBootViaBootOption (
     goto Done;
 
 MacOS:
-  InitializeConsoleSim (gImageHandle); 
+  InitializeConsoleSim (gImageHandle);
+  
+  Status = gBS->HandleProtocol (
+                  Handle,
+                  &gEfiSimpleFileSystemProtocolGuid,
+                  (VOID *) &Volume
+                );
+  if (!EFI_ERROR (Status)) {
+    Status = Volume->OpenVolume (
+                       Volume,
+                       &FHandle
+                     );
+  }
+
+  GetOSVersion (FHandle);
   GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
   ScanSPD ();
   SetDevices ();
@@ -660,7 +676,7 @@ BdsLibEnumerateAllBootOption (
         if ((FileSystemInfo->VolumeLabel == NULL)     ||
             (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, 255, L"%s",  L"OS X Install Data");
         else UnicodeSPrint (Buffer, 255, L"%s (%s)", FileSystemInfo->VolumeLabel, L"OS X Install Data");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_INSTALL_PATH,BdsBootOptionList, Buffer, TRUE);
+        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_INSTALL_PATH, BdsBootOptionList, Buffer, TRUE);
       }
       
       if (FileExists(FHandle, SUSE_LOADER_PATH)) {

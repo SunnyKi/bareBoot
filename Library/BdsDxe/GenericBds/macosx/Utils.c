@@ -735,12 +735,15 @@ GetUserSettings (
 {
   EFI_STATUS  Status;
   UINTN       size;
+  UINTN       i;
   CHAR8*      gConfigPtr;
   TagPtr      dict;
+  TagPtr      dict2;
   TagPtr      dictPointer;
   TagPtr      prop;
   CHAR16      cUUID[40];
   MACHINE_TYPES   Model;
+  CHAR8       ANum[4];
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
@@ -900,6 +903,105 @@ GetUserSettings (
     gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
     gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
 
+    // KernelAndKextPatches
+    gSettings.KPKernelCpu = FALSE; // disabled by default
+    gSettings.KPKextPatchesNeeded = FALSE;
+
+    dictPointer = GetProperty(dict,"KernelAndKextPatches");
+
+    gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
+
+    prop = GetProperty(dictPointer,"ATIConnectorsController");
+    if(prop) {
+      UINTN len = 0;
+      
+      // ATIConnectors patch
+      gSettings.KPATIConnectorsController = AllocateZeroPool(AsciiStrSize(prop->string) * sizeof(CHAR16));
+
+      AsciiStrToUnicodeStr (prop->string, gSettings.KPATIConnectorsController);
+
+      gSettings.KPATIConnectorsData = GetDataSetting(dictPointer, "ATIConnectorsData", &len);
+      gSettings.KPATIConnectorsDataLen = len;
+      gSettings.KPATIConnectorsPatch = GetDataSetting(dictPointer, "ATIConnectorsPatch", &i);
+
+      if (gSettings.KPATIConnectorsData == NULL
+          || gSettings.KPATIConnectorsPatch == NULL
+          || gSettings.KPATIConnectorsDataLen == 0
+          || gSettings.KPATIConnectorsDataLen != i) {
+        // invalid params - no patching
+        if (gSettings.KPATIConnectorsController != NULL) FreePool(gSettings.KPATIConnectorsController);
+        if (gSettings.KPATIConnectorsData != NULL) FreePool(gSettings.KPATIConnectorsData);
+        if (gSettings.KPATIConnectorsPatch != NULL) FreePool(gSettings.KPATIConnectorsPatch);
+        gSettings.KPATIConnectorsController = NULL;
+        gSettings.KPATIConnectorsData = NULL;
+        gSettings.KPATIConnectorsPatch = NULL;
+        gSettings.KPATIConnectorsDataLen = 0;
+      } else {
+        // ok
+        gSettings.KPKextPatchesNeeded = TRUE;
+      }
+    }
+    
+    gSettings.KPAsusAICPUPM = GetBoolProperty (dictPointer, "AsusAICPUPM", FALSE);
+    gSettings.KPKextPatchesNeeded |= gSettings.KPAsusAICPUPM;
+    gSettings.KPAppleRTC = GetBoolProperty (dictPointer, "AppleRTC", FALSE);
+    gSettings.KPKextPatchesNeeded |= gSettings.KPAppleRTC;
+
+    prop = GetProperty(dictPointer,"KextsToPatch");
+    if(prop) {
+      UINTN  j;
+      i = 0;
+      do {
+        AsciiSPrint(ANum, 4, "%d", i);
+        dictPointer = GetProperty(prop, ANum);
+        if (!dictPointer) {
+          break;
+        }
+        GetAsciiProperty (dictPointer, "Name", gSettings.AnyKext[i]);
+        gSettings.KPKextPatchesNeeded = TRUE;
+
+        // check if this is Info.plist patch or kext binary patch
+        gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dictPointer, "InfoPlistPatch", FALSE);
+        
+        if (gSettings.AnyKextInfoPlistPatch[i]) {
+          // Info.plist
+          // Find and Replace should be in <string>...</string>
+          dict2 = GetProperty(dictPointer, "Find");
+          gSettings.AnyKextDataLen[i] = 0;
+          if(dict2 && dict2->string) {
+            gSettings.AnyKextDataLen[i] = AsciiStrLen(dict2->string);
+            gSettings.AnyKextData[i] = (UINT8*) AllocateCopyPool(gSettings.AnyKextDataLen[i] + 1, dict2->string);
+          }
+          dict2 = GetProperty(dictPointer, "Replace");
+          j = 0;
+          if(dict2 && dict2->string) {
+            j = AsciiStrLen(dict2->string);
+            gSettings.AnyKextPatch[i] = (UINT8*) AllocateCopyPool(j + 1, dict2->string);
+          }
+        } else {
+          // kext binary patch
+          // Find and Replace should be in <data>...</data> or <string>...</string>
+          gSettings.AnyKextData[i] = GetDataSetting(dictPointer,"Find", &gSettings.AnyKextDataLen[i]);
+          gSettings.AnyKextPatch[i] = GetDataSetting(dictPointer,"Replace", &j);
+        }
+
+        if (gSettings.AnyKextDataLen[i] != j || j == 0) {
+          gSettings.AnyKext[i][0] = 0; //just erase name
+          continue; //same i
+        }
+        i++;
+
+        if (i>99) {
+          break;
+        }
+      } while (TRUE);
+
+      gSettings.NrKexts = (INT32)i;
+      //there is one moment. This data is allocated in BS memory but will be used
+      // after OnExitBootServices. This is wrong and these arrays should be reallocated
+      // but I am not sure
+    }
+
     gMobile = gSettings.Mobile;
 
     if ((gSettings.BusSpeed > 10 * kilo) &&
@@ -923,77 +1025,41 @@ GetUserSettings (
   return Status;
 }
 
-#if 0
 EFI_STATUS
-GetOSVersion (
-  IN EFI_FILE *RootFileHandle,
-  OUT CHAR16  *OsName
+GetOSVersion(
+  IN EFI_FILE *FileHandle
 )
 {
-  EFI_STATUS        Status = EFI_NOT_FOUND;
-  CHAR8*            plistBuffer = 0;
-  UINTN             plistLen;
-  TagPtr            dict = NULL;
-  TagPtr            prop = NULL;
-  CHAR16*           SystemPlist = L"System\\Library\\CoreServices\\SystemVersion.plist";
-  CHAR16*           ServerPlist = L"System\\Library\\CoreServices\\ServerVersion.plist";
+	EFI_STATUS  Status = EFI_NOT_FOUND;
+	CHAR8*      plistBuffer = 0;
+	UINTN       plistLen;
+	TagPtr      dictPointer  = NULL;
+  CHAR16*     SystemPlist = L"System\\Library\\CoreServices\\SystemVersion.plist";
+  CHAR16*     ServerPlist = L"System\\Library\\CoreServices\\ServerVersion.plist";
+  CHAR16*     RecoveryPlist = L"\\com.apple.recovery.boot\\SystemVersion.plist";
 
-  if (!RootFileHandle) {
+  if (!FileHandle) {
     return EFI_NOT_FOUND;
   }
 
-  OsName = NULL;
-
-  // Mac OS X
-  if (FileExists (RootFileHandle, SystemPlist)) {
-    Status = egLoadFile (RootFileHandle, SystemPlist, (UINT8 **) &plistBuffer, &plistLen);
-  }
-  // Mac OS X Server
-  else if (FileExists (RootFileHandle, ServerPlist)) {
-    Status = egLoadFile (RootFileHandle, ServerPlist, (UINT8 **) &plistBuffer, &plistLen);
+	/* Mac OS X */
+	if(FileExists(FileHandle, SystemPlist)) {
+		Status = egLoadFile(FileHandle, SystemPlist, (UINT8 **)&plistBuffer, &plistLen);
+  }	else if(FileExists(FileHandle, ServerPlist)) {
+		Status = egLoadFile(FileHandle, ServerPlist, (UINT8 **)&plistBuffer, &plistLen);
+  }	else if(FileExists(FileHandle, RecoveryPlist)) {
+		Status = egLoadFile(FileHandle, RecoveryPlist, (UINT8 **)&plistBuffer, &plistLen);
   }
 
-  if (!EFI_ERROR (Status)) {
-    if (ParseXML (plistBuffer, &dict) != EFI_SUCCESS) {
-      FreePool (plistBuffer);
-      return EFI_NOT_FOUND;
+	if(!EFI_ERROR(Status)) {
+		if(ParseXML(plistBuffer, &dictPointer) != EFI_SUCCESS) {
+			FreePool(plistBuffer);
+			return EFI_NOT_FOUND;
     }
 
-    prop = GetProperty (dict, "ProductVersion");
+    GetAsciiProperty (dictPointer, "ProductVersion", OSVersion);
 
-    if (prop != NULL) {
-      // Tiger
-      if (AsciiStrStr (prop->string, "10.4") != 0) {
-        OsName = L"tiger";
-        Status = EFI_SUCCESS;
-      } else
-
-        // Leopard
-        if (AsciiStrStr (prop->string, "10.5") != 0) {
-          OsName = L"leo";
-          Status = EFI_SUCCESS;
-        } else
-
-          // Snow Leopard
-          if (AsciiStrStr (prop->string, "10.6") != 0) {
-            OsName = L"snow";
-            Status = EFI_SUCCESS;
-          } else
-
-            // Lion
-            if (AsciiStrStr (prop->string, "10.7") != 0) {
-              OsName = L"lion";
-              Status = EFI_SUCCESS;
-            } else
-
-              // Mountain Lion
-              if (AsciiStrStr (prop->string, "10.8") != 0) {
-                OsName = L"cougar";
-                Status = EFI_SUCCESS;
-              }
-    }
   }
 
-  return Status;
+	return Status;
 }
-#endif

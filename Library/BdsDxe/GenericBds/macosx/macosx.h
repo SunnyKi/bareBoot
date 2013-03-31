@@ -390,6 +390,22 @@ typedef struct {
   UINT16  HDALayoutId;
   UINT8   *EthMacAddr;
   UINTN   MacAddrLen;
+  // KernelAndKextPatches
+  BOOLEAN KPKernelCpu;
+  BOOLEAN KPKextPatchesNeeded;
+  BOOLEAN KPAsusAICPUPM;
+  BOOLEAN KPAppleRTC;
+  BOOLEAN KextPatchesAllowed;
+  CHAR16  *KPATIConnectorsController;
+  UINT8   *KPATIConnectorsData;
+  UINTN   KPATIConnectorsDataLen;
+  UINT8   *KPATIConnectorsPatch;
+  INT32   NrKexts;
+  CHAR8*  AnyKext[100];
+  BOOLEAN AnyKextInfoPlistPatch[100];
+  UINTN   AnyKextDataLen[100];
+  UINT8   *AnyKextData[100];
+  UINT8   *AnyKextPatch[100];
 } SETTINGS_DATA;
 
 typedef enum {
@@ -529,6 +545,8 @@ BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
 CHAR8                           *AddBootArgs;
+CHAR8                           *OSVersion;
+
 #if 0
 extern UINT8                    *gEDID;
 extern EFI_EDID_DISCOVERED_PROTOCOL*            EdidDiscovered;
@@ -689,6 +707,11 @@ UINT8*
 Base64Decode(
   IN CHAR8 *EncodedData,
   OUT UINTN *DecodedSize
+);
+
+EFI_STATUS
+GetOSVersion(
+  IN EFI_FILE *FileHandle
 );
 
 #endif

@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/IoLib.h>
 
 #include "macosx.h"
+#include "kernel_patcher.h"
 
 EFI_EVENT   mVirtualAddressChangeEvent = NULL;
 EFI_EVENT   OnReadyToBootEvent = NULL;
@@ -299,6 +300,12 @@ OnExitBootServices (
 
   DisableUsbLegacySupport();
 #endif
+  gST->ConOut->OutputString (gST->ConOut, L"+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n");
+	//
+	// Patch kernel and kexts if needed
+	//
+	KernelAndKextsPatcherStart ();
+
   USBOwnerFix();
 }
 
@@ -331,10 +338,32 @@ EventsInitialize (
   VOID
 )
 {
+	EFI_STATUS			Status;
+	VOID*           Registration = NULL;
+
+	//
+	// Register notify for exit boot services
+	//
+	Status = gBS->CreateEvent (
+                  EVT_SIGNAL_EXIT_BOOT_SERVICES,
+                  TPL_CALLBACK,
+                  OnExitBootServices,
+                  NULL,
+                  &ExitBootServiceEvent
+                );
+
+	if(!EFI_ERROR(Status)) {
+		Status = gBS->RegisterProtocolNotify (
+                    &gEfiStatusCodeRuntimeProtocolGuid,
+                    ExitBootServiceEvent,
+                    &Registration
+                  );
+    }
+
+#if 0
   //
   // Register the event to reclaim variable for OS usage.
   //
-#if 0
   EfiCreateEventReadyToBoot (&OnReadyToBootEvent);
   EfiCreateEventReadyToBootEx (
     TPL_NOTIFY, 
@@ -342,7 +371,6 @@ EventsInitialize (
     NULL, 
     &OnReadyToBootEvent
     );
-#endif
   gBS->CreateEventEx (
          EVT_NOTIFY_SIGNAL,
          TPL_NOTIFY,
@@ -351,7 +379,6 @@ EventsInitialize (
          &gEfiEventExitBootServicesGuid,
          &ExitBootServiceEvent
          ); 
-
   //
   // Register the event to convert the pointer for runtime.
   //
@@ -363,6 +390,7 @@ EventsInitialize (
          &gEfiEventVirtualAddressChangeGuid,
          &mVirtualAddressChangeEvent
          );
-  
+#endif
+
   return EFI_SUCCESS;
 }
