@@ -735,7 +735,6 @@ GetUserSettings (
 {
   EFI_STATUS  Status;
   UINTN       size;
-  UINTN       i;
   CHAR8*      gConfigPtr;
   TagPtr      dict;
   TagPtr      dict2;
@@ -744,10 +743,14 @@ GetUserSettings (
   CHAR16      cUUID[40];
   MACHINE_TYPES   Model;
   CHAR8       ANum[4];
+  UINTN       len;
+  UINTN       i;
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
   dict = NULL;
+  len = 0;
+  i = 0;
 
   PrepatchSmbios ();
   Model             = GetDefaultModel();
@@ -845,8 +848,7 @@ GetUserSettings (
       prop = GetProperty (dictPointer, "CustomEDID");
 
       if (prop != NULL) {
-        UINTN j = 128;
-        gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &j);
+        gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &len);
       }
     }
 
@@ -913,21 +915,20 @@ GetUserSettings (
 
     prop = GetProperty(dictPointer,"ATIConnectorsController");
     if(prop) {
-      UINTN len = 0;
-      
       // ATIConnectors patch
-      gSettings.KPATIConnectorsController = AllocateZeroPool(AsciiStrSize(prop->string) * sizeof(CHAR16));
-
+      gSettings.KPATIConnectorsController = AllocateZeroPool (AsciiStrSize (prop->string) * sizeof(CHAR16));
       AsciiStrToUnicodeStr (prop->string, gSettings.KPATIConnectorsController);
+      gSettings.KPATIConnectorsData = GetDataSetting (
+                                        dictPointer,
+                                        "ATIConnectorsData",
+                                        &gSettings.KPATIConnectorsDataLen
+                                      );
+      gSettings.KPATIConnectorsPatch = GetDataSetting (dictPointer, "ATIConnectorsPatch", &len);
 
-      gSettings.KPATIConnectorsData = GetDataSetting(dictPointer, "ATIConnectorsData", &len);
-      gSettings.KPATIConnectorsDataLen = len;
-      gSettings.KPATIConnectorsPatch = GetDataSetting(dictPointer, "ATIConnectorsPatch", &i);
-
-      if (gSettings.KPATIConnectorsData == NULL
-          || gSettings.KPATIConnectorsPatch == NULL
-          || gSettings.KPATIConnectorsDataLen == 0
-          || gSettings.KPATIConnectorsDataLen != i) {
+      if (gSettings.KPATIConnectorsData == NULL ||
+          gSettings.KPATIConnectorsPatch == NULL ||
+          gSettings.KPATIConnectorsDataLen == 0 ||
+          gSettings.KPATIConnectorsDataLen != len) {
         // invalid params - no patching
         if (gSettings.KPATIConnectorsController != NULL) FreePool(gSettings.KPATIConnectorsController);
         if (gSettings.KPATIConnectorsData != NULL) FreePool(gSettings.KPATIConnectorsData);
@@ -949,7 +950,6 @@ GetUserSettings (
 
     prop = GetProperty(dictPointer,"KextsToPatch");
     if(prop) {
-      UINTN  j;
       i = 0;
       do {
         AsciiSPrint(ANum, 4, "%d", i);
@@ -969,23 +969,21 @@ GetUserSettings (
           dict2 = GetProperty(dictPointer, "Find");
           gSettings.AnyKextDataLen[i] = 0;
           if(dict2 && dict2->string) {
-            gSettings.AnyKextDataLen[i] = AsciiStrLen(dict2->string);
-            gSettings.AnyKextData[i] = (UINT8*) AllocateCopyPool(gSettings.AnyKextDataLen[i] + 1, dict2->string);
+            gSettings.AnyKextDataLen[i] = AsciiStrLen (dict2->string);
+            gSettings.AnyKextData[i] = (UINT8*) AllocateCopyPool (gSettings.AnyKextDataLen[i] + 1, dict2->string);
           }
           dict2 = GetProperty(dictPointer, "Replace");
-          j = 0;
           if(dict2 && dict2->string) {
-            j = AsciiStrLen(dict2->string);
-            gSettings.AnyKextPatch[i] = (UINT8*) AllocateCopyPool(j + 1, dict2->string);
+            gSettings.AnyKextPatch[i] = (UINT8*) AllocateCopyPool (AsciiStrLen (dict2->string) + 1, dict2->string);
           }
         } else {
           // kext binary patch
           // Find and Replace should be in <data>...</data> or <string>...</string>
-          gSettings.AnyKextData[i] = GetDataSetting(dictPointer,"Find", &gSettings.AnyKextDataLen[i]);
-          gSettings.AnyKextPatch[i] = GetDataSetting(dictPointer,"Replace", &j);
+          gSettings.AnyKextData[i] = GetDataSetting (dictPointer,"Find", &gSettings.AnyKextDataLen[i]);
+          gSettings.AnyKextPatch[i] = GetDataSetting (dictPointer,"Replace", &len);
         }
 
-        if (gSettings.AnyKextDataLen[i] != j || j == 0) {
+        if (gSettings.AnyKextDataLen[i] != len || len == 0) {
           gSettings.AnyKext[i][0] = 0; //just erase name
           continue; //same i
         }
@@ -996,7 +994,8 @@ GetUserSettings (
         }
       } while (TRUE);
 
-      gSettings.NrKexts = (INT32)i;
+      gSettings.NrKexts = (INT32) i;
+      
       //there is one moment. This data is allocated in BS memory but will be used
       // after OnExitBootServices. This is wrong and these arrays should be reallocated
       // but I am not sure

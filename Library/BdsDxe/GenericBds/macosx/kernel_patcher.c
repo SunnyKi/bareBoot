@@ -39,7 +39,6 @@ UINT32     PrelinkInfoLoadCmdAddr = 0;
 UINT32     PrelinkInfoAddr = 0;
 UINT32     PrelinkInfoSize = 0;
 
-#if 0
 VOID
 SetKernelRelocBase (
   VOID
@@ -54,7 +53,6 @@ SetKernelRelocBase (
     // KernelRelocBase is now either read or 0
     return;
 }
-#endif
 
 VOID
 KernelPatcher_64 (
@@ -595,9 +593,7 @@ KernelAndKextPatcherInit (
   
   // KernelRelocBase will normally be 0
   // but if OsxAptioFixDrv is used, then it will be > 0
-#if 0
   SetKernelRelocBase();
-#endif
   // Find bootArgs - we need then for proper detection
   // of kernel Mach-O header
   FindBootArgs();
@@ -658,7 +654,7 @@ KernelAndKextsPatcherStart(VOID)
   //
   // Kext patches
   //
-  if (gSettings.KPKextPatchesNeeded && gSettings.KextPatchesAllowed) {
+  if (gSettings.KPKextPatchesNeeded) {
     KernelAndKextPatcherInit();
     if (KernelData == NULL) {
       return;

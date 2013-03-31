@@ -392,20 +392,23 @@ typedef struct {
   UINTN   MacAddrLen;
   // KernelAndKextPatches
   BOOLEAN KPKernelCpu;
+
   BOOLEAN KPKextPatchesNeeded;
+
   BOOLEAN KPAsusAICPUPM;
   BOOLEAN KPAppleRTC;
-  BOOLEAN KextPatchesAllowed;
+
   CHAR16  *KPATIConnectorsController;
   UINT8   *KPATIConnectorsData;
   UINTN   KPATIConnectorsDataLen;
   UINT8   *KPATIConnectorsPatch;
-  INT32   NrKexts;
-  CHAR8*  AnyKext[100];
+
+  CHAR8   *AnyKext[100];
   BOOLEAN AnyKextInfoPlistPatch[100];
   UINTN   AnyKextDataLen[100];
   UINT8   *AnyKextData[100];
   UINT8   *AnyKextPatch[100];
+  INT32   NrKexts;
 } SETTINGS_DATA;
 
 typedef enum {
