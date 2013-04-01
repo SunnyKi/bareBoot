@@ -75,3 +75,8 @@ void
 PListXMLFreeTag (
   TagPtr tag
 );
+
+void
+PListXMLCleanup (
+  void
+);

@@ -913,3 +913,21 @@ PListXMLFindSymbol (char * string, SymbolPtr * prevSymbol) {
 
   return symbol;
 }
+
+//==========================================================================
+// PListXMLCleanup
+
+void
+PListXMLCleanup (void) {
+  SymbolPtr symbol;
+
+  symbol = gPListXMLSymbolsHead;
+  while (symbol != NULL) {
+    SymbolPtr next;
+
+    next = symbol->next;
+    _plfree (symbol);
+    symbol = next;
+  }
+  _plfree (gPListXMLTagsFree);
+}
