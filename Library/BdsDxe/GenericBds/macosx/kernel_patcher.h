@@ -7,25 +7,25 @@
 #define __LIBSAIO_KERNEL_PATCHER_H
 
 
-#define CPUFAMILY_INTEL_6_13		0xaa33392b
-#define CPUFAMILY_INTEL_YONAH		0x73d67300
-#define CPUFAMILY_INTEL_MEROM		0x426f69ef
+#define CPUFAMILY_INTEL_6_13      0xaa33392b
+#define CPUFAMILY_INTEL_YONAH     0x73d67300
+#define CPUFAMILY_INTEL_MEROM     0x426f69ef
 #define CPUFAMILY_INTEL_PENRYN		0x78ea4fbc
 #define CPUFAMILY_INTEL_NEHALEM		0x6b5a4cd2
 #define CPUFAMILY_INTEL_WESTMERE	0x573b5eec
 
-#define CPUIDFAMILY_DEFAULT 6
+#define CPUIDFAMILY_DEFAULT       6
 
-#define CPUID_MODEL_6_13	 	    13
-#define CPUID_MODEL_YONAH			14
-#define CPUID_MODEL_MEROM			15
-#define CPUID_MODEL_PENRYN			35
+#define CPUID_MODEL_6_13          13
+#define CPUID_MODEL_YONAH         14
+#define CPUID_MODEL_MEROM         15
+#define CPUID_MODEL_PENRYN        35
 
-#define MACH_GET_MAGIC(hdr)        (((struct mach_header_64*)(hdr))->magic)
-#define MACH_GET_NCMDS(hdr)        (((struct mach_header_64*)(hdr))->ncmds)
-#define MACH_GET_CPU(hdr)          (((struct mach_header_64*)(hdr))->cputype)
-#define MACH_GET_FLAGS(hdr)        (((struct mach_header_64*)(hdr))->flags)
-#define SC_GET_CMD(hdr)            (((struct segment_command_64*)(hdr))->cmd)
+#define MACH_GET_MAGIC (hdr)      (((struct mach_header_64 *) (hdr))->magic)
+#define MACH_GET_NCMDS (hdr)      (((struct mach_header_64 *) (hdr))->ncmds)
+#define MACH_GET_CPU (hdr)        (((struct mach_header_64 *) (hdr))->cputype)
+#define MACH_GET_FLAGS (hdr)      (((struct mach_header_64 *) (hdr))->flags)
+#define SC_GET_CMD (hdr)          (((struct segment_command_64 *) (hdr))->cmd)
 
 
 #define kPrelinkTextSegment                "__PRELINK_TEXT"
@@ -49,12 +49,12 @@
 #define kPrelinkLinkStateKey               "_PrelinkLinkState"
 #define kPrelinkLinkStateSizeKey           "_PrelinkLinkStateSize"
 
-#define kPropCFBundleIdentifier ("CFBundleIdentifier")
-#define kPropCFBundleExecutable ("CFBundleExecutable")
-#define kPropOSBundleRequired   ("OSBundleRequired")
-#define kPropOSBundleLibraries  ("OSBundleLibraries")
-#define kPropIOKitPersonalities ("IOKitPersonalities")
-#define kPropIONameMatch        ("IONameMatch")
+#define kPropCFBundleIdentifier            ("CFBundleIdentifier")
+#define kPropCFBundleExecutable            ("CFBundleExecutable")
+#define kPropOSBundleRequired              ("OSBundleRequired")
+#define kPropOSBundleLibraries             ("OSBundleLibraries")
+#define kPropIOKitPersonalities            ("IOKitPersonalities")
+#define kPropIONameMatch                   ("IONameMatch")
 
 typedef struct _BooterKextFileInfo {
     UINT32  infoDictPhysAddr;
@@ -97,22 +97,25 @@ extern UINT32       PrelinkInfoLoadCmdAddr;
 extern UINT32       PrelinkInfoAddr;
 extern UINT32       PrelinkInfoSize;
 
-extern UINT32 DisplayVendor[2];
-//VOID findCPUfamily();
+extern UINT32       DisplayVendor[2];
 
+VOID
+Patcher_SSE3_5 (
+  VOID *kernelData
+);
+VOID
+Patcher_SSE3_6 (
+  VOID *kernelData
+);
+VOID
+Patcher_SSE3_7 (
+  VOID *kernelData
+);
 
-//UINT64 kernelsize;
-
-VOID Patcher_SSE3_5(VOID* kernelData);
-VOID Patcher_SSE3_6(VOID* kernelData);
-VOID Patcher_SSE3_7(VOID* kernelData);
-
-VOID KernelAndKextsPatcherStart(VOID);
-
-//VOID register_kernel_symbol(CONST CHAR8* name);
-//UINT64 symbol_handler(CHAR8* symbolName, UINT64 addr);
-//INTN locate_symbols(VOID* kernelData);
-
+VOID
+KernelAndKextsPatcherStart (
+  VOID
+);
 
 /////////////////////
 //
@@ -130,13 +133,22 @@ VOID KernelAndKextsPatcherStart(VOID);
 // Will iterate through kext in prelinked kernel (kernelcache)
 // or DevTree (drivers boot) and do patches.
 //
-VOID KextPatcherStart();
+VOID
+KextPatcherStart (
+  VOID
+);
 
 //
 // Searches Source for Search pattern of size SearchSize
 // and returns the number of occurences.
 //
-UINTN SearchAndCount(UINT8 *Source, UINT32 SourceSize, UINT8 *Search, UINTN SearchSize);
+UINTN
+SearchAndCount (
+  UINT8   *Source,
+  UINT32  SourceSize,
+  UINT8   *Search,
+  UINTN   SearchSize
+);
 
 //
 // Searches Source for Search pattern of size SearchSize
@@ -145,7 +157,14 @@ UINTN SearchAndCount(UINT8 *Source, UINT32 SourceSize, UINT8 *Search, UINTN Sear
 // Replace should have the same size as Search.
 // Returns number of replaces done.
 //
-UINTN SearchAndReplace(UINT8 *Source, UINT32 SourceSize, UINT8 *Search, UINTN SearchSize, UINT8 *Replace, INTN MaxReplaces);
-
+UINTN
+SearchAndReplace (
+  UINT8   *Source,
+  UINT32  SourceSize,
+  UINT8   *Search,
+  UINTN   SearchSize,
+  UINT8   *Replace,
+  INTN    MaxReplaces
+);
 
 #endif /* !__LIBSAIO_KERNEL_PATCHER_H */

@@ -12,16 +12,15 @@
 #include "sse3_5_patcher.h"
 
 EFI_PHYSICAL_ADDRESS    KernelRelocBase = 0;
-BootArgs1   *bootArgs1 = NULL;
-BootArgs2   *bootArgs2 = NULL;
-CHAR8       *dtRoot = NULL;
-VOID        *KernelData = NULL;
-UINT32      KernelSlide = 0;
-BOOLEAN     isKernelcache = FALSE;
-BOOLEAN     is64BitKernel = FALSE;
-BOOLEAN     SSSE3;
-
-BOOLEAN     PatcherInited = FALSE;
+BootArgs1               *bootArgs1      = NULL;
+BootArgs2               *bootArgs2      = NULL;
+CHAR8                   *dtRoot         = NULL;
+VOID                    *KernelData     = NULL;
+UINT32                  KernelSlide     = 0;
+BOOLEAN                 isKernelcache   = FALSE;
+BOOLEAN                 is64BitKernel   = FALSE;
+BOOLEAN                 PatcherInited   = FALSE;
+BOOLEAN                 SSSE3;
 
 // notes:
 // - 64bit segCmd64->vmaddr is 0xffffff80xxxxxxxx and we are taking
@@ -49,27 +48,40 @@ SetKernelRelocBase (
     
     KernelRelocBase = 0;
     // OsxAptioFixDrv will set this
-    Status = gRT->GetVariable(L"OsxAptioFixDrv-RelocBase", &gEfiAppleBootGuid, NULL, &DataSize, &KernelRelocBase);
+    Status = gRT->GetVariable(
+                    L"OsxAptioFixDrv-RelocBase",
+                    &gEfiAppleBootGuid,
+                    NULL,
+                    &DataSize,
+                    &KernelRelocBase
+                  );
     // KernelRelocBase is now either read or 0
     return;
 }
 
 VOID
 KernelPatcher_64 (
-  VOID* kernelData
+  VOID  *kernelData
 )
 {
-  BOOLEAN     check = TRUE;
-  UINT8       *bytes = (UINT8*)kernelData;
-  UINT32      patchLocation=0, patchLocation1=0;
+  BOOLEAN     check;
+  UINT8       *bytes;
+  UINT32      patchLocation;
+  UINT32      patchLocation1;
   UINT32      i;
   UINT32      jumpaddr;
   UINT32      cpuid_family_addr;
-  
-  //if (AsciiStrnCmp(OSVersion,"10.7",4)==0) return;
-      
+
+  check = TRUE;
+  bytes = (UINT8 *) kernelData;
+  patchLocation=0;
+  patchLocation1=0;
+
+#if 0
+  if (AsciiStrnCmp (OSVersion,"10.7",4) == 0) return;
+#endif
   // _cpuid_set_info _panic address
-  for (i=0; i<0x1000000; i++) {
+  for (i = 0; i < 0x1000000; i++) {
     if (bytes[i] == 0xC7 && bytes[i+1] == 0x05 && bytes[i+6] == 0x07 && bytes[i+7] == 0x00 &&
         bytes[i+8] == 0x00 && bytes[i+9] == 0x00 && bytes[i+10] == 0xC7 && bytes[i+11] == 0x05 &&
         bytes[i-5] == 0xE8) {
@@ -85,7 +97,7 @@ KernelPatcher_64 (
   // this for 10.6.0 and 10.6.1 kernel and remove tsc.c unknow cpufamily panic
   //  488d3df4632a00
   // find _tsc_init panic address
-  for (i=0; i<0x1000000; i++) {   // _cpuid_set_info _panic address
+  for (i = 0; i < 0x1000000; i++) {   // _cpuid_set_info _panic address
     if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
         bytes[i+4] == 0x63 && bytes[i+5] == 0x2A && bytes[i+6] == 0x00) {
       patchLocation1 = i+9;
@@ -112,7 +124,7 @@ KernelPatcher_64 (
   
   jumpaddr = patchLocation;
        
-  for (i=0;i<500;i++) {
+  for (i = 0; i < 500; i++) {
     if( bytes[jumpaddr-i-4] == 0x85 && bytes[jumpaddr-i-3] == 0xC0 &&
         bytes[jumpaddr-i-2] == 0x0f ) {
       jumpaddr -= i;
@@ -123,7 +135,7 @@ KernelPatcher_64 (
   }
   
   if (jumpaddr == patchLocation) {
-    for(i=0;i<500;i++) {
+    for(i = 0; i < 500; i++) {
       if( bytes[jumpaddr-i-3] == 0x85 && bytes[jumpaddr-i-2] == 0xC0 &&
           bytes[jumpaddr-i-1] == 0x75 ) {
         jumpaddr -= i;
@@ -157,7 +169,8 @@ KernelPatcher_64 (
     bytes[patchLocation - 10] = (CPUFAMILY_INTEL_YONAH & 0xFF000000) >> 24;
   }
       
-  if (check && (AsciiStrnCmp(OSVersion,"10.6.8",6)!=0) && (AsciiStrnCmp(OSVersion,"10.7",4)==0)) {
+  if (check && (AsciiStrnCmp (OSVersion, "10.6.8", 6) != 0) &&
+      (AsciiStrnCmp (OSVersion, "10.7", 4) == 0)) {
     cpuid_family_addr -= 255;
   }
 
@@ -165,7 +178,7 @@ KernelPatcher_64 (
     cpuid_family_addr += 10;
   }
   
-  if (AsciiStrnCmp(OSVersion,"10.6.8",6)==0) goto SE3;
+  if (AsciiStrnCmp (OSVersion,"10.6.8",6) == 0) goto SE3;
   
   //patch info->cpuid_cpufamily
   bytes[patchLocation -  9] = 0x90;
@@ -175,9 +188,9 @@ KernelPatcher_64 (
   bytes[patchLocation -  6] = 0x05;
 
   bytes[patchLocation -  5] = (cpuid_family_addr & 0x000000FF);
-  bytes[patchLocation -  4] = (UINT8)((cpuid_family_addr & 0x0000FF00) >>  8);
-  bytes[patchLocation -  3] = (UINT8)((cpuid_family_addr & 0x00FF0000) >> 16);
-  bytes[patchLocation -  2] = (UINT8)((cpuid_family_addr & 0xFF000000) >> 24);
+  bytes[patchLocation -  4] = (UINT8) ((cpuid_family_addr & 0x0000FF00) >>  8);
+  bytes[patchLocation -  3] = (UINT8) ((cpuid_family_addr & 0x00FF0000) >> 16);
+  bytes[patchLocation -  2] = (UINT8) ((cpuid_family_addr & 0xFF000000) >> 24);
   
   bytes[patchLocation -  1] = CPUIDFAMILY_DEFAULT; //cpuid_family need alway set 0x06
   bytes[patchLocation +  0] = CPUID_MODEL_YONAH;   //cpuid_model set CPUID_MODEL_MEROM
@@ -187,26 +200,31 @@ KernelPatcher_64 (
   bytes[patchLocation +  4] = 0x90;
 SE3:
   // patch sse3
-  if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.6",4)==0)) {
-      Patcher_SSE3_6((VOID*)bytes);
+  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.6", 4) == 0)) {
+      Patcher_SSE3_6 ((VOID *) bytes);
   }
-  if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.7",4)==0)) {
-      Patcher_SSE3_7((VOID*)bytes);
+  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.7", 4) == 0)) {
+      Patcher_SSE3_7 ((VOID *) bytes);
   }
 }
 
 VOID
 KernelPatcher_32 (
-  VOID* kernelData
+  VOID  *kernelData
 )
 {
-  UINT8* bytes = (UINT8*)kernelData;
-  UINT32 patchLocation=0, patchLocation1=0;
-  UINT32 i;
-  UINT32 jumpaddr;
-      
+  UINT8   *bytes;
+  UINT32  patchLocation;
+  UINT32  patchLocation1;
+  UINT32  i;
+  UINT32  jumpaddr;
+
+  bytes = (UINT8 *) kernelData;
+  patchLocation = 0;
+  patchLocation1 = 0;
+  
   // _cpuid_set_info _panic address
-  for (i=0; i<0x1000000; i++) {
+  for (i = 0; i < 0x1000000; i++) {
     if (bytes[i] == 0xC7 && bytes[i+1] == 0x05 && bytes[i+6] == 0x07 && bytes[i+7] == 0x00 &&
         bytes[i+8] == 0x00 && bytes[i+9] == 0x00 && bytes[i+10] == 0xC7 && bytes[i+11] == 0x05 &&
         bytes[i-5] == 0xE8) {
@@ -222,7 +240,7 @@ KernelPatcher_32 (
   // this for 10.6.0 and 10.6.1 kernel and remove tsc.c unknow cpufamily panic
   //  c70424540e5900
   // find _tsc_init panic address
-  for (i=0; i<0x1000000; i++) {   // _cpuid_set_info _panic address
+  for (i = 0; i < 0x1000000; i++) {   // _cpuid_set_info _panic address
     if (bytes[i] == 0xC7 && bytes[i+1] == 0x04 && bytes[i+2] == 0x24 && bytes[i+3] == 0x54 &&
         bytes[i+4] == 0x0E && bytes[i+5] == 0x59 && bytes[i+6] == 0x00) {
       patchLocation1 = i+7;
@@ -249,7 +267,7 @@ KernelPatcher_32 (
    
   jumpaddr = patchLocation;
    
-  for (i=0;i<500;i++) {
+  for (i = 0; i < 500; i++) {
     if (bytes[jumpaddr-i-3] == 0x85 && bytes[jumpaddr-i-2] == 0xC0 &&
         bytes[jumpaddr-i-1] == 0x75 ) {
       jumpaddr -= i;
@@ -288,53 +306,59 @@ KernelPatcher_32 (
   bytes[patchLocation +  3] = 0x90;
   bytes[patchLocation +  4] = 0x90;
   
-  if (AsciiStrnCmp(OSVersion,"10.7",4)==0) return;
-  
-  if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.6",4)==0)) {
-    Patcher_SSE3_6((VOID*)bytes);
+  if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
+    return;
   }
-  if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.5",4)==0)) {
-    Patcher_SSE3_5((VOID*)bytes);
+  
+  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.6", 4) == 0)) {
+    Patcher_SSE3_6 ((VOID *) bytes);
+  }
+  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.5", 4) == 0)) {
+    Patcher_SSE3_5 ((VOID *) bytes);
   } 
 }
        
 VOID
 Patcher_SSE3_6 (
-  VOID* kernelData
+  VOID  *kernelData
 )
 {
-  UINT8* bytes = (UINT8*)kernelData;
-  UINT32 patchLocation1 = 0;
-  UINT32 patchLocation2 = 0;
-  UINT32 patchlast = 0;
-  UINT32 i; 
+  UINT8   *bytes;
+  UINT32  patchLocation1;
+  UINT32  patchLocation2;
+  UINT32  patchlast;
+  UINT32  i; 
 
-  i=0;
+  bytes = (UINT8 *) kernelData;
+  patchLocation1 = 0;
+  patchLocation2 = 0;
+  patchlast = 0;
+  i = 0;
 
-  while(TRUE) {
-      if (bytes[i] == 0x66 && bytes[i+1] == 0x0F && bytes[i+2] == 0x6F && 
-          bytes[i+3] == 0x44 && bytes[i+4] == 0x0E && bytes[i+5] == 0xF1 &&
-          bytes[i-1664-32] == 0x55) {
-        patchLocation1 = i-1664-32;
-      }
+  while (TRUE) {
+    if (bytes[i] == 0x66 && bytes[i+1] == 0x0F && bytes[i+2] == 0x6F && 
+        bytes[i+3] == 0x44 && bytes[i+4] == 0x0E && bytes[i+5] == 0xF1 &&
+        bytes[i-1664-32] == 0x55) {
+      patchLocation1 = i-1664-32;
+    }
 
-      // khasSSE2+..... title
-      if (bytes[i] == 0xE3 && bytes[i+1] == 0x07 && bytes[i+2] == 0x00 &&
-          bytes[i+3] == 0x00 && bytes[i+4] == 0x80 && bytes[i+5] == 0x07 &&
-          bytes[i+6] == 0xFF && bytes[i+7] == 0xFF && bytes[i+8] == 0x24 &&
-          bytes[i+9] == 0x01) {
-        patchLocation2 = i;
-        break;
-      }
-      i++;
-  }            
+    // khasSSE2+..... title
+    if (bytes[i] == 0xE3 && bytes[i+1] == 0x07 && bytes[i+2] == 0x00 &&
+        bytes[i+3] == 0x00 && bytes[i+4] == 0x80 && bytes[i+5] == 0x07 &&
+        bytes[i+6] == 0xFF && bytes[i+7] == 0xFF && bytes[i+8] == 0x24 &&
+        bytes[i+9] == 0x01) {
+      patchLocation2 = i;
+      break;
+    }
+    i++;
+  }
   
   if (!patchLocation1 || !patchLocation2) {
     return;
   }
    
   i = patchLocation1 + 1500;
-  while(TRUE) {
+  while (TRUE) {
     if (bytes[i] == 0x90 && bytes[i+1] == 0x90 && bytes[i+2] == 0x55 ) {
       patchlast = (i+1) - patchLocation1;
       break;
@@ -347,8 +371,8 @@ Patcher_SSE3_6 (
   }
 
   // patch sse3_64 data
-  for (i=0; i<patchlast; i++) {
-    if (i<sizeof(sse3_patcher)) {
+  for (i = 0; i < patchlast; i++) {
+    if (i < sizeof (sse3_patcher)) {
       bytes[patchLocation1 + i] = sse3_patcher[i];
     } else {
       bytes[patchLocation1 + i] = 0x90;
@@ -360,22 +384,27 @@ Patcher_SSE3_6 (
   bytes[patchLocation2 + 1] = 0x05;
   bytes[patchLocation2 + 8] = 0x2C;
   bytes[patchLocation2 + 9] = 0x00;
-    
 }
 
 VOID
 Patcher_SSE3_5 (
-  VOID* kernelData
+  VOID  *kernelData
 )
 {
-  UINT8* bytes = (UINT8*)kernelData;
-  UINT32 patchLocation1 = 0;
-  UINT32 patchLocation2 = 0;
-  UINT32 patchlast=0;
-  UINT32 Length = sizeof(kernelData);
-  UINT32 i; 
+  UINT8   *bytes;
+  UINT32  patchLocation1;
+  UINT32  patchLocation2;
+  UINT32  patchlast;
+  UINT32  Length;
+  UINT32  i; 
 
-  for (i=256; i<(Length-256); i++) {
+  bytes = (UINT8 *) kernelData;
+  patchLocation1 = 0;
+  patchLocation2 = 0;
+  patchlast = 0;
+  Length = sizeof (kernelData);
+
+  for (i = 256; i < (Length - 256); i++) {
     if (bytes[i] == 0x66 && bytes[i+1] == 0x0F && bytes[i+2] == 0x6F &&
         bytes[i+3] == 0x44 && bytes[i+4] == 0x0E && bytes[i+5] == 0xF1 &&
         bytes[i-1680-32] == 0x55) {
@@ -396,7 +425,7 @@ Patcher_SSE3_5 (
     return;
   }
    
-  for (i=(patchLocation1+1500);i<Length;i++) {
+  for (i = (patchLocation1 + 1500); i < Length; i++) {
     if (bytes[i] == 0x90 && bytes[i+1] == 0x90 && bytes[i+2] == 0x55) {
      patchlast = (i+1) - patchLocation1;
      break;
@@ -408,8 +437,8 @@ Patcher_SSE3_5 (
   }
 
   // patech sse3_64 data
-  for (i=0; i<patchlast; i++) {
-    if (i<sizeof(sse3_5_patcher)) {
+  for (i = 0; i < patchlast; i++) {
+    if (i < sizeof (sse3_5_patcher)) {
       bytes[patchLocation1 + i] = sse3_5_patcher[i];
     } else {
         bytes[patchLocation1 + i] = 0x90;
@@ -421,12 +450,11 @@ Patcher_SSE3_5 (
   bytes[patchLocation2 + 1] = 0x06;
   bytes[patchLocation2 + 8] = 0x2C;
   bytes[patchLocation2 + 9] = 0x00;
-    
 } 
 
 VOID
 Patcher_SSE3_7 (
-  VOID* kernelData
+  VOID  *kernelData
 )
 {
      // not support yet
@@ -438,21 +466,25 @@ Get_PreLink (
   VOID
 )
 {
-  UINT32  ncmds, cmdsize;
+  UINT32  ncmds;
+  UINT32  cmdsize;
   UINT32  binaryIndex;
   UINTN   cnt;
-  UINT8*  binary = (UINT8*)KernelData;
+  UINT8   *binary;
   UINT32  sectionIndex;
 
   struct load_command         *loadCommand;
-  struct  segment_command     *segCmd;
+  struct segment_command      *segCmd;
   struct segment_command_64   *segCmd64;
-  struct section *sect;
+  struct section              *sect;
+  struct section_64           *sect64;
+
+  binary = (UINT8 *) KernelData;
 
   if (is64BitKernel) {
-    binaryIndex = sizeof(struct mach_header_64);
+    binaryIndex = sizeof (struct mach_header_64);
   } else {
-    binaryIndex = sizeof(struct mach_header);
+    binaryIndex = sizeof (struct mach_header);
   }
   
   ncmds = MACH_GET_NCMDS(binary);
@@ -463,30 +495,27 @@ Get_PreLink (
     
     switch (loadCommand->cmd) {
       case LC_SEGMENT_64: 
-        segCmd64 = (struct segment_command_64 *)loadCommand;
-        if (AsciiStrCmp(segCmd64->segname, kPrelinkTextSegment) == 0) {
+        segCmd64 = (struct segment_command_64 *) loadCommand;
+        if (AsciiStrCmp (segCmd64->segname, kPrelinkTextSegment) == 0) {
           if (segCmd64->vmsize > 0) {
-            PrelinkTextAddr = (UINT32)(segCmd64->vmaddr ? segCmd64->vmaddr + KernelRelocBase : 0);
-            PrelinkTextSize = (UINT32)segCmd64->vmsize;
-            PrelinkTextLoadCmdAddr = (UINT32)(UINTN)segCmd64;
+            PrelinkTextAddr = (UINT32) (segCmd64->vmaddr ? segCmd64->vmaddr + KernelRelocBase : 0);
+            PrelinkTextSize = (UINT32) segCmd64->vmsize;
+            PrelinkTextLoadCmdAddr = (UINT32) (UINTN) segCmd64;
           }
         }
-        if (AsciiStrCmp(segCmd64->segname, kPrelinkInfoSegment) == 0) {
-          UINT32 sectionIndex;
-          struct section_64 *sect;
-
-          sectionIndex = sizeof(struct segment_command_64);
+        if (AsciiStrCmp (segCmd64->segname, kPrelinkInfoSegment) == 0) {
+          sectionIndex = sizeof (struct segment_command_64);
           
           while(sectionIndex < segCmd64->cmdsize) {
-            sect = (struct section_64 *)((UINT8*)segCmd64 + sectionIndex);
-            sectionIndex += sizeof(struct section_64);
+            sect64 = (struct section_64 *) ((UINT8 *) segCmd64 + sectionIndex);
+            sectionIndex += sizeof (struct section_64);
             
-            if(AsciiStrCmp(sect->sectname, kPrelinkInfoSection) == 0 &&
-               AsciiStrCmp(sect->segname, kPrelinkInfoSegment) == 0) {
-              if (sect->size > 0) {
-                PrelinkInfoLoadCmdAddr = (UINT32)(UINTN)sect;
-                PrelinkInfoAddr = (UINT32)(sect->addr ? sect->addr + KernelRelocBase : 0);
-                PrelinkInfoSize = (UINT32)sect->size;
+            if(AsciiStrCmp (sect64->sectname, kPrelinkInfoSection) == 0 &&
+               AsciiStrCmp (sect64->segname, kPrelinkInfoSegment) == 0) {
+              if (sect64->size > 0) {
+                PrelinkInfoLoadCmdAddr = (UINT32) (UINTN) sect64;
+                PrelinkInfoAddr = (UINT32) (sect64->addr ? sect64->addr + KernelRelocBase : 0);
+                PrelinkInfoSize = (UINT32) sect64->size;
               }
             }
           }
@@ -494,27 +523,27 @@ Get_PreLink (
         break;
 
       case LC_SEGMENT:
-        segCmd = (struct segment_command *)loadCommand;
-        if (AsciiStrCmp(segCmd->segname, kPrelinkTextSegment) == 0) {
+        segCmd = (struct segment_command *) loadCommand;
+        if (AsciiStrCmp (segCmd->segname, kPrelinkTextSegment) == 0) {
           if (segCmd->vmsize > 0) {
-            PrelinkTextAddr = (UINT32)(segCmd->vmaddr ? segCmd->vmaddr + KernelRelocBase : 0);
-            PrelinkTextSize = (UINT32)segCmd->vmsize;
-            PrelinkTextLoadCmdAddr = (UINT32)(UINTN)segCmd;
+            PrelinkTextAddr = (UINT32) (segCmd->vmaddr ? segCmd->vmaddr + KernelRelocBase : 0);
+            PrelinkTextSize = (UINT32) segCmd->vmsize;
+            PrelinkTextLoadCmdAddr = (UINT32) (UINTN) segCmd;
           }
         }
-        if (AsciiStrCmp(segCmd->segname, kPrelinkInfoSegment) == 0) {
-          sectionIndex = sizeof(struct segment_command);
+        if (AsciiStrCmp (segCmd->segname, kPrelinkInfoSegment) == 0) {
+          sectionIndex = sizeof (struct segment_command);
           
           while(sectionIndex < segCmd->cmdsize) {
-            sect = (struct section *)((UINT8*)segCmd + sectionIndex);
-            sectionIndex += sizeof(struct section);
+            sect = (struct section *) ((UINT8*)segCmd + sectionIndex);
+            sectionIndex += sizeof (struct section);
             
-            if(AsciiStrCmp(sect->sectname, kPrelinkInfoSection) == 0 &&
-               AsciiStrCmp(sect->segname, kPrelinkInfoSegment) == 0) {
-              if (sect->size > 0) {
-                PrelinkInfoLoadCmdAddr = (UINT32)(UINTN)sect;
-                PrelinkInfoAddr = (UINT32)(sect->addr ? sect->addr + KernelRelocBase : 0);
-                PrelinkInfoSize = (UINT32)sect->size;
+            if(AsciiStrCmp (sect->sectname, kPrelinkInfoSection) == 0 &&
+               AsciiStrCmp (sect->segname, kPrelinkInfoSegment) == 0) {
+              if (sect->size > 0) { 
+                PrelinkInfoLoadCmdAddr = (UINT32) (UINTN) sect;
+                PrelinkInfoAddr = (UINT32) (sect->addr ? sect->addr + KernelRelocBase : 0);
+                PrelinkInfoSize = (UINT32) sect->size;
               }
             }
           }
@@ -536,23 +565,22 @@ FindBootArgs (
 )
 {
   UINT8           *ptr;
-  UINT8           archMode = sizeof(UINTN) * 8;
-  
+  UINT8           archMode;
+
+  archMode = sizeof (UINTN) * 8;
   // start searching from 0x200000.
-  ptr = (UINT8*)(UINTN)0x200000;
-  
+  ptr = (UINT8 *) (UINTN) 0x200000;
   
   while(TRUE) {
-    
     // check bootargs for 10.7 and up
-    bootArgs2 = (BootArgs2*)ptr;
+    bootArgs2 = (BootArgs2 *) ptr;
     
-    if (bootArgs2->Version==2 && bootArgs2->Revision==0 &&
+    if (bootArgs2->Version == 2 && bootArgs2->Revision == 0 &&
         bootArgs2->efiMode == archMode &&
         bootArgs2->kaddr == 0 && bootArgs2->ksize == 0 &&
         bootArgs2->efiSystemTable == 0) {
       // set vars
-      dtRoot = (CHAR8*)(UINTN)bootArgs2->deviceTreeP;
+      dtRoot = (CHAR8 *) (UINTN) bootArgs2->deviceTreeP;
       KernelSlide = bootArgs2->kslide;
 
       // disable other pointer
@@ -561,15 +589,15 @@ FindBootArgs (
     }
     
     // check bootargs for 10.4 - 10.6.x  
-    bootArgs1 = (BootArgs1*)ptr;
+    bootArgs1 = (BootArgs1 *) ptr;
     
-    if (bootArgs1->Version==1 &&
-        (bootArgs1->Revision==6 || bootArgs1->Revision==5 || bootArgs1->Revision==4) &&
+    if (bootArgs1->Version == 1 &&
+        (bootArgs1->Revision == 6 || bootArgs1->Revision == 5 || bootArgs1->Revision == 4) &&
         bootArgs1->efiMode == archMode &&
         bootArgs1->kaddr == 0 && bootArgs1->ksize == 0 &&
         bootArgs1->efiSystemTable == 0) {
       // set vars
-      dtRoot = (CHAR8*)(UINTN)bootArgs1->deviceTreeP;
+      dtRoot = (CHAR8 *) (UINTN) bootArgs1->deviceTreeP;
 
       // disable other pointer
       bootArgs2 = NULL;
@@ -589,14 +617,12 @@ KernelAndKextPatcherInit (
     return;
   }
   
-  PatcherInited = TRUE;
-  
   // KernelRelocBase will normally be 0
   // but if OsxAptioFixDrv is used, then it will be > 0
-  SetKernelRelocBase();
+  SetKernelRelocBase ();
   // Find bootArgs - we need then for proper detection
   // of kernel Mach-O header
-  FindBootArgs();
+  FindBootArgs ();
 
   if (bootArgs1 == NULL && bootArgs2 == NULL) {
     return;
@@ -618,36 +644,38 @@ KernelAndKextPatcherInit (
     KernelData = NULL;
     return;
   }
-  
+
   // find __PRELINK_TEXT and __PRELINK_INFO
-  Get_PreLink();
+  Get_PreLink ();
   isKernelcache = PrelinkTextSize > 0 && PrelinkInfoSize > 0;
+
+  PatcherInited = TRUE;
 }
 
 VOID
-KernelAndKextsPatcherStart(VOID)
+KernelAndKextsPatcherStart (
+  VOID
+)
 {
-  
   // we will call KernelAndKextPatcherInit() only if needed
-  
   if (gSettings.KPKernelCpu) {
     //
     // Kernel patches
     //
-    if ((gCPUStructure.Family!=0x06 && AsciiStrStr(OSVersion,"10.7")!=0)||
-        (gCPUStructure.Model==CPU_MODEL_ATOM &&
-        ((AsciiStrStr(OSVersion,"10.7")!=0) || AsciiStrStr(OSVersion,"10.6")!=0)) ||
-        (gCPUStructure.Model==CPU_MODEL_IVY_BRIDGE && AsciiStrStr(OSVersion,"10.7")!=0) ||
-        (gCPUStructure.Model==CPU_MODEL_IVY_BRIDGE_E5 && AsciiStrStr(OSVersion,"10.7")!=0)) {
-      KernelAndKextPatcherInit();
+    if ((gCPUStructure.Family != 0x06 && AsciiStrStr(OSVersion,"10.7") != 0)||
+        (gCPUStructure.Model == CPU_MODEL_ATOM &&
+        ((AsciiStrStr (OSVersion, "10.7") != 0) || AsciiStrStr (OSVersion, "10.6") != 0)) ||
+        (gCPUStructure.Model == CPU_MODEL_IVY_BRIDGE && AsciiStrStr (OSVersion, "10.7") != 0) ||
+        (gCPUStructure.Model == CPU_MODEL_IVY_BRIDGE_E5 && AsciiStrStr (OSVersion, "10.7") != 0)) {
+      KernelAndKextPatcherInit ();
       if (KernelData == NULL) {
         return;
       }
 
       if(is64BitKernel) {
-        KernelPatcher_64(KernelData);
+        KernelPatcher_64 (KernelData);
       } else {
-        KernelPatcher_32(KernelData);
+        KernelPatcher_32 (KernelData);
       }
     }
   }
@@ -655,11 +683,11 @@ KernelAndKextsPatcherStart(VOID)
   // Kext patches
   //
   if (gSettings.KPKextPatchesNeeded) {
-    KernelAndKextPatcherInit();
+    KernelAndKextPatcherInit ();
     if (KernelData == NULL) {
       return;
     }
-    KextPatcherStart();
+    KextPatcherStart ();
   }
 #if 0
   //
@@ -671,7 +699,7 @@ KernelAndKextsPatcherStart(VOID)
     UINT32      deviceTreeLength;
     EFI_STATUS  Status;
 
-    KernelAndKextPatcherInit();
+    KernelAndKextPatcherInit ();
     if (KernelData == NULL) {
       return;
     }
@@ -684,9 +712,9 @@ KernelAndKextsPatcherStart(VOID)
         deviceTreeLength = bootArgs2->deviceTreeLength;
     } else return;
 
-    Status = InjectKexts(deviceTreeP, &deviceTreeLength);
+    Status = InjectKexts (deviceTreeP, &deviceTreeLength);
 
-    if (!EFI_ERROR(Status)) KernelBooterExtensionsPatch(KernelData);
+    if (!EFI_ERROR(Status)) KernelBooterExtensionsPatch (KernelData);
   }
 #endif
 }

@@ -550,15 +550,11 @@ CPU_STRUCTURE                   gCPUStructure;
 CHAR8                           *AddBootArgs;
 CHAR8                           *OSVersion;
 
-#if 0
-extern UINT8                    *gEDID;
-extern EFI_EDID_DISCOVERED_PROTOCOL*            EdidDiscovered;
-#endif
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
 extern EFI_GUID                 gEfiAppleNvramGuid;
 extern EFI_GUID                 gEfiAppleBootGuid;
-
+extern BOOLEAN                  SSSE3;
 // ----------------------------------------
 
 UINT16
