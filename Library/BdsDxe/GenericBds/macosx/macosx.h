@@ -395,6 +395,7 @@ typedef struct {
 
   BOOLEAN KPKextPatchesNeeded;
 
+#if 0
   BOOLEAN KPAsusAICPUPM;
   BOOLEAN KPAppleRTC;
 
@@ -402,6 +403,7 @@ typedef struct {
   UINT8   *KPATIConnectorsData;
   UINTN   KPATIConnectorsDataLen;
   UINT8   *KPATIConnectorsPatch;
+#endif
 
   CHAR8   *AnyKext[100];
   BOOLEAN AnyKextInfoPlistPatch[100];

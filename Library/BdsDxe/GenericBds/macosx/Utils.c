@@ -915,6 +915,7 @@ GetUserSettings (
 
     dictPointer = GetProperty(dict,"KextPatches");
 
+#if 0
     prop = GetProperty(dictPointer,"ATIConnectorsController");
     if(prop) {
       // ATIConnectors patch
@@ -949,6 +950,7 @@ GetUserSettings (
     gSettings.KPKextPatchesNeeded |= gSettings.KPAsusAICPUPM;
     gSettings.KPAppleRTC = GetBoolProperty (dictPointer, "AppleRTC", FALSE);
     gSettings.KPKextPatchesNeeded |= gSettings.KPAppleRTC;
+#endif
 
     i = 0;
     do {

@@ -134,8 +134,7 @@ ExtractKextBoundleIdentifier (
   }
 }
 
-
-
+#if 0
 ////////////////////////////////////
 //
 // ATIConnectors patch
@@ -243,8 +242,6 @@ ATIConnectorsPatch (
         );
 }
 
-
-
 ////////////////////////////////////
 //
 // AsusAICPUPM patch
@@ -290,8 +287,6 @@ AsusAICPUPMPatch (
     }
   }
 }
-
-
 
 ////////////////////////////////////
 //
@@ -363,6 +358,7 @@ AppleRTCPatch (
 // Place other kext patches here
 //
 // ...
+#endif
 
 ////////////////////////////////////
 //
@@ -443,7 +439,8 @@ PatchKext (
 )
 {
   UINT32 i;
-  
+
+#if 0
   if (gSettings.KPATIConnectorsController != NULL) {
     //
     // ATIConnectors
@@ -474,13 +471,15 @@ PatchKext (
     //
     //others
     //
-    for (i = 0; i < gSettings.NrKexts; i++) {
-      if ((gSettings.AnyKextDataLen[i] > 0) &&
-          (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
-        AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
-      }
-    }    
   }
+#endif
+
+  for (i = 0; i < gSettings.NrKexts; i++) {
+    if ((gSettings.AnyKextDataLen[i] > 0) &&
+        (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
+      AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
+    }
+  }    
 }
 
 //
