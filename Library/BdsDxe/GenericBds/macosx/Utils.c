@@ -254,16 +254,14 @@ CHAR8* AppleBoardLocation = "Part Component";
 VOID *
 GetDataSetting (
   IN TagPtr dict,
-  IN CHAR8 *propName,
+  IN CHAR8  *propName,
   OUT UINTN *dataLen
   )
 {
-  TagPtr  prop;
-  UINT8   *data = NULL;
-  UINT32   len;
-#if 0
-  UINTN   i;
-#endif
+  TagPtr    prop;
+  UINT8     *data = NULL;
+  UINT32    len;
+
   prop = GetProperty (dict, propName);
 
   if (prop != NULL) {
@@ -275,12 +273,6 @@ GetDataSetting (
       if (dataLen != NULL) {
         *dataLen = prop->dataLen;
       }
-
-#if 0
-      DBG("Data: %p, Len: %d = ", data, prop->dataLen);
-      for (i = 0; i < prop->dataLen; i++) DBG("%02x ", data[i]);
-      DBG("\n");
-#endif
     } else {
       // assume data in hex encoded string property
       len = (UINT32) (AsciiStrLen (prop->string) >> 1);       // 2 chars per byte
@@ -290,12 +282,6 @@ GetDataSetting (
       if (dataLen != NULL) {
         *dataLen = len;
       }
-
-#if 0
-      DBG("Data(str): %p, Len: %d = ", data, len);
-      for (i = 0; i < len; i++) DBG("%02x ", data[i]);
-      DBG("\n");
-#endif
     }
   }
 
@@ -959,7 +945,11 @@ GetUserSettings (
       if (!dict) {
         break;
       }
-      GetAsciiProperty (dict, "Name", gSettings.AnyKext[i]);
+
+      prop = GetProperty(dict,"Name");
+      if (prop) {
+        gSettings.AnyKext[i] = AllocateCopyPool (AsciiStrSize(prop->string), prop->string);
+      }
 
       // check if this is Info.plist patch or kext binary patch
       gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dict, "InfoPlistPatch", FALSE);
@@ -991,14 +981,22 @@ GetUserSettings (
       }
       gSettings.KPKextPatchesNeeded = TRUE;
       i++;
+#if BOOT_DEBUG
+      CHAR16  Buffer1[100];
 
+      ZeroMem (Buffer1, sizeof (Buffer1));
+      AsciiStrToUnicodeStr (gSettings.AnyKext[i - 1], Buffer1);
+      Print (L"%d. name = %s, lenght = %d\n", i, Buffer1, len);
+#endif
       if (i>99) {
         break;
       }
     } while (TRUE);
 
     gSettings.NrKexts = i;
-
+#if BOOT_DEBUG
+    Print (L"gSettings.NrKexts = %d\n", gSettings.NrKexts);
+#endif
     gMobile = gSettings.Mobile;
 
     if ((gSettings.BusSpeed > 10 * kilo) &&
@@ -1010,6 +1008,7 @@ GetUserSettings (
         (gSettings.CpuFreqMHz < 20000)) {
       gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
     }
+
   }
 
   GetCPUProperties ();

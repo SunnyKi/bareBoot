@@ -473,7 +473,6 @@ PatchKext (
     //
   }
 #endif
-
   for (i = 0; i < gSettings.NrKexts; i++) {
     if ((gSettings.AnyKextDataLen[i] > 0) &&
         (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
