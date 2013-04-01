@@ -730,21 +730,20 @@ GetBootDefault (
 EFI_STATUS
 GetUserSettings (
   IN EFI_FILE *RootFileHandle,
-  IN CHAR16* ConfigPlistPath
+  IN CHAR16   *ConfigPlistPath
 )
 {
-  EFI_STATUS  Status;
-  UINTN       size;
-  CHAR8*      gConfigPtr;
-  TagPtr      dict;
-  TagPtr      dict2;
-  TagPtr      dictPointer;
-  TagPtr      prop;
-  CHAR16      cUUID[40];
+  EFI_STATUS      Status;
+  UINTN           size;
+  CHAR8*          gConfigPtr;
+  TagPtr          dict;
+  TagPtr          dictPointer;
+  TagPtr          prop;
+  CHAR16          cUUID[40];
   MACHINE_TYPES   Model;
-  CHAR8       ANum[4];
-  UINTN       len;
-  UINT32      i;
+  CHAR8           ANum[4];
+  UINTN           len;
+  UINT32          i;
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
@@ -753,7 +752,8 @@ GetUserSettings (
   i = 0;
 
   PrepatchSmbios ();
-  Model             = GetDefaultModel();
+
+  Model = GetDefaultModel ();
 
   AsciiStrCpy (gSettings.VendorName,             BiosVendor);
   AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[Model]);
@@ -909,9 +909,11 @@ GetUserSettings (
     gSettings.KPKernelCpu = FALSE; // disabled by default
     gSettings.KPKextPatchesNeeded = FALSE;
 
-    dictPointer = GetProperty(dict,"KernelAndKextPatches");
+    dictPointer = GetProperty(dict,"KernelPatches");
 
     gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
+
+    dictPointer = GetProperty(dict,"KextPatches");
 
     prop = GetProperty(dictPointer,"ATIConnectorsController");
     if(prop) {
@@ -948,58 +950,52 @@ GetUserSettings (
     gSettings.KPAppleRTC = GetBoolProperty (dictPointer, "AppleRTC", FALSE);
     gSettings.KPKextPatchesNeeded |= gSettings.KPAppleRTC;
 
-    prop = GetProperty(dictPointer,"KextsToPatch");
-    if(prop) {
-      i = 0;
-      do {
-        AsciiSPrint(ANum, 4, "%d", i);
-        dictPointer = GetProperty(prop, ANum);
-        if (!dictPointer) {
-          break;
-        }
-        GetAsciiProperty (dictPointer, "Name", gSettings.AnyKext[i]);
-        gSettings.KPKextPatchesNeeded = TRUE;
+    i = 0;
+    do {
+      AsciiSPrint(ANum, 4, "%d", i);
+      dict = GetProperty(dictPointer, ANum);
+      if (!dict) {
+        break;
+      }
+      GetAsciiProperty (dict, "Name", gSettings.AnyKext[i]);
 
-        // check if this is Info.plist patch or kext binary patch
-        gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dictPointer, "InfoPlistPatch", FALSE);
-        
-        if (gSettings.AnyKextInfoPlistPatch[i]) {
-          // Info.plist
-          // Find and Replace should be in <string>...</string>
-          dict2 = GetProperty(dictPointer, "Find");
-          gSettings.AnyKextDataLen[i] = 0;
-          if(dict2 && dict2->string) {
-            gSettings.AnyKextDataLen[i] = AsciiStrLen (dict2->string);
-            gSettings.AnyKextData[i] = (UINT8*) AllocateCopyPool (gSettings.AnyKextDataLen[i] + 1, dict2->string);
-          }
-          dict2 = GetProperty(dictPointer, "Replace");
-          if(dict2 && dict2->string) {
-            gSettings.AnyKextPatch[i] = (UINT8*) AllocateCopyPool (AsciiStrLen (dict2->string) + 1, dict2->string);
-          }
-        } else {
-          // kext binary patch
-          // Find and Replace should be in <data>...</data> or <string>...</string>
-          gSettings.AnyKextData[i] = GetDataSetting (dictPointer,"Find", &gSettings.AnyKextDataLen[i]);
-          gSettings.AnyKextPatch[i] = GetDataSetting (dictPointer,"Replace", &len);
-        }
-
-        if (gSettings.AnyKextDataLen[i] != len || len == 0) {
-          gSettings.AnyKext[i][0] = 0; //just erase name
-          continue; //same i
-        }
-        i++;
-
-        if (i>99) {
-          break;
-        }
-      } while (TRUE);
-
-      gSettings.NrKexts = i;
+      // check if this is Info.plist patch or kext binary patch
+      gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dict, "InfoPlistPatch", FALSE);
       
-      //there is one moment. This data is allocated in BS memory but will be used
-      // after OnExitBootServices. This is wrong and these arrays should be reallocated
-      // but I am not sure
-    }
+      if (gSettings.AnyKextInfoPlistPatch[i]) {
+        // Info.plist
+        // Find and Replace should be in <string>...</string>
+        prop = GetProperty(dict, "Find");
+        gSettings.AnyKextDataLen[i] = 0;
+        if(prop && prop->string) {
+          gSettings.AnyKextDataLen[i] = AsciiStrLen (prop->string);
+          gSettings.AnyKextData[i] = (UINT8 *) AllocateCopyPool (gSettings.AnyKextDataLen[i] + 1, prop->string);
+        }
+        prop = GetProperty(dict, "Replace");
+        if(prop && prop->string) {
+          len = AsciiStrLen (prop->string);
+          gSettings.AnyKextPatch[i] = (UINT8 *) AllocateCopyPool (AsciiStrLen (prop->string) + 1, prop->string);
+        }
+      } else {
+        // kext binary patch
+        // Find and Replace should be in <data>...</data> or <string>...</string>
+        gSettings.AnyKextData[i] = GetDataSetting (dict,"Find", &gSettings.AnyKextDataLen[i]);
+        gSettings.AnyKextPatch[i] = GetDataSetting (dict,"Replace", &len);
+      }
+
+      if (gSettings.AnyKextDataLen[i] != len || len == 0) {
+        gSettings.AnyKext[i][0] = 0; //just erase name
+        continue; //same i
+      }
+      gSettings.KPKextPatchesNeeded = TRUE;
+      i++;
+
+      if (i>99) {
+        break;
+      }
+    } while (TRUE);
+
+    gSettings.NrKexts = i;
 
     gMobile = gSettings.Mobile;
 
@@ -1026,16 +1022,16 @@ GetUserSettings (
 
 EFI_STATUS
 GetOSVersion(
-  IN EFI_FILE *FileHandle
+  IN EFI_FILE   *FileHandle
 )
 {
 	EFI_STATUS  Status = EFI_NOT_FOUND;
-	CHAR8*      plistBuffer = 0;
+	CHAR8       *plistBuffer = 0;
 	UINTN       plistLen;
 	TagPtr      dictPointer  = NULL;
-  CHAR16*     SystemPlist = L"System\\Library\\CoreServices\\SystemVersion.plist";
-  CHAR16*     ServerPlist = L"System\\Library\\CoreServices\\ServerVersion.plist";
-  CHAR16*     RecoveryPlist = L"\\com.apple.recovery.boot\\SystemVersion.plist";
+  CHAR16      *SystemPlist = L"System\\Library\\CoreServices\\SystemVersion.plist";
+  CHAR16      *ServerPlist = L"System\\Library\\CoreServices\\ServerVersion.plist";
+  CHAR16      *RecoveryPlist = L"\\com.apple.recovery.boot\\SystemVersion.plist";
 
   if (!FileHandle) {
     return EFI_NOT_FOUND;
