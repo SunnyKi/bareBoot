@@ -263,6 +263,10 @@ GetCPUProperties (
   gCPUStructure.Cores = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_4][EBX], 15, 0);
 #endif
 
+  if ((gCPUStructure.CPUID[CPUID_1][ECX] & bit(9)) != 0) {
+    SSSE3 = TRUE;
+  }
+
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
     switch (gCPUStructure.Model) {
 

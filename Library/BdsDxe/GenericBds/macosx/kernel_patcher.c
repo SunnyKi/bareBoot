@@ -490,7 +490,7 @@ Get_PreLink (
   ncmds = MACH_GET_NCMDS(binary);
   
   for (cnt = 0; cnt < ncmds; cnt++) {
-    loadCommand = (struct load_command *)(binary + binaryIndex);
+    loadCommand = (struct load_command *) (binary + binaryIndex);
     cmdsize = loadCommand->cmdsize;
     
     switch (loadCommand->cmd) {
