@@ -59,19 +59,19 @@ typedef struct {
 } Tag, *TagPtr;
 
 int
-PListParseXML (
+PListXMLParse (
   const char* buffer,
   unsigned int bSize,
   TagPtr* dict
 );
 
 TagPtr
-PListGetProperty (
+PListXMLGetProperty (
   TagPtr dict,
   const char* key
 );
 
 void
-FreeTag (
+PListXMLFreeTag (
   TagPtr tag
 );

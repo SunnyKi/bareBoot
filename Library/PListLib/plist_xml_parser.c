@@ -55,29 +55,29 @@ struct _Symbol {
   char            string[1];
 };
 
-SymbolPtr gSymbolsHead;
-TagPtr    gTagsFree;
+SymbolPtr gPListXMLSymbolsHead;
+TagPtr    gPListXMLTagsFree;
 
-char* buffer_start = NULL;
+static char* buffer_start = NULL;
 
 // Forward declarations
 
-char*      NewSymbol (char* string);
+char*      PListXMLNewSymbol (char* string);
 
-int FixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr);
-int ParseTagBoolean (char* buffer, TagPtr * tag, unsigned int type, unsigned int* lenPtr);
-int ParseTagData (char* buffer, TagPtr * tag, unsigned int* lenPtr);
-int ParseTagDate (char* buffer, TagPtr * tag, unsigned int* lenPtr);
-int ParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr);
-int ParseTagKey (char * buffer, TagPtr * tag, unsigned int* lenPtr);
-int ParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned int empty, unsigned int* lenPtr);
-int ParseTagString (char* buffer, TagPtr * tag, unsigned int* lenPtr);
+int PListXMLFixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr);
+int PListXMLParseTagBoolean (char* buffer, TagPtr * tag, unsigned int type, unsigned int* lenPtr);
+int PListXMLParseTagData (char* buffer, TagPtr * tag, unsigned int* lenPtr);
+int PListXMLParseTagDate (char* buffer, TagPtr * tag, unsigned int* lenPtr);
+int PListXMLParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr);
+int PListXMLParseTagKey (char * buffer, TagPtr * tag, unsigned int* lenPtr);
+int PListXMLParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned int empty, unsigned int* lenPtr);
+int PListXMLParseTagString (char* buffer, TagPtr * tag, unsigned int* lenPtr);
 
-SymbolPtr   FindSymbol (char * string, SymbolPtr * prevSymbol);
+SymbolPtr   PListXMLFindSymbol (char * string, SymbolPtr * prevSymbol);
 
-TagPtr     NewTag (void);
+TagPtr     PListXMLNewTag (void);
 
-void        FreeSymbol (char* string);
+void        PListXMLFreeSymbol (char* string);
 
 #if 0
 typedef const struct XMLEntity {
@@ -101,7 +101,7 @@ XMLEntity ents[] = {
 /* Function for basic XML character entities parsing */
 
 char*
-XMLDecode (const char* src) {
+PListXMLDecode (const char* src) {
   unsigned int len;
   const char *s;
   char *out, *o;
@@ -145,35 +145,35 @@ XMLDecode (const char* src) {
 #endif
 
 //==========================================================================
-// XMLFreeTag
+// PListXMLFreeTag
 
 void
-FreeTag (TagPtr tag) {
+PListXMLFreeTag (TagPtr tag) {
   if (tag == NULL) {
     return;
   }
 
   if (tag->string != NULL) {
-    FreeSymbol (tag->string);
+    PListXMLFreeSymbol (tag->string);
   }
 
-  FreeTag (tag->tag);
-  FreeTag (tag->tagNext);
+  PListXMLFreeTag (tag->tag);
+  PListXMLFreeTag (tag->tagNext);
   // Clear and free the tag.
   tag->type = kTagTypeNone;
   tag->string = NULL;
   tag->dataLen = 0;
   tag->tag = NULL;
   tag->offset = 0;
-  tag->tagNext = gTagsFree;
-  gTagsFree = tag;
+  tag->tagNext = gPListXMLTagsFree;
+  gPListXMLTagsFree = tag;
 }
 
 //==========================================================================
-// GetNextTag
+// PListXMLGetNextTag
 
 int
-GetNextTag (unsigned char* buffer, char** tag, unsigned int* start, unsigned int* length) {
+PListXMLGetNextTag (unsigned char* buffer, char** tag, unsigned int* start, unsigned int* length) {
   unsigned int cnt, cnt2;
 
   if (tag == NULL) {
@@ -215,10 +215,10 @@ GetNextTag (unsigned char* buffer, char** tag, unsigned int* start, unsigned int
 }
 
 //==========================================================================
-// ParseNextTag
+// PListXMLParseNextTag
 
 int
-XMLParseNextTag (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
+PListXMLParseNextTag (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   int  Status;
   unsigned int    length;
   unsigned int    pos;
@@ -229,7 +229,7 @@ XMLParseNextTag (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   tagName = NULL;
 
   *lenPtr = 0;
-  Status = GetNextTag ((unsigned char*) buffer, &tagName, 0, &length);
+  Status = PListXMLGetNextTag ((unsigned char*) buffer, &tagName, 0, &length);
 
   if (Status != 0) {
     return Status;
@@ -243,51 +243,51 @@ XMLParseNextTag (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   }
   /***** dict ****/
   else if (!_plstrcmp (tagName, kXMLTagDict)) {
-    Status = ParseTagList (buffer + pos, tag, kTagTypeDict, 0, &length);
+    Status = PListXMLParseTagList (buffer + pos, tag, kTagTypeDict, 0, &length);
   } else if (!_plstrcmp (tagName, kXMLTagDict "/")) {
-    Status = ParseTagList (buffer + pos, tag, kTagTypeDict, 1, &length);
+    Status = PListXMLParseTagList (buffer + pos, tag, kTagTypeDict, 1, &length);
   } else if (!_plstrcmp (tagName, kXMLTagDict " ")) {
-    Status = ParseTagList (buffer + pos, tag, kTagTypeDict, 0, &length);
+    Status = PListXMLParseTagList (buffer + pos, tag, kTagTypeDict, 0, &length);
   }
   /***** key ****/
   else if (!_plstrcmp (tagName, kXMLTagKey)) {
-    Status = ParseTagKey (buffer + pos, tag, &length);
+    Status = PListXMLParseTagKey (buffer + pos, tag, &length);
   }
   /***** string ****/
   else if (!_plstrcmp (tagName, kXMLTagString)) {
-    Status = ParseTagString (buffer + pos, tag, &length);
+    Status = PListXMLParseTagString (buffer + pos, tag, &length);
   }
   /***** integer ****/
   else if (!_plstrcmp (tagName, kXMLTagInteger)) {
-    Status = ParseTagInteger (buffer + pos, tag, &length);
+    Status = PListXMLParseTagInteger (buffer + pos, tag, &length);
   } else if (!_plstrcmp (tagName, kXMLTagInteger " ")) {
-    Status = ParseTagInteger (buffer + pos, tag, &length);
+    Status = PListXMLParseTagInteger (buffer + pos, tag, &length);
   }
   /***** data ****/
   else if (!_plstrcmp (tagName, kXMLTagData)) {
-    Status = ParseTagData (buffer + pos, tag, &length);
+    Status = PListXMLParseTagData (buffer + pos, tag, &length);
   } else if (!_plstrcmp (tagName, kXMLTagData " ")) {
-    Status = ParseTagData (buffer + pos, tag, &length);
+    Status = PListXMLParseTagData (buffer + pos, tag, &length);
   }
   /***** date ****/
   else if (!_plstrcmp (tagName, kXMLTagDate)) {
-    Status = ParseTagDate (buffer + pos, tag, &length);
+    Status = PListXMLParseTagDate (buffer + pos, tag, &length);
   }
   /***** FALSE ****/
   else if (!_plstrcmp (tagName, kXMLTagFalse)) {
-    Status = ParseTagBoolean (buffer + pos, tag, kTagTypeFalse, &length);
+    Status = PListXMLParseTagBoolean (buffer + pos, tag, kTagTypeFalse, &length);
   }
   /***** TRUE ****/
   else if (!_plstrcmp (tagName, kXMLTagTrue)) {
-    Status = ParseTagBoolean (buffer + pos, tag, kTagTypeTrue, &length);
+    Status = PListXMLParseTagBoolean (buffer + pos, tag, kTagTypeTrue, &length);
   }
   /***** array ****/
   else if (!_plstrcmp (tagName, kXMLTagArray)) {
-    Status = ParseTagList (buffer + pos, tag, kTagTypeArray, 0, &length);
+    Status = PListXMLParseTagList (buffer + pos, tag, kTagTypeArray, 0, &length);
   } else if (!_plstrcmp (tagName, kXMLTagArray " ")) {
-    Status = ParseTagList (buffer + pos, tag, kTagTypeArray, 0, &length);
+    Status = PListXMLParseTagList (buffer + pos, tag, kTagTypeArray, 0, &length);
   } else if (!_plstrcmp (tagName, kXMLTagArray "/")) {
-    Status = ParseTagList (buffer + pos, tag, kTagTypeArray, 1, &length);
+    Status = PListXMLParseTagList (buffer + pos, tag, kTagTypeArray, 1, &length);
   }
   /***** unknown ****/
   else {
@@ -310,7 +310,7 @@ XMLParseNextTag (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
 //
 
 int
-PListParseXML (const char* buffer, unsigned int bSize, TagPtr* dict) {
+PListXMLParse (const char* buffer, unsigned int bSize, TagPtr* dict) {
   int  Status;
   unsigned int    length;
   unsigned int    pos;
@@ -339,7 +339,7 @@ PListParseXML (const char* buffer, unsigned int bSize, TagPtr* dict) {
   buffer_start = configBuffer;
 
   for (;;) {
-    Status = XMLParseNextTag (configBuffer + pos, &tag, &length);
+    Status = PListXMLParseNextTag (configBuffer + pos, &tag, &length);
 
     if (Status != 0) {
       break;
@@ -355,7 +355,7 @@ PListParseXML (const char* buffer, unsigned int bSize, TagPtr* dict) {
       break;
     }
 
-    FreeTag (tag);
+    PListXMLFreeTag (tag);
   }
 
   _plfree (configBuffer);
@@ -375,10 +375,10 @@ PListParseXML (const char* buffer, unsigned int bSize, TagPtr* dict) {
 #define DOFREE 1
 
 //==========================================================================
-// XMLGetProperty
+// PListXMLGetProperty
 
 TagPtr
-PListGetProperty (TagPtr dict, const char* key) {
+PListXMLGetProperty (TagPtr dict, const char* key) {
   TagPtr tagList, tag;
 
   // No more shots to leg ;-)
@@ -410,10 +410,10 @@ PListGetProperty (TagPtr dict, const char* key) {
 }
 
 //==========================================================================
-// ParseTagList
+// PListXMLParseTagList
 
 int
-ParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned int empty, unsigned int* lenPtr) {
+PListXMLParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned int empty, unsigned int* lenPtr) {
   int          Status;
   unsigned int pos;
   unsigned int length;
@@ -429,7 +429,7 @@ ParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned int empty,
 
   if (!empty) {
     for (;;) {
-      Status = XMLParseNextTag (buffer + pos, &tmpTag, &length);
+      Status = PListXMLParseNextTag (buffer + pos, &tmpTag, &length);
 
       if (Status != 0) {
         break;
@@ -451,15 +451,15 @@ ParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned int empty,
     }
 
     if (Status != 0) {
-      FreeTag (tagList);
+      PListXMLFreeTag (tagList);
       return Status;
     }
   }
 
-  tmpTag = NewTag();
+  tmpTag = PListXMLNewTag();
 
   if (tmpTag == NULL) {
-    FreeTag (tagList);
+    PListXMLFreeTag (tagList);
     return (-1);
   }
 
@@ -476,10 +476,10 @@ ParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned int empty,
 }
 
 //==========================================================================
-// ParseTagKey
+// PListXMLParseTagKey
 
 int
-ParseTagKey (char* buffer, TagPtr* tag, unsigned int* lenPtr) {
+PListXMLParseTagKey (char* buffer, TagPtr* tag, unsigned int* lenPtr) {
   int  Status;
   unsigned int    length;
   unsigned int    length2;
@@ -487,30 +487,30 @@ ParseTagKey (char* buffer, TagPtr* tag, unsigned int* lenPtr) {
   TagPtr    tmpTag;
   TagPtr    subTag;
 
-  Status = FixDataMatchingTag (buffer, kXMLTagKey, &length);
+  Status = PListXMLFixDataMatchingTag (buffer, kXMLTagKey, &length);
 
   if (Status != 0) {
     return Status;
   }
 
-  Status = XMLParseNextTag (buffer + length, &subTag, &length2);
+  Status = PListXMLParseNextTag (buffer + length, &subTag, &length2);
 
   if (Status != 0) {
     return Status;
   }
 
-  tmpTag = NewTag();
+  tmpTag = PListXMLNewTag();
 
   if (tmpTag == NULL) {
-    FreeTag (subTag);
+    PListXMLFreeTag (subTag);
     return (-1);
   }
 
-  string = NewSymbol (buffer);
+  string = PListXMLNewSymbol (buffer);
 
   if (string == NULL) {
-    FreeTag (subTag);
-    FreeTag (tmpTag);
+    PListXMLFreeTag (subTag);
+    PListXMLFreeTag (tmpTag);
     return (-1);
   }
 
@@ -527,31 +527,31 @@ ParseTagKey (char* buffer, TagPtr* tag, unsigned int* lenPtr) {
 }
 
 //==========================================================================
-// ParseTagString
+// PListXMLParseTagString
 
 int
-ParseTagString (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
+PListXMLParseTagString (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   int  Status;
   unsigned int    length;
   char*    string;
   TagPtr    tmpTag;
 
-  Status = FixDataMatchingTag (buffer, kXMLTagString, &length);
+  Status = PListXMLFixDataMatchingTag (buffer, kXMLTagString, &length);
 
   if (Status != 0) {
     return Status;
   }
 
-  tmpTag = NewTag();
+  tmpTag = PListXMLNewTag();
 
   if (tmpTag == NULL) {
     return (-1);
   }
 
-  string = NewSymbol (buffer);
+  string = PListXMLNewSymbol (buffer);
 
   if (string == NULL) {
-    FreeTag (tmpTag);
+    PListXMLFreeTag (tmpTag);
     return (-1);
   }
 
@@ -568,13 +568,13 @@ ParseTagString (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
 }
 
 //==========================================================================
-// ParseTagInteger
+// PListXMLParseTagInteger
 
 int
-ParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
+PListXMLParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   int  Status;
   unsigned int    length;
-  long    integer;
+  vlong    integer;
   unsigned int    size;
   int   negative;
   char*    val;
@@ -582,13 +582,13 @@ ParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
 
   negative = FALSE;
   val = buffer;
-  Status = FixDataMatchingTag (buffer, kXMLTagInteger, &length);
+  Status = PListXMLFixDataMatchingTag (buffer, kXMLTagInteger, &length);
 
   if (Status != 0) {
     return Status;
   }
 
-  tmpTag = NewTag();
+  tmpTag = PListXMLNewTag();
 
   if (tmpTag == NULL) {
     return (-1);
@@ -657,10 +657,10 @@ ParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
 }
 
 //==========================================================================
-// ParseTagData
+// PListXMLParseTagData
 
 int
-ParseTagData (char* buffer, TagPtr * tag, unsigned int* lenPtr)
+PListXMLParseTagData (char* buffer, TagPtr * tag, unsigned int* lenPtr)
 {
   int  Status;
   unsigned int    length;
@@ -671,20 +671,20 @@ ParseTagData (char* buffer, TagPtr * tag, unsigned int* lenPtr)
   len = 0;
   length = 0;
 
-  Status = FixDataMatchingTag (buffer, kXMLTagData, &length);
+  Status = PListXMLFixDataMatchingTag (buffer, kXMLTagData, &length);
 
   if (Status != 0) {
     return Status;
   }
 
-  tmpTag = NewTag();
+  tmpTag = PListXMLNewTag();
 
   if (tmpTag == 0) {
     return (-1);
   }
 
 //Slice - correction as Apple 2003
-  string = NewSymbol (buffer);
+  string = PListXMLNewSymbol (buffer);
   tmpTag->type = kTagTypeData;
   tmpTag->string = string;
   tmpTag->data = (unsigned char*)_plb64decode(tmpTag->string, length, &len);
@@ -699,21 +699,21 @@ ParseTagData (char* buffer, TagPtr * tag, unsigned int* lenPtr)
 }
 
 //==========================================================================
-// ParseTagDate
+// PListXMLParseTagDate
 
 int
-ParseTagDate (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
+PListXMLParseTagDate (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   int  Status;
   unsigned int    length;
   TagPtr    tmpTag;
 
-  Status = FixDataMatchingTag (buffer, kXMLTagDate, &length);
+  Status = PListXMLFixDataMatchingTag (buffer, kXMLTagDate, &length);
 
   if (Status != 0) {
     return Status;
   }
 
-  tmpTag = NewTag();
+  tmpTag = PListXMLNewTag();
 
   if (tmpTag == NULL) {
     return (-1);
@@ -731,13 +731,13 @@ ParseTagDate (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
 }
 
 //==========================================================================
-// ParseTagBoolean
+// PListXMLParseTagBoolean
 
 int
-ParseTagBoolean (char* buffer, TagPtr * tag, unsigned int type, unsigned int* lenPtr) {
+PListXMLParseTagBoolean (char* buffer, TagPtr * tag, unsigned int type, unsigned int* lenPtr) {
   TagPtr tmpTag;
 
-  tmpTag = NewTag();
+  tmpTag = PListXMLNewTag();
 
   if (tmpTag == NULL) {
     return (-1);
@@ -755,13 +755,13 @@ ParseTagBoolean (char* buffer, TagPtr * tag, unsigned int type, unsigned int* le
 }
 
 //==========================================================================
-// FixDataMatchingTag
+// PListXMLFixDataMatchingTag
 // Modifies 'buffer' to add a '\0' at the end of the tag matching 'tag'.
 // Returns the length of the data found, counting the end tag,
 // or -1 if the end tag was not found.
 
 int
-FixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr) {
+PListXMLFixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr) {
   int  Status;
   unsigned int    length;
   unsigned int    start;
@@ -771,7 +771,7 @@ FixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr) {
   start = 0;
 
   for (;;) {
-    Status = GetNextTag (((unsigned char *) buffer) + start, &endTag, &stop, &length);
+    Status = PListXMLGetNextTag (((unsigned char *) buffer) + start, &endTag, &stop, &length);
 
     if (Status != 0) {
       return Status;
@@ -790,14 +790,14 @@ FixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr) {
 }
 
 //==========================================================================
-// NewTag
+// PListXMLNewTag
 
 TagPtr
-NewTag (void) {
+PListXMLNewTag (void) {
   unsigned int i;
   TagPtr       tag;
 
-  if (gTagsFree == NULL) {
+  if (gPListXMLTagsFree == NULL) {
     tag = (TagPtr) _plzalloc (0x1000 * sizeof (Tag));
 
     if (tag == NULL) {
@@ -813,22 +813,22 @@ NewTag (void) {
     }
 
     tag[0x1000 - 1].tagNext = NULL;
-    gTagsFree = tag;
+    gPListXMLTagsFree = tag;
   }
 
-  tag = gTagsFree;
-  gTagsFree = tag->tagNext;
+  tag = gPListXMLTagsFree;
+  gPListXMLTagsFree = tag->tagNext;
   return tag;
 }
 
 char*
-NewSymbol (char* string) {
+PListXMLNewSymbol (char* string) {
   SymbolPtr symbol;
   SymbolPtr lastGuy;
 
   lastGuy = NULL;
   // Look for string in the list of symbols.
-  symbol = FindSymbol (string, NULL);
+  symbol = PListXMLFindSymbol (string, NULL);
 
   // Add the new symbol.
   if (symbol == NULL) {
@@ -842,8 +842,8 @@ NewSymbol (char* string) {
     symbol->refCount = 0;
     _plstrcpy (symbol->string, string);
     // Add the symbol to the list.
-    symbol->next = gSymbolsHead;
-    gSymbolsHead = symbol;
+    symbol->next = gPListXMLSymbolsHead;
+    gPListXMLSymbolsHead = symbol;
   }
 
   // Update the refCount and return the string.
@@ -857,14 +857,14 @@ NewSymbol (char* string) {
 }
 
 //==========================================================================
-// FreeSymbol
+// PListXMLFreeSymbol
 
 void
-FreeSymbol (char* string) {
+PListXMLFreeSymbol (char* string) {
   SymbolPtr symbol, prev;
 
   // Look for string in the list of symbols.
-  symbol = FindSymbol (string, &prev);
+  symbol = PListXMLFindSymbol (string, &prev);
 
   if (symbol == NULL) {
     return;
@@ -881,7 +881,7 @@ FreeSymbol (char* string) {
   if (prev != NULL) {
     prev->next = symbol->next;
   } else {
-    gSymbolsHead = symbol->next;
+    gPListXMLSymbolsHead = symbol->next;
   }
 
   // Free the symbol's memory.
@@ -889,13 +889,13 @@ FreeSymbol (char* string) {
 }
 
 //==========================================================================
-// FindSymbol
+// PListXMLFindSymbol
 
 SymbolPtr
-FindSymbol (char * string, SymbolPtr * prevSymbol) {
+PListXMLFindSymbol (char * string, SymbolPtr * prevSymbol) {
   SymbolPtr symbol, prev;
 
-  symbol = gSymbolsHead;
+  symbol = gPListXMLSymbolsHead;
   prev = NULL;
 
   while (symbol != NULL) {
