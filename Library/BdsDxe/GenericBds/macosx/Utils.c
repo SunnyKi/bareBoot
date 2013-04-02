@@ -944,13 +944,7 @@ GetUserSettings (
       }
       gSettings.KPKextPatchesNeeded = TRUE;
       i++;
-#if BOOT_DEBUG
-      CHAR16  Buffer1[100];
 
-      ZeroMem (Buffer1, sizeof (Buffer1));
-      AsciiStrToUnicodeStr (gSettings.AnyKext[i - 1], Buffer1);
-      Print (L"%d. name = %s, lenght = %d\n", i, Buffer1, len);
-#endif
       if (i>99) {
         break;
       }
@@ -959,6 +953,14 @@ GetUserSettings (
     gSettings.NrKexts = i;
 #if BOOT_DEBUG
     Print (L"gSettings.NrKexts = %d\n", gSettings.NrKexts);
+
+    CHAR16  Buffer1[100];
+
+    for (i = 0; i < gSettings.NrKexts; i++) {
+      ZeroMem (Buffer1, sizeof (Buffer1));
+      AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
+      Print (L"%d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
+    }
 #endif
     gMobile = gSettings.Mobile;
 
