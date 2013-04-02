@@ -658,14 +658,14 @@ SaveBooterLog (
   CHAR8                   *MemLogBuffer;
   UINTN                   MemLogLen;
 
-  MemLogBuffer = GetMemLogBuffer();
-  MemLogLen = GetMemLogLen();
+  MemLogBuffer = GetMemLogBuffer ();
+  MemLogLen = GetMemLogLen ();
 
   if (MemLogBuffer == NULL || MemLogLen == 0) {
 		return EFI_NOT_FOUND;
   }
 
-  return egSaveFile(BaseDir, FileName, (UINT8*)MemLogBuffer, MemLogLen);
+  return egSaveFile(BaseDir, FileName, (UINT8*) MemLogBuffer, MemLogLen);
 }
 
 UINTN

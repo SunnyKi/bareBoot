@@ -276,10 +276,10 @@ MacOS:
   DumpCPU ();
   Pause (NULL);
 #endif
-  
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
-  AsciiStrToUnicodeStr(gSettings.BootArgs, buffer);
+  AsciiStrToUnicodeStr (gSettings.BootArgs, buffer);
   
   if (StrLen(buffer) > 0) 
   {
