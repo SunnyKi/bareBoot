@@ -1034,9 +1034,8 @@ GetUserSettings (
 
     DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
 #ifdef BOOT_DEBUG
-    CHAR16  Buffer1[100];
-
     for (i = 0; i < gSettings.NrKexts; i++) {
+      CHAR16  Buffer1[100];
 
       ZeroMem (Buffer1, sizeof (Buffer1));
       AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
