@@ -901,43 +901,6 @@ GetUserSettings (
 
     dictPointer = GetProperty(dict,"KextPatches");
 
-#if 0
-    prop = GetProperty(dictPointer,"ATIConnectorsController");
-    if(prop) {
-      // ATIConnectors patch
-      gSettings.KPATIConnectorsController = AllocateZeroPool (AsciiStrSize (prop->string) * sizeof(CHAR16));
-      AsciiStrToUnicodeStr (prop->string, gSettings.KPATIConnectorsController);
-      gSettings.KPATIConnectorsData = GetDataSetting (
-                                        dictPointer,
-                                        "ATIConnectorsData",
-                                        &gSettings.KPATIConnectorsDataLen
-                                      );
-      gSettings.KPATIConnectorsPatch = GetDataSetting (dictPointer, "ATIConnectorsPatch", &len);
-
-      if (gSettings.KPATIConnectorsData == NULL ||
-          gSettings.KPATIConnectorsPatch == NULL ||
-          gSettings.KPATIConnectorsDataLen == 0 ||
-          gSettings.KPATIConnectorsDataLen != len) {
-        // invalid params - no patching
-        if (gSettings.KPATIConnectorsController != NULL) FreePool(gSettings.KPATIConnectorsController);
-        if (gSettings.KPATIConnectorsData != NULL) FreePool(gSettings.KPATIConnectorsData);
-        if (gSettings.KPATIConnectorsPatch != NULL) FreePool(gSettings.KPATIConnectorsPatch);
-        gSettings.KPATIConnectorsController = NULL;
-        gSettings.KPATIConnectorsData = NULL;
-        gSettings.KPATIConnectorsPatch = NULL;
-        gSettings.KPATIConnectorsDataLen = 0;
-      } else {
-        // ok
-        gSettings.KPKextPatchesNeeded = TRUE;
-      }
-    }
-    
-    gSettings.KPAsusAICPUPM = GetBoolProperty (dictPointer, "AsusAICPUPM", FALSE);
-    gSettings.KPKextPatchesNeeded |= gSettings.KPAsusAICPUPM;
-    gSettings.KPAppleRTC = GetBoolProperty (dictPointer, "AppleRTC", FALSE);
-    gSettings.KPKextPatchesNeeded |= gSettings.KPAppleRTC;
-#endif
-
     i = 0;
     do {
       AsciiSPrint(ANum, 4, "%d", i);
