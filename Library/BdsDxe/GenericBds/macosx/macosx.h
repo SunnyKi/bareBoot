@@ -23,6 +23,7 @@
 #endif
 #include <IndustryStandard/HighPrecisionEventTimerTable.h>
 #include <Protocol/EdidDiscovered.h>
+#include <Library/MemLogLib.h>
 
 #include "InternalBdsLib.h"
 #include "SmBios.h"
