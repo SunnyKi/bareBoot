@@ -57,6 +57,7 @@ struct _Symbol {
 
 SymbolPtr gPListXMLSymbolsHead;
 TagPtr    gPListXMLTagsFree;
+void*    gPListXMLTagsArena;
 
 static char* buffer_start = NULL;
 
@@ -814,6 +815,7 @@ PListXMLNewTag (void) {
 
     tag[0x1000 - 1].tagNext = NULL;
     gPListXMLTagsFree = tag;
+    gPListXMLTagsArena = tag;
   }
 
   tag = gPListXMLTagsFree;
@@ -929,5 +931,5 @@ PListXMLCleanup (void) {
     _plfree (symbol);
     symbol = next;
   }
-  _plfree (gPListXMLTagsFree);
+  _plfree (gPListXMLTagsArena);
 }
