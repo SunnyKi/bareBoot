@@ -4,9 +4,11 @@
  */
 
 #include "macosx.h"
+#include "kernel_patcher.h"
+#if 0
 #include "LoaderUefi.h"
 #include "device_tree.h"
-#include "kernel_patcher.h"
+#endif
 
 //
 // Searches Source for Search pattern of size SearchSize
@@ -75,6 +77,7 @@ SearchAndReplace (
   return NumReplaces;
 }
 
+#if 0
 /** Global for storing KextBoundleIdentifier */
 CHAR8 gKextBoundleIdentifier[256];
 
@@ -134,7 +137,6 @@ ExtractKextBoundleIdentifier (
   }
 }
 
-#if 0
 ////////////////////////////////////
 //
 // ATIConnectors patch
@@ -667,6 +669,7 @@ PatchPrelinkedKexts (
   }
 }
 
+#if 0
 //
 // Iterates over kexts loaded by booter
 // and calls PatchKext() for each.
@@ -720,6 +723,7 @@ PatchLoadedKexts (
     } 
   }
 }
+#endif
 
 //
 // Entry for all kext patches.
@@ -733,8 +737,11 @@ KextPatcherStart (
 {
   if (isKernelcache) {
     PatchPrelinkedKexts();
-  } else {
+  }
+#if 0
+  else {
     PatchLoadedKexts();
   }
+#endif
 }
 

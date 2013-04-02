@@ -5,11 +5,12 @@
 
 #include "macosx.h"
 #include "LoaderUefi.h"
-#include "device_tree.h"
-
 #include "kernel_patcher.h"
 #include "sse3_patcher.h"
 #include "sse3_5_patcher.h"
+#if 0
+#include "device_tree.h"
+#endif
 
 EFI_PHYSICAL_ADDRESS    KernelRelocBase = 0;
 BootArgs1               *bootArgs1      = NULL;
