@@ -35,6 +35,7 @@
 #define BOOT_DEBUG
 #endif
 #define ACPI_DEBUG
+#define BOOT_LOG L"EFI\\mini\\boot.log"
 
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))
 #define MAX_NUM_DEVICES 64
@@ -642,6 +643,12 @@ egSaveFile (
   IN CHAR16   *FileName,
   IN UINT8    *FileData,
   IN UINTN    FileDataLength
+);
+
+EFI_STATUS
+SaveBooterLog (
+  IN EFI_FILE_HANDLE BaseDir,
+  IN CHAR16 *FileName
 );
 
 EFI_STATUS

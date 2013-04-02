@@ -142,6 +142,7 @@
   PcdLib
   UefiHiiServicesLib
   PListLib
+  MemLogLib
   
 [Guids]
                                                 ## SOMETIMES_PRODUCES ## Variable:L"BootXX" (Boot option variable)

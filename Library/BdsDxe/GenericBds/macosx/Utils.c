@@ -649,6 +649,25 @@ egSaveFile (
   return Status;
 }
 
+EFI_STATUS
+SaveBooterLog (
+  IN EFI_FILE_HANDLE BaseDir,
+  IN CHAR16 *FileName
+)
+{
+  CHAR8                   *MemLogBuffer;
+  UINTN                   MemLogLen;
+
+  MemLogBuffer = GetMemLogBuffer();
+  MemLogLen = GetMemLogLen();
+
+  if (MemLogBuffer == NULL || MemLogLen == 0) {
+		return EFI_NOT_FOUND;
+  }
+
+  return egSaveFile(BaseDir, FileName, (UINT8*)MemLogBuffer, MemLogLen);
+}
+
 UINTN
 AsciiStr2Uintn (
   CHAR8* ps
@@ -1049,7 +1068,7 @@ GetUserSettings (
 }
 
 EFI_STATUS
-GetOSVersion(
+GetOSVersion (
   IN EFI_FILE   *FileHandle
 )
 {
