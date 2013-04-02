@@ -1031,16 +1031,17 @@ GetUserSettings (
         }
       }
     }
-#if BOOT_DEBUG
+
+    DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
+#ifdef BOOT_DEBUG
     CHAR16  Buffer1[100];
 
-    Print (L"gSettings.NrKexts = %d\n", gSettings.NrKexts);
     for (i = 0; i < gSettings.NrKexts; i++) {
+
       ZeroMem (Buffer1, sizeof (Buffer1));
       AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
-      Print (L"%d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
+      DBG ("  %d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
     }
-    Pause (NULL);
 #endif
 
     gMobile = gSettings.Mobile;

@@ -1288,11 +1288,10 @@ Returns:
 #endif
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
-#ifdef BOOT_DEBUG
-  Print (L" New USBLEGCTLSTS = 0x%x\n", mNewValue);
-  Print (L" Old USBLEGCTLSTS = 0x%x\n", mSaveValue);
-  Pause (NULL);
-#endif
+
+  DBG (" New USBLEGCTLSTS = 0x%x\n", mNewValue);
+  DBG (" Old USBLEGCTLSTS = 0x%x\n", mSaveValue);
+
   BdsLibEnumerateAllBootOption (BootOptionList);
 
   AddBootArgs = "";

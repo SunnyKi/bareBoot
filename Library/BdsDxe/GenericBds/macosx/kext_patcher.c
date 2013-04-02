@@ -388,7 +388,7 @@ AnyKextPatch (
             gSettings.AnyKextPatch[N],
             -1
           );
-#if BOOT_DEBUG
+#if KEXT_PATCH_DEBUG
     Print (L"binary replaces %d times:\n", Num);
 #endif
   } else {
@@ -401,7 +401,7 @@ AnyKextPatch (
             gSettings.AnyKextPatch[N],
             -1
           );
-#if BOOT_DEBUG
+#if KEXT_PATCH_DEBUG
     Print (L"plist replaces %d times:\n", Num);
 #endif
   }
@@ -485,7 +485,7 @@ PatchKext (
     if ((gSettings.AnyKextDataLen[i] > 0) &&
         (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
       AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
-#if BOOT_DEBUG
+#if KEXT_PATCH_DEBUG
       CHAR16  Buffer1[100];
 
       ZeroMem (Buffer1, sizeof (Buffer1));
@@ -757,7 +757,7 @@ KextPatcherStart (
     PatchLoadedKexts();
   }
 #endif
-#if BOOT_DEBUG
+#if KEXT_PATCH_DEBUG
   Pause (NULL);
   Pause (NULL);
 #endif

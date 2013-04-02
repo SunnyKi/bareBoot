@@ -476,9 +476,7 @@ ConnectEFIDevices (
       {
         if (HandleType[Index] & EFI_HANDLE_TYPE_DEVICE_HANDLE)
         {
-#ifdef BOOT_DEBUG
-          Print(L"  4.%d. attempt connecting  HandleType = 0x%x\n", Index + 1, HandleType[Index]);
-#endif
+          DBG ("  4.%d. attempt connecting  HandleType = 0x%x\n", Index + 1, HandleType[Index]);
           Status = gBS->ConnectController(AllHandleBuffer[Index],NULL,NULL,TRUE);
         }
       }

@@ -20,20 +20,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "BiosBlkIo.h"
 
-#ifndef DEBUG_ALL
-#define DEBUG_BB 1
-#else
-#define DEBUG_BB DEBUG_ALL
-#endif
-
-#if DEBUG_BB==0
-#define DBG(...)
-#elif DEBUG_BB == 1
-#define DBG(...) MemLog(TRUE, 1, __VA_ARGS__)
-#else
 #define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
-#endif
-
 
 //
 // Global data declaration

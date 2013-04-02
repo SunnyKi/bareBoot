@@ -272,11 +272,10 @@ MacOS:
   SetPrivateVarProto ();
   SetupDataForOSX ();
   EventsInitialize ();
-#if 0
-  DumpCPU ();
-  Pause (NULL);
-#endif
+#ifdef BOOT_DEBUG
   SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
+
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
   AsciiStrToUnicodeStr (gSettings.BootArgs, buffer);

@@ -32,10 +32,18 @@
 #include "device_inject.h"
 
 #if 0
+#define KEXT_PATCH_DEBUG
+#endif
+#if 1
 #define BOOT_DEBUG
 #endif
-#define ACPI_DEBUG
+
+#ifndef BOOT_DEBUG
+#define DBG(...)
+#else
 #define BOOT_LOG L"EFI\\mini\\boot.log"
+#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
+#endif
 
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))
 #define MAX_NUM_DEVICES 64
