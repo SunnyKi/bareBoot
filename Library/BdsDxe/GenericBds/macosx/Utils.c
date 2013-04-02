@@ -623,7 +623,7 @@ egLoadFile (
 
 EFI_STATUS
 egSaveFile (
-  IN EFI_FILE_HANDLE BaseDir OPTIONAL,
+  IN EFI_FILE_HANDLE BaseDir,
   IN CHAR16   *FileName,
   IN UINT8    *FileData,
   IN UINTN    FileDataLength
@@ -634,9 +634,7 @@ egSaveFile (
   UINTN               BufferSize;
 
   if (BaseDir == NULL) {
-    Status = egFindESP(&BaseDir);
-    if (EFI_ERROR(Status))
-      return Status;
+    return EFI_NOT_FOUND;
   }
 
   Status = BaseDir->Open(BaseDir, &FileHandle, FileName,

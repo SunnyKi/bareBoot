@@ -127,7 +127,7 @@
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   MemLogLib|bareBoot/Library/MemLogLibDefault/MemLogLibDefault.inf
-  #PListLib|bareBoot/Library/PListLib/PListLib.inf
+  PListLib|bareBoot/Library/PListLib/PListLib.inf
 
 [LibraryClasses.common.DXE_CORE]
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
