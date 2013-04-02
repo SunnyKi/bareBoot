@@ -994,8 +994,6 @@ GetUserSettings (
       Print (L"%d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
     }
     Pause (NULL);
-    Pause (NULL);
-    Pause (NULL);
 #endif
 
     gMobile = gSettings.Mobile;
