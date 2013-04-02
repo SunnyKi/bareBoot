@@ -288,6 +288,50 @@ GetDataSetting (
   return data;
 }
 
+UINTN
+GetSizeArray (
+  IN TagPtr array
+)
+{
+  UINTN size;
+  TagPtr  tmpptr;
+
+  if ((array == NULL) &&
+      (array->type != kTagTypeArray)) {
+    return 0;
+  }
+
+  for (size = 0, tmpptr = array->tag; tmpptr != NULL; tmpptr = tmpptr->tagNext) {
+    size++;
+  }
+
+  return size;
+}
+
+TagPtr
+GetArrayItem (
+  IN TagPtr array,
+  IN UINTN  nument
+)
+{
+  UINTN   i;
+  TagPtr  tmpptr;
+
+  if ((array == NULL) &&
+      (array->type != kTagTypeArray)) {
+    return NULL;
+  }
+  
+  for (i = 0, tmpptr = array->tag; i < nument; i++) {
+    if (tmpptr == NULL) {
+      return NULL;
+    }
+    tmpptr = tmpptr->tagNext;
+  }
+  
+  return tmpptr;
+}
+
 EFI_STATUS
 StrToBuf (
   OUT UINT8    *Buf,
@@ -722,18 +766,19 @@ GetUserSettings (
   EFI_STATUS      Status;
   UINTN           size;
   CHAR8*          gConfigPtr;
-  TagPtr          dict;
   TagPtr          dictPointer;
+  TagPtr          dict;
+  TagPtr          array;
   TagPtr          prop;
   CHAR16          cUUID[40];
   MACHINE_TYPES   Model;
-  CHAR8           ANum[4];
   UINTN           len;
   UINT32          i;
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
   dict = NULL;
+  array = NULL;
   len = 0;
   i = 0;
 
@@ -892,76 +937,67 @@ GetUserSettings (
     gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
 
     // KernelAndKextPatches
-    gSettings.KPKernelCpu = FALSE; // disabled by default
+    gSettings.KPKernelCpu = FALSE;
     gSettings.KPKextPatchesNeeded = FALSE;
 
-    dictPointer = GetProperty(dict,"KernelPatches");
-
+    dictPointer = GetProperty (dict, "KernelPatches");
     gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
 
-    dictPointer = GetProperty(dict,"KextPatches");
+    array = GetProperty (dict, "KextPatches");
 
-    i = 0;
-    do {
-      AsciiSPrint(ANum, 4, "%d", i);
-      dict = GetProperty(dictPointer, ANum);
-      if (!dict) {
-        break;
-      }
-
-      prop = GetProperty(dict,"Name");
-      if (prop) {
-        gSettings.AnyKext[i] = AllocateCopyPool (AsciiStrSize(prop->string), prop->string);
-      }
-
-      // check if this is Info.plist patch or kext binary patch
-      gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dict, "InfoPlistPatch", FALSE);
-      
-      if (gSettings.AnyKextInfoPlistPatch[i]) {
-        // Info.plist
-        // Find and Replace should be in <string>...</string>
-        prop = GetProperty(dict, "Find");
-        gSettings.AnyKextDataLen[i] = 0;
-        if(prop && prop->string) {
-          gSettings.AnyKextDataLen[i] = AsciiStrLen (prop->string);
-          gSettings.AnyKextData[i] = (UINT8 *) AllocateCopyPool (gSettings.AnyKextDataLen[i] + 1, prop->string);
+    if (array != NULL) {
+      gSettings.NrKexts = GetSizeArray (array);
+      if ((gSettings.NrKexts <= 100)) {
+        for (i = 0; i < gSettings.NrKexts; i++) {
+          dictPointer = GetArrayItem (array, i);
+          prop = GetProperty(dictPointer, "Name");
+          if (prop) {
+            gSettings.AnyKext[i] = AllocateCopyPool (AsciiStrSize(prop->string), prop->string);
+          }
+          // check if this is Info.plist patch or kext binary patch
+          gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dictPointer, "InfoPlistPatch", FALSE);
+          if (gSettings.AnyKextInfoPlistPatch[i]) {
+            // Info.plist
+            // Find and Replace should be in <string>...</string>
+            prop = GetProperty (dictPointer, "Find");
+            gSettings.AnyKextDataLen[i] = 0;
+            if(prop && prop->string) {
+              gSettings.AnyKextDataLen[i] = AsciiStrLen (prop->string);
+              gSettings.AnyKextData[i] = (UINT8 *) AllocateCopyPool (gSettings.AnyKextDataLen[i] + 1, prop->string);
+            }
+            prop = GetProperty(dictPointer, "Replace");
+            if(prop && prop->string) {
+              len = AsciiStrLen (prop->string);
+              gSettings.AnyKextPatch[i] = (UINT8 *) AllocateCopyPool (AsciiStrLen (prop->string) + 1, prop->string);
+            }
+          } else {
+            // kext binary patch
+            // Find and Replace should be in <data>...</data> or <string>...</string>
+            gSettings.AnyKextData[i] = GetDataSetting (dictPointer, "Find", &gSettings.AnyKextDataLen[i]);
+            gSettings.AnyKextPatch[i] = GetDataSetting (dictPointer, "Replace", &len);
+          }
+          if (gSettings.AnyKextDataLen[i] != len || len == 0) {
+            gSettings.AnyKext[i][0] = 0; //just erase name
+            continue; //same i
+          }
+          gSettings.KPKextPatchesNeeded = TRUE;
         }
-        prop = GetProperty(dict, "Replace");
-        if(prop && prop->string) {
-          len = AsciiStrLen (prop->string);
-          gSettings.AnyKextPatch[i] = (UINT8 *) AllocateCopyPool (AsciiStrLen (prop->string) + 1, prop->string);
-        }
-      } else {
-        // kext binary patch
-        // Find and Replace should be in <data>...</data> or <string>...</string>
-        gSettings.AnyKextData[i] = GetDataSetting (dict,"Find", &gSettings.AnyKextDataLen[i]);
-        gSettings.AnyKextPatch[i] = GetDataSetting (dict,"Replace", &len);
       }
-
-      if (gSettings.AnyKextDataLen[i] != len || len == 0) {
-        gSettings.AnyKext[i][0] = 0; //just erase name
-        continue; //same i
-      }
-      gSettings.KPKextPatchesNeeded = TRUE;
-      i++;
-
-      if (i>99) {
-        break;
-      }
-    } while (TRUE);
-
-    gSettings.NrKexts = i;
+    }
 #if BOOT_DEBUG
-    Print (L"gSettings.NrKexts = %d\n", gSettings.NrKexts);
-
     CHAR16  Buffer1[100];
 
+    Print (L"gSettings.NrKexts = %d\n", gSettings.NrKexts);
     for (i = 0; i < gSettings.NrKexts; i++) {
       ZeroMem (Buffer1, sizeof (Buffer1));
       AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
       Print (L"%d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
     }
+    Pause (NULL);
+    Pause (NULL);
+    Pause (NULL);
 #endif
+
     gMobile = gSettings.Mobile;
 
     if ((gSettings.BusSpeed > 10 * kilo) &&
