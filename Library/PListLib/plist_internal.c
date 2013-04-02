@@ -374,7 +374,7 @@ plFromXml(plbuf_t* ibuf) {
 	rc = 0;
 	pn = NULL;
 
-	rc = PListParseXML(ibuf->dat, ibuf->len, &plist);
+	rc = PListXMLParse(ibuf->dat, ibuf->len, &plist);
 	if(rc == 0) {
 		switch(plist->type) {
 		case kTagTypeDict:
@@ -386,7 +386,8 @@ plFromXml(plbuf_t* ibuf) {
 			rc = 0;
 			break;
 		}
-		FreeTag(plist);
+		PListXMLFreeTag(plist);
 	}
+	PListXMLCleanup();
 	return  rc == 0 ? NULL : pn;
 }

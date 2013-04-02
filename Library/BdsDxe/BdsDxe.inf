@@ -141,7 +141,7 @@
   CapsuleLib
   PcdLib
   UefiHiiServicesLib
-  #PListLib
+  PListLib
   
 [Guids]
                                                 ## SOMETIMES_PRODUCES ## Variable:L"BootXX" (Boot option variable)
