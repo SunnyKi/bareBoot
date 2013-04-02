@@ -137,7 +137,7 @@ echo Building from: $WORKSPACE
 fi
 
 
-BUILD_ROOT_ARCH=$WORKSPACE/Build/miniClover$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"/$PROCESSOR
+BUILD_ROOT_ARCH=$WORKSPACE/Build/bareBoot$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"/$PROCESSOR
 
 if  [[ ! -f `which build` || ! -f `which GenFv` ]];
 then
@@ -153,23 +153,23 @@ fi
 
 if [[ $ARG == cleanall ]]; then
 make -C $WORKSPACE/BaseTools clean
-build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
+build -p $WORKSPACE/bareBoot/bareBoot$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
 exit $?
 fi
 
 if [[ $ARG == clean ]]; then
-build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
+build -p $WORKSPACE/bareBoot/bareBoot$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 clean
 exit $?
 fi
 
-# Build the edk2 miniClover
-echo Running edk2 build for miniClover$Processor
-VERFILE=$WORKSPACE/miniClover/Version.h
+# Build the edk2 bareBoot
+echo Running edk2 build for bareBoot$Processor
+VERFILE=$WORKSPACE/bareBoot/Version.h
 echo "#define FIRMWARE_VERSION L\"2.31\"" > $VERFILE
 echo "#define FIRMWARE_BUILDDATE L\"`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $VERFILE
-echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/miniClover; git tag | tail -n 1`\"" >> $VERFILE
+echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
 
-build -p $WORKSPACE/miniClover/miniClover$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 $*
+build -p $WORKSPACE/bareBoot/bareBoot$Processor.dsc -a $PROCESSOR -b $VTARGET -t $TARGET_TOOLS -n 3 $*
 
 }
 
@@ -182,8 +182,8 @@ export BASETOOLS_DIR=$WORKSPACE/BaseTools/Source/C/bin
 else
 export BASETOOLS_DIR=$EDK_TOOLS_PATH/Source/C/bin
 fi
-export BOOTSECTOR_BIN_DIR=$WORKSPACE/miniClover/BootSector/bin
-export BUILD_DIR=$WORKSPACE/Build/miniClover$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"
+export BOOTSECTOR_BIN_DIR=$WORKSPACE/bareBoot/BootSector/bin
+export BUILD_DIR=$WORKSPACE/Build/bareBoot$PROCESSOR/"$VTARGET"_"$TARGET_TOOLS"
 
 echo Compressing DUETEFIMainFv.FV ...
 $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DUETEFIMAINFV.z $BUILD_DIR/FV/DUETEFIMAINFV.Fv

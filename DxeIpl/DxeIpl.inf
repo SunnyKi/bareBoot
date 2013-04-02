@@ -25,7 +25,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  miniClover/miniClover.dec
+  bareBoot/bareBoot.dec
   MdeModulePkg/MdeModulePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
 

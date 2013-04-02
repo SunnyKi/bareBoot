@@ -22,15 +22,15 @@
 #
 ################################################################################
 [Defines]
-  PLATFORM_NAME                  = miniClover
+  PLATFORM_NAME                  = bareBoot
   PLATFORM_GUID                  = 199E24E0-0989-42aa-87F2-611A8C397E72
   PLATFORM_VERSION               = 0.4
   DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = Build/miniCloverX64
-  SUPPORTED_ARCHITECTURES        = X64
+  OUTPUT_DIRECTORY               = Build/bareBootIA32
+  SUPPORTED_ARCHITECTURES        = IA32
   BUILD_TARGETS                  = DEBUG || RELEASE
   SKUID_IDENTIFIER               = DEFAULT
-  FLASH_DEFINITION               = miniClover/miniClover.fdf
+  FLASH_DEFINITION               = bareBoot/bareBoot.fdf
 
 ################################################################################
 #
@@ -59,7 +59,7 @@
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
   #PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
-  PeCoffLib|miniClover/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
+  PeCoffLib|bareBoot/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
 #  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
 #  EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
 #  PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
@@ -100,7 +100,7 @@
   #
   # Platform
   #
-  TimerLib|miniClover/Library/DuetTimerLib/DuetTimerLib.inf
+  TimerLib|bareBoot/Library/DuetTimerLib/DuetTimerLib.inf
   #
   # Misc
   #
@@ -126,8 +126,8 @@
   DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
-  MemLogLib|miniClover/Library/MemLogLibDefault/MemLogLibDefault.inf
-  #PListLib|miniClover/Library/PListLib/PListLib.inf
+  MemLogLib|bareBoot/Library/MemLogLibDefault/MemLogLibDefault.inf
+  PListLib|bareBoot/Library/PListLib/PListLib.inf
 
 [LibraryClasses.common.DXE_CORE]
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
@@ -161,7 +161,7 @@
 
 ###################################################################################################
 [Components]
-  miniClover/DxeIpl/DxeIpl.inf 
+  bareBoot/DxeIpl/DxeIpl.inf 
   MdeModulePkg/Core/Dxe/DxeMain.inf 
 
   MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
@@ -184,15 +184,15 @@
   MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
   MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-  miniClover/SmbiosGenDxe/SmbiosGen.inf
+  bareBoot/SmbiosGenDxe/SmbiosGen.inf
 
-  miniClover/EfiLdr/EfiLdr.inf {
+  bareBoot/EfiLdr/EfiLdr.inf {
     <LibraryClasses>
       DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
       NULL|IntelFrameworkModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   }
 
-  miniClover/Library/BdsDxe/BdsDxe.inf {
+  bareBoot/Library/BdsDxe/BdsDxe.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   }
@@ -200,21 +200,21 @@
   UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
   UefiCpuPkg/CpuDxe/CpuDxe.inf
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
-  miniClover/AcpiResetDxe/Reset.inf
-  miniClover/LegacyMetronome/Metronome.inf
+  bareBoot/AcpiResetDxe/Reset.inf
+  bareBoot/LegacyMetronome/Metronome.inf
 
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
-  miniClover/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
-  miniClover/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+  bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
+  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
 #  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf
 
   # IDE/AHCI Support
 #  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
-  miniClover/BlockIoDxe/BlockIoDxe.inf
-  miniClover/SataControllerDxe/SataControllerDxe.inf
+  bareBoot/BlockIoDxe/BlockIoDxe.inf
+  bareBoot/SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
@@ -233,21 +233,21 @@
   PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
   IntelFrameworkModulePkg/Bus/Isa/IsaBusDxe/IsaBusDxe.inf
 #  IntelFrameworkModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2keyboardDxe.inf
-  miniClover/BiosKeyboard/KeyboardDxe.inf
+  bareBoot/BiosKeyboard/KeyboardDxe.inf
 
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
-  miniClover/PartitionDxe/PartitionDxe.inf
+  bareBoot/PartitionDxe/PartitionDxe.inf
 
 
   # Bios Thunk
-  miniClover/BiosVideo/BiosVideo.inf
+  bareBoot/BiosVideo/BiosVideo.inf
 
   # ACPI Support
 #  MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
 #  MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
-#  miniClover/OsxAcpiTableDxe/AcpiTableDxe.inf
-#  miniClover/OsxAcpiPlatformDxe/AcpiPlatformDxe.inf
+#  bareBoot/OsxAcpiTableDxe/AcpiTableDxe.inf
+#  bareBoot/OsxAcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # DataHub
   IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf

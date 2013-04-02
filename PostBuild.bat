@@ -16,7 +16,7 @@
 @REM #
 @REM ##
 
-@set PKGNAME=miniClover
+@set PKGNAME=bareBoot
 
 @set BASETOOLS_DIR=%WORKSPACE_TOOLS_PATH%\Bin\Win32
 @set BOOTSECTOR_BIN_DIR=%WORKSPACE%\%PKGNAME%\BootSector\bin
