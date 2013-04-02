@@ -20,7 +20,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  Clover/CloverPkg.dec
+  bareBoot/bareBoot.dec
 
 [LibraryClasses]
   BaseLib
@@ -28,4 +28,3 @@
   PrintLib
   MemoryAllocationLib
   UefiBootServicesTableLib
-

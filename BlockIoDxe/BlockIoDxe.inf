@@ -55,7 +55,7 @@
   gBlockIoVendorGuid
 
 [Packages]
-  Clover/CloverPkg.dec
+  bareBoot/bareBoot.dec
   MdePkg/MdePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
