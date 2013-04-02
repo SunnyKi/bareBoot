@@ -296,7 +296,7 @@ GetSizeArray (
   UINTN size;
   TagPtr  tmpptr;
 
-  if ((array == NULL) &&
+  if ((array == NULL) ||
       (array->type != kTagTypeArray)) {
     return 0;
   }
@@ -317,7 +317,7 @@ GetArrayItem (
   UINTN   i;
   TagPtr  tmpptr;
 
-  if ((array == NULL) &&
+  if ((array == NULL) ||
       (array->type != kTagTypeArray)) {
     return NULL;
   }
