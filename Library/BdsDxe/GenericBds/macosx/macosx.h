@@ -636,6 +636,14 @@ egLoadFile (
 );
 
 EFI_STATUS
+egSaveFile (
+  IN EFI_FILE_HANDLE BaseDir OPTIONAL,
+  IN CHAR16   *FileName,
+  IN UINT8    *FileData,
+  IN UINTN    FileDataLength
+);
+
+EFI_STATUS
 GetBootDefault(
   IN EFI_FILE *RootFileHandle,
   IN CHAR16* ConfigPlistPath

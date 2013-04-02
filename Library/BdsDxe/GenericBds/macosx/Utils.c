@@ -621,6 +621,36 @@ egLoadFile (
   return EFI_SUCCESS;
 }
 
+EFI_STATUS
+egSaveFile (
+  IN EFI_FILE_HANDLE BaseDir OPTIONAL,
+  IN CHAR16   *FileName,
+  IN UINT8    *FileData,
+  IN UINTN    FileDataLength
+)
+{
+  EFI_STATUS          Status;
+  EFI_FILE_HANDLE     FileHandle;
+  UINTN               BufferSize;
+
+  if (BaseDir == NULL) {
+    Status = egFindESP(&BaseDir);
+    if (EFI_ERROR(Status))
+      return Status;
+  }
+
+  Status = BaseDir->Open(BaseDir, &FileHandle, FileName,
+                         EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+  if (EFI_ERROR(Status))
+    return Status;
+
+  BufferSize = FileDataLength;
+  Status = FileHandle->Write(FileHandle, &BufferSize, FileData);
+  FileHandle->Close(FileHandle);
+
+  return Status;
+}
+
 UINTN
 AsciiStr2Uintn (
   CHAR8* ps
