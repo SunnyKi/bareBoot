@@ -248,6 +248,7 @@ BdsLibBootViaBootOption (
     goto Done;
 
 MacOS:
+  DBG ("BdsBoot: Starting InitializeConsoleSim\n");
   InitializeConsoleSim (gImageHandle);
   
   Status = gBS->HandleProtocol (
@@ -261,16 +262,25 @@ MacOS:
                        &FHandle
                      );
   }
-
+  DBG ("BdsBoot: Starting GetOSVersion\n");
   GetOSVersion (FHandle);
+  DBG ("BdsBoot: Starting GetUserSettings\n");
   GetUserSettings (gRootFHandle, L"\\EFI\\bb\\config.plist");
+  DBG ("BdsBoot: Starting ScanSPD\n");
   ScanSPD ();
+  DBG ("BdsBoot: Starting SetDevices\n");
   SetDevices ();
+  DBG ("BdsBoot: Starting PatchSmbios\n");
   PatchSmbios ();
+  DBG ("BdsBoot: Starting PatchACPI\n");
   PatchACPI (gRootFHandle);
+  DBG ("BdsBoot: Starting SetVariablesForOSX\n");
   SetVariablesForOSX ();
+  DBG ("BdsBoot: Starting SetPrivateVarProto\n");
   SetPrivateVarProto ();
+  DBG ("BdsBoot: Starting SetupDataForOSX\n");
   SetupDataForOSX ();
+  DBG ("BdsBoot: Starting EventsInitialize\n");
   EventsInitialize ();
 #ifdef BOOT_DEBUG
   SaveBooterLog (gRootFHandle, BOOT_LOG);
@@ -946,7 +956,8 @@ BdsLibGetBootableHandle (
     // For removable device boot option, its contained device path only point to the removable device handle, 
     // should make sure all its children handles (its child partion or media handles) are created and connected. 
     //
-    gBS->ConnectController (Handle, NULL, NULL, TRUE); 
+    gBS->ConnectController (Handle, NULL, NULL, TRUE);
+    DBG ("    BdsBoot: BdsLibGetBootableHandle->ConnectController BlockIo\n");
     //
     // Get BlockIo protocol and check removable attribute
     //
@@ -1051,6 +1062,7 @@ BdsLibGetBootableHandle (
       }
     }
   }
+  DBG ("    BdsBoot: Get the device path size of SimpleFileSystem handle finished\n");
   FreePool(DupDevicePath);
   if (SimpleFileSystemHandles != NULL) {
     FreePool(SimpleFileSystemHandles);

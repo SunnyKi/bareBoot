@@ -25,6 +25,7 @@ Abstract:
 
 #include <Library/IoLib.h>
 
+#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
 #define IS_PCI_ISA_PDECODE(_p)        IS_CLASS3 (_p, PCI_CLASS_BRIDGE, PCI_CLASS_BRIDGE_ISA_PDECODE, 0)
 #define SCAN_ESC        0x0017
 #define SCAN_F1         0x000B
@@ -637,7 +638,8 @@ GetGopDevicePath (
   // on them, then we get device paths of these child handles and select
   // them as possible console device.
   //
-  gBS->ConnectController (PciDeviceHandle, NULL, NULL, FALSE);
+  gBS->ConnectController (PciDeviceHandle, NULL, NULL, FALSE);    // 2,6 sec !!!!!!
+  DBG ("    BdsPlatorm: GetGopDevicePath->ConnectController\n");
 
   Status = gBS->LocateHandleBuffer (
                   ByProtocol,
@@ -846,7 +848,6 @@ Returns:
         // Add IsaKeyboard to ConIn,
         // add IsaSerial to ConOut, ConIn, ErrOut
         //
-        DEBUG ((EFI_D_INFO, "Find the LPC Bridge device\n"));
         PrepareLpcBridgeDevicePath (HandleBuffer[Index]);
         continue;
       }
@@ -857,7 +858,6 @@ Returns:
         //
         // Add them to ConOut, ConIn, ErrOut.
         //
-        DEBUG ((EFI_D_INFO, "Find the 16550 SERIAL device\n"));
         PreparePciSerialDevicePath (HandleBuffer[Index]);
         continue;
       }
@@ -870,7 +870,6 @@ Returns:
       //
       // Add them to ConOut.
       //
-      DEBUG ((EFI_D_INFO, "Find the VGA device\n"));
       PreparePciVgaDevicePath (HandleBuffer[Index]);
       continue;
     }
@@ -916,7 +915,7 @@ Returns:
   //
   // Connect RootBridge
   //
-  ConnectRootBridge ();
+  ConnectRootBridge (); //
 
   VarConout = BdsLibGetVariableAndSize (
                 VarConsoleOut,
@@ -971,6 +970,7 @@ Returns:
   //
   // Connect the all the default console with current cosole variable
   //
+  DBG ("  BdsPlatorm: Starting BdsLibConnectAllDefaultConsoles\n");  // 2.6 sec
   Status = BdsLibConnectAllDefaultConsoles ();
   if (EFI_ERROR (Status)) {
     return Status;
@@ -1277,21 +1277,25 @@ Returns:
   EFI_KEY_DATA                        mKeyData;
 #endif
 
+  DBG ("BdsPlatorm: Starting BdsLibGetBootMode\n");
   Status = BdsLibGetBootMode (&BootMode);
   ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
   // very long function:
+  DBG ("BdsPlatorm: Starting PlatformBdsConnectConsole\n"); // 5.2 sec
   PlatformBdsConnectConsole (gPlatformConsole);
-
+  DBG ("BdsPlatorm: Starting PlatformBdsDiagnostics\n");
   PlatformBdsDiagnostics (IGNORE, TRUE, BaseMemoryTest);
 #if 0
   EnableSmbus ();
 #endif
+  DBG ("BdsPlatorm: Starting BdsLibConnectAllDriversToAllControllers\n");  // 2.3 sec
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
 
-  DBG (" New USBLEGCTLSTS = 0x%x\n", mNewValue);
-  DBG (" Old USBLEGCTLSTS = 0x%x\n", mSaveValue);
+  DBG ("BdsPlatorm: New USBLEGCTLSTS = 0x%x\n", mNewValue);
+  DBG ("BdsPlatorm: Old USBLEGCTLSTS = 0x%x\n", mSaveValue);
 
+  DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");  // 0.3 sec
   BdsLibEnumerateAllBootOption (BootOptionList);
 
   AddBootArgs = "";
@@ -1345,6 +1349,7 @@ Returns:
     }
   }
 #endif
+  DBG ("BdsPlatorm: Starting PlatformBdsEnterFrontPage\n");
   PlatformBdsEnterFrontPage (gSettings.BootTimeout, TRUE);
   return ;
 }

@@ -325,6 +325,7 @@ BdsLibConnectDevicePath (
           //    next connection
           //
           gBS->ConnectController (Handle, NULL, RemainingDevicePath, FALSE);
+          DBG ("    BdsConnect: BdsLibConnectDevicePath->ConnectController\n");
         }
       }
       //
@@ -453,8 +454,7 @@ ConnectEFIDevices (
   Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &AllHandleCount, &AllHandleBuffer);
     if (EFI_ERROR (Status))  goto Done;
 
-  for (Index = 0; Index < AllHandleCount; Index++)
-  {
+  for (Index = 0; Index < AllHandleCount; Index++) {
     Status = ScanDeviceHandles(AllHandleBuffer[Index],NULL,&HandleCount,&HandleBuffer,&HandleType);
     if (EFI_ERROR (Status))  goto Done;
 
@@ -463,21 +463,17 @@ ConnectEFIDevices (
     if (HandleType[Index] & EFI_HANDLE_TYPE_DRIVER_BINDING_HANDLE)  Device = FALSE;
     if (HandleType[Index] & EFI_HANDLE_TYPE_IMAGE_HANDLE)           Device = FALSE;
 
-    if (Device)
-    {
+    if (Device) {
       Parent = FALSE;
-      for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++)
-      {
+      for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++) {
         if (HandleType[HandleIndex] & EFI_HANDLE_TYPE_PARENT_HANDLE)
           Parent = TRUE;
       }
 
-      if (!Parent)
-      {
-        if (HandleType[Index] & EFI_HANDLE_TYPE_DEVICE_HANDLE)
-        {
-          DBG ("  4.%d. attempt connecting  HandleType = 0x%x\n", Index + 1, HandleType[Index]);
+      if (!Parent) {
+        if (HandleType[Index] & EFI_HANDLE_TYPE_DEVICE_HANDLE) {
           Status = gBS->ConnectController(AllHandleBuffer[Index],NULL,NULL,TRUE);
+          DBG ("    BdsConnect: %d. ConnectEFIDevices->ConnectController HandleType = 0x%x\n", Index + 1, HandleType[Index]);
         }
       }
     }
@@ -611,6 +607,7 @@ BdsLibConnectUsbDevByShortFormDP(
                               RemainingDevicePath,
                               FALSE
                               );
+              DBG ("    BdsConnect: BdsLibConnectUsbDevByShortFormDP->ConnectController\n");
               if (!EFI_ERROR(Status)) {
                 AtLeastOneConnected = TRUE;
               }
