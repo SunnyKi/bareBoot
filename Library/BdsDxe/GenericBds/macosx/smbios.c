@@ -1049,7 +1049,7 @@ PatchTableType17 (
       newSmbiosTable.Type130->Size = (gRAM->DIMM[map].SpdSize);
       CopyMem ((UINT8 *) newSmbiosTable.Type130->Data, gRAM->DIMM[map].spd, gRAM->DIMM[map].SpdSize);
       Handle = LogSmbiosTable (newSmbiosTable);
-      DBG ("Type130 Lenght = 0x%x, Handle = 0x%x, Size = 0x%x",
+      DBG ("Type130 Lenght = 0x%x, Handle = 0x%x, Size = 0x%x\n",
             newSmbiosTable.Type130->Hdr.Length,
             newSmbiosTable.Type130->Hdr.Handle,
             newSmbiosTable.Type130->Size
