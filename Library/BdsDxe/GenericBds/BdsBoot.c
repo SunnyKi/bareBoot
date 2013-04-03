@@ -263,7 +263,7 @@ MacOS:
   }
 
   GetOSVersion (FHandle);
-  GetUserSettings (gRootFHandle, L"\\EFI\\mini\\config.plist");
+  GetUserSettings (gRootFHandle, L"\\EFI\\bb\\config.plist");
   ScanSPD ();
   SetDevices ();
   PatchSmbios ();
@@ -649,7 +649,7 @@ BdsLibEnumerateAllBootOption (
                          );
       }
 
-      if ((FileExists (FHandle, L"\\EFI\\mini\\config.plist")) && (ConfigNotFound)) {
+      if ((FileExists (FHandle, L"\\EFI\\bb\\config.plist")) && (ConfigNotFound)) {
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
       }
@@ -729,7 +729,7 @@ BdsLibEnumerateAllBootOption (
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], SHELL_PATH, BdsBootOptionList, Buffer, TRUE);
       }
     }
-    GetBootDefault(gRootFHandle, L"\\EFI\\mini\\config.plist");
+    GetBootDefault(gRootFHandle, L"\\EFI\\bb\\config.plist");
 #if 0
   }
 #endif

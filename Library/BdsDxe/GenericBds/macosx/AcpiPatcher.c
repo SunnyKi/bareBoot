@@ -295,7 +295,7 @@ PatchACPI (
   FadtPointer = NULL;
   newFadt   = NULL;
   PathDsdt      = L"DSDT.aml";
-  PathPatched   = L"\\EFI\\mini\\acpi\\patched\\";
+  PathPatched   = L"\\EFI\\bb\\acpi\\patched\\";
   PathToACPITables = AllocateZeroPool (250);
   rf = NULL;
   RsdPointer = NULL;
