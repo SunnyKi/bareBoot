@@ -23,30 +23,60 @@
  * SUCH DAMAGE.
  */
 
-#ifndef NULL
-#define NULL ((void*)0)
-#endif
+/*
+ * All strings are not terminated by '\0'.
+ * Ask for size
+ */
 
-#ifndef TRUE
-#define TRUE (1 != 0)
-#endif
+typedef enum _plkind {
+  plKindAny = 0,
+  /* bag nodes */
+  plKindArray,
+  plKindDict,
+  plKindKey, /* Node with ascii key and datum child node */
+  /* leaf nodes */
+  plKindBool,
+  plKindData, /* byte array with any content */
+  plKindDate,
+  plKindInteger,
+  plKindString /* string? */
+} plkind_t;
 
-#ifndef FALSE
-#define FALSE (1 == 0)
-#endif
+typedef long long vlong;
 
-unsigned int _plstrlen(const char* str);
-char* _plstrcpy(char* dst, const char* src);
-int _plstrcmp(const char* s1, const char* s2);
+typedef struct _plbuf {
+	char* dat;
+	unsigned int len; 
+	unsigned int pos;
+} plbuf_t;
 
-int _plmemcmp(const void* s1, const void* s2, unsigned int sz);
-void* _plmemcpy(void* dst, const void* src, unsigned int sz);
+void* plFromXml(plbuf_t*);
 
-int _plint2str(vlong val, char* vbuf, unsigned int bsz);
-vlong _plstr2vlong(char* vbuf, unsigned int bsz);
+int plToXml(void*, plbuf_t*);
 
-void* _plzalloc(unsigned int sz);
-void _plfree(void* ptr);
+plkind_t plGetKind(void*);
 
-char* _plb64encode(char* idat, unsigned int ilen, unsigned int* olen);
-char* _plb64decode(char* idat, unsigned int ilen, unsigned int* olen);
+unsigned int plGetSize(void*); /* Applied to any node where size has meaning */
+char* plGetBytes(void*);
+
+void* plNewBool(int);
+int plGetBool(void*);
+
+void* plNewInteger(vlong);
+vlong plGetIntValue(void*);
+
+void* plNewDate(char*, unsigned int);
+
+int plAdd(void* bag, void* elem);
+
+void* plNewArray(void);
+void* plNewDict(void);
+void* plGetItem(void*, unsigned int);
+void* plNewKey(char*, unsigned int, void*);
+void* plFind(void* dict, char* key, unsigned int klen, plkind_t kind); /* kind can be Any */
+
+void* plNewData(char*, unsigned int);
+
+void* plNewString(char*, unsigned int);
+
+void plDeleteNode(void*);

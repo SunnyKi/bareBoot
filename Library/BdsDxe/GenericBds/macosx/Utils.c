@@ -17,6 +17,9 @@
 
 #include "macosx.h"
 
+#include <Library/plist.h>
+#include <Library/plist_xml_parser.h>
+
 BOOLEAN
 EfiGrowBuffer (
   IN OUT EFI_STATUS   *Status,
@@ -262,7 +265,7 @@ GetDataSetting (
   UINT8     *data = NULL;
   UINT32    len;
 
-  prop = GetProperty (dict, propName);
+  prop = PListXMLGetProperty (dict, propName);
 
   if (prop != NULL) {
     if (prop->data != NULL && prop->dataLen > 0) {
@@ -515,12 +518,12 @@ hex2bin (
   p = (CHAR8 *) hex;
 
   for (i = 0; i < (UINT32) len; i++) {
-		while ((*p == 0x20) || (*p == ',')) {
-			p++;
-		}
-		if (*p == 0) {
-			break;
-		}
+    while ((*p == 0x20) || (*p == ',')) {
+      p++;
+    }
+    if (*p == 0) {
+      break;
+    }
     if (!IsHexDigit (p[0]) || !IsHexDigit (p[1])) {
       return 0;
     }
@@ -530,8 +533,8 @@ hex2bin (
     bin[i] = hexstrtouint8 (buf);
     outlen++;
   }
-	bin[outlen] = 0;
-	return outlen;
+  bin[outlen] = 0;
+  return outlen;
 }
 
 VOID
@@ -662,7 +665,7 @@ SaveBooterLog (
   MemLogLen = GetMemLogLen ();
 
   if (MemLogBuffer == NULL || MemLogLen == 0) {
-		return EFI_NOT_FOUND;
+    return EFI_NOT_FOUND;
   }
 
   return egSaveFile(BaseDir, FileName, (UINT8*) MemLogBuffer, MemLogLen);
@@ -692,7 +695,7 @@ GetNumProperty (
 {
   TagPtr dentry;
 
-  dentry = GetProperty (dict, key);
+  dentry = PListXMLGetProperty (dict, key);
   if (dentry != NULL) {
     def = AsciiStr2Uintn(dentry->string);
   }
@@ -719,7 +722,7 @@ GetBoolProperty (
 {
   TagPtr dentry;
 
-  dentry = GetProperty (dict, key);
+  dentry = PListXMLGetProperty (dict, key);
   if (dentry != NULL) {
     return AsciiStr2Bool (dentry->string);
   }
@@ -735,7 +738,7 @@ GetAsciiProperty (
 {
   TagPtr dentry;
 
-  dentry = GetProperty (dict, key);
+  dentry = PListXMLGetProperty (dict, key);
   if (dentry != NULL) {
     AsciiStrCpy (aptr, dentry->string);
   }
@@ -750,7 +753,7 @@ GetUnicodeProperty (
 {
   TagPtr dentry;
 
-  dentry = GetProperty (dict, key);
+  dentry = PListXMLGetProperty (dict, key);
   if (dentry != NULL) {
     AsciiStrToUnicodeStr (dentry->string, uptr);
     return TRUE;
@@ -775,6 +778,7 @@ GetBootDefault (
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
+  size = 0;
 
   ZeroMem (gSettings.DefaultBoot, 40);
 
@@ -789,12 +793,12 @@ GetBootDefault (
 
   dict = NULL;
   if (gConfigPtr != NULL) {
-    if (ParseXML ((const CHAR8*) gConfigPtr, &dict) != EFI_SUCCESS) {
+    if (PListXMLParse ((const CHAR8*) gConfigPtr, size, &dict) != EFI_SUCCESS) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
     }
 
-    dictPointer = GetProperty (dict, "SystemParameters");
+    dictPointer = PListXMLGetProperty (dict, "SystemParameters");
     gSettings.BootTimeout = (UINT16) GetNumProperty (dictPointer, "Timeout", 0);
     if (!GetUnicodeProperty (dictPointer, "DefaultBootVolume", gSettings.DefaultBoot)) {
       gSettings.BootTimeout = 0xFFFF;
@@ -828,6 +832,7 @@ GetUserSettings (
   array = NULL;
   len = 0;
   i = 0;
+  size = 0;
 
   PrepatchSmbios ();
 
@@ -859,7 +864,7 @@ GetUserSettings (
   }
 
   if (gConfigPtr != NULL) {
-    if (ParseXML ((const CHAR8*) gConfigPtr, &dict) != EFI_SUCCESS) {
+    if (PListXMLParse ((const CHAR8*) gConfigPtr, size, &dict) != EFI_SUCCESS) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
     }
@@ -873,7 +878,7 @@ GetUserSettings (
     gSettings.CustomEDID = NULL;
     gSettings.ProcessorInterconnectSpeed = 0;
     
-    dictPointer = GetProperty (dict, "SystemParameters");
+    dictPointer = PListXMLGetProperty (dict, "SystemParameters");
 
     GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
     GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
@@ -885,7 +890,7 @@ GetUserSettings (
     }
 #endif
     if (dictPointer != NULL) {
-      prop = GetProperty (dictPointer, "PlatformUUID");
+      prop = PListXMLGetProperty (dictPointer, "PlatformUUID");
 
       if (prop != NULL) {
         AsciiStrToUnicodeStr (prop->string, cUUID);
@@ -893,7 +898,7 @@ GetUserSettings (
         //else value from SMBIOS
       }
 
-      prop = GetProperty (dictPointer, "SystemID");
+      prop = PListXMLGetProperty (dictPointer, "SystemID");
 
       if (prop != NULL) {
         AsciiStrToUnicodeStr (prop->string, cUUID);
@@ -901,7 +906,7 @@ GetUserSettings (
       }
     }
 
-    dictPointer = GetProperty (dict, "Graphics");
+    dictPointer = PListXMLGetProperty (dict, "Graphics");
     
     gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
     gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
@@ -911,26 +916,26 @@ GetUserSettings (
 
     if (dictPointer != NULL) {
 
-      prop = GetProperty (dictPointer, "NVCAP");
+      prop = PListXMLGetProperty (dictPointer, "NVCAP");
 
       if (prop != NULL) {
         hex2bin (prop->string, (UINT8*) &gSettings.NVCAP[0], 20);
       }
 
-      prop = GetProperty (dictPointer, "DisplayCfg");
+      prop = PListXMLGetProperty (dictPointer, "DisplayCfg");
 
       if (prop != NULL) {
         hex2bin (prop->string, (UINT8*) &gSettings.Dcfg[0], 8);
       }
 
-      prop = GetProperty (dictPointer, "CustomEDID");
+      prop = PListXMLGetProperty (dictPointer, "CustomEDID");
 
       if (prop != NULL) {
         gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &len);
       }
     }
 
-    dictPointer = GetProperty (dict, "PCI");
+    dictPointer = PListXMLGetProperty (dict, "PCI");
     
     gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
     gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
@@ -939,7 +944,7 @@ GetUserSettings (
 
 
     if (dictPointer != NULL) {
-      prop = GetProperty (dictPointer, "DeviceProperties");
+      prop = PListXMLGetProperty (dictPointer, "DeviceProperties");
 
       if (prop != NULL) {
         cDevProp = AllocateZeroPool (AsciiStrLen (prop->string) + 1);
@@ -947,7 +952,7 @@ GetUserSettings (
       }
     }
 
-    dictPointer = GetProperty (dict, "ACPI");
+    dictPointer = PListXMLGetProperty (dict, "ACPI");
 
     gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
     gSettings.PatchAPIC = GetBoolProperty (dictPointer, "PatchAPIC", FALSE);
@@ -956,7 +961,7 @@ GetUserSettings (
     gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
     gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
 
-    dictPointer = GetProperty (dict, "SMBIOS");
+    dictPointer = PListXMLGetProperty (dict, "SMBIOS");
 
     gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
     GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
@@ -975,7 +980,7 @@ GetUserSettings (
     GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
     GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
 
-    dictPointer = GetProperty (dict, "CPU");
+    dictPointer = PListXMLGetProperty (dict, "CPU");
 
     gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
     gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
@@ -987,17 +992,17 @@ GetUserSettings (
     gSettings.KPKernelCpu = FALSE;
     gSettings.KPKextPatchesNeeded = FALSE;
 
-    dictPointer = GetProperty (dict, "KernelPatches");
+    dictPointer = PListXMLGetProperty (dict, "KernelPatches");
     gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
 
-    array = GetProperty (dict, "KextPatches");
+    array = PListXMLGetProperty (dict, "KextPatches");
 
     if (array != NULL) {
       gSettings.NrKexts = GetSizeArray (array);
       if ((gSettings.NrKexts <= 100)) {
         for (i = 0; i < gSettings.NrKexts; i++) {
           dictPointer = GetArrayItem (array, i);
-          prop = GetProperty(dictPointer, "Name");
+          prop = PListXMLGetProperty(dictPointer, "Name");
           if (prop) {
             gSettings.AnyKext[i] = AllocateCopyPool (AsciiStrSize(prop->string), prop->string);
           }
@@ -1006,13 +1011,13 @@ GetUserSettings (
           if (gSettings.AnyKextInfoPlistPatch[i]) {
             // Info.plist
             // Find and Replace should be in <string>...</string>
-            prop = GetProperty (dictPointer, "Find");
+            prop = PListXMLGetProperty (dictPointer, "Find");
             gSettings.AnyKextDataLen[i] = 0;
             if(prop && prop->string) {
               gSettings.AnyKextDataLen[i] = AsciiStrLen (prop->string);
               gSettings.AnyKextData[i] = (UINT8 *) AllocateCopyPool (gSettings.AnyKextDataLen[i] + 1, prop->string);
             }
-            prop = GetProperty(dictPointer, "Replace");
+            prop = PListXMLGetProperty(dictPointer, "Replace");
             if(prop && prop->string) {
               len = AsciiStrLen (prop->string);
               gSettings.AnyKextPatch[i] = (UINT8 *) AllocateCopyPool (AsciiStrLen (prop->string) + 1, prop->string);
@@ -1060,7 +1065,7 @@ GetUserSettings (
   GetCPUProperties ();
 
   if (gConfigPtr != NULL) {
-    dictPointer = GetProperty (dict, "CPU");
+    dictPointer = PListXMLGetProperty (dict, "CPU");
     gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
   }
 
@@ -1072,10 +1077,10 @@ GetOSVersion (
   IN EFI_FILE   *FileHandle
 )
 {
-	EFI_STATUS  Status = EFI_NOT_FOUND;
-	CHAR8       *plistBuffer = 0;
-	UINTN       plistLen;
-	TagPtr      dictPointer  = NULL;
+  EFI_STATUS  Status = EFI_NOT_FOUND;
+  CHAR8       *plistBuffer = 0;
+  UINTN       plistLen;
+  TagPtr      dictPointer  = NULL;
   CHAR16      *SystemPlist = L"System\\Library\\CoreServices\\SystemVersion.plist";
   CHAR16      *ServerPlist = L"System\\Library\\CoreServices\\ServerVersion.plist";
   CHAR16      *RecoveryPlist = L"\\com.apple.recovery.boot\\SystemVersion.plist";
@@ -1084,24 +1089,25 @@ GetOSVersion (
     return EFI_NOT_FOUND;
   }
 
-	/* Mac OS X */
-	if(FileExists(FileHandle, SystemPlist)) {
-		Status = egLoadFile(FileHandle, SystemPlist, (UINT8 **)&plistBuffer, &plistLen);
-  }	else if(FileExists(FileHandle, ServerPlist)) {
-		Status = egLoadFile(FileHandle, ServerPlist, (UINT8 **)&plistBuffer, &plistLen);
-  }	else if(FileExists(FileHandle, RecoveryPlist)) {
-		Status = egLoadFile(FileHandle, RecoveryPlist, (UINT8 **)&plistBuffer, &plistLen);
+  /* Mac OS X */
+  plistLen = 0;
+  if(FileExists(FileHandle, SystemPlist)) {
+    Status = egLoadFile(FileHandle, SystemPlist, (UINT8 **)&plistBuffer, &plistLen);
+  }  else if(FileExists(FileHandle, ServerPlist)) {
+    Status = egLoadFile(FileHandle, ServerPlist, (UINT8 **)&plistBuffer, &plistLen);
+  }  else if(FileExists(FileHandle, RecoveryPlist)) {
+    Status = egLoadFile(FileHandle, RecoveryPlist, (UINT8 **)&plistBuffer, &plistLen);
   }
 
-	if(!EFI_ERROR(Status)) {
-		if(ParseXML(plistBuffer, &dictPointer) != EFI_SUCCESS) {
-			FreePool(plistBuffer);
-			return EFI_NOT_FOUND;
+  if(!EFI_ERROR(Status)) {
+    if(PListXMLParse(plistBuffer, plistLen, &dictPointer) != EFI_SUCCESS) {
+      FreePool(plistBuffer);
+      return EFI_NOT_FOUND;
     }
 
     GetAsciiProperty (dictPointer, "ProductVersion", OSVersion);
 
   }
 
-	return Status;
+  return Status;
 }

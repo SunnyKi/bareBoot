@@ -44,6 +44,39 @@ _plint2str(vlong val, char* vbuf, unsigned int bsz) {
 	return (int)AsciiValueToString(vbuf, 0x00, val, bsz);
 }
 
+vlong
+_plstr2vlong(char* vbuf, unsigned int bsz) {
+	UINT64 rval;
+	unsigned int wsize;
+	char* wptr;
+	int negative;
+	char wbuffer[40];
+
+	if (vbuf == NULL || bsz < 1) { return 0; }
+	wsize = sizeof(wbuffer) - 1;
+	if (bsz < wsize) { wsize = bsz; }
+	_plmemcpy(wbuffer, vbuf, wsize);
+	wbuffer[wsize] = '\0';
+	wptr = AsciiStrStr(wbuffer, "-");
+	if (wptr != NULL) {
+		negative = 1;
+		wptr++;
+	} else {
+		negative = 0;
+		wptr = wbuffer;
+	}
+	if (AsciiStrStr(wptr, "x") != NULL || AsciiStrStr(wptr, "X") != NULL ) {
+		rval = AsciiStrHexToUint64(wptr);
+	} else {
+		rval = AsciiStrDecimalToUint64(wptr);
+	}
+	if (negative) {
+		return (vlong) (0 - (vlong) rval);
+	} else {
+		return (vlong) rval;
+	}
+}
+
 int
 _plstrcmp(const char* s1, const char* s2) {
 	return (int)AsciiStrCmp(s1, s2);

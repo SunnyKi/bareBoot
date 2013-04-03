@@ -77,7 +77,6 @@
 #  BootMaint/Bmstring.uni
   GenericBds/macosx/Console.c
   GenericBds/macosx/Utils.c
-  GenericBds/macosx/plist.c
   GenericBds/macosx/cpu.c
   GenericBds/macosx/smbios.c
   GenericBds/macosx/spd.c

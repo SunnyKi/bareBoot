@@ -43,7 +43,6 @@ int _plmemcmp(const void* s1, const void* s2, unsigned int sz);
 void* _plmemcpy(void* dst, const void* src, unsigned int sz);
 
 int _plint2str(vlong val, char* vbuf, unsigned int bsz);
-vlong _plstr2vlong(char* vbuf, unsigned int bsz);
 
 void* _plzalloc(unsigned int sz);
 void _plfree(void* ptr);

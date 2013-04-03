@@ -43,6 +43,11 @@ _plint2str(vlong val, char* vbuf, unsigned int bsz) {
 	return snprintf(vbuf, bsz, "%lld", val);
 }
 
+vlong
+_plstr2vlong(char* vbuf, unsigned int bsz) {
+	return 0;
+}
+
 int
 _plstrcmp(const char* s1, const char* s2) {
 	return strcmp(s1, s2);

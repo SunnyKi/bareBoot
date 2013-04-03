@@ -424,43 +424,11 @@ typedef struct {
 } SETTINGS_DATA;
 
 typedef enum {
-  kTagTypeNone,
-  kTagTypeDict,
-  kTagTypeKey,
-  kTagTypeString,
-  kTagTypeInteger,
-  kTagTypeData,
-  kTagTypeDate,
-  kTagTypeFalse,
-  kTagTypeTrue,
-  kTagTypeArray
-} TAG_TYPE;
-
-typedef struct {
-  UINT32    type;
-  CHAR8     *string;
-  UINT8      *data;
-  UINTN      dataLen;
-  INT32     intval;
-  UINT32    offset;
-  VOID      *tag;
-  VOID      *tagNext;
-} Tag, *TagPtr;
-
-typedef enum {
   Unknown,
   Ati,
   Intel,
   Nvidia
 } GFX_MANUFACTERER;
-
-typedef struct Symbol Symbol, *SymbolPtr;
-
-struct Symbol {
-  UINT32        refCount;
-  struct Symbol *next;
-  CHAR8         string[1];
-};
 
 typedef struct {
   CHAR8   BrandString[48];
@@ -610,12 +578,6 @@ FileExists (
   IN EFI_FILE *Root, IN CHAR16 *RelativePath
 );
 
-TagPtr
-GetProperty (
-  TagPtr dict,
-  const CHAR8* key
-);
-
 EFI_STATUS
 PatchACPI (
   IN EFI_FILE *FHandle
@@ -624,12 +586,6 @@ PatchACPI (
 MACHINE_TYPES
 GetDefaultModel (
   VOID
-);
-
-EFI_STATUS
-ParseXML (
-  CONST CHAR8 *buffer,
-  TagPtr *dict
 );
 
 EFI_FILE_INFO *
@@ -727,12 +683,6 @@ EFIAPI
 EventsInitialize (
   VOID
   );
-
-UINT8*
-Base64Decode(
-  IN CHAR8 *EncodedData,
-  OUT UINTN *DecodedSize
-);
 
 EFI_STATUS
 GetOSVersion(

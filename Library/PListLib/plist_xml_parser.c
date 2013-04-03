@@ -576,13 +576,8 @@ PListXMLParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   int  Status;
   unsigned int    length;
   vlong    integer;
-  unsigned int    size;
-  int   negative;
-  char*    val;
   TagPtr tmpTag;
 
-  negative = FALSE;
-  val = buffer;
   Status = PListXMLFixDataMatchingTag (buffer, kXMLTagInteger, &length);
 
   if (Status != 0) {
@@ -594,9 +589,6 @@ PListXMLParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   if (tmpTag == NULL) {
     return (-1);
   }
-
-  size = length;
-  integer = 0;
 
   if (buffer[0] == '<') {
     tmpTag->type = kTagTypeInteger;
@@ -610,41 +602,7 @@ PListXMLParseTagInteger (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
     return 0;
   }
 
-  if (size > 1 && (val[1] == 'x' || val[1] == 'X')) { // Hex value
-    val += 2;
-
-    while (*val) {
-      if ((*val >= '0' && *val <= '9')) { // 0 - 9
-        integer = (integer * 16) + (*val++ - '0');
-      } else if ((*val >= 'a' && *val <= 'f')) { // a - f
-        integer = (integer * 16) + (*val++ - 'a' + 10);
-      } else if ((*val >= 'A' && *val <= 'F')) { // A - F
-        integer = (integer * 16) + (*val++ - 'a' + 10);
-      } else {
-        return (-1);
-      }
-    }
-  } else if (size) { // Decimal value
-    if (*val == '-') {
-      negative = TRUE;
-      val++;
-      size--;
-    }
-
-    for (integer = 0; size > 0; size--) {
-      if (*val) { // UGLY HACK, fix me.
-        if (*val < '0' || *val > '9') {
-          return (-1);
-        }
-
-        integer = (integer * 10) + (*val++ - '0');
-      }
-    }
-
-    if (negative) {
-      integer = -integer;
-    }
-  }
+  integer = _plstr2vlong(buffer, length);
 
   tmpTag->type = kTagTypeInteger;
   tmpTag->intval = integer;
