@@ -111,8 +111,8 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   PlatformHookLib|MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf
-#  SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
-  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+  SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
+#  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
   LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
   EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
@@ -123,8 +123,10 @@
   # To save size, use NULL library for DebugLib and ReportStatusCodeLib.
   # If need status code output, do library instance overriden as below DxeMain.inf does
   #
-  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
-  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
+#  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+#  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
+  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   MemLogLib|bareBoot/Library/MemLogLibDefault/MemLogLibDefault.inf
   PListLib|bareBoot/Library/PListLib/PListLib.inf
@@ -140,14 +142,20 @@
 ################################################################################
 [PcdsFixedAtBuild]
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Apple"|VOID*|32
-  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x0
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x0
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x0
+#  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x0
+#  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x0
+#  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x0
+  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x2F
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FFFCF
+  gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseHardwareFlowControl|TRUE
   gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyAEnable|FALSE
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyBEnable|FALSE
-  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom1Enable|FALSE
-  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|FALSE
+#  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom1Enable|FALSE
+#  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|FALSE
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom1Enable|TRUE
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|TRUE
   gPcAtChipsetPkgTokenSpaceGuid.Pcd8259LegacyModeMask|0xFFFC
   
 [PcdsPatchableInModule]
