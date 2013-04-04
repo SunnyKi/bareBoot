@@ -265,7 +265,7 @@ MacOS:
   DBG ("BdsBoot: Starting GetOSVersion\n");
   GetOSVersion (FHandle);
   DBG ("BdsBoot: Starting GetUserSettings\n");
-  GetUserSettings (gRootFHandle, L"\\EFI\\bb\\config.plist");
+  GetUserSettings (gRootFHandle, L"\\EFI\\bareboot\\config.plist");
   DBG ("BdsBoot: Starting ScanSPD\n");
   ScanSPD ();
   DBG ("BdsBoot: Starting SetDevices\n");
@@ -659,7 +659,7 @@ BdsLibEnumerateAllBootOption (
                          );
       }
 
-      if ((FileExists (FHandle, L"\\EFI\\bb\\config.plist")) && (ConfigNotFound)) {
+      if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
       }
@@ -739,7 +739,7 @@ BdsLibEnumerateAllBootOption (
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], SHELL_PATH, BdsBootOptionList, Buffer, TRUE);
       }
     }
-    GetBootDefault(gRootFHandle, L"\\EFI\\bb\\config.plist");
+    GetBootDefault(gRootFHandle, L"\\EFI\\bareboot\\config.plist");
 #if 0
   }
 #endif

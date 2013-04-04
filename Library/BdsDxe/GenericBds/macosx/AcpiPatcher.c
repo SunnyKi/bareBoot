@@ -265,7 +265,7 @@ PatchACPI (
   UINT32                                            *pEntryR;
   UINT64                                            *pEntryX;
   CHAR16                                            *PathToACPITables;
-  CHAR16                                            *PathPatched;
+  CHAR16                                            *PathACPI;
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
 
@@ -288,21 +288,21 @@ PatchACPI (
   UINT8                                                 ProcCount;
   UINT8                                                 Type;
 
-  buffer = NULL;
-  bufferLen = 0;
-  dsdt = EFI_SYSTEM_TABLE_MAX_ADDRESS; //0xFE000000;
-  Facs = NULL;
-  FadtPointer = NULL;
-  newFadt   = NULL;
+  buffer        = NULL;
+  bufferLen     = 0;
+  dsdt          = EFI_SYSTEM_TABLE_MAX_ADDRESS; //0xFE000000;
+  Facs          = NULL;
+  FadtPointer   = NULL;
+  newFadt       = NULL;
   PathDsdt      = L"DSDT.aml";
-  PathPatched   = L"\\EFI\\bb\\acpi\\patched\\";
+  PathACPI      = L"\\EFI\\bareboot\\acpi\\";
   PathToACPITables = AllocateZeroPool (250);
-  rf = NULL;
-  RsdPointer = NULL;
-  Status = EFI_SUCCESS;
-  xf = NULL;
-  NewApicTable = NULL;
-  ApicTable = NULL;
+  rf            = NULL;
+  RsdPointer    = NULL;
+  Status        = EFI_SUCCESS;
+  xf            = NULL;
+  NewApicTable  = NULL;
+  ApicTable     = NULL;
 
   for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
     if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi20TableGuid)) {
@@ -668,7 +668,7 @@ PatchACPI (
       newFadt->Dsdt = (UINT32) XDsdt;
     }
 
-    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathPatched, PathDsdt);
+    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathACPI, PathDsdt);
 
     if (FileExists (FHandle, PathToACPITables)) {
       Status = egLoadFile (FHandle, PathToACPITables , &buffer, &bufferLen);
@@ -726,7 +726,7 @@ PatchACPI (
   
   // Load SSDTs
   for (Index = 0; Index < NUM_TABLES; Index++) {
-    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathPatched, ACPInames[Index]);
+    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathACPI, ACPInames[Index]);
 
     if (FileExists (FHandle, PathToACPITables)) {
       Status = egLoadFile (FHandle, PathToACPITables, &buffer, &bufferLen);
