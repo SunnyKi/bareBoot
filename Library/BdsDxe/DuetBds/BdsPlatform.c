@@ -25,7 +25,6 @@ Abstract:
 
 #include <Library/IoLib.h>
 
-#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
 #define IS_PCI_ISA_PDECODE(_p)        IS_CLASS3 (_p, PCI_CLASS_BRIDGE, PCI_CLASS_BRIDGE_ISA_PDECODE, 0)
 #define SCAN_ESC        0x0017
 #define SCAN_F1         0x000B
