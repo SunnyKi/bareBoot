@@ -793,7 +793,7 @@ GetBootDefault (
 
   dict = NULL;
   if (gConfigPtr != NULL) {
-    if (PListXMLParse ((const CHAR8*) gConfigPtr, size, &dict) != EFI_SUCCESS) {
+    if (PListXMLParse ((const CHAR8*) gConfigPtr, (unsigned int)size, &dict) != EFI_SUCCESS) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
     }
@@ -864,7 +864,7 @@ GetUserSettings (
   }
 
   if (gConfigPtr != NULL) {
-    if (PListXMLParse ((const CHAR8*) gConfigPtr, size, &dict) != EFI_SUCCESS) {
+    if (PListXMLParse ((const CHAR8*) gConfigPtr, (unsigned int)size, &dict) != EFI_SUCCESS) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
     }
@@ -998,7 +998,7 @@ GetUserSettings (
     array = PListXMLGetProperty (dict, "KextPatches");
 
     if (array != NULL) {
-      gSettings.NrKexts = GetSizeArray (array);
+      gSettings.NrKexts = (UINT32)GetSizeArray (array);
       if ((gSettings.NrKexts <= 100)) {
         for (i = 0; i < gSettings.NrKexts; i++) {
           dictPointer = GetArrayItem (array, i);
@@ -1100,7 +1100,7 @@ GetOSVersion (
   }
 
   if(!EFI_ERROR(Status)) {
-    if(PListXMLParse(plistBuffer, plistLen, &dictPointer) != EFI_SUCCESS) {
+    if(PListXMLParse(plistBuffer, (unsigned int)plistLen, &dictPointer) != EFI_SUCCESS) {
       FreePool(plistBuffer);
       return EFI_NOT_FOUND;
     }
