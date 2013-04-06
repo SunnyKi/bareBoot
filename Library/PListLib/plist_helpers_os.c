@@ -45,7 +45,15 @@ _plint2str(vlong val, char* vbuf, unsigned int bsz) {
 
 vlong
 _plstr2vlong(char* vbuf, unsigned int bsz) {
-	return 0;
+	char wbuffer[32];
+	unsigned int sz;
+
+	sz = sizeof(wbuffer) - 1;
+	if (bsz < sz) { sz = bsz; }
+	_plmemcpy(wbuffer, vbuf, sz);
+	wbuffer[sz] = '\0';
+
+	return strtoll(wbuffer, NULL, 0);
 }
 
 int

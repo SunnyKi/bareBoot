@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include "plist.h"
+#include "plist_xml_parser.h"
 
 char ibig[32768];
 char obig[32768];
@@ -37,7 +38,9 @@ plbuf_t obuf = {obig, sizeof(obig), 0 };
 int main(int argc, char* argv[]) {
 	FILE* ifp;
 	void* pl;
-	void* ap;
+	void* dp;
+	void* kp;
+	int rc;
 
 	if (argc > 1) {
 		ifp = fopen(argv[1], "rb");
@@ -47,35 +50,34 @@ int main(int argc, char* argv[]) {
 		fclose(ifp);
 		if (ibuf.len < 1)
 			return 2;
-		pl = plFromXml(&ibuf);
+		pl = plXmlToNode(&ibuf);
 		if (pl != NULL) {
-			(void) plToXml(pl, &obuf);
+			(void) plNodeToXml(pl, &obuf);
 			fwrite(obig, 1, obuf.pos, stdout);
 		}
-		plDeleteNode(pl);
+		plNodeDelete(pl);
 	}
 	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	fflush(stdout);
 	obuf.pos = 0;
 
-	pl = plNewDict();
+	pl = plDictNew();
 
-	plAdd(pl, plNewKey("dkey", 4, plNewData("7890", 4)));
+	dp = plDataNew("7890", 4);
+	kp = plKeyNew("dkey", 4, dp);
 
-	ap = plNewArray();
-	plAdd(ap, plNewInteger(4));
-	plAdd(ap, plNewInteger(5));
-	plAdd(ap, plNewBool(0));
-	plAdd(ap, plNewBool(1));
-	plAdd(ap, plNewString("abcdef", 6));
+	rc = plNodeAdd(pl, kp);
 
-	plAdd(pl, plNewKey("akey", 4, ap));
+	dp = plDataNew("0123", 4);
+	kp = plKeyNew("zkey", 4, dp);
 
-	(void) plToXml(pl, &obuf);
+	rc = plNodeAdd(pl, kp);
 
-	plDeleteNode(pl);
+	(void) plNodeToXml(pl, &obuf);
+
+	plNodeDelete(pl);
 
 	fwrite(obig, 1, obuf.pos, stdout);
-	fflush(stdout);
+	fclose(stdout);
 	return 0;
 }

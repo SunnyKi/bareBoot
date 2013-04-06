@@ -50,33 +50,28 @@ typedef struct _plbuf {
 	unsigned int pos;
 } plbuf_t;
 
-void* plFromXml(plbuf_t*);
+char* plNodeGetBytes(void*);
 
-int plToXml(void*, plbuf_t*);
+int plBoolGet(void*);
+int plNodeAdd(void* bag, void* elem);
+int plNodeToXml(void*, plbuf_t*);
 
-plkind_t plGetKind(void*);
+plkind_t plNodeGetKind(void*);
 
-unsigned int plGetSize(void*); /* Applied to any node where size has meaning */
-char* plGetBytes(void*);
+unsigned int plNodeGetSize(void*); /* Applied to any node where size has meaning */
 
-void* plNewBool(int);
-int plGetBool(void*);
+vlong plIntegerGet(void*);
 
-void* plNewInteger(vlong);
-vlong plGetIntValue(void*);
+void plNodeDelete(void*);
 
-void* plNewDate(char*, unsigned int);
-
-int plAdd(void* bag, void* elem);
-
-void* plNewArray(void);
-void* plNewDict(void);
-void* plGetItem(void*, unsigned int);
-void* plNewKey(char*, unsigned int, void*);
-void* plFind(void* dict, char* key, unsigned int klen, plkind_t kind); /* kind can be Any */
-
-void* plNewData(char*, unsigned int);
-
-void* plNewString(char*, unsigned int);
-
-void plDeleteNode(void*);
+void* plArrayNew(void);
+void* plBoolNew(int);
+void* plDataNew(char*, unsigned int);
+void* plDateNew(char*, unsigned int);
+void* plDictFind(void* dict, char* key, unsigned int klen, plkind_t kind); /* kind can be Any */
+void* plDictNew(void);
+void* plIntegerNew(vlong);
+void* plKeyNew(char*, unsigned int, void*);
+void* plNodeGetItem(void*, unsigned int);
+void* plStringNew(char*, unsigned int);
+void* plXmlToNode(plbuf_t*);

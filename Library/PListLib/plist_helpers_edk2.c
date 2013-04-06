@@ -57,7 +57,7 @@ _plstr2vlong(char* vbuf, unsigned int bsz) {
 	if (bsz < wsize) { wsize = bsz; }
 	_plmemcpy(wbuffer, vbuf, wsize);
 	wbuffer[wsize] = '\0';
-	wptr = AsciiStrStr(wbuffer, "-");
+	wptr = ScanMem8(wbuffer, wsize, '-');
 	if (wptr != NULL) {
 		negative = 1;
 		wptr++;
@@ -65,7 +65,8 @@ _plstr2vlong(char* vbuf, unsigned int bsz) {
 		negative = 0;
 		wptr = wbuffer;
 	}
-	if (AsciiStrStr(wptr, "x") != NULL || AsciiStrStr(wptr, "X") != NULL ) {
+	bsize -= wptr - wbuffer;
+	if (ScanMem8(wptr, bsize, 'x') != NULL || ScanMem8(wptr, bsize, 'X') != NULL ) {
 		rval = AsciiStrHexToUint64(wptr);
 	} else {
 		rval = AsciiStrDecimalToUint64(wptr);

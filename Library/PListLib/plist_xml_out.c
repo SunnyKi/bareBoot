@@ -34,7 +34,7 @@ char _plXmlHdr3[] = "<plist version=\"1.0\">\n";
 
 char _plXmlTlr1[] = "</plist>\n";
 
-int _plNodeToXml(void* ipl, plbuf_t* obuf, int indent);
+int _plNode2Xml(void* ipl, plbuf_t* obuf, int indent);
 
 int
 _plBufHasNum(plbuf_t* ibuf, unsigned int num) {
@@ -92,7 +92,7 @@ _plBagToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 	unsigned int bsize;
 	unsigned int i;
 
-	bsize = plGetSize(ipl);
+	bsize = plNodeGetSize(ipl);
 	if (bsize == 0) {
 		if (!_plEmptyNodeTagToXml(obuf, indent, name, nlen, 1)) { return 0; }
 		return 1;
@@ -101,8 +101,8 @@ _plBagToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 	for (i = 0; i < bsize; i++) {
 		void* spn;
 
-		spn = plGetItem(ipl, i);
-		if (spn != NULL && !_plNodeToXml(spn, obuf, indent + 1)) { return 0; }
+		spn = plNodeGetItem(ipl, i);
+		if (spn != NULL && !_plNode2Xml(spn, obuf, indent + 1)) { return 0; }
 	}
 	if (!_plNodeTagToXml(obuf, indent, name, nlen, 1, 1)) { return 0; }
 	return 1;
@@ -113,7 +113,7 @@ _plStrToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 	char* bp;
 	unsigned int bsize;
 
-	bsize = plGetSize(ipl);
+	bsize = plNodeGetSize(ipl);
 #if 0
 	/* Parser cannot handle <string/> */
 	if (bsize == 0) {
@@ -123,7 +123,7 @@ _plStrToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 #endif
 	if (!_plNodeTagToXml(obuf, indent, name, nlen, 0, 0)) { return 0; }
 	if (bsize > 0) {
-		bp = plGetBytes(ipl);
+		bp = plNodeGetBytes(ipl);
 		if (bp == NULL || !_plAppendBytes(obuf, bp, bsize)) { return 0; }
 	}
 	if (!_plNodeTagToXml(obuf, 0, name, nlen, 1, 1)) { return 0; }
@@ -137,7 +137,7 @@ _plBytesToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 	char* odat;
 	int rc;
 
-	bsize = plGetSize(ipl);
+	bsize = plNodeGetSize(ipl);
 #if 0
 	/* Parser cannot handle <data/> */
 	if (bsize == 0) {
@@ -147,7 +147,7 @@ _plBytesToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 #endif
 	if (!_plNodeTagToXml(obuf, indent, name, nlen, 0, 0)) { return 0; }
 	if (bsize > 0) {
-		odat = _plb64encode(plGetBytes(ipl), bsize, &osize);
+		odat = _plb64encode(plNodeGetBytes(ipl), bsize, &osize);
 		if (odat == NULL) { return 0; }
 		rc = _plAppendBytes(obuf, odat, osize);
 		_plfree(odat);
@@ -159,7 +159,7 @@ _plBytesToXml(void* ipl, char* name, int nlen, plbuf_t* obuf, int indent) {
 
 int
 _plBoolToXml(void* ipl, plbuf_t* obuf, int indent) {
-	if (plGetBool(ipl)) {
+	if (plBoolGet(ipl)) {
 		if (!_plEmptyNodeTagToXml(obuf, indent, "true", 4, 1)) { return 0; }
 	} else {
 		if (!_plEmptyNodeTagToXml(obuf, indent, "false", 5, 1)) { return 0; }
@@ -173,7 +173,7 @@ _plIntToXml(void* ipl, char* name, unsigned int nlen, plbuf_t* obuf, int indent)
 	int slen;
 
 	if (!_plNodeTagToXml(obuf, indent, name, nlen, 0, 0)) { return 0; }
-	slen = _plint2str(plGetIntValue(ipl), vbuf, sizeof(vbuf));
+	slen = _plint2str(plIntegerGet(ipl), vbuf, sizeof(vbuf));
 	if (!_plAppendBytes(obuf, vbuf, slen)) { return 0; }
 	if (!_plNodeTagToXml(obuf, 0, name, nlen, 1, 1)) { return 0; }
 	return 1;
@@ -188,9 +188,9 @@ _plDateToXml(void* ipl, char* name, unsigned int nlen, plbuf_t* obuf, int indent
 }
 
 int
-_plNodeToXml(void* ipl, plbuf_t* obuf, int indent) {
+_plNode2Xml(void* ipl, plbuf_t* obuf, int indent) {
 	if (ipl == NULL) { return 1; }
-	switch(plGetKind(ipl)) {
+	switch(plNodeGetKind(ipl)) {
 	case plKindDict:
 		if (!_plBagToXml(ipl, "dict", 4, obuf, indent)) { return 0; }
 		break;
@@ -199,7 +199,7 @@ _plNodeToXml(void* ipl, plbuf_t* obuf, int indent) {
 		break;
 	case plKindKey:
 		if (!_plStrToXml(ipl, "key", 3, obuf, indent)) { return 0; }
-   		if (!_plNodeToXml(plGetItem(ipl, 0), obuf, indent + 1)) { return 0; }
+   		if (!_plNode2Xml(plNodeGetItem(ipl, 0), obuf, indent + 1)) { return 0; }
 		break;
 	case plKindString:
 		if (!_plStrToXml(ipl, "string", 6, obuf, indent)) { return 0; }
@@ -223,11 +223,11 @@ _plNodeToXml(void* ipl, plbuf_t* obuf, int indent) {
 }
 
 int
-plToXml(void* pl, plbuf_t* obuf) {
+plNodeToXml(void* pl, plbuf_t* obuf) {
 	if (!_plAppendBytes(obuf, _plXmlHdr1, sizeof(_plXmlHdr1) - 1)) { return 0; }
 	if (!_plAppendBytes(obuf, _plXmlHdr2, sizeof(_plXmlHdr2) - 1)) { return 0; }
 	if (!_plAppendBytes(obuf, _plXmlHdr3, sizeof(_plXmlHdr3) - 1)) { return 0; }
-	if (!_plNodeToXml(pl, obuf, 1)) { return 0; }
+	if (!_plNode2Xml(pl, obuf, 1)) { return 0; }
 	if (!_plAppendBytes(obuf, _plXmlTlr1, sizeof(_plXmlTlr1) - 1)) { return 0; }
 	return 1;
 }
