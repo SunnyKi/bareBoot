@@ -85,7 +85,6 @@
   GenericBds/macosx/DataHubCpu.c
   GenericBds/macosx/Events.c
   GenericBds/macosx/device_inject.c
-  GenericBds/macosx/b64cdecode.c
   GenericBds/macosx/kernel_patcher.c
   GenericBds/macosx/kext_patcher.c
   GenericBds/macosx/device_tree.c
