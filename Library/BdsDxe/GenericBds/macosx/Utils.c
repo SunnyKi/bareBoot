@@ -987,7 +987,7 @@ GetUserSettings (
             // Find and Replace should be in <string>...</string>
             gSettings.AnyKextDataLen[i] = 0;
             gSettings.AnyKextData[i] = GetStringProperty (dictPointer, "Find");
-            if (gSettings.AnyKextData != NULL) {
+            if (gSettings.AnyKextData[i] != NULL) {
               gSettings.AnyKextDataLen[i] = AsciiStrLen (gSettings.AnyKextData[i]);
             }
             gSettings.AnyKextPatch[i] = GetStringProperty (dictPointer, "Replace");
