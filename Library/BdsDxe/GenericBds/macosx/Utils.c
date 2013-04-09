@@ -576,7 +576,7 @@ egLoadFile (
   FileHandle->Close (FileHandle);
 
   if (EFI_ERROR (Status)) {
-    FreePool (Buffer);
+    FreeAlignedPages (Buffer, EFI_SIZE_TO_PAGES (BufferSize));
     return Status;
   }
 
@@ -765,7 +765,7 @@ GetBootDefault (
     pbuf.pos = 0;
 
     plist = plXmlToNode (&pbuf);
-    FreePool (gConfigPtr);
+    FreeAlignedPages (gConfigPtr, EFI_SIZE_TO_PAGES (size));
     if (plist == NULL) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
@@ -844,7 +844,7 @@ GetUserSettings (
     pbuf.pos = 0;
 
     plist = plXmlToNode (&pbuf);
-    FreePool (gConfigPtr);
+    FreeAlignedPages (gConfigPtr, EFI_SIZE_TO_PAGES (size));
     if (plist == NULL) {
       Print (L"config error\n");
       return EFI_UNSUPPORTED;
@@ -1076,7 +1076,7 @@ GetOSVersion (
     pbuf.pos = 0;
 
     plistPointer = plXmlToNode (&pbuf);
-    FreePool (plistBuffer);
+    FreeAlignedPages (plistBuffer, EFI_SIZE_TO_PAGES (plistLen));
     if (plistPointer == NULL) {
       return EFI_NOT_FOUND;
     }
