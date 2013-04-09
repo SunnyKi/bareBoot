@@ -544,6 +544,10 @@ egLoadFile (
   UINTN               BufferSize;
   UINT8               *Buffer;
 
+  if (BaseDir == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
   Status = BaseDir->Open (BaseDir, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
 
   if (EFI_ERROR (Status)) {
@@ -729,6 +733,35 @@ GetStringProperty (
   return tbuf;
 }
 
+VOID*
+LoadPListFile (
+  IN EFI_FILE *RootFileHandle,
+  IN CHAR16* XmlPlistPath
+)
+{
+  EFI_STATUS  Status;
+  plbuf_t     pbuf;
+  VOID*       plist;
+
+  Status = EFI_NOT_FOUND;
+  pbuf.pos = 0;
+
+  Status = egLoadFile (RootFileHandle, XmlPlistPath, (UINT8**) &pbuf.dat, &pbuf.len);
+
+  if (EFI_ERROR (Status) || pbuf.dat == NULL) {
+    return NULL;
+  }
+
+  plist = plXmlToNode (&pbuf);
+  FreeAlignedPages (pbuf.dat, EFI_SIZE_TO_PAGES (pbuf.len));
+  if (plist == NULL) {
+    Print (L"plist load error\n");
+    return NULL;
+  }
+
+  return plist;
+}
+
 // ----============================----
 
 EFI_STATUS
@@ -737,49 +770,28 @@ GetBootDefault (
   IN CHAR16* ConfigPlistPath
 )
 {
-  EFI_STATUS  Status;
-  CHAR8*      gConfigPtr;
   VOID*       plist;
   VOID*       spdict;
-  UINTN       size;
-  plbuf_t     pbuf;
 
-  Status = EFI_NOT_FOUND;
-  gConfigPtr = NULL;
-  size = 0;
+  ZeroMem (gSettings.DefaultBoot, sizeof (gSettings.DefaultBoot));
 
-  ZeroMem (gSettings.DefaultBoot, 40);
+  plist = LoadPListFile (RootFileHandle, ConfigPlistPath);
 
-  if ((RootFileHandle != NULL) && FileExists (RootFileHandle, ConfigPlistPath)) {
-    Status = egLoadFile (RootFileHandle, ConfigPlistPath, (UINT8**) &gConfigPtr, &size);
+  if (plist == NULL) {
+    Print (L"Error loading bootdefault plist!\r\n");
+    return EFI_NOT_FOUND;
   }
 
-  if (EFI_ERROR (Status)) {
-    Print (L"Error loading config.plist!\r\n");
-    return Status;
+  spdict = plDictFind (plist, "SystemParameters", 16, plKindDict);
+
+  gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
+  if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
+    gSettings.BootTimeout = 0xFFFF;
   }
 
-  if (gConfigPtr != NULL) {
-    pbuf.dat = gConfigPtr;
-    pbuf.len = size;
-    pbuf.pos = 0;
+  plNodeDelete (plist);
 
-    plist = plXmlToNode (&pbuf);
-    FreeAlignedPages (gConfigPtr, EFI_SIZE_TO_PAGES (size));
-    if (plist == NULL) {
-      Print (L"config error\n");
-      return EFI_UNSUPPORTED;
-    }
-
-    spdict = plDictFind (plist, "SystemParameters", 16, plKindDict);
-    gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
-    if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
-      gSettings.BootTimeout = 0xFFFF;
-    }
-    plNodeDelete (plist);
-  }
-
-  return Status;
+  return EFI_SUCCESS;
 }
 
 EFI_STATUS
@@ -799,7 +811,6 @@ GetUserSettings (
   MACHINE_TYPES   Model;
   UINTN           len;
   UINT32          i;
-  plbuf_t         pbuf;
 
   Status = EFI_NOT_FOUND;
   gConfigPtr = NULL;
@@ -829,260 +840,227 @@ GetUserSettings (
   AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
   AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
 
-  if ((RootFileHandle != NULL) && FileExists (RootFileHandle, ConfigPlistPath)) {
-    Status = egLoadFile (RootFileHandle, ConfigPlistPath, (UINT8**) &gConfigPtr, &size);
+  plist = LoadPListFile (RootFileHandle, ConfigPlistPath);
+
+  if (plist == NULL) {
+    Print (L"Error loading usersettings plist!\r\n");
+    return EFI_NOT_FOUND;
   }
 
-  if (EFI_ERROR (Status)) {
-    Print (L"Error loading config.plist!\r\n");
-    return Status;
+  ZeroMem (gSettings.Language, 10);
+  ZeroMem (gSettings.BootArgs, 120);
+  ZeroMem (gSettings.SerialNr, 64);
+  ZeroMem (cUUID, 40);
+  SystemIDStatus = EFI_UNSUPPORTED;
+  PlatformUuidStatus = EFI_UNSUPPORTED;
+  gSettings.CustomEDID = NULL;
+  gSettings.ProcessorInterconnectSpeed = 0;
+  
+  dictPointer = plDictFind (plist, "SystemParameters", 16, plKindDict);
+
+  GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
+  GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
+
+  if (AsciiStrLen (AddBootArgs) != 0) {
+    AsciiStrCat (gSettings.BootArgs, AddBootArgs);
   }
-
-  if (gConfigPtr != NULL) {
-    pbuf.dat = gConfigPtr;
-    pbuf.len = size;
-    pbuf.pos = 0;
-
-    plist = plXmlToNode (&pbuf);
-    FreeAlignedPages (gConfigPtr, EFI_SIZE_TO_PAGES (size));
-    if (plist == NULL) {
-      Print (L"config error\n");
-      return EFI_UNSUPPORTED;
-    }
-
-    ZeroMem (gSettings.Language, 10);
-    ZeroMem (gSettings.BootArgs, 120);
-    ZeroMem (gSettings.SerialNr, 64);
-    ZeroMem (cUUID, 40);
-    SystemIDStatus = EFI_UNSUPPORTED;
-    PlatformUuidStatus = EFI_UNSUPPORTED;
-    gSettings.CustomEDID = NULL;
-    gSettings.ProcessorInterconnectSpeed = 0;
-    
-    dictPointer = plDictFind (plist, "SystemParameters", 16, plKindDict);
-
-    GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
-    GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
-    if (AsciiStrLen (AddBootArgs) != 0) {
-      AsciiStrCat (gSettings.BootArgs, AddBootArgs);
-    }
 #if 0
-    if (AsciiStrStr(gSettings.BootArgs, AddBootArgs) == 0) {
-    }
+  if (AsciiStrStr(gSettings.BootArgs, AddBootArgs) == 0) {
+  }
 #endif
-    if (dictPointer != NULL) {
-      if (GetUnicodeProperty (dictPointer, "PlatformUUID", cUUID)) {
-        PlatformUuidStatus = StrToGuidLE (cUUID, &gPlatformUuid);
-        //else value from SMBIOS
-      }
-
-      if (GetUnicodeProperty (dictPointer, "SystemID", cUUID)) {
-        SystemIDStatus = StrToGuidLE (cUUID, &gSystemID);
-      }
+  if (dictPointer != NULL) {
+    if (GetUnicodeProperty (dictPointer, "PlatformUUID", cUUID)) {
+      PlatformUuidStatus = StrToGuidLE (cUUID, &gPlatformUuid);
+      //else value from SMBIOS
     }
 
-    dictPointer = plDictFind (plist, "Graphics", 8, plKindDict);
-    
-    gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
-    gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
-    gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
-    gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
-    GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
+    if (GetUnicodeProperty (dictPointer, "SystemID", cUUID)) {
+      SystemIDStatus = StrToGuidLE (cUUID, &gSystemID);
+    }
+  }
 
-    if (dictPointer != NULL) {
+  dictPointer = plDictFind (plist, "Graphics", 8, plKindDict);
+  
+  gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
+  gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
+  gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
+  gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
+  GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
 
-      prop = plDictFind (dictPointer, "NVCAP", 5, plKindString);
+  if (dictPointer != NULL) {
 
-      if (prop != NULL) {
-        hex2bin (plNodeGetBytes (prop), (UINT8*) &gSettings.NVCAP[0], 20);
-      }
+    prop = plDictFind (dictPointer, "NVCAP", 5, plKindString);
 
-      prop = plDictFind (dictPointer, "DisplayCfg", 10, plKindString);
-
-      if (prop != NULL) {
-        hex2bin (plNodeGetBytes (prop), (UINT8*) &gSettings.Dcfg[0], 8);
-      }
-
-      prop = plDictFind (dictPointer, "CustomEDID", 10, plKindData);
-
-      if (prop != NULL) {
-        gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &len);
-      }
+    if (prop != NULL) {
+      hex2bin (plNodeGetBytes (prop), (UINT8*) &gSettings.NVCAP[0], 20);
     }
 
-    dictPointer = plDictFind (plist, "PCI", 3, plKindDict);
-    
-    gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
-    gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
-    gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-    gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
+    prop = plDictFind (dictPointer, "DisplayCfg", 10, plKindString);
 
-
-    if (dictPointer != NULL) {
-      prop = plDictFind (dictPointer, "DeviceProperties", 16, plKindString);
-
-      if (prop != NULL) {
-        len = plNodeGetSize (prop);
-        cDevProp = AllocatePool (len + 1);
-        CopyMem (cDevProp, plNodeGetBytes (prop), len);
-        cDevProp[len] = '\0';
-      }
+    if (prop != NULL) {
+      hex2bin (plNodeGetBytes (prop), (UINT8*) &gSettings.Dcfg[0], 8);
     }
 
-    dictPointer = plDictFind (plist, "ACPI", 4, plKindDict);
+    prop = plDictFind (dictPointer, "CustomEDID", 10, plKindData);
 
-    gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
-    gSettings.PatchAPIC = GetBoolProperty (dictPointer, "PatchAPIC", FALSE);
-    // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
-    gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
-    gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
-    gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
+    if (prop != NULL) {
+      gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &len);
+    }
+  }
 
-    dictPointer = plDictFind (plist, "SMBIOS", 6, plKindDict);
+  dictPointer = plDictFind (plist, "PCI", 3, plKindDict);
+  
+  gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
+  gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
+  gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
+  gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
 
-    gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
-    GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
-    GetAsciiProperty (dictPointer, "BiosVersion", gSettings.RomVersion);
-    GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
-    GetAsciiProperty (dictPointer, "Manufacturer", gSettings.ManufactureName);
-    GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
-    GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
-    GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
-    GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
-    GetAsciiProperty (dictPointer, "BoardManufacturer", gSettings.BoardManufactureName);
-    GetAsciiProperty (dictPointer, "BoardSerialNumber", gSettings.BoardSerialNumber);
-    GetAsciiProperty (dictPointer, "Board-ID", gSettings.BoardNumber);
-    GetAsciiProperty (dictPointer, "BoardVersion", gSettings.BoardVersion);
-    GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
-    GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
-    GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
 
-    dictPointer = plDictFind (plist, "CPU", 3, plKindDict);
+  if (dictPointer != NULL) {
+    prop = plDictFind (dictPointer, "DeviceProperties", 16, plKindString);
 
-    gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
-    gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
-    gSettings.BusSpeed = (UINT32) GetNumProperty (dictPointer, "BusSpeedkHz", 0);
-    gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
-    gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
+    if (prop != NULL) {
+      len = plNodeGetSize (prop);
+      cDevProp = AllocatePool (len + 1);
+      CopyMem (cDevProp, plNodeGetBytes (prop), len);
+      cDevProp[len] = '\0';
+    }
+  }
 
-    // KernelAndKextPatches
-    gSettings.KPKernelCpu = FALSE;
-    gSettings.KPKextPatchesNeeded = FALSE;
+  dictPointer = plDictFind (plist, "ACPI", 4, plKindDict);
 
-    dictPointer = plDictFind (plist, "KernelPatches", 13, plKindDict);
-    gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
+  gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
+  gSettings.PatchAPIC = GetBoolProperty (dictPointer, "PatchAPIC", FALSE);
+  // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
+  gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
+  gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
+  gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
 
-    array = plDictFind (plist, "KextPatches", 11, plKindArray);
+  dictPointer = plDictFind (plist, "SMBIOS", 6, plKindDict);
 
-    if (array != NULL) {
-      gSettings.NrKexts = (UINT32) plNodeGetSize (array);
-      if ((gSettings.NrKexts <= 100)) {
-        for (i = 0; i < gSettings.NrKexts; i++) {
-          dictPointer = plNodeGetItem (array, i);
-          gSettings.AnyKext[i] = GetStringProperty (dictPointer, "Name");
-          // check if this is Info.plist patch or kext binary patch
-          gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dictPointer, "InfoPlistPatch", FALSE);
-          if (gSettings.AnyKextInfoPlistPatch[i]) {
-            // Info.plist
-            // Find and Replace should be in <string>...</string>
-            gSettings.AnyKextDataLen[i] = 0;
-            gSettings.AnyKextData[i] = GetStringProperty (dictPointer, "Find");
-            if (gSettings.AnyKextData[i] != NULL) {
-              gSettings.AnyKextDataLen[i] = AsciiStrLen (gSettings.AnyKextData[i]);
-            }
-            gSettings.AnyKextPatch[i] = GetStringProperty (dictPointer, "Replace");
-          } else {
-            // kext binary patch
-            // Find and Replace should be in <data>...</data> or <string>...</string>
-            gSettings.AnyKextData[i] = GetDataSetting (dictPointer, "Find", &gSettings.AnyKextDataLen[i]);
-            gSettings.AnyKextPatch[i] = GetDataSetting (dictPointer, "Replace", &len);
+  gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
+  GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
+  GetAsciiProperty (dictPointer, "BiosVersion", gSettings.RomVersion);
+  GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
+  GetAsciiProperty (dictPointer, "Manufacturer", gSettings.ManufactureName);
+  GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
+  GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
+  GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
+  GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
+  GetAsciiProperty (dictPointer, "BoardManufacturer", gSettings.BoardManufactureName);
+  GetAsciiProperty (dictPointer, "BoardSerialNumber", gSettings.BoardSerialNumber);
+  GetAsciiProperty (dictPointer, "Board-ID", gSettings.BoardNumber);
+  GetAsciiProperty (dictPointer, "BoardVersion", gSettings.BoardVersion);
+  GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
+  GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
+  GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
+
+  dictPointer = plDictFind (plist, "CPU", 3, plKindDict);
+
+  gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
+  gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
+  gSettings.BusSpeed = (UINT32) GetNumProperty (dictPointer, "BusSpeedkHz", 0);
+  gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
+  gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
+
+  // KernelAndKextPatches
+  gSettings.KPKernelCpu = FALSE;
+  gSettings.KPKextPatchesNeeded = FALSE;
+
+  dictPointer = plDictFind (plist, "KernelPatches", 13, plKindDict);
+  gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
+
+  array = plDictFind (plist, "KextPatches", 11, plKindArray);
+
+  if (array != NULL) {
+    gSettings.NrKexts = (UINT32) plNodeGetSize (array);
+    if ((gSettings.NrKexts <= 100)) {
+      for (i = 0; i < gSettings.NrKexts; i++) {
+        dictPointer = plNodeGetItem (array, i);
+        gSettings.AnyKext[i] = GetStringProperty (dictPointer, "Name");
+        // check if this is Info.plist patch or kext binary patch
+        gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dictPointer, "InfoPlistPatch", FALSE);
+        if (gSettings.AnyKextInfoPlistPatch[i]) {
+          // Info.plist
+          // Find and Replace should be in <string>...</string>
+          gSettings.AnyKextDataLen[i] = 0;
+          gSettings.AnyKextData[i] = GetStringProperty (dictPointer, "Find");
+          if (gSettings.AnyKextData[i] != NULL) {
+            gSettings.AnyKextDataLen[i] = AsciiStrLen (gSettings.AnyKextData[i]);
           }
-          if (gSettings.AnyKextDataLen[i] != len || len == 0) {
-            gSettings.AnyKext[i][0] = '\0'; //just erase name
-            continue; //same i
-          }
-          gSettings.KPKextPatchesNeeded = TRUE;
+          gSettings.AnyKextPatch[i] = GetStringProperty (dictPointer, "Replace");
+        } else {
+          // kext binary patch
+          // Find and Replace should be in <data>...</data> or <string>...</string>
+          gSettings.AnyKextData[i] = GetDataSetting (dictPointer, "Find", &gSettings.AnyKextDataLen[i]);
+          gSettings.AnyKextPatch[i] = GetDataSetting (dictPointer, "Replace", &len);
         }
+        if (gSettings.AnyKextDataLen[i] != len || len == 0) {
+          gSettings.AnyKext[i][0] = '\0'; //just erase name
+          continue; //same i
+        }
+        gSettings.KPKextPatchesNeeded = TRUE;
       }
     }
+  }
 
-    DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
+  DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
 #ifdef BOOT_DEBUG
-    for (i = 0; i < gSettings.NrKexts; i++) {
-      CHAR16  Buffer1[100];
+  for (i = 0; i < gSettings.NrKexts; i++) {
+    CHAR16  Buffer1[100];
 
-      ZeroMem (Buffer1, sizeof (Buffer1));
-      AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
-      DBG ("  %d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
-    }
+    ZeroMem (Buffer1, sizeof (Buffer1));
+    AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
+    DBG ("  %d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
+  }
 #endif
 
-    gMobile = gSettings.Mobile;
+  gMobile = gSettings.Mobile;
 
-    if ((gSettings.BusSpeed > 10 * kilo) &&
-        (gSettings.BusSpeed < 500 * kilo)) {
-      gCPUStructure.ExternalClock = gSettings.BusSpeed;
-    }
+  if ((gSettings.BusSpeed > 10 * kilo) &&
+      (gSettings.BusSpeed < 500 * kilo)) {
+    gCPUStructure.ExternalClock = gSettings.BusSpeed;
+  }
 
-    if ((gSettings.CpuFreqMHz > 100) &&
-        (gSettings.CpuFreqMHz < 20000)) {
-      gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
-    }
-
+  if ((gSettings.CpuFreqMHz > 100) &&
+      (gSettings.CpuFreqMHz < 20000)) {
+    gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
   }
 
   GetCPUProperties ();
 
-  if (plist != NULL) {
-    dictPointer = plDictFind (plist, "CPU", 3, plKindDict);
-    gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
-  }
+  dictPointer = plDictFind (plist, "CPU", 3, plKindDict);
+  gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
+
   plNodeDelete (plist);
 
   return Status;
 }
+
+STATIC CHAR16* OSVersionFiles[] = {
+  L"System\\Library\\CoreServices\\SystemVersion.plist",
+  L"System\\Library\\CoreServices\\ServerVersion.plist",
+  L"\\com.apple.recovery.boot\\SystemVersion.plist"
+};
 
 EFI_STATUS
 GetOSVersion (
   IN EFI_FILE   *FileHandle
 )
 {
-  EFI_STATUS  Status = EFI_NOT_FOUND;
-  CHAR16      *SystemPlist = L"System\\Library\\CoreServices\\SystemVersion.plist";
-  CHAR16      *ServerPlist = L"System\\Library\\CoreServices\\ServerVersion.plist";
-  CHAR16      *RecoveryPlist = L"\\com.apple.recovery.boot\\SystemVersion.plist";
-  CHAR8       *plistBuffer = 0;
-  UINTN       plistLen;
-  VOID*       plistPointer  = NULL;
-  plbuf_t     pbuf;
-
-  if (!FileHandle) {
-    return EFI_NOT_FOUND;
-  }
+  UINTN i;
+  VOID* plist;
 
   /* Mac OS X */
-  plistLen = 0;
-  if(FileExists(FileHandle, SystemPlist)) {
-    Status = egLoadFile(FileHandle, SystemPlist, (UINT8 **)&plistBuffer, &plistLen);
-  }  else if(FileExists(FileHandle, ServerPlist)) {
-    Status = egLoadFile(FileHandle, ServerPlist, (UINT8 **)&plistBuffer, &plistLen);
-  }  else if(FileExists(FileHandle, RecoveryPlist)) {
-    Status = egLoadFile(FileHandle, RecoveryPlist, (UINT8 **)&plistBuffer, &plistLen);
-  }
 
-  if(!EFI_ERROR(Status)) {
-    pbuf.dat = plistBuffer;
-    pbuf.len = plistLen;
-    pbuf.pos = 0;
-
-    plistPointer = plXmlToNode (&pbuf);
-    FreeAlignedPages (plistBuffer, EFI_SIZE_TO_PAGES (plistLen));
-    if (plistPointer == NULL) {
-      return EFI_NOT_FOUND;
+  for (i = 0; i < 3; i++) {
+    plist = LoadPListFile (FileHandle, OSVersionFiles[i]);
+    if (plist != NULL) {
+      GetAsciiProperty (plist, "ProductVersion", OSVersion);
+      plNodeDelete (plist);
+      return EFI_SUCCESS;
     }
-    GetAsciiProperty (plistPointer, "ProductVersion", OSVersion);
-    plNodeDelete (plistPointer);
   }
 
-  return Status;
+  return EFI_NOT_FOUND;
 }
