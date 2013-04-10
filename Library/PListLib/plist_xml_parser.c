@@ -893,4 +893,5 @@ PListXMLCleanup (void) {
     symbol = next;
   }
   _plfree (gPListXMLTagsArena);
+  gPListXMLTagsFree = NULL;
 }
