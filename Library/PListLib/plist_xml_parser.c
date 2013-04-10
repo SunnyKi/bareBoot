@@ -35,6 +35,8 @@
 #include "plist.h"
 #include "plist_xml_parser.h"
 #include "plist_helpers.h"
+#include <Library/BaseLib.h>
+
 
 #define kXMLTagPList      "plist"
 #define kXMLTagDict       "dict"
@@ -155,9 +157,11 @@ PListXMLFreeTag (TagPtr tag) {
   }
 
   if (tag->string != NULL) {
+    DEBUG ((DEBUG_INFO, "PListXMLFreeTag, len = %d, tag->string = %a\n", AsciiStrLen (tag->string), tag->string));
     PListXMLFreeSymbol (tag->string);
   }
 
+  DEBUG ((DEBUG_INFO, "PListXMLFreeTag, tag->tag = 0x%x, tag->tagNext = 0x%x\n", tag->tag, tag->tagNext));
   PListXMLFreeTag (tag->tag);
   PListXMLFreeTag (tag->tagNext);
   // Clear and free the tag.
@@ -355,7 +359,6 @@ PListXMLParse (const char* buffer, unsigned int bSize, TagPtr* dict) {
     if (tag->type == kTagTypeDict) {
       break;
     }
-
     PListXMLFreeTag (tag);
   }
 

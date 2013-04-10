@@ -28,6 +28,8 @@
  * Ask for size
  */
 
+#include <Library/DebugLib.h>
+
 typedef enum _plkind {
   plKindAny = 0,
   /* bag nodes */
