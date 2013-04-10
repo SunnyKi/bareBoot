@@ -583,6 +583,36 @@ FindBootArgs (
       // set vars
       dtRoot = (CHAR8 *) (UINTN) bootArgs2->deviceTreeP;
       KernelSlide = bootArgs2->kslide;
+      DEBUG ((DEBUG_INFO, "bootArgs2->Revision 0x%x\n",bootArgs2->Revision));
+      DEBUG ((DEBUG_INFO, "bootArgs2->Version 0x%x\n",bootArgs2->Version));
+      DEBUG ((DEBUG_INFO, "bootArgs2->efiMode 0x%x\n",bootArgs2->efiMode));
+      DEBUG ((DEBUG_INFO, "bootArgs2->debugMode 0x%x\n",bootArgs2->debugMode));
+      DEBUG ((DEBUG_INFO, "bootArgs2->flags 0x%x\n",bootArgs2->flags));
+      DEBUG ((DEBUG_INFO, "bootArgs2->CommandLine %a\n",bootArgs2->CommandLine));
+      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMap 0x%x\n",bootArgs2->MemoryMap));
+      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMapSize 0x%x\n",bootArgs2->MemoryMapSize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMapDescriptorSize 0x%x\n",bootArgs2->MemoryMapDescriptorSize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMapDescriptorVersion 0x%x\n",bootArgs2->MemoryMapDescriptorVersion));
+      DEBUG ((DEBUG_INFO, "bootArgs2->deviceTreeP 0x%x\n",bootArgs2->deviceTreeP));
+      DEBUG ((DEBUG_INFO, "bootArgs2->deviceTreeLength 0x%x\n",bootArgs2->deviceTreeLength));
+      DEBUG ((DEBUG_INFO, "bootArgs2->kaddr 0x%x\n",bootArgs2->kaddr));
+      DEBUG ((DEBUG_INFO, "bootArgs2->ksize 0x%x\n",bootArgs2->ksize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->efiRuntimeServicesPageStart 0x%x\n",bootArgs2->efiRuntimeServicesPageStart));
+      DEBUG ((DEBUG_INFO, "bootArgs2->efiRuntimeServicesPageCount 0x%x\n",bootArgs2->efiRuntimeServicesPageCount));
+      DEBUG ((DEBUG_INFO, "bootArgs2->efiRuntimeServicesVirtualPageStart 0x%x\n",bootArgs2->efiRuntimeServicesVirtualPageStart));
+      DEBUG ((DEBUG_INFO, "bootArgs2->efiSystemTable 0x%x\n",bootArgs2->efiSystemTable));
+      DEBUG ((DEBUG_INFO, "bootArgs2->kslide 0x%x\n",bootArgs2->kslide));
+      DEBUG ((DEBUG_INFO, "bootArgs2->performanceDataSize 0x%x\n",bootArgs2->performanceDataSize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->performanceDataSize 0x%x\n",bootArgs2->performanceDataSize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->keyStoreDataStart 0x%x\n",bootArgs2->keyStoreDataStart));
+      DEBUG ((DEBUG_INFO, "bootArgs2->keyStoreDataSize 0x%x\n",bootArgs2->keyStoreDataSize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->bootMemStart 0x%x\n",bootArgs2->bootMemStart));
+      DEBUG ((DEBUG_INFO, "bootArgs2->bootMemSize 0x%x\n",bootArgs2->bootMemSize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->PhysicalMemorySize 0x%x\n",bootArgs2->PhysicalMemorySize));
+      DEBUG ((DEBUG_INFO, "bootArgs2->FSBFrequency 0x%x\n",bootArgs2->FSBFrequency));
+      DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceBaseAddress 0x%x\n",bootArgs2->pciConfigSpaceBaseAddress));
+      DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceStartBusNumber 0x%x\n",bootArgs2->pciConfigSpaceStartBusNumber));
+      DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n",bootArgs2->pciConfigSpaceEndBusNumber));
 
       // disable other pointer
       bootArgs1 = NULL;
@@ -602,7 +632,7 @@ FindBootArgs (
 
       DEBUG ((DEBUG_INFO, "bootArgs1->Revision 0x%x\n",bootArgs1->Revision));
       DEBUG ((DEBUG_INFO, "bootArgs1->Version 0x%x\n",bootArgs1->Version));
-      DEBUG ((DEBUG_INFO, "bootArgs1->CommandLine %s\n",bootArgs1->CommandLine));
+      DEBUG ((DEBUG_INFO, "bootArgs1->CommandLine %a\n",bootArgs1->CommandLine));
       DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMap 0x%x\n",bootArgs1->MemoryMap));
       DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapSize 0x%x\n",bootArgs1->MemoryMapSize));
       DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapDescriptorSize 0x%x\n",bootArgs1->MemoryMapDescriptorSize));

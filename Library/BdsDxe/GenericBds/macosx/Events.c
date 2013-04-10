@@ -101,12 +101,16 @@ USBOwnerFix(
                 PortBase = (Base >> 5) & 0x07ff;
                 Command = 0x8f00;
                 Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
-                if (PortBase) {
-                  IoWrite16 (PortBase, 0x0002);
+                DEBUG ((DEBUG_INFO, "USBOwnerFix: Base = 0x%x, PortBase = 0x%x\n", Base, PortBase));
+                if (PortBase != 0) {
+                  IoWrite8 (PortBase, 0x0002);
                   gBS->Stall (500);
-                  IoWrite16 (PortBase+4, 0);
+                  DEBUG ((DEBUG_INFO, "USBOwnerFix: 1. PortBase = 0x%x\n", PortBase));
+                  IoWrite8 ((PortBase + 4), 0);
                   gBS->Stall (500);
-                  IoWrite16 (PortBase, 0);
+                  DEBUG ((DEBUG_INFO, "USBOwnerFix: 1. PortBase = 0x%x\n", PortBase));
+                  IoWrite8 (PortBase, 0);
+                  DEBUG ((DEBUG_INFO, "USBOwnerFix: 1. PortBase = 0x%x\n", PortBase));
                 }
                 break;
 #if 0

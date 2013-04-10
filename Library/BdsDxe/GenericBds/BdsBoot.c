@@ -288,6 +288,7 @@ MacOS:
 
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
+  DEBUG ((DEBUG_INFO, "AddBootArgs = %a, gSettings.BootArgs = %a\n", AddBootArgs, gSettings.BootArgs));
   AsciiStrToUnicodeStr (gSettings.BootArgs, buffer);
   
   if (StrLen(buffer) > 0) 
@@ -304,7 +305,9 @@ Next:
   if (ImageHandle == NULL) {
     goto Done;
   }
-
+#if 0
+  gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);
+#endif
   Status = gBS->StartImage (ImageHandle, ExitDataSize, ExitData);
 
 Done:
