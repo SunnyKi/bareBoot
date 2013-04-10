@@ -1292,7 +1292,7 @@ Returns:
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");  // 0.3 sec
   BdsLibEnumerateAllBootOption (BootOptionList);
 
-  AddBootArgs = "";
+  AddBootArgs = "\0123456789012345678901234567890123456789";
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
     AsciiStrCat (AddBootArgs, " -v");
   }
