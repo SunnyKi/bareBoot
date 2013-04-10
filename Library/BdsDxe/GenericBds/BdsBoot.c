@@ -79,6 +79,7 @@ BdsLibBootViaBootOption (
   UINT16                    buffer[255];
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
+  UINT8                     Index;
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
@@ -282,6 +283,42 @@ MacOS:
   SetupDataForOSX ();
   DBG ("BdsBoot: Starting EventsInitialize\n");
   EventsInitialize ();
+
+  DBG ("gST->Hdr.Signature = 0x%x\n", gST->Hdr.Signature);
+  DBG ("gST->Hdr.Revision = 0x%x\n", gST->Hdr.Revision);
+  DBG ("gST->Hdr.HeaderSize = 0x%x\n", gST->Hdr.HeaderSize);
+  DBG ("gST->FirmwareVendor = %s\n", gST->FirmwareVendor);
+  DBG ("gST->FirmwareRevision = 0x%x\n", gST->FirmwareRevision);
+  DBG ("gST->ConsoleInHandle = 0x%x size = 0x%x\n", gST->ConsoleInHandle, sizeof(gST->ConsoleInHandle));
+  DBG ("gST->ConIn = 0x%x size = 0x%x\n", gST->ConIn, sizeof(gST->ConIn));
+  DBG ("gST->ConsoleOutHandle = 0x%x size = 0x%x\n", gST->ConsoleOutHandle, sizeof(gST->ConsoleOutHandle));
+  DBG ("gST->ConOut = 0x%x size = 0x%x\n", gST->ConOut, sizeof(gST->ConOut));
+  DBG ("gST->StandardErrorHandle = 0x%x size = 0x%x\n", gST->StandardErrorHandle, sizeof(gST->StandardErrorHandle));
+  DBG ("gST->StdErr = 0x%x size = 0x%x\n", gST->StdErr, sizeof(gST->StdErr));
+  DBG ("gST->RuntimeServices = 0x%x size = 0x%x\n", gST->RuntimeServices, sizeof(gST->RuntimeServices));
+  DBG ("gST->BootServices = 0x%x size = 0x%x\n", gST->BootServices, sizeof(gST->BootServices));
+  DBG ("gST->NumberOfTableEntries = 0x%x\n", gST->NumberOfTableEntries);
+  DBG ("gST->ConfigurationTable = 0x%x size = 0x%x\n", gST->StdErr, sizeof(gST->ConfigurationTable));
+  for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
+    CHAR16  Buffer1[100];
+
+    ZeroMem (Buffer1, sizeof (Buffer1));
+    UnicodeSPrint (Buffer1, 100, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                   gST->ConfigurationTable[Index].VendorGuid.Data1,
+                   gST->ConfigurationTable[Index].VendorGuid.Data2,
+                   gST->ConfigurationTable[Index].VendorGuid.Data3,
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[0],
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[1],
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[2],
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[3],
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[4],
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[5],
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[6],
+                   gST->ConfigurationTable[Index].VendorGuid.Data4[7]
+                   );
+    DBG ("gST->ConfigurationTable[Index].VendorGuid = %s\n", &Buffer1);
+    DBG ("gST->ConfigurationTable[Index].VendorTable = 0x%x size = 0x%x\n", gST->ConfigurationTable[Index].VendorTable, sizeof( gST->ConfigurationTable[Index].VendorTable));
+  }
 #ifdef BOOT_DEBUG
   SaveBooterLog (gRootFHandle, BOOT_LOG);
 #endif
@@ -300,14 +337,13 @@ MacOS:
   if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
     gST->ConOut = NULL; 
   } 
-
+#if 0
+  gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);
+#endif
 Next:
   if (ImageHandle == NULL) {
     goto Done;
   }
-#if 0
-  gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);
-#endif
   Status = gBS->StartImage (ImageHandle, ExitDataSize, ExitData);
 
 Done:
@@ -672,12 +708,14 @@ BdsLibEnumerateAllBootOption (
       Status = FHandle->GetInfo(FHandle, &gEfiFileSystemInfoGuid,(UINTN*)&BufferSizeVolume, FileSystemInfo);
 
       if (!EFI_ERROR(Status)) {
-        if (FileSystemInfo->VolumeLabel) {
+        if (FileSystemInfo->VolumeLabel != NULL) {
           UnicodeSPrint (Buffer, BufferSizeVolume, L"%s", FileSystemInfo->VolumeLabel);
         } else {
           UnicodeSPrint (Buffer, BufferSizeVolume, L"%s %d", L"Unnamed Volume ", Index);
         }
-      } 
+      } else {
+        UnicodeSPrint (Buffer, BufferSizeVolume, L"%s %d", L"Unnamed Volume ", Index);
+      }
 
       if (FileExists(FHandle, MACOSX_LOADER_PATH))
         BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
