@@ -157,7 +157,7 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
   
 [PcdsFeatureFlag]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|TRUE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|FALSE
 
 ###################################################################################################
 [Components]

@@ -39,24 +39,26 @@ USBOwnerFix(
 {
   EFI_STATUS          Status = EFI_SUCCESS;
   EFI_HANDLE          *HandleArray = NULL;
-  UINTN             HandleArrayCount = 0;
-  UINTN             Index;
-  EFI_PCI_IO_PROTOCOL      *PciIo;
-  PCI_TYPE00              Pci;
-  UINT16            Command;
+  UINTN               HandleArrayCount = 0;
+  UINTN               Index;
+  EFI_PCI_IO_PROTOCOL *PciIo;
+  PCI_TYPE00          Pci;
+  UINT16              Command;
+  UINT32              Base;
+  UINT32              PortBase;
+#if 0
   UINT32            HcCapParams;
   UINT32            ExtendCap;
   UINT32            Value;
   UINT32            TimeOut;
-  UINT32            Base;
-  UINT32            PortBase;
   volatile UINT32        opaddr;
   UINT32            usbcmd, usbsts, usbintr;
   UINT32            usblegsup, usblegctlsts;
   UINTN             isOSowned;
   UINTN             isBIOSowned;
   BOOLEAN            isOwnershipConflict;
-  
+#endif
+
   //
   // Find the usb host controller
   //
@@ -107,6 +109,7 @@ USBOwnerFix(
                   IoWrite16 (PortBase, 0);
                 }
                 break;
+#if 0
               case PCI_IF_EHCI:
                 //
                 // Found the EHCI, then disable the legacy support
@@ -244,6 +247,7 @@ USBOwnerFix(
                 }
                 
                 break;
+#endif
               default:
                 break;
             }

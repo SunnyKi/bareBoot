@@ -50,9 +50,6 @@ EFI_GUID    *gTableGuidArray[] = {&gEfiAcpi20TableGuid,
                                   &gEfiSmbiosTableGuid,
                                   &gEfiMpsTableGuid};
 
-UINT32                            mNewValue;
-UINT32                            mSaveValue;
-
 //
 // BDS Platform Functions
 //
@@ -280,6 +277,8 @@ DisableUsbLegacySupport(
   UINT32                                ExtendCap;
   UINT32                                Value;
   UINT32                                TimeOut;
+  UINT32                                SaveValue;
+  
 
   //
   // Find the usb host controller
@@ -329,8 +328,8 @@ DisableUsbLegacySupport(
               //
               // Disable the SMI in USBLEGCTLSTS firstly
               //
-              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &mSaveValue);
-              Value = mSaveValue & 0xFFFF0000;
+              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
+              Value = SaveValue & 0xFFFF0000;
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
 
               //
@@ -350,8 +349,7 @@ DisableUsbLegacySupport(
                   break;
                 }
               }
-              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &mNewValue);
-              PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &mSaveValue);
+              PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
             }
           }
         }
@@ -1290,9 +1288,6 @@ Returns:
   DBG ("BdsPlatorm: Starting BdsLibConnectAllDriversToAllControllers\n");  // 2.3 sec
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
-
-  DBG ("BdsPlatorm: New USBLEGCTLSTS = 0x%x\n", mNewValue);
-  DBG ("BdsPlatorm: Old USBLEGCTLSTS = 0x%x\n", mSaveValue);
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");  // 0.3 sec
   BdsLibEnumerateAllBootOption (BootOptionList);
