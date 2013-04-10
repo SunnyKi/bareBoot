@@ -50,6 +50,11 @@ int main(int argc, char* argv[]) {
 		fclose(ifp);
 		if (ibuf.len < 1)
 			return 2;
+
+		pl = plXmlToNode(&ibuf);
+		plNodeDelete(pl);
+
+		ibuf.pos = 0;
 		pl = plXmlToNode(&ibuf);
 		if (pl != NULL) {
 			(void) plNodeToXml(pl, &obuf);
