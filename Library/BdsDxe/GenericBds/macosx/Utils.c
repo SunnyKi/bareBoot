@@ -746,7 +746,7 @@ LoadPListFile (
   Status = EFI_NOT_FOUND;
   pbuf.pos = 0;
 
-  Status = egLoadFile (RootFileHandle, XmlPlistPath, (UINT8**) &pbuf.dat, &pbuf.len);
+  Status = egLoadFile (RootFileHandle, XmlPlistPath, (UINT8**) &pbuf.dat, (UINTN *) &pbuf.len);
 
   if (EFI_ERROR (Status) || pbuf.dat == NULL) {
     return NULL;

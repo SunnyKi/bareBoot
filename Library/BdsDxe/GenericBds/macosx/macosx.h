@@ -418,8 +418,8 @@ typedef struct {
   CHAR8   *AnyKext[100];
   BOOLEAN AnyKextInfoPlistPatch[100];
   UINTN   AnyKextDataLen[100];
-  UINT8   *AnyKextData[100];
-  UINT8   *AnyKextPatch[100];
+  CHAR8   *AnyKextData[100];
+  CHAR8   *AnyKextPatch[100];
   UINT32   NrKexts;
 } SETTINGS_DATA;
 

@@ -146,7 +146,7 @@ UINTN
 SearchAndCount (
   UINT8   *Source,
   UINT32  SourceSize,
-  UINT8   *Search,
+  CHAR8   *Search,
   UINTN   SearchSize
 );
 
@@ -161,9 +161,9 @@ UINTN
 SearchAndReplace (
   UINT8   *Source,
   UINT32  SourceSize,
-  UINT8   *Search,
+  CHAR8   *Search,
   UINTN   SearchSize,
-  UINT8   *Replace,
+  CHAR8   *Replace,
   INTN    MaxReplaces
 );
 

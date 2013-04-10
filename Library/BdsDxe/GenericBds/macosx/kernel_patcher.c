@@ -600,6 +600,25 @@ FindBootArgs (
       // set vars
       dtRoot = (CHAR8 *) (UINTN) bootArgs1->deviceTreeP;
 
+      DEBUG ((DEBUG_INFO, "bootArgs1->Revision 0x%x\n",bootArgs1->Revision));
+      DEBUG ((DEBUG_INFO, "bootArgs1->Version 0x%x\n",bootArgs1->Version));
+      DEBUG ((DEBUG_INFO, "bootArgs1->CommandLine %s\n",bootArgs1->CommandLine));
+      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMap 0x%x\n",bootArgs1->MemoryMap));
+      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapSize 0x%x\n",bootArgs1->MemoryMapSize));
+      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapDescriptorSize 0x%x\n",bootArgs1->MemoryMapDescriptorSize));
+      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapDescriptorVersion 0x%x\n",bootArgs1->MemoryMapDescriptorVersion));
+      DEBUG ((DEBUG_INFO, "bootArgs1->deviceTreeP 0x%x\n",bootArgs1->deviceTreeP));
+      DEBUG ((DEBUG_INFO, "bootArgs1->deviceTreeLength 0x%x\n",bootArgs1->deviceTreeLength));
+      DEBUG ((DEBUG_INFO, "bootArgs1->kaddr 0x%x\n",bootArgs1->kaddr));
+      DEBUG ((DEBUG_INFO, "bootArgs1->ksize 0x%x\n",bootArgs1->ksize));
+      DEBUG ((DEBUG_INFO, "bootArgs1->efiRuntimeServicesPageStart 0x%x\n",bootArgs1->efiRuntimeServicesPageStart));
+      DEBUG ((DEBUG_INFO, "bootArgs1->efiRuntimeServicesPageCount 0x%x\n",bootArgs1->efiRuntimeServicesPageCount));
+      DEBUG ((DEBUG_INFO, "bootArgs1->efiSystemTable 0x%x\n",bootArgs1->efiSystemTable));
+      DEBUG ((DEBUG_INFO, "bootArgs1->efiMode 0x%x\n",bootArgs1->efiMode));
+      DEBUG ((DEBUG_INFO, "bootArgs1->performanceDataStart 0x%x\n",bootArgs1->performanceDataStart));
+      DEBUG ((DEBUG_INFO, "bootArgs1->performanceDataSize 0x%x\n",bootArgs1->performanceDataSize));
+      DEBUG ((DEBUG_INFO, "bootArgs1->efiRuntimeServicesVirtualPageStart 0x%x\n",bootArgs1->efiRuntimeServicesVirtualPageStart));
+
       // disable other pointer
       bootArgs2 = NULL;
       break;
