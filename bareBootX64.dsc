@@ -243,6 +243,9 @@
   # Bios Thunk
   bareBoot/BiosVideo/BiosVideo.inf
 
+  # HFS+
+  bareBoot/VBoxFsDxe/VBoxHfs.inf
+
   # ACPI Support
 #  MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
 #  MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf

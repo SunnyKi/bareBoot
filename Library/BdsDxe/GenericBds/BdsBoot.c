@@ -263,25 +263,25 @@ MacOS:
                        &FHandle
                      );
   }
-  DBG ("BdsBoot: Starting GetOSVersion\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetOSVersion\n"));
   GetOSVersion (FHandle);
-  DBG ("BdsBoot: Starting GetUserSettings\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
   GetUserSettings (gRootFHandle, L"\\EFI\\bareboot\\config.plist");
-  DBG ("BdsBoot: Starting ScanSPD\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting ScanSPD\n"));
   ScanSPD ();
-  DBG ("BdsBoot: Starting SetDevices\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
   SetDevices ();
-  DBG ("BdsBoot: Starting PatchSmbios\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchSmbios\n"));
   PatchSmbios ();
-  DBG ("BdsBoot: Starting PatchACPI\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchACPI\n"));
   PatchACPI (gRootFHandle);
-  DBG ("BdsBoot: Starting SetVariablesForOSX\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetVariablesForOSX\n"));
   SetVariablesForOSX ();
-  DBG ("BdsBoot: Starting SetPrivateVarProto\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetPrivateVarProto\n"));
   SetPrivateVarProto ();
-  DBG ("BdsBoot: Starting SetupDataForOSX\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetupDataForOSX\n"));
   SetupDataForOSX ();
-  DBG ("BdsBoot: Starting EventsInitialize\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting EventsInitialize\n"));
   EventsInitialize ();
 
   DBG ("gST->Hdr.Signature = 0x%x\n", gST->Hdr.Signature);
@@ -708,7 +708,8 @@ BdsLibEnumerateAllBootOption (
       Status = FHandle->GetInfo(FHandle, &gEfiFileSystemInfoGuid,(UINTN*)&BufferSizeVolume, FileSystemInfo);
 
       if (!EFI_ERROR(Status)) {
-        if (FileSystemInfo->VolumeLabel != NULL) {
+        if ((FileSystemInfo->VolumeLabel != NULL) &&
+            (StrLen(FileSystemInfo->VolumeLabel) > 0)) {
           UnicodeSPrint (Buffer, BufferSizeVolume, L"%s", FileSystemInfo->VolumeLabel);
         } else {
           UnicodeSPrint (Buffer, BufferSizeVolume, L"%s %d", L"Unnamed Volume ", Index);

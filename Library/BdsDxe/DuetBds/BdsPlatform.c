@@ -1291,8 +1291,9 @@ Returns:
   gConnectAllHappened = TRUE;
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");  // 0.3 sec
-  BdsLibEnumerateAllBootOption (BootOptionList);
-
+  if (IsListEmpty (BootOptionList)) {
+    BdsLibEnumerateAllBootOption (BootOptionList);
+  }
   AddBootArgs = "\0 23456789012345678901234567890123456789";
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
     AsciiStrCat (AddBootArgs, " -v");
