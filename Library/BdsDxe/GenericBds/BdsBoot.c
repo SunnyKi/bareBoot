@@ -269,8 +269,6 @@ MacOS:
   GetCpuProps ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
   GetUserSettings (gRootFHandle, L"\\EFI\\bareboot\\config.plist");
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting ScanSPD\n"));
-  ScanSPD ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
   SetDevices ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchSmbios\n"));

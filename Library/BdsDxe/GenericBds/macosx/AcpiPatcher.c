@@ -645,7 +645,7 @@ PatchACPI (
     }
 #if 0
     else {
-      newFadt->PreferredPmProfile = gMobile ? 2 : 1;
+      newFadt->PreferredPmProfile = gSettings.Mobile ? 2 : 1;
     }
 #endif
 

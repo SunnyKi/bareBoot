@@ -424,16 +424,16 @@ read_smb_intel (
              1,
              &hostc
            );
-  fullBanks = (gRAM->MemoryModules == gRAM->CntMemorySlots);
+  fullBanks = (gRAM->MemoryModules == gRAM->MaxMemorySlots);
 
-  // Search MAX_RAM_SLOTS slots
-  for (i = 0; i <  MAX_RAM_SLOTS; i++) {
+  for (i = 0; i <  gRAM->MaxMemorySlots; i++) {
     slot = &gRAM->DIMM[i];
     slot->SpdSize = smb_read_byte_intel (base, (UINT8) (0x50 + i), 0);
     slot->InUse = FALSE;
 
     // Check spd is present
     if ((slot->SpdSize != 0) && (slot->SpdSize != 0xff)) {
+      gRAM->SpdDetected = TRUE;
       slot->InUse = TRUE;
 
       slot->spd = AllocateZeroPool (MAX_SPD_SIZE);
@@ -468,7 +468,7 @@ read_smb_intel (
     gRAM->Map[i] = (UINT16) ((i > 0 &&
                                gRAM->DIMM[1].InUse == FALSE &&
                                fullBanks &&
-                               gRAM->CntMemorySlots == 2) ? mapping[i] : i);
+                               gRAM->MaxMemorySlots == 2) ? mapping[i] : i);
   }
 }
 

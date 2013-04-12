@@ -329,8 +329,8 @@ typedef struct {
 } RAM_SLOT_INFO;
 
 typedef struct {
+  BOOLEAN   SpdDetected;
   UINT8     MaxMemorySlots;         // number of memory slots polulated by SMBIOS
-  UINT8     CntMemorySlots;         // number of memory slots counted
   UINT16    MemoryModules;          // number of memory modules installed
   UINT16    Map[MAX_RAM_SLOTS];     // Information and SPD mapping for each slot
   RAM_SLOT_INFO DIMM[MAX_RAM_SLOTS];
@@ -509,7 +509,6 @@ EFI_GUID                        gSystemID;
 EFI_GUID                        gPlatformUuid;
 EFI_STATUS                      SystemIDStatus;
 EFI_STATUS                      PlatformUuidStatus;
-BOOLEAN                         gMobile;
 GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
 CHAR8                           *AddBootArgs;
@@ -613,11 +612,6 @@ GetCpuProps (
 
 VOID
 SetDevices (
-  VOID
-);
-
-EFI_STATUS
-PrepatchSmbios (
   VOID
 );
 

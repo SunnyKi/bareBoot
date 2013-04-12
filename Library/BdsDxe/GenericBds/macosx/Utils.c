@@ -351,7 +351,7 @@ GetDefaultModel (
   MACHINE_TYPES DefaultType = MacPro31;
 
   // TODO: Add more CPU models and configure the correct machines per CPU/GFX model
-  if (gMobile) {
+  if (gSettings.Mobile) {
     switch (gCPUStructure.Model) {
       case CPU_MODEL_ATOM:
         DefaultType = MacBookAir31; //MacBookAir1,1 doesn't support _PSS for speedstep!
@@ -1055,26 +1055,6 @@ GetUserSettings (
   i = 0;
   size = 0;
 
-  PrepatchSmbios ();
-
-  Model = GetDefaultModel ();
-
-  AsciiStrCpy (gSettings.VendorName,             BiosVendor);
-  AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[Model]);
-  AsciiStrCpy (gSettings.ReleaseDate,            AppleReleaseDate[Model]);
-  AsciiStrCpy (gSettings.ManufactureName,        BiosVendor);
-  AsciiStrCpy (gSettings.ProductName,            AppleProductName[Model]);
-  AsciiStrCpy (gSettings.VersionNr,              AppleSystemVersion[Model]);
-  AsciiStrCpy (gSettings.SerialNr,               AppleSerialNumber[Model]);
-  AsciiStrCpy (gSettings.FamilyName,             AppleFamilies[Model]);
-  AsciiStrCpy (gSettings.BoardManufactureName,   BiosVendor);
-  AsciiStrCpy (gSettings.BoardSerialNumber,      AppleBoardSN);
-  AsciiStrCpy (gSettings.BoardNumber,            AppleBoardID[Model]);
-  AsciiStrCpy (gSettings.BoardVersion,           AppleSystemVersion[Model]);
-  AsciiStrCpy (gSettings.LocationInChassis,      AppleBoardLocation);
-  AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
-  AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
-
   plist = LoadPListFile (RootFileHandle, ConfigPlistPath);
 
   if (plist == NULL) {
@@ -1106,9 +1086,7 @@ GetUserSettings (
   if (dictPointer != NULL) {
     if (GetUnicodeProperty (dictPointer, "PlatformUUID", cUUID)) {
       PlatformUuidStatus = StrToGuidLE (cUUID, &gPlatformUuid);
-      //else value from SMBIOS
     }
-
     if (GetUnicodeProperty (dictPointer, "SystemID", cUUID)) {
       SystemIDStatus = StrToGuidLE (cUUID, &gSystemID);
     }
@@ -1173,7 +1151,26 @@ GetUserSettings (
 
   dictPointer = plDictFind (plist, "SMBIOS", 6, plKindDict);
 
-  gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", gMobile);
+  gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", FALSE);
+
+  Model = GetDefaultModel ();
+
+  AsciiStrCpy (gSettings.VendorName,             BiosVendor);
+  AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[Model]);
+  AsciiStrCpy (gSettings.ReleaseDate,            AppleReleaseDate[Model]);
+  AsciiStrCpy (gSettings.ManufactureName,        BiosVendor);
+  AsciiStrCpy (gSettings.ProductName,            AppleProductName[Model]);
+  AsciiStrCpy (gSettings.VersionNr,              AppleSystemVersion[Model]);
+  AsciiStrCpy (gSettings.SerialNr,               AppleSerialNumber[Model]);
+  AsciiStrCpy (gSettings.FamilyName,             AppleFamilies[Model]);
+  AsciiStrCpy (gSettings.BoardManufactureName,   BiosVendor);
+  AsciiStrCpy (gSettings.BoardSerialNumber,      AppleBoardSN);
+  AsciiStrCpy (gSettings.BoardNumber,            AppleBoardID[Model]);
+  AsciiStrCpy (gSettings.BoardVersion,           AppleSystemVersion[Model]);
+  AsciiStrCpy (gSettings.LocationInChassis,      AppleBoardLocation);
+  AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
+  AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
+
   GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
   GetAsciiProperty (dictPointer, "BiosVersion", gSettings.RomVersion);
   GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
@@ -1206,7 +1203,6 @@ GetUserSettings (
     AsmReadMsr64 (MSR_IA32_PERF_STATUS);
   }
   
-
   gSettings.CPUFrequency = (UINT64) GetNumProperty (dictPointer, "CPUFrequency", 0);
   gSettings.FSBFrequency = (UINT64) GetNumProperty (dictPointer, "FSBFrequency", 0);
   gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
@@ -1273,8 +1269,6 @@ GetUserSettings (
     DBG ("  %d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
   }
 #endif
-
-  gMobile = gSettings.Mobile;
 
   plNodeDelete (plist);
 
