@@ -361,10 +361,8 @@ typedef struct {
   CHAR8 ChassisManufacturer[64];
   CHAR8 ChassisAssetTag[64];
   // SMBIOS TYPE4
-  UINT16  CpuFreqMHz;
-  UINT32  BusSpeed; //in kHz
-  UINT8   CPUSpeedDetectiond;
-  BOOLEAN Turbo;
+  UINT64  CPUFrequency;
+  UINT64  FSBFrequency; 
   // SMBIOS TYPE17
   CHAR8 MemoryManufacturer[64];
   CHAR8 MemorySerialNumber[64];
@@ -444,6 +442,7 @@ typedef struct {
   UINT64  ExtFeatures;
   UINT64  MicroCode;
   UINT64  ProcessorFlag;
+  UINT8   Mobile;
 
   UINT8   Cores;
   UINT8   Threads;
@@ -454,27 +453,13 @@ typedef struct {
   UINT32  CoresPerPackage;
   UINT32  LogicalPerPackage;
 
-  UINT8   Mobile;
-
-  UINT8   MaxDiv;
-  UINT8   CurrDiv;
   UINT32  SubDivider;
   UINT32  MaxRatio;
-  UINT32  MinRatio;
-
-  UINT32  ExternalClock; //MHz
-  UINT16  CurrentSpeed; //MHz
-  UINT16  MaxSpeed; //MHz
   UINT64  FSBFrequency; //Hz
   UINT64  CPUFrequency; //Hz
   UINT64  TSCFrequency; //Hz
   UINT64  ProcessorInterconnectSpeed; //Hz
-
-  // Core i7,5,3
-  UINT8 Turbo1; //1 Core
-  UINT8 Turbo2; //2 Core
-  UINT8 Turbo3; //3 Core
-  UINT8 Turbo4; //4 Core
+  UINT64  TurboMsr; //1 Core
 
   UINT32  CPUID[CPUID_MAX][4];
 
@@ -633,12 +618,7 @@ GetUserSettings (
 );
 
 VOID
-GetCPUProperties (
-  VOID
-);
-
-VOID
-DumpCPU (
+GetCpuProps (
   VOID
 );
 

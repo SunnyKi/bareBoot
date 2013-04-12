@@ -957,11 +957,35 @@ GetUserSettings (
 
   dictPointer = plDictFind (plist, "CPU", 3, plKindDict);
 
-  gSettings.Turbo = GetBoolProperty (dictPointer, "Turbo", FALSE);
-  gSettings.CpuFreqMHz = (UINT16) GetNumProperty (dictPointer, "CpuFrequencyMHz", 0);
-  gSettings.BusSpeed = (UINT32) GetNumProperty (dictPointer, "BusSpeedkHz", 0);
+  if (GetBoolProperty (dictPointer, "Turbo", FALSE)) {
+    if (gCPUStructure.TurboMsr != 0) {
+      AsmWriteMsr64 (MSR_IA32_PERF_CONTROL, gCPUStructure.TurboMsr);
+      gBS->Stall (100);
+      i = 100000;
+      while (AsmReadMsr64 (MSR_IA32_PERF_STATUS) & (1 << 21)) {
+        if (!i--) {
+          break;
+        }
+      }
+    }
+    AsmReadMsr64 (MSR_IA32_PERF_STATUS);
+  }
+  
+
+  gSettings.CPUFrequency = (UINT64) GetNumProperty (dictPointer, "CPUFrequency", 0);
+  gSettings.FSBFrequency = (UINT64) GetNumProperty (dictPointer, "FSBFrequency", 0);
   gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
-  gSettings.CPUSpeedDetectiond = (UINT8) GetNumProperty (dictPointer, "CPUSpeedDetection", 0);
+  gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
+
+  if (gSettings.FSBFrequency != 0) {
+    gCPUStructure.FSBFrequency = gSettings.FSBFrequency;
+    DBG ("GetUserSettings: gCPUStructure.FSBFrequency = %d\n", gCPUStructure.FSBFrequency);
+  }
+
+  if (gSettings.CPUFrequency != 0) {
+    gCPUStructure.CPUFrequency = gSettings.CPUFrequency;
+    DBG ("GetUserSettings: gCPUStructure.CPUFrequency = %d\n", gCPUStructure.CPUFrequency);
+  }
 
   // KernelAndKextPatches
   gSettings.KPKernelCpu = FALSE;
@@ -1016,21 +1040,6 @@ GetUserSettings (
 #endif
 
   gMobile = gSettings.Mobile;
-
-  if ((gSettings.BusSpeed > 10 * kilo) &&
-      (gSettings.BusSpeed < 500 * kilo)) {
-    gCPUStructure.ExternalClock = gSettings.BusSpeed;
-  }
-
-  if ((gSettings.CpuFreqMHz > 100) &&
-      (gSettings.CpuFreqMHz < 20000)) {
-    gCPUStructure.CurrentSpeed = gSettings.CpuFreqMHz;
-  }
-
-  GetCPUProperties ();
-
-  dictPointer = plDictFind (plist, "CPU", 3, plKindDict);
-  gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
 
   plNodeDelete (plist);
 

@@ -369,16 +369,12 @@ GetTableType1 (
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_SYSTEM_INFORMATION, 0);
 
   if (SmbiosTable.Raw == NULL) {
-    Print (L"SmbiosTable: Type 1 (System Information) not found!\n");
+    DBG ("SmbiosTable: Type 1 (System Information) not found!\n");
     return;
   }
 
-#if 0
-  s = GetSmbiosString (SmbiosTable, SmbiosTable.Type1->ProductName);
-  CopyMem (gSettings.OEMProduct, s, iStrLen (s, 64));
-#endif
-
   gUuid = SmbiosTable.Type1->Uuid;
+  DBG ("Smbios gUuid = %g\n", gUuid);
 
   AsciiSPrint (Buffer, 50, "%02x%02x%02x%02x%02x%02x",
     SmbiosTable.Type1->Uuid.Data4[2],
@@ -393,9 +389,6 @@ GetTableType1 (
   gSettings.MacAddrLen = hex2bin (Buffer, gSettings.EthMacAddr, (INT32)(AsciiStrLen(Buffer) >> 1));
 
 #if 0
-  DBG ("gUuid = %g\n", gUuid);
-
-  CHAR8* s;
   CHAR16  Buffer1[100];
 
   ZeroMem (Buffer1, sizeof (Buffer1));
@@ -634,32 +627,6 @@ PatchTableType3 (
 }
 
 VOID
-GetTableType4 (
-  VOID
-)
-{
-  // Processor Information
-  //
-  SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_PROCESSOR_INFORMATION, 0);
-
-  if (SmbiosTable.Raw == NULL) {
-    Print (L"SmbiosTable: Type 4 (Processor Information) not found!\n");
-    return;
-  }
-
-  if (SmbiosTable.Type4->ExternalClock > 1000) {
-    gCPUStructure.ExternalClock = (UINT32) DivU64x32 (SmbiosTable.Type4->ExternalClock, 4);
-  } else {
-    gCPUStructure.ExternalClock = SmbiosTable.Type4->ExternalClock;  //MHz
-  }
-
-  gCPUStructure.CurrentSpeed = 0;
-  gCPUStructure.CurrentSpeed = SmbiosTable.Type4->CurrentSpeed; //MHz
-  gCPUStructure.MaxSpeed = SmbiosTable.Type4->MaxSpeed; //MHz
-  return;
-}
-
-VOID
 PatchTableType4 (
   VOID
 )
@@ -702,8 +669,8 @@ PatchTableType4 (
 #if 0
     Once = TRUE;
 #endif
-    newSmbiosTable.Type4->MaxSpeed = gCPUStructure.CurrentSpeed;
-    newSmbiosTable.Type4->CurrentSpeed = gCPUStructure.CurrentSpeed;
+    newSmbiosTable.Type4->MaxSpeed = (UINT16) DivU64x32 (gCPUStructure.CPUFrequency, 1000000);;
+    newSmbiosTable.Type4->CurrentSpeed = (UINT16) DivU64x32 (gCPUStructure.CPUFrequency, 1000000);;
 
     if (gCPUStructure.Model < CPU_MODEL_NEHALEM) {
       if (newSmbiosTable.Type4->ExternalClock > 1000) {
@@ -1321,7 +1288,6 @@ PrepatchSmbios (
   //Collect information for use in menu
   GetTableType1();
   GetTableType3();
-  GetTableType4();
   GetTableType16();
   GetTableType17();
   

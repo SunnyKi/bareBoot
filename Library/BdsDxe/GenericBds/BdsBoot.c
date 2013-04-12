@@ -249,7 +249,7 @@ BdsLibBootViaBootOption (
     goto Done;
 
 MacOS:
-  DBG ("BdsBoot: Starting InitializeConsoleSim\n");
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting InitializeConsoleSim\n"));
   InitializeConsoleSim (gImageHandle);
   
   Status = gBS->HandleProtocol (
@@ -265,6 +265,8 @@ MacOS:
   }
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetOSVersion\n"));
   GetOSVersion (FHandle);
+  DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetCpuProps\n"));
+  GetCpuProps ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
   GetUserSettings (gRootFHandle, L"\\EFI\\bareboot\\config.plist");
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting ScanSPD\n"));
