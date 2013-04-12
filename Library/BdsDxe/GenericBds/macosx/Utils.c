@@ -1210,11 +1210,17 @@ GetUserSettings (
 
   if (gSettings.FSBFrequency != 0) {
     gCPUStructure.FSBFrequency = gSettings.FSBFrequency;
+    if (gSettings.CPUFrequency == 0) {
+      gCPUStructure.CPUFrequency = MultU64x32 (gCPUStructure.FSBFrequency, gCPUStructure.MaxRatio);
+    }
     DBG ("GetUserSettings: gCPUStructure.FSBFrequency = %d\n", gCPUStructure.FSBFrequency);
   }
 
   if (gSettings.CPUFrequency != 0) {
     gCPUStructure.CPUFrequency = gSettings.CPUFrequency;
+    if (gSettings.FSBFrequency == 0) {
+      gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
+    }
     DBG ("GetUserSettings: gCPUStructure.CPUFrequency = %d\n", gCPUStructure.CPUFrequency);
   }
 
