@@ -521,12 +521,6 @@ extern EFI_GUID                 gEfiAppleNvramGuid;
 extern EFI_GUID                 gEfiAppleBootGuid;
 extern BOOLEAN                  SSSE3;
 // ----------------------------------------
-
-UINT16
-GetAdvancedCpuType (
-  VOID
-);
-
 UINT32
 hex2bin (
   IN CHAR8 *hex,
@@ -566,11 +560,6 @@ FileExists (
 EFI_STATUS
 PatchACPI (
   IN EFI_FILE *FHandle
-);
-
-MACHINE_TYPES
-GetDefaultModel (
-  VOID
 );
 
 EFI_FILE_INFO *

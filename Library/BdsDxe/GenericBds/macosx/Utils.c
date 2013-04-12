@@ -1,18 +1,6 @@
-/* $Id: Console.c $ */
+/* $Id: Utils.c $ */
 /** @file
- * Console.c - VirtualBox Console control emulation
- */
-
-/*
- * Copyright (C) 2010 Oracle Corporation
- *
- * This file is part of VirtualBox Open Source Edition (OSE), as
- * available from http://www.virtualbox.org. This file is free software;
- * you can redistribute it and/or modify it under the terms of the GNU
- * General Public License (GPL) as published by the Free Software
- * Foundation, in version 2 as it comes in the "COPYING" file of the
- * VirtualBox OSE distribution. VirtualBox OSE is distributed in the
- * hope that it will be useful, but WITHOUT ANY WARRANTY of any kind.
+ * Utils.c - VirtualBox Console control emulation
  */
 
 #include "macosx.h"
@@ -24,7 +12,7 @@ EfiGrowBuffer (
   IN OUT EFI_STATUS   *Status,
   IN OUT VOID         **Buffer,
   IN UINTN            BufferSize
-  );
+);
 
 CHAR8*  DefaultMemEntry = "N/A";
 CHAR8*  DefaultSerial = "CT288GT9VT6";
@@ -251,14 +239,482 @@ CHAR8* AppleChassisAsset[24] = {
 CHAR8* AppleBoardSN = "C02032101R5DC771H";
 CHAR8* AppleBoardLocation = "Part Component";
 
+UINT16
+GetAdvancedCpuType (
+  VOID
+)
+{
+  if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
+    switch (gCPUStructure.Family) {
+
+      case 0x06: {
+        switch (gCPUStructure.Model) {
+          case CPU_MODEL_DOTHAN:// Dothan
+          case CPU_MODEL_YONAH: // Yonah
+            return 0x201;
+
+          case CPU_MODEL_NEHALEM_EX: //Xeon 5300
+            return 0x402;
+
+          case CPU_MODEL_NEHALEM: // Intel Core i7 LGA1366 (45nm)
+            return 0x701; // Core i7
+
+          case CPU_MODEL_FIELDS: // Lynnfield, Clarksfield, Jasper
+            if (AsciiStrStr (gCPUStructure.BrandString, "i5")) {
+              return 0x601;  // Core i5
+            }
+
+            return 0x701; // Core i7
+
+          case CPU_MODEL_DALES: // Intel Core i5, i7 LGA1156 (45nm) (Havendale, Auburndale)
+            if (AsciiStrStr (gCPUStructure.BrandString, "Core(TM) i3")) {
+              return 0x901;  // Core i3 //why not 902? Ask Apple
+            }
+
+            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
+              return 0x602;  // Core i5
+            }
+
+            return 0x702; // Core i7
+
+            //case CPU_MODEL_ARRANDALE:
+          case CPU_MODEL_CLARKDALE: // Intel Core i3, i5, i7 LGA1156 (32nm) (Clarkdale, Arrandale)
+            if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+              return 0x901;  // Core i3
+            }
+
+            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
+              return 0x601;  // Core i5 - (M540 -> 0x0602)
+            }
+
+            return 0x701; // Core i7
+
+          case CPU_MODEL_WESTMERE: // Intel Core i7 LGA1366 (32nm) 6 Core (Gulftown, Westmere-EP, Westmere-WS)
+          case CPU_MODEL_WESTMERE_EX: // Intel Core i7 LGA1366 (45nm) 6 Core ???
+            return 0x701; // Core i7
+
+          case CPU_MODEL_SANDY_BRIDGE:
+            if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+              return 0x903;  // Core i3
+            }
+
+            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
+              return 0x603;  // Core i5
+            }
+
+            return 0x703;
+
+          case CPU_MODEL_IVY_BRIDGE:
+          case CPU_MODEL_IVY_BRIDGE_E5:
+            if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+              return 0x903;  // Core i3 - Apple doesn't use it
+            }
+
+            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
+              return 0x604;  // Core i5
+            }
+
+            return 0x704;
+
+          case CPU_MODEL_MEROM: // Merom
+            if (gCPUStructure.Cores >= 2) {
+              if (AsciiStrStr (gCPUStructure.BrandString, "Xeon")) {
+                return 0x402;   // Quad-Core Xeon
+              } else {
+                return 0x301;   // Core 2 Duo
+              }
+            } else {
+              return 0x201;   // Core Solo
+            };
+
+          case CPU_MODEL_PENRYN:// Penryn
+          case CPU_MODEL_ATOM:  // Atom (45nm)
+          default:
+            if (gCPUStructure.Cores >= 4) {
+              return 0x402;   // Quad-Core Xeon
+            } else if (gCPUStructure.Cores == 1) {
+              return 0x201;   // Core Solo
+            };
+            return 0x301;   // Core 2 Duo
+        }
+      }
+    }
+  }
+  return 0x0;
+}
+
+MACHINE_TYPES
+GetDefaultModel (
+  VOID
+)
+{
+  MACHINE_TYPES DefaultType = MacPro31;
+
+  // TODO: Add more CPU models and configure the correct machines per CPU/GFX model
+  if (gMobile) {
+    switch (gCPUStructure.Model) {
+      case CPU_MODEL_ATOM:
+        DefaultType = MacBookAir31; //MacBookAir1,1 doesn't support _PSS for speedstep!
+        break;
+
+      case CPU_MODEL_DOTHAN:
+        DefaultType = MacBook11;
+        break;
+
+      case CPU_MODEL_YONAH:
+        DefaultType = MacBook11;
+        break;
+
+      case CPU_MODEL_MEROM:
+        DefaultType = MacBook21;
+        break;
+
+      case CPU_MODEL_PENRYN:
+        if (gGraphics.Vendor == Nvidia) {
+          DefaultType = MacBookPro51;
+        } else {
+          DefaultType = MacBook41;
+        }
+
+        break;
+
+      case CPU_MODEL_JAKETOWN:
+      case CPU_MODEL_SANDY_BRIDGE:
+        if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
+            (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
+          DefaultType = MacBookPro81;
+          break;
+        }
+
+        DefaultType = MacBookPro83;
+        break;
+
+      case CPU_MODEL_IVY_BRIDGE:
+      case CPU_MODEL_IVY_BRIDGE_E5:
+        DefaultType = MacBookAir52;
+        break;
+
+      default:
+        if (gGraphics.Vendor == Nvidia) {
+          DefaultType = MacBookPro51;
+        } else {
+          DefaultType = MacBook52;
+        }
+
+        break;
+    }
+  } else {
+    switch (gCPUStructure.Model) {
+      case CPU_MODEL_CELERON:
+        DefaultType = MacMini21;
+        break;
+
+      case CPU_MODEL_LINCROFT:
+        DefaultType = MacMini21;
+        break;
+
+      case CPU_MODEL_ATOM:
+        DefaultType = MacMini21;
+        break;
+
+      case CPU_MODEL_MEROM:
+        DefaultType = iMac81;
+        break;
+
+      case CPU_MODEL_PENRYN:
+        DefaultType = MacPro31;//speedstep without patching; Hapertown is also a Penryn, according to Wikipedia
+        break;
+
+      case CPU_MODEL_NEHALEM:
+        DefaultType = MacPro41;
+        break;
+
+      case CPU_MODEL_NEHALEM_EX:
+        DefaultType = MacPro41;
+        break;
+
+      case CPU_MODEL_FIELDS:
+        DefaultType = iMac112;
+        break;
+
+      case CPU_MODEL_DALES:
+        DefaultType = iMac112;
+        break;
+
+      case CPU_MODEL_CLARKDALE:
+        DefaultType = iMac112;
+        break;
+
+      case CPU_MODEL_WESTMERE:
+        DefaultType = MacPro51;
+        break;
+
+      case CPU_MODEL_WESTMERE_EX:
+        DefaultType = MacPro51;
+        break;
+
+      case CPU_MODEL_SANDY_BRIDGE:
+        if (gGraphics.Vendor == Intel) {
+          DefaultType = MacMini51;
+        }
+
+        if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
+            (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
+          DefaultType = iMac112;
+          break;
+        }
+
+        if (AsciiStrStr (gCPUStructure.BrandString, "i7")) {
+          DefaultType = iMac121;
+          break;
+        }
+        
+        DefaultType = MacPro51;
+        break;
+        
+      case CPU_MODEL_IVY_BRIDGE:
+      case CPU_MODEL_IVY_BRIDGE_E5:
+        DefaultType = iMac122;  //do not make 13,1 by default because of OS 10.8.2 doesn't know it
+        
+      case CPU_MODEL_JAKETOWN:
+        DefaultType = MacPro41;
+        break;
+        
+      default:
+        DefaultType = MacPro31;
+        break;
+    }
+  }
+  
+  return DefaultType;
+}
 //---------------------------------------------------------------------------------
+
+VOID
+Pause (
+  IN CHAR16* Message
+)
+{
+  if (Message != NULL) {
+    Print (L"%s", Message);
+  }
+
+  gBS->Stall (4000000);
+}
+
+BOOLEAN
+FileExists (
+            IN EFI_FILE *RootFileHandle,
+            IN CHAR16   *RelativePath
+            )
+{
+  EFI_STATUS  Status;
+  EFI_FILE    *TestFile;
+
+  Status = RootFileHandle->Open (RootFileHandle, &TestFile, RelativePath, EFI_FILE_MODE_READ, 0);
+
+  if (Status == EFI_SUCCESS) {
+    TestFile->Close (TestFile);
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+EFI_STATUS
+egLoadFile (
+  IN EFI_FILE_HANDLE BaseDir,
+  IN CHAR16 *FileName,
+  OUT UINT8 **FileData,
+  OUT UINTN *FileDataLength
+)
+{
+  EFI_STATUS          Status;
+  EFI_FILE_HANDLE     FileHandle;
+  EFI_FILE_INFO       *FileInfo;
+  UINT64              ReadSize;
+  UINTN               BufferSize;
+  UINT8               *Buffer;
+
+  if (BaseDir == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = BaseDir->Open (BaseDir, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+
+  FileInfo = EfiLibFileInfo (FileHandle);
+
+  if (FileInfo == NULL) {
+    FileHandle->Close (FileHandle);
+    return EFI_NOT_FOUND;
+  }
+
+  ReadSize = FileInfo->FileSize;
+
+  if (ReadSize > MAX_FILE_SIZE) {
+    ReadSize = MAX_FILE_SIZE;
+  }
+
+  FreePool (FileInfo);
+  BufferSize = (UINTN) ReadSize;   // was limited to 1 GB above, so this is safe
+  Buffer = (UINT8 *) AllocateAlignedPages (EFI_SIZE_TO_PAGES (BufferSize), 16);
+
+  if (Buffer == NULL) {
+    FileHandle->Close (FileHandle);
+    return EFI_OUT_OF_RESOURCES;
+  }
+
+  Status = FileHandle->Read (FileHandle, &BufferSize, Buffer);
+  FileHandle->Close (FileHandle);
+
+  if (EFI_ERROR (Status)) {
+    FreeAlignedPages (Buffer, EFI_SIZE_TO_PAGES (BufferSize));
+    return Status;
+  }
+
+  *FileData = Buffer;
+  *FileDataLength = BufferSize;
+  return EFI_SUCCESS;
+}
+
+EFI_STATUS
+egSaveFile (
+  IN EFI_FILE_HANDLE BaseDir,
+  IN CHAR16   *FileName,
+  IN UINT8    *FileData,
+  IN UINTN    FileDataLength
+)
+{
+  EFI_STATUS          Status;
+  EFI_FILE_HANDLE     FileHandle;
+  UINTN               BufferSize;
+
+  if (BaseDir == NULL) {
+    return EFI_NOT_FOUND;
+  }
+
+  Status = BaseDir->Open(BaseDir, &FileHandle, FileName,
+                         EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
+  if (EFI_ERROR(Status))
+    return Status;
+
+  BufferSize = FileDataLength;
+  Status = FileHandle->Write(FileHandle, &BufferSize, FileData);
+  FileHandle->Close(FileHandle);
+
+  return Status;
+}
+
+EFI_STATUS
+SaveBooterLog (
+  IN EFI_FILE_HANDLE BaseDir,
+  IN CHAR16 *FileName
+)
+{
+  CHAR8                   *MemLogBuffer;
+  UINTN                   MemLogLen;
+  
+  MemLogBuffer = GetMemLogBuffer ();
+  MemLogLen = GetMemLogLen ();
+  
+  if (MemLogBuffer == NULL || MemLogLen == 0) {
+    return EFI_NOT_FOUND;
+  }
+  
+  return egSaveFile(BaseDir, FileName, (UINT8*) MemLogBuffer, MemLogLen);
+}
+//---------------------------------------------------------------------------------
+BOOLEAN
+IsHexDigit (
+  CHAR8 c
+)
+{
+  return (IS_DIGIT (c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) ? TRUE : FALSE;
+}
+
+UINT8
+hexstrtouint8 (
+  CHAR8* buf
+)
+{
+  INT8 i;
+
+  if (IS_DIGIT (buf[0])) {
+    i = buf[0] - '0';
+  } else if (IS_HEX (buf[0])) {
+    i = buf[0] - 'a' + 10;
+  } else {
+    i = buf[0] - 'A' + 10;
+  }
+
+  if (AsciiStrLen (buf) == 1) {
+    return i;
+  }
+
+  i <<= 4;
+
+  if (IS_DIGIT (buf[1])) {
+    i += buf[1] - '0';
+  } else if (IS_HEX (buf[1])) {
+    i += buf[1] - 'a' + 10;
+  } else {
+    i += buf[1] - 'A' + 10;  //no error checking
+  }
+
+  return i;
+}
+
+UINT32
+hex2bin (
+  IN CHAR8 *hex,
+  OUT UINT8 *bin,
+  INT32 len
+)
+{
+  CHAR8 *p;
+  UINT32 i;
+  UINT32 outlen;
+  CHAR8 buf[3];
+
+  outlen = 0;
+
+  if (hex == NULL || bin == NULL || len <= 0 || (INT32) AsciiStrLen (hex) != len * 2) {
+    return 0;
+  }
+
+  buf[2] = '\0';
+  p = (CHAR8 *) hex;
+
+  for (i = 0; i < (UINT32) len; i++) {
+    while ((*p == 0x20) || (*p == ',')) {
+      p++;
+    }
+    if (*p == 0) {
+      break;
+    }
+    if (!IsHexDigit (p[0]) || !IsHexDigit (p[1])) {
+      return 0;
+    }
+
+    buf[0] = *p++;
+    buf[1] = *p++;
+    bin[i] = hexstrtouint8 (buf);
+    outlen++;
+  }
+  bin[outlen] = 0;
+  return outlen;
+}
 
 VOID *
 GetDataSetting (
   IN VOID   *dict,
   IN CHAR8  *propName,
   OUT UINTN *dataLen
-  )
+)
 {
   VOID      *prop;
   UINT8     *data;
@@ -417,225 +873,6 @@ StrToGuidLE (
   return EFI_SUCCESS;
 }
 
-BOOLEAN
-IsHexDigit (
-  CHAR8 c
-)
-{
-  return (IS_DIGIT (c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) ? TRUE : FALSE;
-}
-
-UINT8
-hexstrtouint8 (
-  CHAR8* buf
-)
-{
-  INT8 i;
-
-  if (IS_DIGIT (buf[0])) {
-    i = buf[0] - '0';
-  } else if (IS_HEX (buf[0])) {
-    i = buf[0] - 'a' + 10;
-  } else {
-    i = buf[0] - 'A' + 10;
-  }
-
-  if (AsciiStrLen (buf) == 1) {
-    return i;
-  }
-
-  i <<= 4;
-
-  if (IS_DIGIT (buf[1])) {
-    i += buf[1] - '0';
-  } else if (IS_HEX (buf[1])) {
-    i += buf[1] - 'a' + 10;
-  } else {
-    i += buf[1] - 'A' + 10;  //no error checking
-  }
-
-  return i;
-}
-
-UINT32
-hex2bin (
-  IN CHAR8 *hex,
-  OUT UINT8 *bin,
-  INT32 len
-)
-{
-  CHAR8 *p;
-  UINT32 i;
-  UINT32 outlen;
-  CHAR8 buf[3];
-
-  outlen = 0;
-
-  if (hex == NULL || bin == NULL || len <= 0 || (INT32) AsciiStrLen (hex) != len * 2) {
-    return 0;
-  }
-
-  buf[2] = '\0';
-  p = (CHAR8 *) hex;
-
-  for (i = 0; i < (UINT32) len; i++) {
-    while ((*p == 0x20) || (*p == ',')) {
-      p++;
-    }
-    if (*p == 0) {
-      break;
-    }
-    if (!IsHexDigit (p[0]) || !IsHexDigit (p[1])) {
-      return 0;
-    }
-
-    buf[0] = *p++;
-    buf[1] = *p++;
-    bin[i] = hexstrtouint8 (buf);
-    outlen++;
-  }
-  bin[outlen] = 0;
-  return outlen;
-}
-
-VOID
-Pause (
-  IN CHAR16* Message
-)
-{
-  if (Message != NULL) {
-    Print (L"%s", Message);
-  }
-
-  gBS->Stall (4000000);
-}
-
-BOOLEAN
-FileExists (
-  IN EFI_FILE *RootFileHandle,
-  IN CHAR16   *RelativePath
-)
-{
-  EFI_STATUS  Status;
-  EFI_FILE    *TestFile;
-
-  Status = RootFileHandle->Open (RootFileHandle, &TestFile, RelativePath, EFI_FILE_MODE_READ, 0);
-
-  if (Status == EFI_SUCCESS) {
-    TestFile->Close (TestFile);
-    return TRUE;
-  }
-
-  return FALSE;
-}
-
-EFI_STATUS
-egLoadFile (
-  IN EFI_FILE_HANDLE BaseDir,
-  IN CHAR16 *FileName,
-  OUT UINT8 **FileData,
-  OUT UINTN *FileDataLength
-)
-{
-  EFI_STATUS          Status;
-  EFI_FILE_HANDLE     FileHandle;
-  EFI_FILE_INFO       *FileInfo;
-  UINT64              ReadSize;
-  UINTN               BufferSize;
-  UINT8               *Buffer;
-
-  if (BaseDir == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  Status = BaseDir->Open (BaseDir, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  FileInfo = EfiLibFileInfo (FileHandle);
-
-  if (FileInfo == NULL) {
-    FileHandle->Close (FileHandle);
-    return EFI_NOT_FOUND;
-  }
-
-  ReadSize = FileInfo->FileSize;
-
-  if (ReadSize > MAX_FILE_SIZE) {
-    ReadSize = MAX_FILE_SIZE;
-  }
-
-  FreePool (FileInfo);
-  BufferSize = (UINTN) ReadSize;   // was limited to 1 GB above, so this is safe
-  Buffer = (UINT8 *) AllocateAlignedPages (EFI_SIZE_TO_PAGES (BufferSize), 16);
-
-  if (Buffer == NULL) {
-    FileHandle->Close (FileHandle);
-    return EFI_OUT_OF_RESOURCES;
-  }
-
-  Status = FileHandle->Read (FileHandle, &BufferSize, Buffer);
-  FileHandle->Close (FileHandle);
-
-  if (EFI_ERROR (Status)) {
-    FreeAlignedPages (Buffer, EFI_SIZE_TO_PAGES (BufferSize));
-    return Status;
-  }
-
-  *FileData = Buffer;
-  *FileDataLength = BufferSize;
-  return EFI_SUCCESS;
-}
-
-EFI_STATUS
-egSaveFile (
-  IN EFI_FILE_HANDLE BaseDir,
-  IN CHAR16   *FileName,
-  IN UINT8    *FileData,
-  IN UINTN    FileDataLength
-)
-{
-  EFI_STATUS          Status;
-  EFI_FILE_HANDLE     FileHandle;
-  UINTN               BufferSize;
-
-  if (BaseDir == NULL) {
-    return EFI_NOT_FOUND;
-  }
-
-  Status = BaseDir->Open(BaseDir, &FileHandle, FileName,
-                         EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
-  if (EFI_ERROR(Status))
-    return Status;
-
-  BufferSize = FileDataLength;
-  Status = FileHandle->Write(FileHandle, &BufferSize, FileData);
-  FileHandle->Close(FileHandle);
-
-  return Status;
-}
-
-EFI_STATUS
-SaveBooterLog (
-  IN EFI_FILE_HANDLE BaseDir,
-  IN CHAR16 *FileName
-)
-{
-  CHAR8                   *MemLogBuffer;
-  UINTN                   MemLogLen;
-
-  MemLogBuffer = GetMemLogBuffer ();
-  MemLogLen = GetMemLogLen ();
-
-  if (MemLogBuffer == NULL || MemLogLen == 0) {
-    return EFI_NOT_FOUND;
-  }
-
-  return egSaveFile(BaseDir, FileName, (UINT8*) MemLogBuffer, MemLogLen);
-}
-
 UINTN
 GetNumProperty (
   VOID* dict,
@@ -761,9 +998,7 @@ LoadPListFile (
 
   return plist;
 }
-
 // ----============================----
-
 EFI_STATUS
 GetBootDefault (
   IN EFI_FILE *RootFileHandle,
