@@ -262,34 +262,32 @@ SetupDataForOSX (
 
   Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &mDataHub);
 
-  if (!EFI_ERROR (Status)) {
-    devPathSupportedVal = 1;
-    FrontSideBus    = gCPUStructure.FSBFrequency;
-    CpuSpeed        = gCPUStructure.CPUFrequency;
-    TSCFrequency    = gCPUStructure.TSCFrequency;
-
-    AsciiStrToUnicodeStr (gSettings.ProductName, productName);
-    AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
-
-    Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &FrontSideBus, sizeof (UINT64));
-#if 0
-    Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"TSCFrequency", &TSCFrequency, sizeof (UINT64));
-    Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"CPUFrequency", &CpuSpeed, sizeof (UINT64));
-#endif
-    Status =  LogDataHub (&gEfiMiscSubClassGuid, L"DevicePathsSupported", &devPathSupportedVal, sizeof (UINT32));
-    Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
-    Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
-    if (!EFI_ERROR (SystemIDStatus)) {
-      Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
-      Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
-    } else {
-      if (EFI_ERROR (PlatformUuidStatus)) {
-        Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
-        Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
-      }
-    }
-    return Status;
-  } else {
+  if (EFI_ERROR (Status)) {
     return EFI_NOT_FOUND;
   }
+
+  devPathSupportedVal = 1;
+  FrontSideBus    = gCPUStructure.FSBFrequency;
+  CpuSpeed        = gCPUStructure.CPUFrequency;
+  TSCFrequency    = gCPUStructure.TSCFrequency;
+
+  AsciiStrToUnicodeStr (gSettings.ProductName, productName);
+  AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
+
+  Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &FrontSideBus, sizeof (UINT64));
+#if 0
+  Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"TSCFrequency", &TSCFrequency, sizeof (UINT64));
+  Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"CPUFrequency", &CpuSpeed, sizeof (UINT64));
+#endif
+  Status =  LogDataHub (&gEfiMiscSubClassGuid, L"DevicePathsSupported", &devPathSupportedVal, sizeof (UINT32));
+  Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
+  Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
+  if (!EFI_ERROR (SystemIDStatus)) {
+    Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
+  } else {
+    if (!EFI_ERROR (PlatformUuidStatus)) {
+      Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
+    }
+  }
+  return Status;
 }
