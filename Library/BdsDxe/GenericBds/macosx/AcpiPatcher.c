@@ -288,6 +288,8 @@ PatchACPI (
   UINT8                                                 ProcCount;
   UINT8                                                 Type;
 
+#define PATHTOACPITABLESSIZE 250
+
   buffer        = NULL;
   bufferLen     = 0;
   dsdt          = EFI_SYSTEM_TABLE_MAX_ADDRESS; //0xFE000000;
@@ -296,7 +298,7 @@ PatchACPI (
   newFadt       = NULL;
   PathDsdt      = L"DSDT.aml";
   PathACPI      = L"\\EFI\\bareboot\\acpi\\";
-  PathToACPITables = AllocateZeroPool (250);
+  PathToACPITables = AllocateZeroPool (PATHTOACPITABLESSIZE);
   rf            = NULL;
   RsdPointer    = NULL;
   Status        = EFI_SUCCESS;
@@ -668,7 +670,7 @@ PatchACPI (
       newFadt->Dsdt = (UINT32) XDsdt;
     }
 
-    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathACPI, PathDsdt);
+    UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, PathDsdt);
 
     if (FileExists (FHandle, PathToACPITables)) {
       Status = egLoadFile (FHandle, PathToACPITables , &buffer, &bufferLen);
@@ -726,7 +728,7 @@ PatchACPI (
   
   // Load SSDTs
   for (Index = 0; Index < NUM_TABLES; Index++) {
-    UnicodeSPrint (PathToACPITables, 250, L"%s%s", PathACPI, ACPInames[Index]);
+    UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, ACPInames[Index]);
 
     if (FileExists (FHandle, PathToACPITables)) {
       Status = egLoadFile (FHandle, PathToACPITables, &buffer, &bufferLen);
