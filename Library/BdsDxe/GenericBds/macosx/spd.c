@@ -377,7 +377,7 @@ read_smb_intel (
 )
 {
   EFI_STATUS      Status;
-  INTN            i, i2;
+  INTN            i, i2, maxslots;
   UINT8           spd_type;
   UINT32          base, mmio, hostc;
   UINT16          Command;
@@ -425,8 +425,8 @@ read_smb_intel (
              &hostc
            );
   fullBanks = (gRAM->MemoryModules == gRAM->MaxMemorySlots);
-
-  for (i = 0; i <  gRAM->MaxMemorySlots; i++) {
+  maxslots = gRAM->MaxMemorySlots <= 2? 3: gRAM->MaxMemorySlots;
+  for (i = 0; i <  maxslots; i++) {
     slot = &gRAM->DIMM[i];
     slot->SpdSize = smb_read_byte_intel (base, (UINT8) (0x50 + i), 0);
     slot->InUse = FALSE;

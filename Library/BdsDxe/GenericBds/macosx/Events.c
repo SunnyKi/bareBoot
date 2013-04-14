@@ -46,7 +46,7 @@ USBOwnerFix(
   UINT16              Command;
   UINT32              Base;
   UINT32              PortBase;
-#if 0
+#if 1
   UINT32            HcCapParams;
   UINT32            ExtendCap;
   UINT32            Value;
@@ -113,7 +113,7 @@ USBOwnerFix(
                   DEBUG ((DEBUG_INFO, "USBOwnerFix: 1. PortBase = 0x%x\n", PortBase));
                 }
                 break;
-#if 0
+#if 1
               case PCI_IF_EHCI:
                 //
                 // Found the EHCI, then disable the legacy support
