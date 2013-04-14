@@ -143,7 +143,7 @@ BdsLibGetFreeOptionNumber (
   )
 {
   UINTN         Index;
-  CHAR16        StrTemp[10];
+  CHAR16        StrTemp[32];
   UINT16        *OptionBuffer;
   UINTN         OptionSize;
 
@@ -214,7 +214,7 @@ BdsLibRegisterNewOption (
   UINT8                     *TempPtr;
   EFI_DEVICE_PATH_PROTOCOL  *OptionDevicePath;
   CHAR16                    *Description;
-  CHAR16                    OptionName[10];
+  CHAR16                    OptionName[32];
   BOOLEAN                   UpdateDescription;
   UINT16                    BootOrderEntry;
   UINTN                     OrderItemNum;
@@ -1149,7 +1149,7 @@ BdsLibGetImageHeader (
   //
   // Get file size
   //
-  BufferSize  = SIZE_OF_EFI_FILE_INFO + 200;
+  BufferSize  = SIZE_OF_EFI_FILE_INFO + 255;
   do {
     Info   = NULL;
     Status = gBS->AllocatePool (EfiBootServicesData, BufferSize, (VOID **) &Info);
