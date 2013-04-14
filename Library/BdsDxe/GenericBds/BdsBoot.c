@@ -473,6 +473,25 @@ BdsDeleteAllInvalidEfiBootOption (
   return Status;
 }
 
+VOID
+EFIAPI
+BdsLibBuildOneOptionFromHandle (
+  IN EFI_FILE_HANDLE RFHandle,
+  IN OUT EFI_FILE_HANDLE FHandle,
+  IN OUT CHAR16* Path,
+  IN CHAR16* OSName,
+  IN CHAR16* VolName,
+  IN OUT LIST_ENTRY          *BdsBootOptionList,
+  IN OUT BOOLEAN Flag
+  )
+{
+  CHAR16 Buffer[255];
+
+  if (FileExists(RFHandle, Path)) {
+    UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", VolName, OSName);
+    BdsLibBuildOptionFromHandle (FHandle, Path, BdsBootOptionList, Buffer, TRUE);
+  }
+}
 
 /**
   For EFI boot option, BDS separate them as six types:
@@ -718,68 +737,17 @@ BdsLibEnumerateAllBootOption (
         UnicodeSPrint (Buffer, sizeof (Buffer), L"%s %d", L"Unnamed Volume ", Index);
       }
 
-      if (FileExists(FHandle, MACOSX_LOADER_PATH))
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
-
-      if (FileExists(FHandle, MACOSX_RECOVERY_LOADER_PATH))
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_RECOVERY_LOADER_PATH,BdsBootOptionList, Buffer, TRUE);
-
-      if (FileExists(FHandle, MACOSX_INSTALL_PATH)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s",  L"OS X Install Data");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"OS X Install Data");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], MACOSX_INSTALL_PATH, BdsBootOptionList, Buffer, TRUE);
-      }
-      
-      if (FileExists(FHandle, SUSE_LOADER_PATH)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s",  L"OpenSuSE EFI Loader");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"OpenSuSE EFI Loader");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], SUSE_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
-      }
-      if (FileExists(FHandle, UBUNTU_LOADER_PATH)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"Ubuntu EFI Loader");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"Ubuntu EFI Loader");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], UBUNTU_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
-      }
-      if (FileExists(FHandle, REDHAT_LOADER_PATH)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"RedHat EFI Loader");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"RedHat EFI Loader");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], REDHAT_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
-      }
-      if (FileExists(FHandle, EFI_REMOVABLE_MEDIA_FILE_NAME)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"EFI Boot Loader");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"EFI Boot Loader");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], EFI_REMOVABLE_MEDIA_FILE_NAME, BdsBootOptionList, Buffer, TRUE);
-      }
-
-      if (FileExists(FHandle, WINDOWS_LOADER_PATH)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"Windows EFI Loader");
-          else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"Windows EFI Loader");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], WINDOWS_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
-      }
-      if (FileExists(FHandle, ALT_WINDOWS_LOADER_PATH)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"Windows EFI Loader");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"Windows EFI Loader");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], ALT_WINDOWS_LOADER_PATH, BdsBootOptionList, Buffer, TRUE);
-      }
-      if (FileExists(FHandle, CLOVER_MEDIA_FILE_NAME)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"Clover EFI");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", FileSystemInfo->VolumeLabel, L"Clover EFI");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], CLOVER_MEDIA_FILE_NAME, BdsBootOptionList, Buffer, TRUE);
-      }
-      if (FileExists(FHandle, SHELL_PATH)) {
-        if ((FileSystemInfo->VolumeLabel == NULL)     ||
-            (*FileSystemInfo->VolumeLabel == 0x0000)) UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"[-Shell-]");
-        else UnicodeSPrint (Buffer, sizeof (Buffer), L"%s %s", FileSystemInfo->VolumeLabel, L"[-Shell-]");
-        BdsLibBuildOptionFromHandle (FileSystemHandles[Index], SHELL_PATH, BdsBootOptionList, Buffer, TRUE);
-      }
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_LOADER_PATH, L"OS X Loader", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_RECOVERY_LOADER_PATH, L"OS X Recovery", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_INSTALL_PATH, L"OS X Install Data", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SUSE_LOADER_PATH, L"OpenSuSE EFI Loader", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], UBUNTU_LOADER_PATH, L"Ubuntu EFI Loader", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], REDHAT_LOADER_PATH, L"RedHat EFI Loader", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], EFI_REMOVABLE_MEDIA_FILE_NAME, L"EFI boot Loader", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], WINDOWS_LOADER_PATH, L"Windows EFI Loader", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], ALT_WINDOWS_LOADER_PATH, L"Alt Windows EFI Loader", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], CLOVER_MEDIA_FILE_NAME, L"Clover EFI", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SHELL_PATH, L"[EFI SHell]", Buffer, BdsBootOptionList, TRUE);
     }
     GetBootDefault(gRootFHandle, L"\\EFI\\bareboot\\config.plist");
 #if 0
