@@ -116,10 +116,6 @@ SetVariablesForOSX (
   UINT32      BackgroundClear;
   CHAR8       *None;
 #endif
-  UINT8       SNLen;
-  UINTN       bootArgsLen;
-  UINT8       LanguageLen;
-  CHAR8*      Addr;
 
   BootNext = NULL; //it already presents in EFI FW. First GetVariable ?
   FwFeatures      = 0xc0007417;
@@ -128,23 +124,6 @@ SetVariablesForOSX (
   BackgroundClear = 0x00000000;
   None = "none";
 #endif
-  SNLen = 20;
-  bootArgsLen = 120;
-  LanguageLen = 10;
-
-  Addr = &gSettings.BoardSerialNumber[19];
-
-  while ((*Addr == ' ') || (*Addr == 0)) {
-    Addr--;
-    SNLen--;
-  }
-
-  Addr = &gSettings.BootArgs[119];
-  
-  while ((*Addr == ' ') || (*Addr == 0)) {
-    Addr--;
-    bootArgsLen--;
-  }
 
   Status = gRS->SetVariable(L"ROM", &gEfiAppleNvramGuid, 0, 0, NULL);
 
@@ -176,7 +155,7 @@ SetVariablesForOSX (
                   L"MLB",
                   &gEfiAppleNvramGuid,
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  SNLen,
+                  AsciiStrLen (gSettings.BoardSerialNumber),
                   &gSettings.BoardSerialNumber
                 );
 
@@ -188,19 +167,13 @@ SetVariablesForOSX (
                   gSettings.EthMacAddr
                 );
 
-  if (gSettings.Language[0] != 0) {
-
-    Addr  = &gSettings.Language[9];
-    while ((*Addr == ' ') || (*Addr == 0)) {
-      Addr--;
-      LanguageLen--;
-    }
+  if (gSettings.Language[0] != '\0') {
 
     Status = gRS->SetVariable (
                     L"prev-lang:kbd",
                     &gEfiAppleBootGuid,
                     EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                    LanguageLen,
+                    AsciiStrLen (gSettings.Language),
                     &gSettings.Language
                   );
   }
@@ -220,7 +193,7 @@ SetVariablesForOSX (
                   L"boot-args",
                   &gEfiAppleBootGuid,
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  bootArgsLen ,
+                  AsciiStrLen (gSettings.BootArgs),
                   &gSettings.BootArgs
                 );
 #if 0
@@ -236,7 +209,7 @@ SetVariablesForOSX (
                   L"security-mode",
                   &gEfiAppleBootGuid,
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  5,
+                  AsciiStrLen (None),
                   (VOID*) None
                 );
 #endif
