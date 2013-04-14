@@ -349,7 +349,9 @@ DisableUsbLegacySupport(
                   break;
                 }
               }
+#if 0
               SaveValue &= ~0x003F;
+#endif
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
             }
           }
