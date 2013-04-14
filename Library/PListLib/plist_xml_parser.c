@@ -856,6 +856,9 @@ SymbolPtr
 PListXMLFindSymbol (char * string, SymbolPtr * prevSymbol) {
   SymbolPtr symbol, prev;
 
+  if (string == NULL) {
+    return NULL;
+  }
   symbol = gPListXMLSymbolsHead;
   prev = NULL;
 
