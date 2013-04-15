@@ -806,9 +806,11 @@ PatchMemoryTables (
     }
 
     if (gRAM->SpdDetected) {
-      DBG ("Smbios: SPD detected %d\n", Index);
 
       if (gRAM->DIMM[map].InUse) {
+
+        DBG ("Smbios: SPD detected and slot %d (mapped to %d) used\n", Index, map);
+
         if ((gRAM->DIMM[map].Type != MemoryTypeUnknown) &&
             (gRAM->DIMM[map].Type != MemoryTypeOther)  &&
             (gRAM->DIMM[map].Type != 0)) {
@@ -829,6 +831,10 @@ PatchMemoryTables (
 
         if (gRAM->DIMM[map].Frequency > 0) {
           newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[map].Frequency;
+        }
+
+        if (gRAM->DIMM[map].ModuleSize > 0) {
+          newSmbiosTable.Type17->Size = (UINT16) gRAM->DIMM[map].ModuleSize;
         }
       } else {
         newSmbiosTable.Type17->Speed = 0;

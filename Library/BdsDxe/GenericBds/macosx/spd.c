@@ -456,6 +456,8 @@ read_smb_intel (
           break;
       }
 
+      DBG ("Spd: %d module size = %d\n", i, slot->ModuleSize);
+      
       spd_type = (slot->spd[SPD_MEMORY_TYPE] < ((UINT8) 12) ? slot->spd[SPD_MEMORY_TYPE] : 0);
       slot->Type = spd_mem_to_smbios[spd_type];
       slot->PartNo = getDDRPartNum (slot->spd, base, (UINT8) i);
