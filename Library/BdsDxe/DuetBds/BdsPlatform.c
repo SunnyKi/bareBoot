@@ -1244,7 +1244,6 @@ EnableSmbus (
 VOID
 EFIAPI
 PlatformBdsPolicyBehavior (
-  IN OUT LIST_ENTRY              *BootOptionList,
   IN BASEM_MEMORY_TEST           BaseMemoryTest
   )
 /*++
@@ -1293,9 +1292,8 @@ Returns:
   gConnectAllHappened = TRUE;
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");  // 0.3 sec
-  if (IsListEmpty (BootOptionList)) {
-    BdsLibEnumerateAllBootOption (BootOptionList);
-  }
+  BdsLibEnumerateAllBootOption (&gBootOptionList);
+
   AddBootArgs = "\0 23456789012345678901234567890123456789";
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
     AsciiStrCat (AddBootArgs, " -v");

@@ -17,7 +17,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "../GenericBds/macosx/macosx.h"
 
 UINT16             mKeyInput;
-LIST_ENTRY         mBootOptionsList;
 BDS_COMMON_OPTION  *gOption;
 EFI_FORM_BROWSER2_PROTOCOL      *gFormBrowser2;
 
@@ -118,7 +117,7 @@ BootManagerCallback (
         break;
     }
 
-    for (Link = GetFirstNode (&mBootOptionsList); !IsNull (&mBootOptionsList, Link); Link = GetNextNode (&mBootOptionsList, Link)) {
+    for (Link = GetFirstNode (&gBootOptionList); !IsNull (&gBootOptionList, Link); Link = GetNextNode (&gBootOptionList, Link)) {
       Option = CR (Link, BDS_COMMON_OPTION, Link, BDS_LOAD_OPTION_SIGNATURE);
 
       KeyCount++;
@@ -484,12 +483,10 @@ CallBootManager (
     gConnectAllHappened = TRUE;
   }
 
-  BdsLibBuildOptionFromVar (&mBootOptionsList, L"BootOrder");
-
-  if (IsListEmpty (&mBootOptionsList)) {
+  if (IsListEmpty (&gBootOptionList)) {
     DBG ("BootManager: BdsLibEnumerateAllBootOption\n");
-    InitializeListHead (&mBootOptionsList);
-    BdsLibEnumerateAllBootOption (&mBootOptionsList);
+    InitializeListHead (&gBootOptionList);
+    BdsLibEnumerateAllBootOption (&gBootOptionList);
   }
 
   HiiHandle = gBootManagerPrivate.HiiHandle;
@@ -519,7 +516,7 @@ CallBootManager (
 
   mKeyInput = 0;
   NeedEndOp = FALSE;
-  for (Link = GetFirstNode (&mBootOptionsList); !IsNull (&mBootOptionsList, Link); Link = GetNextNode (&mBootOptionsList, Link)) {
+  for (Link = GetFirstNode (&gBootOptionList); !IsNull (&gBootOptionList, Link); Link = GetNextNode (&gBootOptionList, Link)) {
     Option = CR (Link, BDS_COMMON_OPTION, Link, BDS_LOAD_OPTION_SIGNATURE);
 
     //

@@ -188,11 +188,10 @@ BdsEntry (
   IN EFI_BDS_ARCH_PROTOCOL  *This
   )
 {
-  LIST_ENTRY                      BootOptionList;
   UINTN                           BootNextSize;
   CHAR16                          *FirmwareVendor;
 
-  InitializeListHead (&BootOptionList);
+  InitializeListHead (&gBootOptionList);
 #if 0
   InitializeHotkeyService ();
 #endif
@@ -212,7 +211,7 @@ BdsEntry (
                 &gEfiGlobalVariableGuid,
                 &BootNextSize
                 );
-  PlatformBdsPolicyBehavior (&BootOptionList, BdsMemoryTest);
+  PlatformBdsPolicyBehavior (BdsMemoryTest);
   BdsBootDeviceSelect ();
   ASSERT (FALSE);
   return ;

@@ -513,6 +513,7 @@ GFX_PROPERTIES                  gGraphics;
 CPU_STRUCTURE                   gCPUStructure;
 CHAR8                           *AddBootArgs;
 CHAR8                           *OSVersion;
+LIST_ENTRY                      gBootOptionList;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
