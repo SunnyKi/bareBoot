@@ -14,6 +14,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "BootManager.h"
 #include "../../../Version.h"
+#include "../GenericBds/macosx/macosx.h"
 
 UINT16             mKeyInput;
 LIST_ENTRY         mBootOptionsList;
@@ -474,7 +475,6 @@ CallBootManager (
 
   DeviceType = (UINT16) -1;
   gOption    = NULL;
-  InitializeListHead (&mBootOptionsList);
 
   //
   // Connect all prior to entering the platform setup menu.
@@ -484,7 +484,13 @@ CallBootManager (
     gConnectAllHappened = TRUE;
   }
 
-  BdsLibEnumerateAllBootOption (&mBootOptionsList);
+  BdsLibBuildOptionFromVar (&mBootOptionsList, L"BootOrder");
+
+  if (IsListEmpty (&mBootOptionsList)) {
+    DBG ("BootManager: BdsLibEnumerateAllBootOption\n");
+    InitializeListHead (&mBootOptionsList);
+    BdsLibEnumerateAllBootOption (&mBootOptionsList);
+  }
 
   HiiHandle = gBootManagerPrivate.HiiHandle;
 

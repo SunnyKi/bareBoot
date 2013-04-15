@@ -729,7 +729,7 @@ BdsLibEnumerateAllBootOption (
       BufferSizeVolume = SIZE_OF_EFI_FILE_SYSTEM_INFO + 255;
       FileSystemInfo = AllocateZeroPool(BufferSizeVolume);      
       Status = FHandle->GetInfo(FHandle, &gEfiFileSystemInfoGuid,(UINTN*)&BufferSizeVolume, FileSystemInfo);
-
+      DBG ("BdsLibEnumerateAllBootOption: FileSystemInfo->VolumeLabel -> |%s|\n", FileSystemInfo->VolumeLabel);
       if (!EFI_ERROR(Status)) {
         if ((FileSystemInfo->VolumeLabel != NULL) &&
             (StrLen(FileSystemInfo->VolumeLabel) > 0)) {

@@ -123,6 +123,7 @@ BdsBootDeviceSelect (
   }
   BdsLibBuildOptionFromVar (&BootLists, L"BootOrder");
   if (IsListEmpty (&BootLists)) {
+    DBG ("BdsEntry: BdsLibEnumerateAllBootOption\n");
     BdsLibEnumerateAllBootOption (&BootLists);
   }
   Link = BootLists.ForwardLink;
