@@ -69,8 +69,8 @@ INF  bareBoot/Library/BdsDxe/BdsDxe.inf
 
 INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
-#INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
-INF  bareBoot/CpuDxe/Cpu.inf
+INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
+#INF  bareBoot/CpuDxe/Cpu.inf
 INF  bareBoot/AcpiResetDxe/Reset.inf
 INF  bareBoot/LegacyMetronome/Metronome.inf
 

@@ -836,6 +836,12 @@ PatchMemoryTables (
         newSmbiosTable.Type17->MemoryType  = MemoryTypeUnknown;
       }
 
+      if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
+        TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
+        Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
+        DBG ("Smbios: Memory17[%d] = %d\n", Index, Memory17[Index]);
+      }
+
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
 
@@ -860,14 +866,14 @@ PatchMemoryTables (
              );
       }
     } else {
+      if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
+        TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
+        Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
+        DBG ("Smbios: Memory17[%d] = %d\n", Index, Memory17[Index]);
+      }
+
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
-    }
-
-    if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
-      TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
-      Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
-      DBG ("Smbios: Memory17[%d] = %d\n", Index, Memory17[Index]);
     }
   }
   //
