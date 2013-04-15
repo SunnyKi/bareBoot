@@ -799,12 +799,6 @@ PatchMemoryTables (
 
     map = gRAM->Map[Index];
 
-    if ((SmbiosTable.Type17->Size & 0x8000) == 0) {
-      TotalSystemMemory += SmbiosTable.Type17->Size; //Mb
-      Memory17[Index] = (UINT16)(SmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
-      DBG ("Smbios: Memory17[%d] = %d\n", Index, Memory17[Index]);
-    }
-
     if (gRAM->SpdDetected) {
 
       if (gRAM->DIMM[map].InUse) {
@@ -839,6 +833,7 @@ PatchMemoryTables (
       } else {
         newSmbiosTable.Type17->Speed = 0;
         newSmbiosTable.Type17->Size  = 0;
+        newSmbiosTable.Type17->MemoryType  = MemoryTypeUnknown;
       }
 
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
@@ -867,6 +862,12 @@ PatchMemoryTables (
     } else {
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
+    }
+
+    if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
+      TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
+      Memory17[map] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
+      DBG ("Smbios: Memory17[%d] = %d\n", map, Memory17[map]);
     }
   }
   //
