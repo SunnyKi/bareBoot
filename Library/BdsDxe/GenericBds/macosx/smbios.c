@@ -867,7 +867,7 @@ PatchMemoryTables (
     if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
       TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
       Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
-      DBG ("Smbios: Memory17[%d] = %d\n", map, Memory17[Index]);
+      DBG ("Smbios: Memory17[%d] = %d\n", Index, Memory17[Index]);
     }
   }
   //
