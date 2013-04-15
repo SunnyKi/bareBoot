@@ -207,6 +207,7 @@
 # ----+++++++------
   UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
   UefiCpuPkg/CpuDxe/CpuDxe.inf
+  bareBoot/CpuDxe/Cpu.inf
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
   bareBoot/AcpiResetDxe/Reset.inf
   bareBoot/LegacyMetronome/Metronome.inf
@@ -250,6 +251,7 @@
 
   # Bios Thunk
   bareBoot/BiosVideo/BiosVideo.inf
+  bareBoot/BiosVideoThunkDxe/BiosVideo.inf
 
   # HFS+
   bareBoot/VBoxFsDxe/VBoxHfs.inf
