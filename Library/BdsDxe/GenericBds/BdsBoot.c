@@ -488,7 +488,11 @@ BdsLibBuildOneOptionFromHandle (
   CHAR16 Buffer[255];
 
   if (FileExists(RFHandle, Path)) {
-    UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", VolName, OSName);
+    if (OSName != NULL) {
+      UnicodeSPrint (Buffer, sizeof (Buffer), L"%s (%s)", VolName, OSName);
+    } else {
+      UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", VolName);
+    }
     BdsLibBuildOptionFromHandle (FHandle, Path, BdsBootOptionList, Buffer, TRUE);
   }
 }
@@ -737,8 +741,8 @@ BdsLibEnumerateAllBootOption (
         UnicodeSPrint (Buffer, sizeof (Buffer), L"%s %d", L"Unnamed Volume ", Index);
       }
 
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_LOADER_PATH, L"OS X Loader", Buffer, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_RECOVERY_LOADER_PATH, L"OS X Recovery", Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_LOADER_PATH, NULL, Buffer, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_RECOVERY_LOADER_PATH, NULL, Buffer, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_INSTALL_PATH, L"OS X Install Data", Buffer, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SUSE_LOADER_PATH, L"OpenSuSE EFI Loader", Buffer, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], UBUNTU_LOADER_PATH, L"Ubuntu EFI Loader", Buffer, BdsBootOptionList, TRUE);
