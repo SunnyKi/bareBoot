@@ -803,6 +803,7 @@ BiosVideoDeviceReleaseResource (
   return ;
 }
 
+#if 0
 /**
 
   Generate a search key for a specified timing data.
@@ -827,7 +828,6 @@ CalculateEdidKey (
   Key = (EdidTiming->HorizontalResolution * 2) + EdidTiming->VerticalResolution;
   return Key;
 }
-#if 0
 /**
 
   Parse the Established Timing and Standard Timing in EDID data block.
@@ -935,7 +935,6 @@ ParseEdidData (
   ValidEdidTiming->ValidNumber = ValidNumber;
   return TRUE;
 }
-#endif
 /**
 
   Search a specified Timing in all the valid EDID timings.
@@ -968,6 +967,7 @@ SearchEdidTiming (
 
   return FALSE;
 }
+#endif
 
 #define PCI_DEVICE_ENABLED  (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)
 
@@ -1027,7 +1027,7 @@ BiosVideoIsVga (
   return VgaCompatible;
 }
 
-#if 1
+#if 0
 /** Read one byte from the intel i2c, used for reading SPD on intel chipsets only. */
 #include "Library/IoLib.h"
 #include "../Library/BdsDxe/GenericBds/macosx/spd.h"
@@ -1191,8 +1191,10 @@ BiosVideoCheckForVbe (
   BIOS_VIDEO_MODE_DATA                   *CurrentModeData;
   UINTN                                  PreferMode;
   UINTN                                  ModeNumber;
+#if 0
   VESA_BIOS_EXTENSIONS_EDID_TIMING       Timing;
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
+#endif
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
 
   //
@@ -1216,9 +1218,9 @@ BiosVideoCheckForVbe (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-
+#if 0
   ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
-
+#endif
   //
   // Fill in the Graphics Output Protocol
   //
@@ -1495,6 +1497,7 @@ BiosVideoCheckForVbe (
 
     ModeFound = FALSE;
 
+#if 0
     if (EdidFound && (ValidEdidTiming.ValidNumber > 0)) {
       //
       // EDID exist, check whether this mode match with any mode in EDID
@@ -1508,16 +1511,34 @@ BiosVideoCheckForVbe (
         PreferMode = ModeNumber;
       }
     }
-    
-    DBG ("BiosVideo: XResolution = %d, YResolution = %d\n",
+#endif
+
+    DBG ("BiosVideo: XResolution = %d, YResolution = %d, ModeNumber = %d\n",
          BiosVideoPrivate->VbeModeInformationBlock->XResolution,
-         BiosVideoPrivate->VbeModeInformationBlock->YResolution);
+         BiosVideoPrivate->VbeModeInformationBlock->YResolution,
+         ModeNumber);
 
     //
     // Select a reasonable mode to be set for current display mode
     //
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
         BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1080
         ) {
       if (PreferMode < ModeNumber) {
         PreferMode = ModeNumber;
@@ -1708,6 +1729,7 @@ BiosVideoCheckForVbe (
   DBG ("BiosVideo: PreferMode %d\n", PreferMode);
   Status = BiosVideoGraphicsOutputSetMode (&BiosVideoPrivate->GraphicsOutput, (UINT32) PreferMode);
   if (EFI_ERROR (Status)) {
+    DBG ("BiosVideo: Error set PreferMode %d, number modes = %d\n", PreferMode, ModeNumber);
     for (PreferMode = 0; PreferMode < ModeNumber; PreferMode ++) {
       Status = BiosVideoGraphicsOutputSetMode (
                 &BiosVideoPrivate->GraphicsOutput,
