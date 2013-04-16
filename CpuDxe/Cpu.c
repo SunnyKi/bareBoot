@@ -1,48 +1,35 @@
 /*++
 
-Copyright (c) 2006, Intel Corporation                                                         
-All rights reserved. This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+ Copyright (c) 2006 - 2009, Intel Corporation
+ All rights reserved. This program and the accompanying materials
+ are licensed and made available under the terms and conditions of the BSD License
+ which accompanies this distribution.  The full text of the license may be found at
+ http://opensource.org/licenses/bsd-license.php
 
-Module Name:
-  Cpu.c
+ THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
-Abstract:
+ Module Name:
+ Cpu.c
+
+ Abstract:
 
 --*/
 
 #include "CpuDxe.h"
 
-extern VOID BiosPutC(CHAR8 ch);
 //
 // Global Variables
 //
 
-BOOLEAN                              mInterruptState = FALSE;
-extern UINT32                        mExceptionCodeSize;
-UINTN                                mTimerVector = 0;
-volatile EFI_CPU_INTERRUPT_HANDLER   mTimerHandler = NULL;
 EFI_LEGACY_8259_PROTOCOL             *gLegacy8259 = NULL;
 THUNK_CONTEXT                        mThunkContext;
-#define EFI_CPU_EFLAGS_IF 0x200
+BOOLEAN                              mInterruptState = FALSE;
+UINTN                                mTimerVector = 0;
 
-VOID
-InitializeBiosIntCaller (
-  VOID
-  );
-  
-BOOLEAN
-EFIAPI
-LegacyBiosInt86 (
-  IN  UINT8                           BiosInt,
-  IN  EFI_IA32_REGISTER_SET           *Regs
-  );
-  
+volatile EFI_CPU_INTERRUPT_HANDLER   mTimerHandler = NULL;
+
+extern UINT32                        mExceptionCodeSize;
 //
 // The Cpu Architectural Protocol that this Driver produces
 //
@@ -333,7 +320,7 @@ Returns:
   return EFI_UNSUPPORTED;
 }
 
-#if CPU_EXCEPTION_DEBUG_OUTPUT
+STATIC
 VOID
 DumpExceptionDataDebugOut (
   IN EFI_EXCEPTION_TYPE   InterruptType,
@@ -542,423 +529,6 @@ DumpExceptionDataDebugOut (
 #endif
   return ;
 }
-#endif
-
-
-VOID
-DumpExceptionDataVgaOut (
-  IN EFI_EXCEPTION_TYPE   InterruptType,
-  IN EFI_SYSTEM_CONTEXT   SystemContext
-  )
-{
-  UINTN         COLUMN_MAX;
-  UINTN         ROW_MAX;
-  UINT32        ErrorCodeFlag;
-  CHAR16        *VideoBufferBase;
-  CHAR16        *VideoBuffer;
-  UINTN         Index;
-
-  COLUMN_MAX      = 80;
-  ROW_MAX         = 25;
-  ErrorCodeFlag   = 0x00027d00;
-  VideoBufferBase = (CHAR16 *) (UINTN) 0xb8000;
-  VideoBuffer     = (CHAR16 *) (UINTN) 0xb8000;
-
-#ifdef MDE_CPU_IA32
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "!!!! IA32 Exception Type - %08x !!!!",
-    InterruptType
-    );
-  VideoBuffer += COLUMN_MAX;
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "EIP - %08x, CS - %08x, EFLAGS - %08x",
-    SystemContext.SystemContextIa32->Eip,
-    SystemContext.SystemContextIa32->Cs,
-    SystemContext.SystemContextIa32->Eflags
-    );
-  VideoBuffer += COLUMN_MAX;
-  if (ErrorCodeFlag & (1 << InterruptType)) {
-    UnicodeSPrintAsciiFormat (
-      VideoBuffer,
-      COLUMN_MAX * sizeof (CHAR16),
-      "ExceptionData - %08x",
-      SystemContext.SystemContextIa32->ExceptionData
-    );
-    VideoBuffer += COLUMN_MAX;
-  }
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "EAX - %08x, ECX - %08x, EDX - %08x, EBX - %08x",
-    SystemContext.SystemContextIa32->Eax,
-    SystemContext.SystemContextIa32->Ecx,
-    SystemContext.SystemContextIa32->Edx,
-    SystemContext.SystemContextIa32->Ebx
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "ESP - %08x, EBP - %08x, ESI - %08x, EDI - %08x",
-    SystemContext.SystemContextIa32->Esp,
-    SystemContext.SystemContextIa32->Ebp,
-    SystemContext.SystemContextIa32->Esi,
-    SystemContext.SystemContextIa32->Edi
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "DS - %08x, ES - %08x, FS - %08x, GS - %08x, SS - %08x",
-    SystemContext.SystemContextIa32->Ds,
-    SystemContext.SystemContextIa32->Es,
-    SystemContext.SystemContextIa32->Fs,
-    SystemContext.SystemContextIa32->Gs,
-    SystemContext.SystemContextIa32->Ss
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "GDTR - %08x %08x, IDTR - %08x %08x",
-    SystemContext.SystemContextIa32->Gdtr[0],
-    SystemContext.SystemContextIa32->Gdtr[1],
-    SystemContext.SystemContextIa32->Idtr[0],
-    SystemContext.SystemContextIa32->Idtr[1]
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "LDTR - %08x, TR - %08x",
-    SystemContext.SystemContextIa32->Ldtr,
-    SystemContext.SystemContextIa32->Tr
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "CR0 - %08x, CR2 - %08x, CR3 - %08x, CR4 - %08x",
-    SystemContext.SystemContextIa32->Cr0,
-    SystemContext.SystemContextIa32->Cr2,
-    SystemContext.SystemContextIa32->Cr3,
-    SystemContext.SystemContextIa32->Cr4
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "DR0 - %08x, DR1 - %08x, DR2 - %08x, DR3 - %08x",
-    SystemContext.SystemContextIa32->Dr0,
-    SystemContext.SystemContextIa32->Dr1,
-    SystemContext.SystemContextIa32->Dr2,
-    SystemContext.SystemContextIa32->Dr3
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "DR6 - %08x, DR7 - %08x",
-    SystemContext.SystemContextIa32->Dr6,
-    SystemContext.SystemContextIa32->Dr7
-    );
-  VideoBuffer += COLUMN_MAX;
-#else
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "!!!! X64 Exception Type - %016lx !!!!",
-    (UINT64)InterruptType
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "RIP - %016lx, CS - %016lx, RFLAGS - %016lx",
-    SystemContext.SystemContextX64->Rip,
-    SystemContext.SystemContextX64->Cs,
-    SystemContext.SystemContextX64->Rflags
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  if (ErrorCodeFlag & (1 << InterruptType)) {
-    UnicodeSPrintAsciiFormat (
-      VideoBuffer,
-      COLUMN_MAX * sizeof (CHAR16),
-      "ExceptionData - %016lx",
-      SystemContext.SystemContextX64->ExceptionData
-      );
-    VideoBuffer += COLUMN_MAX;
-  }
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "RAX - %016lx, RCX - %016lx, RDX - %016lx",
-    SystemContext.SystemContextX64->Rax,
-    SystemContext.SystemContextX64->Rcx,
-    SystemContext.SystemContextX64->Rdx
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "RBX - %016lx, RSP - %016lx, RBP - %016lx",
-    SystemContext.SystemContextX64->Rbx,
-    SystemContext.SystemContextX64->Rsp,
-    SystemContext.SystemContextX64->Rbp
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "RSI - %016lx, RDI - %016lx",
-    SystemContext.SystemContextX64->Rsi,
-    SystemContext.SystemContextX64->Rdi
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "R8 - %016lx, R9 - %016lx, R10 - %016lx",
-    SystemContext.SystemContextX64->R8,
-    SystemContext.SystemContextX64->R9,
-    SystemContext.SystemContextX64->R10
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "R11 - %016lx, R12 - %016lx, R13 - %016lx",
-    SystemContext.SystemContextX64->R11,
-    SystemContext.SystemContextX64->R12,
-    SystemContext.SystemContextX64->R13
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "R14 - %016lx, R15 - %016lx",
-    SystemContext.SystemContextX64->R14,
-    SystemContext.SystemContextX64->R15
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "DS - %016lx, ES - %016lx, FS - %016lx",
-    SystemContext.SystemContextX64->Ds,
-    SystemContext.SystemContextX64->Es,
-    SystemContext.SystemContextX64->Fs
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "GS - %016lx, SS - %016lx",
-    SystemContext.SystemContextX64->Gs,
-    SystemContext.SystemContextX64->Ss
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "GDTR - %016lx %016lx, LDTR - %016lx",
-    SystemContext.SystemContextX64->Gdtr[0],
-    SystemContext.SystemContextX64->Gdtr[1],
-    SystemContext.SystemContextX64->Ldtr
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "IDTR - %016lx %016lx, TR - %016lx",
-    SystemContext.SystemContextX64->Idtr[0],
-    SystemContext.SystemContextX64->Idtr[1],
-    SystemContext.SystemContextX64->Tr
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "CR0 - %016lx, CR2 - %016lx, CR3 - %016lx",
-    SystemContext.SystemContextX64->Cr0,
-    SystemContext.SystemContextX64->Cr2,
-    SystemContext.SystemContextX64->Cr3
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "CR4 - %016lx, CR8 - %016lx",
-    SystemContext.SystemContextX64->Cr4,
-    SystemContext.SystemContextX64->Cr8
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "DR0 - %016lx, DR1 - %016lx, DR2 - %016lx",
-    SystemContext.SystemContextX64->Dr0,
-    SystemContext.SystemContextX64->Dr1,
-    SystemContext.SystemContextX64->Dr2
-    );
-  VideoBuffer += COLUMN_MAX;
-
-  UnicodeSPrintAsciiFormat (
-    VideoBuffer,
-    COLUMN_MAX * sizeof (CHAR16),
-    "DR3 - %016lx, DR6 - %016lx, DR7 - %016lx",
-    SystemContext.SystemContextX64->Dr3,
-    SystemContext.SystemContextX64->Dr6,
-    SystemContext.SystemContextX64->Dr7
-    );
-  VideoBuffer += COLUMN_MAX;
-#endif
-
-  for (Index = 0; Index < COLUMN_MAX * ROW_MAX; Index ++) {
-    if (Index > (UINTN)(VideoBuffer - VideoBufferBase)) {
-      VideoBufferBase[Index] = 0x0c20;
-    } else {
-      VideoBufferBase[Index] |= 0x0c00;
-    }
-  }
-
-  return ;
-}
-
-#if CPU_EXCEPTION_VGA_SWITCH
-UINT16
-SwitchVideoMode (
-  UINT16    NewVideoMode
-  )
-/*++
-Description
-  Switch Video Mode from current mode to new mode, and return the old mode.
-  Use Thuink
-
-Arguments
-  NewVideoMode - new video mode want to set
-
-Return
-  UINT16       - (UINT16) -1 indicates failure
-                 Other value indicates the old mode, which can be used for restore later
- 
---*/
-{
-  EFI_STATUS                      Status;
-  EFI_LEGACY_BIOS_THUNK_PROTOCOL  *LegacyBios;
-  EFI_IA32_REGISTER_SET           Regs;
-  UINT16                          OriginalVideoMode = (UINT16) -1;
-  
-
-  //
-  // VESA SuperVGA BIOS - GET CURRENT VIDEO MODE
-  // AX = 4F03h
-  // Return:AL = 4Fh if function supported
-  // AH = status 00h successful
-  // BX = video mode (see #0082,#0083)
-  //
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = 0x4F03;
-  LegacyBiosInt86 (0x10, &Regs);
-  if (Regs.X.AX == 0x004F) {
-    OriginalVideoMode = Regs.X.BX;
-  } else {
-    //
-    // VIDEO - GET CURRENT VIDEO MODE
-    // AH = 0Fh
-    // Return:AH = number of character columns
-    // AL = display mode (see #0009 at AH=00h)
-    // BH = active page (see AH=05h)
-    //
-    gBS->SetMem (&Regs, sizeof (Regs), 0);
-    Regs.H.AH = 0x0F;
-    LegacyBiosInt86 (0x10, &Regs);
-    OriginalVideoMode = Regs.H.AL;
-  }
-
-  //
-  // Set new video mode
-  //
-  if (NewVideoMode < 0x100) {
-    //
-    // Set the 80x25 Text VGA Mode: Assume successful always
-    //
-    // VIDEO - SET VIDEO MODE
-    // AH = 00h
-    // AL = desired video mode (see #0009)
-    // Return:AL = video mode flag (Phoenix, AMI BIOS)
-    // 20h mode > 7
-    // 30h modes 0-5 and 7
-    // 3Fh mode 6
-    // AL = CRT controller mode byte (Phoenix 386 BIOS v1.10)
-    //
-    gBS->SetMem (&Regs, sizeof (Regs), 0);
-    Regs.H.AH = 0x00;
-    Regs.H.AL = (UINT8) NewVideoMode;
-    LegacyBiosInt86 (0x10, &Regs);
-
-    //
-    // VIDEO - TEXT-MODE CHARGEN - LOAD ROM 8x16 CHARACTER SET (VGA)
-    // AX = 1114h
-    // BL = block to load
-    // Return:Nothing
-    //
-    gBS->SetMem (&Regs, sizeof (Regs), 0);
-    Regs.H.AH = 0x11;
-    Regs.H.AL = 0x14;
-    Regs.H.BL = 0;
-    LegacyBiosInt86 (0x10, &Regs);
-  } else {
-    //
-    //    VESA SuperVGA BIOS - SET SuperVGA VIDEO MODE
-    //    AX = 4F02h
-    //    BX = mode (see #0082,#0083)
-    //    bit 15 set means don't clear video memory
-    //    bit 14 set means enable linear framebuffer mode (VBE v2.0+)
-    //    Return:AL = 4Fh if function supported
-    //    AH = status
-    //    00h successful
-    //    01h failed
-    //
-    gBS->SetMem (&Regs, sizeof (Regs), 0);
-    Regs.X.AX = 0x4F02;
-    Regs.X.BX = NewVideoMode;
-    LegacyBiosInt86 (0x10, &Regs);
-    if (Regs.X.AX != 0x004F) {
-//      DEBUG ((EFI_D_ERROR, "SORRY: Cannot set to video mode: 0x%04X!\n", NewVideoMode));
-      return (UINT16) -1;
-    }
-  }
-
-  return OriginalVideoMode;
-}
-#endif
 
 VOID
 ExceptionHandler (
@@ -966,41 +536,13 @@ ExceptionHandler (
   IN EFI_SYSTEM_CONTEXT    SystemContext
   )
 {
-#if CPU_EXCEPTION_VGA_SWITCH
-  UINT16                          VideoMode;
-#endif
-
-#if CPU_EXCEPTION_DEBUG_OUTPUT
   DumpExceptionDataDebugOut (InterruptType, SystemContext);
-#endif
-
-#if CPU_EXCEPTION_VGA_SWITCH
-  //
-  // Switch to text mode for RED-SCREEN output
-  //
-  VideoMode = SwitchVideoMode (0x83);
-  if (VideoMode == (UINT16) -1) {
-//    DEBUG ((EFI_D_ERROR, "Video Mode Unknown!\n"));
-  }
-#endif
-
-  DumpExceptionDataVgaOut (InterruptType, SystemContext);
-
   //
   // Use this macro to hang so that the compiler does not optimize out
   // the following RET instructions. This allows us to return if we
   // have a debugger attached.
   //
   CpuDeadLoop ();
-
-#if CPU_EXCEPTION_VGA_SWITCH
-  //
-  // Switch back to the old video mode
-  //
-  if (VideoMode != (UINT16)-1) {
-    SwitchVideoMode (VideoMode);
-  }
-#endif
 
   return ;
 }
@@ -1084,8 +626,6 @@ Returns:
     InstallInterruptHandler (InterruptVector, SystemTimerHandler);
   }
 
-  InitializeBiosIntCaller();
-  
   //
   // Install CPU Architectural Protocol and the thunk protocol
   //
@@ -1099,142 +639,4 @@ Returns:
   ASSERT_EFI_ERROR (Status);
 
   return EFI_SUCCESS;
-}
-
-VOID
-InitializeBiosIntCaller (
-  VOID
-  )
-{
-  EFI_STATUS            Status;
-  UINT32                RealModeBufferSize;
-  UINT32                ExtraStackSize;
-  EFI_PHYSICAL_ADDRESS  LegacyRegionBase;
-  
-  //
-  // Get LegacyRegion
-  //
-  AsmGetThunk16Properties (&RealModeBufferSize, &ExtraStackSize);
-
-  LegacyRegionBase = 0x0C0000;
-  Status = gBS->AllocatePages (
-                  AllocateMaxAddress,
-                  EfiACPIMemoryNVS,
-                  EFI_SIZE_TO_PAGES(RealModeBufferSize + ExtraStackSize + 200),
-                  &LegacyRegionBase
-                  );
-  ASSERT_EFI_ERROR (Status);
-  
-  mThunkContext.RealModeBuffer     = (VOID*)(UINTN)LegacyRegionBase;
-  mThunkContext.RealModeBufferSize = EFI_PAGES_TO_SIZE ((UINTN)RealModeBufferSize);
-  mThunkContext.ThunkAttributes    = 3;
-  AsmPrepareThunk16(&mThunkContext);
-  
-}
-
-BOOLEAN
-EFIAPI
-LegacyBiosInt86 (
-  IN  UINT8                           BiosInt,
-  IN  EFI_IA32_REGISTER_SET           *Regs
-  )
-{
-  UINTN                 Status;
-  UINTN                 Eflags;
-  IA32_REGISTER_SET     ThunkRegSet;
-  BOOLEAN               Ret;
-  UINT16                *Stack16;
-  
-  Regs->X.Flags.Reserved1 = 1;
-  Regs->X.Flags.Reserved2 = 0;
-  Regs->X.Flags.Reserved3 = 0;
-  Regs->X.Flags.Reserved4 = 0;
-  Regs->X.Flags.IOPL      = 3;
-  Regs->X.Flags.NT        = 0;
-  Regs->X.Flags.IF        = 1;
-  Regs->X.Flags.TF        = 0;
-  Regs->X.Flags.CF        = 0;
-
-  ZeroMem (&ThunkRegSet, sizeof (ThunkRegSet));
-  ThunkRegSet.E.EDI  = Regs->E.EDI;
-  ThunkRegSet.E.ESI  = Regs->E.ESI;
-  ThunkRegSet.E.EBP  = Regs->E.EBP;
-  ThunkRegSet.E.EBX  = Regs->E.EBX;
-  ThunkRegSet.E.EDX  = Regs->E.EDX;
-  ThunkRegSet.E.ECX  = Regs->E.ECX;
-  ThunkRegSet.E.EAX  = Regs->E.EAX;
-  ThunkRegSet.E.DS   = Regs->E.DS;
-  ThunkRegSet.E.ES   = Regs->E.ES;
-
-  CopyMem (&(ThunkRegSet.E.EFLAGS), &(Regs->E.EFlags), sizeof (UINT32));
- 
-  //
-  // The call to Legacy16 is a critical section to EFI
-  //
-  Eflags = AsmReadEflags ();
-  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
-    DisableInterrupts ();
-  }
-
-  //
-  // Set Legacy16 state. 0x08, 0x70 is legacy 8259 vector bases.
-  //
-  Status = gLegacy8259->SetMode (gLegacy8259, Efi8259LegacyMode, NULL, NULL);
-  ASSERT_EFI_ERROR (Status);
-  
-  Stack16 = (UINT16 *)((UINT8 *) mThunkContext.RealModeBuffer + mThunkContext.RealModeBufferSize - sizeof (UINT16));
-  Stack16 -= sizeof (ThunkRegSet.E.EFLAGS) / sizeof (UINT16);
-  CopyMem (Stack16, &ThunkRegSet.E.EFLAGS, sizeof (ThunkRegSet.E.EFLAGS));
-
-  ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
-  ThunkRegSet.E.ESP  = (UINT16) (UINTN) Stack16;
-  ThunkRegSet.E.Eip  = (UINT16)((UINT32 *)NULL)[BiosInt];
-  ThunkRegSet.E.CS   = (UINT16)(((UINT32 *)NULL)[BiosInt] >> 16);
-  mThunkContext.RealModeState = &ThunkRegSet;
-  AsmThunk16 (&mThunkContext);
-
-  //
-  // Restore protected mode interrupt state
-  //
-  Status = gLegacy8259->SetMode (gLegacy8259, Efi8259ProtectedMode, NULL, NULL);
-  ASSERT_EFI_ERROR (Status);
-
-  //
-  // End critical section
-  //
-  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
-    EnableInterrupts ();
-  }
-
-  Regs->E.EDI      = ThunkRegSet.E.EDI;      
-  Regs->E.ESI      = ThunkRegSet.E.ESI;  
-  Regs->E.EBP      = ThunkRegSet.E.EBP;  
-  Regs->E.EBX      = ThunkRegSet.E.EBX;  
-  Regs->E.EDX      = ThunkRegSet.E.EDX;  
-  Regs->E.ECX      = ThunkRegSet.E.ECX;  
-  Regs->E.EAX      = ThunkRegSet.E.EAX;
-  Regs->E.SS       = ThunkRegSet.E.SS;
-  Regs->E.CS       = ThunkRegSet.E.CS;  
-  Regs->E.DS       = ThunkRegSet.E.DS;  
-  Regs->E.ES       = ThunkRegSet.E.ES;
-
-  CopyMem (&(Regs->E.EFlags), &(ThunkRegSet.E.EFLAGS), sizeof (UINT32));
-
-  Ret = (BOOLEAN) (Regs->E.EFlags.CF == 1);
-
-  return Ret;
-}
-
-
-VOID BiosPutC(CHAR8 ch)
-{
-	EFI_IA32_REGISTER_SET           Regs;
-	
-	gBS->SetMem (&Regs, sizeof (Regs), 0);
-    Regs.H.AH = 0x0e;
-    Regs.H.AL = ch;
-    Regs.H.BL = 0x0F;	/* foreground white */
-	Regs.H.BH = 0x00;  /* background black */
-	LegacyBiosInt86 (0x10, &Regs);
-	
 }
