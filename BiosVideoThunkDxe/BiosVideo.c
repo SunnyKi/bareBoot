@@ -1195,6 +1195,7 @@ BiosVideoCheckForVbe (
 #if 1
   VESA_BIOS_EXTENSIONS_EDID_TIMING       Timing;
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
+  UINT16 *VMPtr16;
 #endif
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
 
@@ -1412,8 +1413,6 @@ BiosVideoCheckForVbe (
         ((UINTN) BiosVideoPrivate->VbeInformationBlock->VideoModePtr & 0x0000ffff)
     );
 #else
-  UINT16 *VMPtr16;
-
 	VMPtr16 = (UINT16 *)&BiosVideoPrivate->VbeInformationBlock->VideoModePtr;
 	ModeNumberPtr = (UINT16 *)(UINTN)(VMPtr16[0] | ((UINTN)VMPtr16[1] << 4));
 #endif
