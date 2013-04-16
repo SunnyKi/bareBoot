@@ -827,7 +827,7 @@ CalculateEdidKey (
   Key = (EdidTiming->HorizontalResolution * 2) + EdidTiming->VerticalResolution;
   return Key;
 }
-
+#if 0
 /**
 
   Parse the Established Timing and Standard Timing in EDID data block.
@@ -935,7 +935,7 @@ ParseEdidData (
   ValidEdidTiming->ValidNumber = ValidNumber;
   return TRUE;
 }
-#if 0
+#endif
 /**
 
   Search a specified Timing in all the valid EDID timings.
@@ -968,7 +968,7 @@ SearchEdidTiming (
 
   return FALSE;
 }
-#endif
+
 #define PCI_DEVICE_ENABLED  (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)
 
 
@@ -1027,7 +1027,147 @@ BiosVideoIsVga (
   return VgaCompatible;
 }
 
+#if 1
+/** Read one byte from the intel i2c, used for reading SPD on intel chipsets only. */
+#include "Library/IoLib.h"
+#include "../Library/BdsDxe/GenericBds/macosx/spd.h"
+#include <Library/MemoryAllocationLib.h>
 
+UINT8
+ReadSmb (
+  UINT32 base,
+  UINT8 adr,
+  UINT8 cmd
+  )
+{
+  UINT64 t;
+
+  IoWrite8 (base + SMBHSTSTS, 0x1f);        // reset SMBus Controller
+  IoWrite8 (base + SMBHSTDAT, 0xff);
+  t = 0;
+
+  while (IoRead8 (base + SMBHSTSTS) & 0x01) {  // wait until read
+    gBS->Stall (1000);
+    t += 1;
+    if (t > 5) {
+      return 0xFF;
+    }
+  }
+
+  IoWrite8 (base + SMBHSTCMD, cmd);
+  IoWrite8 (base + SMBHSTADD, (adr << 1) | 0x01);
+  IoWrite8 (base + SMBHSTCNT, 0x48);
+  t = 0;
+
+  while (!(IoRead8 (base + SMBHSTSTS) & 0x02)) { // wait til command finished
+    gBS->Stall (1000);
+    t += 1;
+    if (t > 5) {
+      break;
+    }
+  }
+  
+  return IoRead8 (base + SMBHSTDAT);
+}
+
+UINT8*
+ReadEdid (
+  VESA_BIOS_EXTENSIONS_INFORMATION_BLOCK      *VbeInformationBlock
+  )
+{
+  EFI_STATUS            Status;
+  EFI_HANDLE            *HandleBuffer;
+  EFI_GUID              **ProtocolGuidArray;
+  EFI_PCI_IO_PROTOCOL   *PciIo;
+  PCI_TYPE00            Pci;
+  UINTN                 HandleCount;
+  UINTN                 ArrayCount;
+  UINTN                 HandleIndex;
+  UINTN                 ProtocolIndex;
+  UINTN                 Segment;
+  UINTN                 Bus;
+  UINTN                 Device;
+  UINTN                 Function;
+
+  INTN            i;
+  UINT32          base;
+  UINT16          Command;
+  UINT8           *edid;
+
+  edid = AllocateZeroPool (128);
+
+  /**
+   * Scan PCI BUS For SmBus controller
+   **/
+  Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
+
+  if (!EFI_ERROR (Status)) {
+    for (HandleIndex = 0; HandleIndex < HandleCount; HandleIndex++) {
+      Status = gBS->ProtocolsPerHandle (HandleBuffer[HandleIndex], &ProtocolGuidArray, &ArrayCount);
+
+      if (!EFI_ERROR (Status)) {
+        for (ProtocolIndex = 0; ProtocolIndex < ArrayCount; ProtocolIndex++) {
+          if (CompareGuid (&gEfiPciIoProtocolGuid, ProtocolGuidArray[ProtocolIndex])) {
+            Status = gBS->OpenProtocol (HandleBuffer[HandleIndex],
+                                        &gEfiPciIoProtocolGuid,
+                                        (VOID **) &PciIo,
+                                        gImageHandle,
+                                        NULL,
+                                        EFI_OPEN_PROTOCOL_GET_PROTOCOL
+                                        );
+
+            if (!EFI_ERROR (Status)) {
+              /* Read PCI BUS */
+              Status = PciIo->Pci.Read (
+                                        PciIo,
+                                        EfiPciIoWidthUint32,
+                                        0,
+                                        sizeof (Pci) / sizeof (UINT32),
+                                        &Pci
+                                        );
+              if (Pci.Hdr.VendorId == 0x8086) {
+                Status = PciIo->GetLocation (PciIo, &Segment, &Bus, &Device, &Function);
+                if ((Bus == 0) && (Device == 0x1F) && (Function == 3)) {
+                  Status = PciIo->Pci.Read (
+                                            PciIo,
+                                            EfiPciIoWidthUint16,
+                                            PCI_COMMAND_OFFSET,
+                                            1,
+                                            &Command
+                                            );
+                  Command |= 1;
+                  Status = PciIo->Pci.Write (
+                                             PciIo,
+                                             EfiPciIoWidthUint16,
+                                             PCI_COMMAND_OFFSET,
+                                             1,
+                                             &Command
+                                             );
+                  Status = PciIo->Pci.Read (
+                                            PciIo,
+                                            EfiPciIoWidthUint32,
+                                            0x20,
+                                            1,
+                                            &base
+                                            );
+                  base &= 0xFFFE;
+                  
+                  for (i = 0; i < 128; i++) {
+                    edid[i] = ReadSmb (base, (UINT8) (0xa0 + 0), (UINT8) i);
+                  }
+                  return edid;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  FreePool (edid);
+  return NULL;
+}
+#endif
 /**
   Check for VBE device
 
@@ -1140,14 +1280,31 @@ BiosVideoCheckForVbe (
     return Status;
   }
   DBG ("BiosVideo: VESA Signature = 0x%x\n", BiosVideoPrivate->VbeInformationBlock->VESASignature);
+  DBG ("BiosVideo: VESA Version = 0x%x\n", BiosVideoPrivate->VbeInformationBlock->VESAVersion);
   //
   // Check to see if this is VBE 2.0 or higher
   //
   if (BiosVideoPrivate->VbeInformationBlock->VESAVersion < VESA_BIOS_EXTENSIONS_VERSION_2_0) {
     return Status;
   }
-  DBG ("BiosVideo: BE 2.0 or higher\n");
+  DBG ("BiosVideo: VBE 2.0 or higher\n");
+  
+#if 0
+  gBS->SetMem (&Regs, sizeof (Regs), 0);
+  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+  Regs.X.BX = 0;
+  Regs.X.CX = 0;
+  Regs.E.ES = 0;
+  Regs.X.DI = 0;
 
+  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+  if ((Regs.X.BX & 0x1)) {
+    DBG ("BiosVideo: DDC 1 supported\n");
+  }
+  if ((Regs.X.BX & 0x2)) {
+    DBG ("BiosVideo: DDC 2 supported\n");
+  }
   //
   // Read EDID information
   //
@@ -1168,12 +1325,28 @@ BiosVideoCheckForVbe (
   Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
   Regs.X.BX = 1;
   Regs.X.CX = 0;
+  Regs.X.DX = 1;
+  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+
+  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+  DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
+  DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+
+  gBS->SetMem (&Regs, sizeof (Regs), 0);
+  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+  Regs.X.BX = 1;
+  Regs.X.CX = 0;
   Regs.X.DX = 0;
   Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
   Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
 
   LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-  
+
+  DBG ("BiosVideo: block 0 read with status 0x%x\n", Regs.X.AX);
+  DBG ("BiosVideo: block 0 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+
   //
   // See if the VESA call succeeded
   //
@@ -1224,6 +1397,9 @@ BiosVideoCheckForVbe (
       DBG ("BiosVideo: Edid not found\n");
     }
   }
+#endif
+
+  EdidFound = FALSE;
 
   //
   // Walk through the mode list to see if there is at least one mode the is compatible with the EDID mode
@@ -1242,6 +1418,7 @@ BiosVideoCheckForVbe (
     // Make sure this is a mode number defined by the VESA VBE specification.  If it isn'tm then skip this mode number.
     //
     if ((*ModeNumberPtr & VESA_BIOS_EXTENSIONS_MODE_NUMBER_VESA) == 0) {
+      DBG ("BiosVideo: Not a VESA defined VBE mode\n");
       continue;
     }
     //
@@ -1272,6 +1449,7 @@ BiosVideoCheckForVbe (
     // See if the call succeeded.  If it didn't, then try the next mode.
     //
     if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+      DBG ("BiosVideo: call not succeeded\n");
       continue;
     }
     //
@@ -1323,36 +1501,93 @@ BiosVideoCheckForVbe (
       //
       Timing.HorizontalResolution = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
       Timing.VerticalResolution = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
-#if 0
       if (SearchEdidTiming (&ValidEdidTiming, &Timing) == FALSE) {
-#endif
+        ModeFound = FALSE;
+      } else {
         ModeFound = TRUE;
         PreferMode = ModeNumber;
-#if 0
       }
-#endif
     }
+    
+    DBG ("BiosVideo: XResolution = %d, YResolution = %d\n",
+         BiosVideoPrivate->VbeModeInformationBlock->XResolution,
+         BiosVideoPrivate->VbeModeInformationBlock->YResolution);
 
-#if 0
     //
     // Select a reasonable mode to be set for current display mode
     //
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1680 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1600 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1400 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1440 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 900
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1280 &&
+        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1024
+        ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
+      ModeFound = TRUE;
+    }
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1024 &&
         BiosVideoPrivate->VbeModeInformationBlock->YResolution == 768
         ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
       ModeFound = TRUE;
     }
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 800 &&
         BiosVideoPrivate->VbeModeInformationBlock->YResolution == 600
         ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
       ModeFound = TRUE;
     }
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 640 &&
         BiosVideoPrivate->VbeModeInformationBlock->YResolution == 480
         ) {
+      if (PreferMode < ModeNumber) {
+        PreferMode = ModeNumber;
+      }
       ModeFound = TRUE;
     }
-#endif
 
     if ((!EdidFound) && (!ModeFound)) {
       //
@@ -1470,6 +1705,7 @@ BiosVideoCheckForVbe (
   //
   // Find the best mode to initialize
   //
+  DBG ("BiosVideo: PreferMode %d\n", PreferMode);
   Status = BiosVideoGraphicsOutputSetMode (&BiosVideoPrivate->GraphicsOutput, (UINT32) PreferMode);
   if (EFI_ERROR (Status)) {
     for (PreferMode = 0; PreferMode < ModeNumber; PreferMode ++) {
