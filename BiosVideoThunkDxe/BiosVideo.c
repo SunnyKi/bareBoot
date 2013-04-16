@@ -803,7 +803,7 @@ BiosVideoDeviceReleaseResource (
   return ;
 }
 
-#if 0
+#if 1
 /**
 
   Generate a search key for a specified timing data.
@@ -1168,6 +1168,7 @@ ReadEdid (
   return NULL;
 }
 #endif
+
 /**
   Check for VBE device
 
@@ -1191,7 +1192,7 @@ BiosVideoCheckForVbe (
   BIOS_VIDEO_MODE_DATA                   *CurrentModeData;
   UINTN                                  PreferMode;
   UINTN                                  ModeNumber;
-#if 0
+#if 1
   VESA_BIOS_EXTENSIONS_EDID_TIMING       Timing;
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
 #endif
@@ -1218,7 +1219,7 @@ BiosVideoCheckForVbe (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-#if 0
+#if 1
   ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
 #endif
   //
@@ -1335,6 +1336,7 @@ BiosVideoCheckForVbe (
 
   DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
   DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+#endif
 
   gBS->SetMem (&Regs, sizeof (Regs), 0);
   Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
@@ -1399,9 +1401,6 @@ BiosVideoCheckForVbe (
       DBG ("BiosVideo: Edid not found\n");
     }
   }
-#endif
-
-  EdidFound = FALSE;
 
   //
   // Walk through the mode list to see if there is at least one mode the is compatible with the EDID mode
@@ -1497,16 +1496,14 @@ BiosVideoCheckForVbe (
 
     ModeFound = FALSE;
 
-#if 0
+#if 1
     if (EdidFound && (ValidEdidTiming.ValidNumber > 0)) {
       //
       // EDID exist, check whether this mode match with any mode in EDID
       //
       Timing.HorizontalResolution = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
       Timing.VerticalResolution = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
-      if (SearchEdidTiming (&ValidEdidTiming, &Timing) == FALSE) {
-        ModeFound = FALSE;
-      } else {
+      if (SearchEdidTiming (&ValidEdidTiming, &Timing) != FALSE) {
         ModeFound = TRUE;
         PreferMode = ModeNumber;
       }
@@ -1517,98 +1514,101 @@ BiosVideoCheckForVbe (
          BiosVideoPrivate->VbeModeInformationBlock->XResolution,
          BiosVideoPrivate->VbeModeInformationBlock->YResolution,
          ModeNumber);
-
+#if 1
     //
     // Select a reasonable mode to be set for current display mode
     //
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+    if (!EdidFound) {
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1080
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1080
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1680 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1680 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1600 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1600 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1400 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1400 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1440 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 900
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1440 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 900
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1280 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1024
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1280 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1024
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1024 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 768
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1024 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 768
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 800 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 600
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 800 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 600
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
-    }
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 640 &&
-        BiosVideoPrivate->VbeModeInformationBlock->YResolution == 480
-        ) {
-      if (PreferMode < ModeNumber) {
-        PreferMode = ModeNumber;
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 640 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 480
+          ) {
+        if (PreferMode < ModeNumber) {
+          PreferMode = ModeNumber;
+        }
+        ModeFound = TRUE;
       }
-      ModeFound = TRUE;
     }
+#endif
 
     if ((!EdidFound) && (!ModeFound)) {
       //
