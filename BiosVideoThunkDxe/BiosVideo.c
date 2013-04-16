@@ -14,6 +14,18 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "BiosVideo.h"
+#include <Library/MemLogLib.h>
+
+#if 1
+#define BOOT_DEBUG
+#endif
+
+#ifndef BOOT_DEBUG
+#define DBG(...)
+#else
+#define BOOT_LOG L"EFI\\bareboot\\boot.log"
+#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
+#endif
 
 //
 // EFI Driver Binding Protocol Instance
@@ -923,7 +935,7 @@ ParseEdidData (
   ValidEdidTiming->ValidNumber = ValidNumber;
   return TRUE;
 }
-
+#if 0
 /**
 
   Search a specified Timing in all the valid EDID timings.
@@ -956,7 +968,7 @@ SearchEdidTiming (
 
   return FALSE;
 }
-
+#endif
 #define PCI_DEVICE_ENABLED  (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)
 
 
@@ -1120,18 +1132,21 @@ BiosVideoCheckForVbe (
   if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
     return Status;
   }
+  DBG ("BiosVideo: VESA call succeeded\n");
   //
   // Check for 'VESA' signature
   //
   if (BiosVideoPrivate->VbeInformationBlock->VESASignature != VESA_BIOS_EXTENSIONS_VESA_SIGNATURE) {
     return Status;
   }
+  DBG ("BiosVideo: VESA Signature = 0x%x\n", BiosVideoPrivate->VbeInformationBlock->VESASignature);
   //
   // Check to see if this is VBE 2.0 or higher
   //
   if (BiosVideoPrivate->VbeInformationBlock->VESAVersion < VESA_BIOS_EXTENSIONS_VERSION_2_0) {
     return Status;
   }
+  DBG ("BiosVideo: BE 2.0 or higher\n");
 
   //
   // Read EDID information
@@ -1169,6 +1184,7 @@ BiosVideoCheckForVbe (
     //
     if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock, &ValidEdidTiming) == TRUE) {
       EdidFound = TRUE;
+      DBG ("BiosVideo: Edid found\n");
 
       BiosVideoPrivate->EdidDiscovered.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
       Status = gBS->AllocatePool (
@@ -1205,6 +1221,7 @@ BiosVideoCheckForVbe (
 
       BiosVideoPrivate->EdidActive.SizeOfEdid = 0;
       BiosVideoPrivate->EdidActive.Edid = NULL;
+      DBG ("BiosVideo: Edid not found\n");
     }
   }
 
@@ -1298,22 +1315,28 @@ BiosVideoCheckForVbe (
       continue;
     }
 
+    ModeFound = FALSE;
+
     if (EdidFound && (ValidEdidTiming.ValidNumber > 0)) {
       //
       // EDID exist, check whether this mode match with any mode in EDID
       //
       Timing.HorizontalResolution = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
       Timing.VerticalResolution = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
+#if 0
       if (SearchEdidTiming (&ValidEdidTiming, &Timing) == FALSE) {
-        continue;
+#endif
+        ModeFound = TRUE;
+        PreferMode = ModeNumber;
+#if 0
       }
+#endif
     }
 
+#if 0
     //
     // Select a reasonable mode to be set for current display mode
     //
-    ModeFound = FALSE;
-
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1024 &&
         BiosVideoPrivate->VbeModeInformationBlock->YResolution == 768
         ) {
@@ -1323,13 +1346,14 @@ BiosVideoCheckForVbe (
         BiosVideoPrivate->VbeModeInformationBlock->YResolution == 600
         ) {
       ModeFound = TRUE;
-      PreferMode = ModeNumber;
     }
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 640 &&
         BiosVideoPrivate->VbeModeInformationBlock->YResolution == 480
         ) {
       ModeFound = TRUE;
     }
+#endif
+
     if ((!EdidFound) && (!ModeFound)) {
       //
       // When no EDID exist, only select three possible resolutions, i.e. 1024x768, 800x600, 640x480
