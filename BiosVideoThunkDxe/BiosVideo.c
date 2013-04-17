@@ -849,6 +849,7 @@ ParseEdidData (
 {
   UINT8  CheckSum;
   UINT32 Index;
+  UINT32 Index2;
   UINT32 ValidNumber;
   UINT32 TimingBits;
   UINT8  *BufferIndex;
@@ -874,7 +875,6 @@ ParseEdidData (
 
   ValidNumber = 0;
   gBS->SetMem (ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING), 0);
-
   if ((EdidDataBlock->EstablishedTimings[0] != 0) ||
       (EdidDataBlock->EstablishedTimings[1] != 0) ||
       (EdidDataBlock->EstablishedTimings[2] != 0)
@@ -931,6 +931,49 @@ ParseEdidData (
       BufferIndex += 2;
     }
   }
+  // thnx Slice (Detailed Timing) 
+	BufferIndex = &EdidDataBlock->DetailedTimingDescriptions[0];
+	for (Index = 0; Index < 4; Index ++, BufferIndex += DETAILED_TIMING_DESCRIPTION_SIZE) {
+		if ((BufferIndex[0] != 0x00) || (BufferIndex[1] != 0x00) ||
+        (BufferIndex[2] != 0x00) || (BufferIndex[4] != 0x00)) {
+			TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
+			TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
+			DBG("BiosVideo: ParseEdidData, found Detail Timing %dx%d\n",
+          TempTiming.HorizontalResolution,
+          TempTiming.VerticalResolution);
+			TempTiming.RefreshRate = 60; //doesn't matter, it's temporary
+      ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
+      ValidNumber ++;
+		} else if (BufferIndex[3] == 0xFA) {
+			for (Index2 = 0; Index2 < 6; Index2 ++) {
+        HorizontalResolution = (UINT8) (BufferIndex[0] * 8 + 248);
+        AspectRatio = (UINT8) (BufferIndex[1] >> 6);
+        switch (AspectRatio) {
+          case 0:
+            VerticalResolution = (UINT8) (HorizontalResolution / 16 * 10);
+            break;
+          case 1:
+            VerticalResolution = (UINT8) (HorizontalResolution / 4 * 3);
+            break;
+          case 2:
+            VerticalResolution = (UINT8) (HorizontalResolution / 5 * 4);
+            break;
+          case 3:
+            VerticalResolution = (UINT8) (HorizontalResolution / 16 * 9);
+            break;
+          default:
+            VerticalResolution = (UINT8) (HorizontalResolution / 4 * 3);
+            break;
+        }
+        RefreshRate = (UINT8) ((BufferIndex[1] & 0x1f) + 60);
+        TempTiming.HorizontalResolution = HorizontalResolution;
+        TempTiming.VerticalResolution = VerticalResolution;
+        TempTiming.RefreshRate = RefreshRate;
+        ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
+        ValidNumber ++;
+			}
+		} 
+	}
 
   ValidEdidTiming->ValidNumber = ValidNumber;
   return TRUE;
@@ -1500,6 +1543,15 @@ BiosVideoCheckForVbe (
       continue;
     }
 
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1024) {
+      continue;
+    }
+
+    DBG ("BiosVideo: XResolution = %d, YResolution = %d, ModeNumber = %d\n",
+         BiosVideoPrivate->VbeModeInformationBlock->XResolution,
+         BiosVideoPrivate->VbeModeInformationBlock->YResolution,
+         ModeNumber);
+
     ModeFound = FALSE;
 
 #if 1
@@ -1509,7 +1561,9 @@ BiosVideoCheckForVbe (
       //
       Timing.HorizontalResolution = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
       Timing.VerticalResolution = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
-      if (SearchEdidTiming (&ValidEdidTiming, &Timing) != FALSE) {
+      if (SearchEdidTiming (&ValidEdidTiming, &Timing) == FALSE) {
+        continue;
+      } else {
         ModeFound = TRUE;
         PreferMode = ModeNumber;
         DBG ("BiosVideo: mode %d found in edid\n", ModeNumber);
@@ -1517,21 +1571,19 @@ BiosVideoCheckForVbe (
     }
 #endif
 
-    DBG ("BiosVideo: XResolution = %d, YResolution = %d, ModeNumber = %d\n",
-         BiosVideoPrivate->VbeModeInformationBlock->XResolution,
-         BiosVideoPrivate->VbeModeInformationBlock->YResolution,
-         ModeNumber);
 #if 1
     //
     // Select a reasonable mode to be set for current display mode
     //
     if (!EdidFound) {
+      DBG ("BiosVideo: Edid not found? sorry guys, but we want try to set maximum VBE mode...\n");
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
           ) {
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1920x1440)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
@@ -1540,6 +1592,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1920x1200)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
@@ -1548,6 +1601,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1920x1080)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1680 &&
@@ -1556,6 +1610,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1680x1050)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1600 &&
@@ -1564,6 +1619,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1600x1200)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1400 &&
@@ -1572,6 +1628,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1440x1050)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1440 &&
@@ -1580,6 +1637,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1440x900)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1280 &&
@@ -1588,6 +1646,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
+        DBG ("BiosVideo: VBE mode for set = %d (1280x1024)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1024 &&
@@ -1596,22 +1655,7 @@ BiosVideoCheckForVbe (
         if (PreferMode < ModeNumber) {
           PreferMode = ModeNumber;
         }
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 800 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 600
-          ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 640 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 480
-          ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
+        DBG ("BiosVideo: VBE mode for set = %d (1024x768)\n", ModeNumber);
         ModeFound = TRUE;
       }
     }
@@ -1621,6 +1665,7 @@ BiosVideoCheckForVbe (
       //
       // When no EDID exist, only select three possible resolutions, i.e. 1024x768, 800x600, 640x480
       //
+      DBG ("BiosVideo: Valid mode not found, skip mode %d (640x480)\n", ModeNumber);
       continue;
     }
 
@@ -1736,8 +1781,8 @@ BiosVideoCheckForVbe (
   DBG ("BiosVideo: PreferMode %d\n", PreferMode);
   Status = BiosVideoGraphicsOutputSetMode (&BiosVideoPrivate->GraphicsOutput, (UINT32) PreferMode);
   if (EFI_ERROR (Status)) {
-    DBG ("BiosVideo: Error set PreferMode %d, number modes = %d\n", PreferMode, ModeNumber);
     for (PreferMode = 0; PreferMode < ModeNumber; PreferMode ++) {
+      DBG ("BiosVideo: Error set PreferMode, tru to set mode = %d (%dx%d)\n", PreferMode);
       Status = BiosVideoGraphicsOutputSetMode (
                 &BiosVideoPrivate->GraphicsOutput,
                 (UINT32) PreferMode
@@ -1965,6 +2010,10 @@ BiosVideoGraphicsOutputSetMode (
   }
 
   ModeData = &BiosVideoPrivate->ModeData[ModeNumber];
+
+  DBG ("BiosVideo: BiosVideoGraphicsOutputSetMode, ModeNumber = %d (%dx%d)\n", ModeNumber,
+       ModeData->HorizontalResolution,
+       ModeData->VerticalResolution);
 
   if (BiosVideoPrivate->LineBuffer) {
     gBS->FreePool (BiosVideoPrivate->LineBuffer);
