@@ -803,7 +803,6 @@ BiosVideoDeviceReleaseResource (
   return ;
 }
 
-#if 1
 /**
 
   Generate a search key for a specified timing data.
@@ -1010,7 +1009,6 @@ SearchEdidTiming (
 
   return FALSE;
 }
-#endif
 
 #define PCI_DEVICE_ENABLED  (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)
 
@@ -1235,9 +1233,9 @@ BiosVideoCheckForVbe (
   BIOS_VIDEO_MODE_DATA                   *CurrentModeData;
   UINTN                                  PreferMode;
   UINTN                                  ModeNumber;
-#if 1
   VESA_BIOS_EXTENSIONS_EDID_TIMING       Timing;
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
+#if 0
   UINT16 *VMPtr16;
 #endif
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
@@ -1263,9 +1261,9 @@ BiosVideoCheckForVbe (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-#if 1
+
   ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
-#endif
+
   //
   // Fill in the Graphics Output Protocol
   //
@@ -1352,6 +1350,21 @@ BiosVideoCheckForVbe (
   if ((Regs.X.BX & 0x2)) {
     DBG ("BiosVideo: DDC 2 supported\n");
   }
+
+  gBS->SetMem (&Regs, sizeof (Regs), 0);
+  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+  Regs.X.BX = 1;
+  Regs.X.CX = 0;
+  Regs.X.DX = 1;
+  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+
+  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+  DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
+  DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+#endif
+
   //
   // Read EDID information
   //
@@ -1368,19 +1381,6 @@ BiosVideoCheckForVbe (
   //    ES:DI buffer filled
   //    01h failed (e.g. non-DDC monitor)
   //
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-  Regs.X.BX = 1;
-  Regs.X.CX = 0;
-  Regs.X.DX = 1;
-  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-
-  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-  DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
-  DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
-#endif
 
   gBS->SetMem (&Regs, sizeof (Regs), 0);
   Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
@@ -1449,7 +1449,7 @@ BiosVideoCheckForVbe (
   //
   // Walk through the mode list to see if there is at least one mode the is compatible with the EDID mode
   //
-#if 0
+#if 1
   ModeNumberPtr = (UINT16 *)
     (
       (((UINTN) BiosVideoPrivate->VbeInformationBlock->VideoModePtr & 0xffff0000) >> 12) |
@@ -1554,7 +1554,6 @@ BiosVideoCheckForVbe (
 
     ModeFound = FALSE;
 
-#if 1
     if (EdidFound && (ValidEdidTiming.ValidNumber > 0)) {
       //
       // EDID exist, check whether this mode match with any mode in EDID
@@ -1569,9 +1568,7 @@ BiosVideoCheckForVbe (
         DBG ("BiosVideo: mode %d found in edid\n", ModeNumber);
       }
     }
-#endif
 
-#if 1
     //
     // Select a reasonable mode to be set for current display mode
     //
@@ -1659,7 +1656,6 @@ BiosVideoCheckForVbe (
         ModeFound = TRUE;
       }
     }
-#endif
 
     if ((!EdidFound) && (!ModeFound)) {
       //
