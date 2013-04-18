@@ -725,11 +725,13 @@ BdsLibEnumerateAllBootOption (
         gPNDirExists = TRUE;
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
+        DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
       }
 
       if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
+        DBG ("BdsBoot: config's dir: \\EFI\\bareboot\\\n");
       }
         
       BufferSizeVolume = SIZE_OF_EFI_FILE_SYSTEM_INFO + 255;
