@@ -1009,7 +1009,7 @@ GetBootDefault (
 
   ZeroMem (gSettings.DefaultBoot, sizeof (gSettings.DefaultBoot));
   
-  if (gPNConfigPlist != NULL) {
+  if (gPNDirExists) {
     plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
   } else {
     plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
@@ -1057,7 +1057,7 @@ GetUserSettings (
   i = 0;
   size = 0;
 
-  if (gPNConfigPlist != NULL) {
+  if (gPNDirExists) {
     plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
   } else {
     plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");

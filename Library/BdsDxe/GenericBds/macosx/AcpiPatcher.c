@@ -670,7 +670,7 @@ PatchACPI (
       newFadt->Dsdt = (UINT32) XDsdt;
     }
 
-    if (gPNAcpiDir != NULL) {
+    if (gPNDirExists) {
       UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
     } else {
       UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, PathDsdt);
@@ -732,7 +732,7 @@ PatchACPI (
   
   // Load SSDTs
   for (Index = 0; Index < NUM_TABLES; Index++) {
-    if (gPNAcpiDir != NULL) {
+    if (gPNDirExists) {
       UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, ACPInames[Index]);
     } else {
       UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, ACPInames[Index]);

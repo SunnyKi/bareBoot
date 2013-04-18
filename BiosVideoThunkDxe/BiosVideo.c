@@ -887,6 +887,9 @@ ParseEdidData (
     for (Index = 0; Index < VESA_BIOS_EXTENSIONS_EDID_ESTABLISHED_TIMING_MAX_NUMBER; Index ++) {
       if (TimingBits & 0x1) {
         ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&mEstablishedEdidTiming[Index]);
+        DBG("BiosVideo: ParseEdidData, found Established Timing %dx%d\n",
+            mEstablishedEdidTiming[Index].HorizontalResolution,
+            mEstablishedEdidTiming[Index].VerticalResolution);
         ValidNumber ++;
       }
       TimingBits = TimingBits >> 1;
@@ -924,23 +927,26 @@ ParseEdidData (
         TempTiming.HorizontalResolution = HorizontalResolution;
         TempTiming.VerticalResolution = VerticalResolution;
         TempTiming.RefreshRate = RefreshRate;
+        DBG("BiosVideo: ParseEdidData, found Standard    Timing %dx%d\n",
+            TempTiming.HorizontalResolution,
+            TempTiming.VerticalResolution);
         ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
         ValidNumber ++;
       }
       BufferIndex += 2;
     }
   }
-  // thnx Slice (Detailed Timing) 
+  // thnx Slice (Detailed Timing)
 	BufferIndex = &EdidDataBlock->DetailedTimingDescriptions[0];
 	for (Index = 0; Index < 4; Index ++, BufferIndex += DETAILED_TIMING_DESCRIPTION_SIZE) {
 		if ((BufferIndex[0] != 0x00) || (BufferIndex[1] != 0x00) ||
         (BufferIndex[2] != 0x00) || (BufferIndex[4] != 0x00)) {
 			TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
 			TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
-			DBG("BiosVideo: ParseEdidData, found Detail Timing %dx%d\n",
+			TempTiming.RefreshRate = 60; //doesn't matter, it's temporary
+			DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%d\n",
           TempTiming.HorizontalResolution,
           TempTiming.VerticalResolution);
-			TempTiming.RefreshRate = 60; //doesn't matter, it's temporary
       ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
       ValidNumber ++;
 		} else if (BufferIndex[3] == 0xFA) {
@@ -968,6 +974,9 @@ ParseEdidData (
         TempTiming.HorizontalResolution = HorizontalResolution;
         TempTiming.VerticalResolution = VerticalResolution;
         TempTiming.RefreshRate = RefreshRate;
+        DBG("BiosVideo: ParseEdidData, found Detailed Timing %dx%d\n",
+            TempTiming.HorizontalResolution,
+            TempTiming.VerticalResolution);
         ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
         ValidNumber ++;
 			}

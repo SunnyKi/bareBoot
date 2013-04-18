@@ -1319,6 +1319,7 @@ Returns:
   } while (!GotIt);
   DBG ("BdsPlatorm: DMI ProductName = '%s'\n", TmpString);
 
+  gPNDirExists = FALSE;
   gProductNameDir = NULL;
   gPNConfigPlist = NULL;
   gPNAcpiDir = NULL;

@@ -517,6 +517,7 @@ LIST_ENTRY                      gBootOptionList;
 CHAR16                          *gProductNameDir;
 CHAR16                          *gPNConfigPlist;
 CHAR16                          *gPNAcpiDir;
+BOOLEAN                         gPNDirExists;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;

@@ -722,6 +722,7 @@ BdsLibEnumerateAllBootOption (
       }
 
       if ((gPNConfigPlist != NULL) && (FileExists (FHandle, gPNConfigPlist)) && (ConfigNotFound)) {
+        gPNDirExists = TRUE;
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
       }
