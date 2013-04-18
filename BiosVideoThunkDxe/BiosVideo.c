@@ -1648,7 +1648,7 @@ BiosVideoCheckForVbe (
       DBG ("BiosVideo: Valid mode not found, skip mode %d (640x480)\n", ModeNumber);
       continue;
     }
-    if (BestMode < (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
+    if (BestMode < (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
                     BiosVideoPrivate->VbeModeInformationBlock->YResolution)) {
       PreferMode = ModeNumber;
       BestMode = BiosVideoPrivate->VbeModeInformationBlock->XResolution +
