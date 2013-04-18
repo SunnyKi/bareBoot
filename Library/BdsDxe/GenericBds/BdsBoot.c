@@ -268,7 +268,7 @@ MacOS:
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetCpuProps\n"));
   GetCpuProps ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
-  GetUserSettings (gRootFHandle, L"\\EFI\\bareboot\\config.plist");
+  GetUserSettings (gRootFHandle);
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
   SetDevices ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchSmbios\n"));
@@ -721,6 +721,11 @@ BdsLibEnumerateAllBootOption (
                          );
       }
 
+      if ((gPNConfigPlist != NULL) && (FileExists (FHandle, gPNConfigPlist)) && (ConfigNotFound)) {
+        gRootFHandle = FHandle;
+        ConfigNotFound  = FALSE;
+      }
+
       if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
@@ -753,7 +758,7 @@ BdsLibEnumerateAllBootOption (
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], CLOVER_MEDIA_FILE_NAME, L"Clover EFI", Buffer, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SHELL_PATH, L"[EFI SHell]", Buffer, BdsBootOptionList, TRUE);
     }
-    GetBootDefault(gRootFHandle, L"\\EFI\\bareboot\\config.plist");
+    GetBootDefault (gRootFHandle);
 #if 0
   }
 #endif

@@ -44,6 +44,9 @@ Abstract:
 #include <Library/DevicePathLib.h>
 
 #include <Protocol/PciIo.h>
+#include <Library/IoLib.h>
+#include <Protocol/Smbios.h>
+#include <IndustryStandard/SmBios.h>
 
 #include <Guid/Acpi.h>
 #include <Guid/SmBios.h>
@@ -52,6 +55,8 @@ Abstract:
 #include <Guid/PciExpressBaseAddress.h>
 #include <Guid/GlobalVariable.h>
 #include <Guid/LdrMemoryDescriptor.h>
+#include <PiDxe.h>
+#include "../BdsDxe/String.h"
 
 extern BDS_CONSOLE_CONNECT_ENTRY  gPlatformConsole[];
 extern EFI_DEVICE_PATH_PROTOCOL   *gPlatformConnectSequence[];

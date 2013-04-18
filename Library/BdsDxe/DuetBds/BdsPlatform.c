@@ -23,8 +23,6 @@ Abstract:
 #include "BdsPlatform.h"
 #include "../GenericBds/macosx/macosx.h"
 
-#include <Library/IoLib.h>
-
 #define IS_PCI_ISA_PDECODE(_p)        IS_CLASS3 (_p, PCI_CLASS_BRIDGE, PCI_CLASS_BRIDGE_ISA_PDECODE, 0)
 #define SCAN_ESC        0x0017
 #define SCAN_F1         0x000B
@@ -1275,6 +1273,13 @@ Returns:
   EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL   *SimpleTextInEx;
   EFI_KEY_DATA                        mKeyData;
 #endif
+  EFI_SMBIOS_HANDLE                 SmbiosHandle;
+  EFI_SMBIOS_PROTOCOL               *Smbios;
+  EFI_SMBIOS_TABLE_HEADER           *Record;
+  SMBIOS_TABLE_TYPE1                *Type1Record;
+  BOOLEAN                           GotIt;
+  CHAR16                            *TmpString;
+  UINT8                             StrIndex;
 
   DBG ("BdsPlatorm: Starting BdsLibGetBootMode\n");
   Status = BdsLibGetBootMode (&BootMode);
@@ -1291,7 +1296,54 @@ Returns:
   BdsLibConnectAllDriversToAllControllers ();
   gConnectAllHappened = TRUE;
 
-  DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");  // 0.3 sec
+  Status = gBS->LocateProtocol (
+                  &gEfiSmbiosProtocolGuid,
+                  NULL,
+                  (VOID **) &Smbios
+                );
+  SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
+  TmpString = NULL;
+  GotIt = FALSE;
+  do {
+    Status = Smbios->GetNext (Smbios, &SmbiosHandle, NULL, &Record, NULL);
+    if (EFI_ERROR(Status)) {
+      break;
+    }
+    if (Record->Type == EFI_SMBIOS_TYPE_SYSTEM_INFORMATION) {
+      Type1Record = (SMBIOS_TABLE_TYPE1 *) Record;
+      StrIndex = Type1Record->ProductName;
+      GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), StrIndex, &TmpString);
+      GotIt = TRUE;
+    }
+
+  } while (!GotIt);
+  DBG ("BdsPlatorm: DMI ProductName = '%s'\n", TmpString);
+
+  gProductNameDir = NULL;
+  gPNConfigPlist = NULL;
+  gPNAcpiDir = NULL;
+  if (TmpString != NULL) {
+    gProductNameDir = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (TmpString) + StrSize (L"\\"));
+    StrCat (gProductNameDir, L"\\EFI\\bareboot\\");
+    StrCat (gProductNameDir, TmpString);
+    StrCat (gProductNameDir, L"\\");
+    FreePool (TmpString);
+    
+    gPNConfigPlist = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"config.plist"));
+    StrCpy (gPNConfigPlist, gProductNameDir);
+    StrCat (gPNConfigPlist, L"config.plist");
+
+    gPNAcpiDir = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"acpi\\"));
+    StrCpy (gPNAcpiDir, gProductNameDir);
+    StrCat (gPNAcpiDir, L"acpi\\");
+
+  }
+
+  DBG ("BdsPlatorm: ProductNameDir = '%s'\n", gProductNameDir);
+  DBG ("BdsPlatorm: gPNConfigPlist = '%s'\n", gPNConfigPlist);
+  DBG ("BdsPlatorm: gPNAcpiDir = '%s'\n", gPNAcpiDir);
+
+  DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");
   BdsLibEnumerateAllBootOption (&gBootOptionList);
 
   AddBootArgs = "\0 23456789012345678901234567890123456789";

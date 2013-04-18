@@ -1001,16 +1001,19 @@ LoadPListFile (
 // ----============================----
 EFI_STATUS
 GetBootDefault (
-  IN EFI_FILE *RootFileHandle,
-  IN CHAR16* ConfigPlistPath
+  IN EFI_FILE *RootFileHandle
 )
 {
   VOID*       plist;
   VOID*       spdict;
 
   ZeroMem (gSettings.DefaultBoot, sizeof (gSettings.DefaultBoot));
-
-  plist = LoadPListFile (RootFileHandle, ConfigPlistPath);
+  
+  if (gPNConfigPlist != NULL) {
+    plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
+  } else {
+    plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
+  }
 
   if (plist == NULL) {
     Print (L"Error loading bootdefault plist!\r\n");
@@ -1031,8 +1034,7 @@ GetBootDefault (
 
 EFI_STATUS
 GetUserSettings (
-  IN EFI_FILE *RootFileHandle,
-  IN CHAR16   *ConfigPlistPath
+  IN EFI_FILE *RootFileHandle
 )
 {
   EFI_STATUS      Status;
@@ -1055,7 +1057,11 @@ GetUserSettings (
   i = 0;
   size = 0;
 
-  plist = LoadPListFile (RootFileHandle, ConfigPlistPath);
+  if (gPNConfigPlist != NULL) {
+    plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
+  } else {
+    plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
+  }
 
   if (plist == NULL) {
     Print (L"Error loading usersettings plist!\r\n");

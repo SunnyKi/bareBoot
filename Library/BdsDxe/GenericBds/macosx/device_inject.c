@@ -1453,7 +1453,12 @@ load_vbios_file (
     return FALSE;
   }
 
-  UnicodeSPrint (FileName, sizeof (FileName), L"\\EFI\\bareboot\\rom\\%04x_%04x.rom", vendor_id, device_id);
+  if (gProductNameDir != NULL) {
+    UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom", gProductNameDir, vendor_id, device_id);
+  } else {
+    UnicodeSPrint (FileName, sizeof (FileName), L"\\EFI\\bareboot\\rom\\%04x_%04x.rom", vendor_id, device_id);
+  }
+
 
   if (!FileExists (gRootFHandle, FileName)) {
     return FALSE;

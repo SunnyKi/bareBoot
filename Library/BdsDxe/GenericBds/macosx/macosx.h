@@ -514,6 +514,9 @@ CPU_STRUCTURE                   gCPUStructure;
 CHAR8                           *AddBootArgs;
 CHAR8                           *OSVersion;
 LIST_ENTRY                      gBootOptionList;
+CHAR16                          *gProductNameDir;
+CHAR16                          *gPNConfigPlist;
+CHAR16                          *gPNAcpiDir;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
@@ -591,8 +594,7 @@ SaveBooterLog (
 
 EFI_STATUS
 GetBootDefault(
-  IN EFI_FILE *RootFileHandle,
-  IN CHAR16* ConfigPlistPath
+  IN EFI_FILE *RootFileHandle
 );
 
 VOID
@@ -602,8 +604,7 @@ GetDefaultSettings (
 
 EFI_STATUS
 GetUserSettings (
-  IN EFI_FILE *RootDir,
-  IN CHAR16* ConfigPlistPath
+  IN EFI_FILE *RootDir
 );
 
 VOID
@@ -651,6 +652,13 @@ EventsInitialize (
 EFI_STATUS
 GetOSVersion(
   IN EFI_FILE *FileHandle
+);
+
+EFI_STATUS
+GetOptionalStringByIndex (
+  IN      CHAR8                   *OptionalStrStart,
+  IN      UINT8                   Index,
+  OUT     CHAR16                  **String
 );
 
 #endif

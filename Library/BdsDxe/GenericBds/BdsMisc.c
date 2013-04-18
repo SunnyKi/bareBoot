@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "InternalBdsLib.h"
+#include "macosx/macosx.h"
 
 
 #define MAX_STRING_LEN        200
@@ -300,12 +301,18 @@ BdsLibRegisterNewOption (
     FreePool (OptionPtr);
   }
 
+  DBG ("BdsLibRegisterNewOption: String = |%s|, StrSize (String) = %d\n", String, StrSize (String));
+  DBG ("BdsLibRegisterNewOption: LoadOptions = |%s|, StrSize (LoadOptions) = %d\n",LoadOptions, StrSize (LoadOptions));
+
   OptionSize          = sizeof (UINT32) + sizeof (UINT16) + StrSize (String);
   OptionSize          += GetDevicePathSize (DevicePath);
   OptionSize          += StrSize (LoadOptions);
   OptionPtr           = AllocateZeroPool (OptionSize);
   ASSERT (OptionPtr != NULL);
-  
+
+  DBG ("BdsLibRegisterNewOption: DevicePath size = %d, OptionSize = %d\n", GetDevicePathSize (DevicePath), OptionSize);
+
+
   TempPtr             = OptionPtr;
   *(UINT32 *) TempPtr = LOAD_OPTION_ACTIVE;
   TempPtr             += sizeof (UINT32);
@@ -343,7 +350,7 @@ BdsLibRegisterNewOption (
   Status = gRT->SetVariable (
                   OptionName,
                   &gEfiGlobalVariableGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS | EFI_VARIABLE_NON_VOLATILE,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
                   OptionSize,
                   OptionPtr
                   );

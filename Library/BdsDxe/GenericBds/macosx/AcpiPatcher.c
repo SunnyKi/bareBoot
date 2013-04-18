@@ -310,15 +310,15 @@ PatchACPI (
     if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi20TableGuid)) {
       RsdPointer = (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
 #if 0
-      Print (L"ACPI 2.0\r\n");
-      Print (L"RSDT = 0x%x\r\n", (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress);
-      Print (L"XSDT = 0x%x\r\n", (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress);
+      Print (L"ACPI 2.0\n");
+      Print (L"RSDT = 0x%x\n", (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress);
+      Print (L"XSDT = 0x%x\n", (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress);
 #endif
       break;
     } else if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi10TableGuid)) {
       RsdPointer = (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
 #if 0
-      Print (L"ACPI 1.0\r\n");
+      Print (L"ACPI 1.0\n");
 #endif
       continue;
     }
@@ -331,12 +331,12 @@ PatchACPI (
   Rsdt = (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress;
 
 #if 0
-  Print (L"FADT = 0x%x\r\n", FadtPointer);
+  Print (L"FADT = 0x%x\n", FadtPointer);
   Xsdt = (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress;
-  Print (L"XSDT = 0x%x\r\n", Xsdt);
+  Print (L"XSDT = 0x%x\n", Xsdt);
   eCntR = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
   eCntX = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-  Print (L"eCntR=0x%x  eCntX=0x%x\r\n", eCntR, eCntX);
+  Print (L"eCntR=0x%x  eCntX=0x%x\n", eCntR, eCntX);
 #endif
 
   BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
@@ -358,7 +358,7 @@ PatchACPI (
 
     for (Index = 0; Index < eCntR; Index ++) {
 #if 0
-      Print (L"RSDT entry = 0x%x\r\n", *pEntryR);
+      Print (L"RSDT entry = 0x%x\n", *pEntryR);
 #endif
 
       if (*pEntryR != 0) {
@@ -383,7 +383,7 @@ PatchACPI (
     RsdPointer->ExtendedChecksum = (UINT8) (256 - CalculateSum8 ((UINT8*) RsdPointer, RsdPointer->Length));
 #endif
   } else {
-    Print (L"no allocate page for new xsdt\r\n");
+    Print (L"no allocate page for new xsdt\n");
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -391,7 +391,7 @@ PatchACPI (
     *(ScanXSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE));
 
   if (FadtPointer == NULL) {
-    Print (L"no FADT entry in RSDT\r\n");
+    Print (L"no FADT entry in RSDT\n");
     return EFI_NOT_FOUND;
   }
   
@@ -670,7 +670,11 @@ PatchACPI (
       newFadt->Dsdt = (UINT32) XDsdt;
     }
 
-    UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, PathDsdt);
+    if (gPNAcpiDir != NULL) {
+      UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
+    } else {
+      UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, PathDsdt);
+    }
 
     if (FileExists (FHandle, PathToACPITables)) {
       Status = egLoadFile (FHandle, PathToACPITables , &buffer, &bufferLen);
@@ -728,8 +732,11 @@ PatchACPI (
   
   // Load SSDTs
   for (Index = 0; Index < NUM_TABLES; Index++) {
-    UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, ACPInames[Index]);
-
+    if (gPNAcpiDir != NULL) {
+      UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, ACPInames[Index]);
+    } else {
+      UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, ACPInames[Index]);
+    }
     if (FileExists (FHandle, PathToACPITables)) {
       Status = egLoadFile (FHandle, PathToACPITables, &buffer, &bufferLen);
 
