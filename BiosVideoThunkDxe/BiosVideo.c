@@ -1248,6 +1248,7 @@ BiosVideoCheckForVbe (
   UINT16 *VMPtr16;
 #endif
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
+  UINT32                                 BestMode;
 
   //
   // Allocate buffer under 1MB for VBE data structures
@@ -1359,19 +1360,6 @@ BiosVideoCheckForVbe (
   if ((Regs.X.BX & 0x2)) {
     DBG ("BiosVideo: DDC 2 supported\n");
   }
-
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-  Regs.X.BX = 1;
-  Regs.X.CX = 0;
-  Regs.X.DX = 1;
-  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-
-  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-  DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
-  DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
 #endif
 
   //
@@ -1395,15 +1383,29 @@ BiosVideoCheckForVbe (
   Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
   Regs.X.BX = 1;
   Regs.X.CX = 0;
-  Regs.X.DX = 0;
+  Regs.X.DX = 1;
   Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
   Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
 
   LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
 
-  DBG ("BiosVideo: block 0 read with status 0x%x\n", Regs.X.AX);
-  DBG ("BiosVideo: block 0 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+  DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
+  DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
 
+  if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+    gBS->SetMem (&Regs, sizeof (Regs), 0);
+    Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+    Regs.X.BX = 1;
+    Regs.X.CX = 0;
+    Regs.X.DX = 0;
+    Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+    Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+
+    LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+    DBG ("BiosVideo: block 0 read with status 0x%x\n", Regs.X.AX);
+    DBG ("BiosVideo: block 0 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+  }
   //
   // See if the VESA call succeeded
   //
@@ -1471,6 +1473,7 @@ BiosVideoCheckForVbe (
 
   PreferMode = 0;
   ModeNumber = 0;
+  BestMode = 0;
 
   for (; *ModeNumberPtr != VESA_BIOS_EXTENSIONS_END_OF_MODE_LIST; ModeNumberPtr++) {
     //
@@ -1573,7 +1576,6 @@ BiosVideoCheckForVbe (
         continue;
       } else {
         ModeFound = TRUE;
-        PreferMode = ModeNumber;
         DBG ("BiosVideo: mode %d found in edid\n", ModeNumber);
       }
     }
@@ -1586,92 +1588,71 @@ BiosVideoCheckForVbe (
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1920x1440)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1920x1200)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1080
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1920x1080)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1680 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1680x1050)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1600 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1600x1200)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1400 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1440x1050)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1440 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 900
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1440x900)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1280 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1024
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1280x1024)\n", ModeNumber);
         ModeFound = TRUE;
       }
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1024 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 768
           ) {
-        if (PreferMode < ModeNumber) {
-          PreferMode = ModeNumber;
-        }
         DBG ("BiosVideo: VBE mode for set = %d (1024x768)\n", ModeNumber);
         ModeFound = TRUE;
       }
     }
 
-    if ((!EdidFound) && (!ModeFound)) {
+    if (!ModeFound) {
       //
       // When no EDID exist, only select three possible resolutions, i.e. 1024x768, 800x600, 640x480
       //
       DBG ("BiosVideo: Valid mode not found, skip mode %d (640x480)\n", ModeNumber);
       continue;
+    }
+    if (BestMode < (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
+                    BiosVideoPrivate->VbeModeInformationBlock->YResolution)) {
+      PreferMode = ModeNumber;
+      BestMode = BiosVideoPrivate->VbeModeInformationBlock->XResolution +
+                 BiosVideoPrivate->VbeModeInformationBlock->YResolution;
     }
 
     //
