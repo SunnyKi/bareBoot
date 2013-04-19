@@ -515,6 +515,7 @@ CHAR8                           *AddBootArgs;
 CHAR8                           *OSVersion;
 LIST_ENTRY                      gBootOptionList;
 CHAR16                          *gProductNameDir;
+CHAR16                          *gProductNameDir2;
 CHAR16                          *gPNConfigPlist;
 CHAR16                          *gPNAcpiDir;
 BOOLEAN                         gPNDirExists;

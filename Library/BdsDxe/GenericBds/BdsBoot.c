@@ -579,6 +579,7 @@ BdsLibEnumerateAllBootOption (
   UINT16                        CdromNumber;
   BOOLEAN                       Removable[2];
   UINTN                         RemovableIndex;
+  UINT16                        *PNConfigPlist2;
 
   gRootFHandle    = NULL;
   FileSystemInfo  = NULL;
@@ -595,10 +596,24 @@ BdsLibEnumerateAllBootOption (
   Removable[0]    = FALSE;
   Removable[1]    = TRUE;
 
+  if (gProductNameDir != NULL) {
+    gPNConfigPlist = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"config.plist"));
+    StrCpy (gPNConfigPlist, gProductNameDir);
+    StrCat (gPNConfigPlist, L"config.plist");
+  }
+
+  PNConfigPlist2 = NULL;
+  if (gProductNameDir2 != NULL) {
+    PNConfigPlist2 = AllocateZeroPool (StrSize (gProductNameDir2) + StrSize (L"config.plist"));
+    StrCpy (PNConfigPlist2, gProductNameDir2);
+    StrCat (PNConfigPlist2, L"config.plist");
+  }
+
 #if 0
   PlatLang        = NULL;
   LastLang        = NULL;
   FloppyNumber    = 0;
+
   //
   // If the boot device enumerate happened, just get the boot
   // device from the boot order variable
@@ -720,8 +735,20 @@ BdsLibEnumerateAllBootOption (
                            &FHandle
                          );
       }
-
+      
       if ((gPNConfigPlist != NULL) && (FileExists (FHandle, gPNConfigPlist)) && (ConfigNotFound)) {
+        gPNDirExists = TRUE;
+        gRootFHandle = FHandle;
+        ConfigNotFound  = FALSE;
+        DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
+      }
+
+      if ((PNConfigPlist2 != NULL) && (FileExists (FHandle, PNConfigPlist2)) && (ConfigNotFound)) {
+        FreePool (gPNConfigPlist);
+        gPNConfigPlist = PNConfigPlist2;
+        FreePool (gProductNameDir);
+        gProductNameDir = gProductNameDir2;
+
         gPNDirExists = TRUE;
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
@@ -731,9 +758,9 @@ BdsLibEnumerateAllBootOption (
       if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
         gRootFHandle = FHandle;
         ConfigNotFound  = FALSE;
-        DBG ("BdsBoot: config's dir: \\EFI\\bareboot\\\n");
+        DBG ("BdsBoot: config's dir: \\EFI\\bareboot\\ \n");
       }
-        
+
       BufferSizeVolume = SIZE_OF_EFI_FILE_SYSTEM_INFO + 255;
       FileSystemInfo = AllocateZeroPool(BufferSizeVolume);      
       Status = FHandle->GetInfo(FHandle, &gEfiFileSystemInfoGuid,(UINTN*)&BufferSizeVolume, FileSystemInfo);
@@ -761,6 +788,14 @@ BdsLibEnumerateAllBootOption (
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], CLOVER_MEDIA_FILE_NAME, L"Clover EFI", Buffer, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SHELL_PATH, L"[EFI SHell]", Buffer, BdsBootOptionList, TRUE);
     }
+
+    if (gPNDirExists) {
+      gPNAcpiDir = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"acpi\\"));
+      StrCpy (gPNAcpiDir, gProductNameDir);
+      StrCat (gPNAcpiDir, L"acpi\\");
+      DBG ("BdsBoot: acpi dir: %s\n", gPNAcpiDir);
+    }
+
     GetBootDefault (gRootFHandle);
 #if 0
   }

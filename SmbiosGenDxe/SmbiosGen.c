@@ -94,9 +94,32 @@ InstallCacheSmbios (
 }
 
 VOID
-InstallMemorySmbios (
+InstallBaseBoardSmbios (
   IN VOID                  *Smbios
   )
+{
+  SMBIOS_STRUCTURE_POINTER          SmbiosTable;
+
+  //
+  // Generate Base Board info (TYPE 2)
+  //
+  SmbiosTable = GetSmbiosTableFromType ((SMBIOS_TABLE_ENTRY_POINT *)Smbios, 2, 0);
+  if (SmbiosTable.Raw == NULL) {
+    DEBUG ((EFI_D_ERROR, "SmbiosTable: Type 2 (BaseBoard Information) not found!\n"));
+    return ;
+  }
+
+  //
+  // Record Smbios Type 19
+  //
+  LogSmbiosData(gSmbios, (UINT8*)SmbiosTable.Type2);
+  return ;
+}
+
+VOID
+InstallMemorySmbios (
+                     IN VOID                  *Smbios
+                     )
 {
   SMBIOS_STRUCTURE_POINTER          SmbiosTable;
 
@@ -231,10 +254,11 @@ SmbiosGenEntrypoint (
                     );
   ASSERT (gStringHandle != NULL);
 
-  InstallProcessorSmbios (Smbios);
-  InstallCacheSmbios     (Smbios);
-  InstallMemorySmbios    (Smbios);
   InstallMiscSmbios      (Smbios);
+  InstallBaseBoardSmbios (Smbios);
+  InstallProcessorSmbios (Smbios);
+  InstallMemorySmbios    (Smbios);
+  InstallCacheSmbios     (Smbios);
 
   return EFI_SUCCESS;
 }

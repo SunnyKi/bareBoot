@@ -1277,8 +1277,10 @@ Returns:
   EFI_SMBIOS_PROTOCOL               *Smbios;
   EFI_SMBIOS_TABLE_HEADER           *Record;
   SMBIOS_TABLE_TYPE1                *Type1Record;
-  BOOLEAN                           GotIt;
-  CHAR16                            *TmpString;
+  SMBIOS_TABLE_TYPE2                *Type2Record;
+  BOOLEAN                           GotIt[2];
+  CHAR16                            *TmpString1;
+  CHAR16                            *TmpString2;
   UINT8                             StrIndex;
 
   DBG ("BdsPlatorm: Starting BdsLibGetBootMode\n");
@@ -1302,8 +1304,10 @@ Returns:
                   (VOID **) &Smbios
                 );
   SmbiosHandle = SMBIOS_HANDLE_PI_RESERVED;
-  TmpString = NULL;
-  GotIt = FALSE;
+  TmpString1 = NULL;
+  TmpString2 = NULL;
+  GotIt[0] = FALSE;
+  GotIt[1] = FALSE;
   do {
     Status = Smbios->GetNext (Smbios, &SmbiosHandle, NULL, &Record, NULL);
     if (EFI_ERROR(Status)) {
@@ -1312,37 +1316,42 @@ Returns:
     if (Record->Type == EFI_SMBIOS_TYPE_SYSTEM_INFORMATION) {
       Type1Record = (SMBIOS_TABLE_TYPE1 *) Record;
       StrIndex = Type1Record->ProductName;
-      GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), StrIndex, &TmpString);
-      GotIt = TRUE;
+      GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), StrIndex, &TmpString1);
+      GotIt[0] = TRUE;
     }
-
-  } while (!GotIt);
-  DBG ("BdsPlatorm: DMI ProductName = '%s'\n", TmpString);
+    if (Record->Type == EFI_SMBIOS_TYPE_BASEBOARD_INFORMATION) {
+      Type2Record = (SMBIOS_TABLE_TYPE2 *) Record;
+      StrIndex = Type2Record->ProductName;
+      GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type2Record + Type2Record->Hdr.Length), StrIndex, &TmpString2);
+      GotIt[1] = TRUE;
+    }
+  } while (!(GotIt[0] && GotIt[1]));
+  DBG ("BdsPlatorm: DMI TableType1->ProductName = '%s'\n", TmpString1);
+  DBG ("BdsPlatorm: DMI TableType2->ProductName = '%s'\n", TmpString2);
 
   gPNDirExists = FALSE;
   gProductNameDir = NULL;
+  gProductNameDir2 = NULL;
   gPNConfigPlist = NULL;
   gPNAcpiDir = NULL;
-  if (TmpString != NULL) {
-    gProductNameDir = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (TmpString) + StrSize (L"\\"));
-    StrCat (gProductNameDir, L"\\EFI\\bareboot\\");
-    StrCat (gProductNameDir, TmpString);
+
+  if (TmpString1 != NULL) {
+    gProductNameDir = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (TmpString1) + StrSize (L"\\"));
+    StrCpy (gProductNameDir, L"\\EFI\\bareboot\\");
+    StrCat (gProductNameDir, TmpString1);
     StrCat (gProductNameDir, L"\\");
-    FreePool (TmpString);
-    
-    gPNConfigPlist = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"config.plist"));
-    StrCpy (gPNConfigPlist, gProductNameDir);
-    StrCat (gPNConfigPlist, L"config.plist");
-
-    gPNAcpiDir = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"acpi\\"));
-    StrCpy (gPNAcpiDir, gProductNameDir);
-    StrCat (gPNAcpiDir, L"acpi\\");
-
+    FreePool (TmpString1);
   }
 
+  if (TmpString2 != NULL) {
+    gProductNameDir2 = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (TmpString2) + StrSize (L"\\"));
+    StrCpy (gProductNameDir2, L"\\EFI\\bareboot\\");
+    StrCat (gProductNameDir2, TmpString2);
+    StrCat (gProductNameDir2, L"\\");
+    FreePool (TmpString2);
+  }
   DBG ("BdsPlatorm: ProductNameDir = '%s'\n", gProductNameDir);
-  DBG ("BdsPlatorm: gPNConfigPlist = '%s'\n", gPNConfigPlist);
-  DBG ("BdsPlatorm: gPNAcpiDir = '%s'\n", gPNAcpiDir);
+  DBG ("BdsPlatorm: ProductNameDir2 = '%s'\n", gProductNameDir2);
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");
   BdsLibEnumerateAllBootOption (&gBootOptionList);
