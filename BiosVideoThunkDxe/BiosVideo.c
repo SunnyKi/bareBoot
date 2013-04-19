@@ -1399,6 +1399,7 @@ BiosVideoCheckForVbe (
       DBG ("BiosVideo: Edid1 found\n");
     }
   }
+  
   gBS->SetMem (&Regs, sizeof (Regs), 0);
   Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
   Regs.X.BX = 1;
@@ -1652,9 +1653,10 @@ BiosVideoCheckForVbe (
       //
       // When no EDID exist, only select three possible resolutions, i.e. 1024x768, 800x600, 640x480
       //
-      DBG ("BiosVideo: Valid mode not found, skip mode %d (640x480)\n", ModeNumber);
+      DBG ("BiosVideo: Valid mode not found, skip mode %d\n", ModeNumber);
       continue;
     }
+    
     if (BestMode < (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
                     BiosVideoPrivate->VbeModeInformationBlock->YResolution)) {
       PreferMode = ModeNumber;
