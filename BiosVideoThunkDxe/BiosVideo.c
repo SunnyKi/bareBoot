@@ -842,14 +842,13 @@ CalculateEdidKey (
 STATIC
 BOOLEAN
 ParseEdidData (
-  UINT8                                      *EdidBuffer,
-  VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING *ValidEdidTiming
+  UINT8                                   *EdidBuffer,
+  VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING  *ValidEdidTiming
   )
 {
   UINT8  CheckSum;
   UINT32 Index;
   UINT32 Index2;
-  UINT32 ValidNumber;
   UINT32 TimingBits;
   UINT8  *BufferIndex;
   UINT16 HorizontalResolution;
@@ -872,7 +871,6 @@ ParseEdidData (
     return FALSE;
   }
 
-  ValidNumber = 0;
   gBS->SetMem (ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING), 0);
   if ((EdidDataBlock->EstablishedTimings[0] != 0) ||
       (EdidDataBlock->EstablishedTimings[1] != 0) ||
@@ -886,11 +884,11 @@ ParseEdidData (
                  ((EdidDataBlock->EstablishedTimings[2] & 0x80) << 9) ;
     for (Index = 0; Index < VESA_BIOS_EXTENSIONS_EDID_ESTABLISHED_TIMING_MAX_NUMBER; Index ++) {
       if (TimingBits & 0x1) {
-        ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&mEstablishedEdidTiming[Index]);
+        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&mEstablishedEdidTiming[Index]);
         DBG("BiosVideo: ParseEdidData, found Established Timing %dx%d\n",
             mEstablishedEdidTiming[Index].HorizontalResolution,
             mEstablishedEdidTiming[Index].VerticalResolution);
-        ValidNumber ++;
+        ValidEdidTiming->ValidNumber ++;
       }
       TimingBits = TimingBits >> 1;
     }
@@ -930,8 +928,8 @@ ParseEdidData (
         DBG("BiosVideo: ParseEdidData, found Standard    Timing %dx%d\n",
             TempTiming.HorizontalResolution,
             TempTiming.VerticalResolution);
-        ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
-        ValidNumber ++;
+        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+        ValidEdidTiming->ValidNumber ++;
       }
       BufferIndex += 2;
     }
@@ -947,8 +945,8 @@ ParseEdidData (
 			DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%d\n",
           TempTiming.HorizontalResolution,
           TempTiming.VerticalResolution);
-      ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
-      ValidNumber ++;
+      ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+      ValidEdidTiming->ValidNumber ++;
 		} else if (BufferIndex[3] == 0xFA) {
 			for (Index2 = 0; Index2 < 6; Index2 ++) {
         HorizontalResolution = (UINT8) (BufferIndex[0] * 8 + 248);
@@ -977,13 +975,12 @@ ParseEdidData (
         DBG("BiosVideo: ParseEdidData, found Detailed Timing %dx%d\n",
             TempTiming.HorizontalResolution,
             TempTiming.VerticalResolution);
-        ValidEdidTiming->Key[ValidNumber] = CalculateEdidKey (&TempTiming);
-        ValidNumber ++;
+        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+        ValidEdidTiming->ValidNumber ++;
 			}
 		} 
 	}
 
-  ValidEdidTiming->ValidNumber = ValidNumber;
   return TRUE;
 }
 /**
@@ -1392,69 +1389,79 @@ BiosVideoCheckForVbe (
   DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
   DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
 
-  if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
-    gBS->SetMem (&Regs, sizeof (Regs), 0);
-    Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-    Regs.X.BX = 1;
-    Regs.X.CX = 0;
-    Regs.X.DX = 0;
-    Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-    Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+  EdidFound = FALSE;
 
-    LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-    DBG ("BiosVideo: block 0 read with status 0x%x\n", Regs.X.AX);
-    DBG ("BiosVideo: block 0 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+  if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock, &ValidEdidTiming) != TRUE) {
+      ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
+    } else {
+      EdidFound = TRUE;
+      DBG ("BiosVideo: Edid1 found\n");
+    }
   }
+  gBS->SetMem (&Regs, sizeof (Regs), 0);
+  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+  Regs.X.BX = 1;
+  Regs.X.CX = 0;
+  Regs.X.DX = 0;
+  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+
+  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+  DBG ("BiosVideo: block 0 read with status 0x%x\n", Regs.X.AX);
+  DBG ("BiosVideo: block 0 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+
   //
   // See if the VESA call succeeded
   //
-  EdidFound = FALSE;
   if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
     //
     // Parse EDID data structure to retrieve modes supported by monitor
     //
     if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock, &ValidEdidTiming) == TRUE) {
       EdidFound = TRUE;
-      DBG ("BiosVideo: Edid found\n");
-
-      BiosVideoPrivate->EdidDiscovered.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
-      Status = gBS->AllocatePool (
-                      EfiBootServicesData,
-                      VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
-                      (VOID**) &BiosVideoPrivate->EdidDiscovered.Edid
-                      );
-      if (EFI_ERROR (Status)) {
-        goto Done;
-      }
-      gBS->CopyMem (
-             BiosVideoPrivate->EdidDiscovered.Edid,
-             BiosVideoPrivate->VbeEdidDataBlock,
-             VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
-             );
-
-      BiosVideoPrivate->EdidActive.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
-      Status = gBS->AllocatePool (
-                      EfiBootServicesData,
-                      VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
-                      (VOID**)&BiosVideoPrivate->EdidActive.Edid
-                      );
-      if (EFI_ERROR (Status)) {
-        goto Done;
-      }
-      gBS->CopyMem (
-             BiosVideoPrivate->EdidActive.Edid,
-             BiosVideoPrivate->VbeEdidDataBlock,
-             VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
-             );
-    } else {
-      BiosVideoPrivate->EdidDiscovered.SizeOfEdid = 0;
-      BiosVideoPrivate->EdidDiscovered.Edid = NULL;
-
-      BiosVideoPrivate->EdidActive.SizeOfEdid = 0;
-      BiosVideoPrivate->EdidActive.Edid = NULL;
-      DBG ("BiosVideo: Edid not found\n");
+      DBG ("BiosVideo: Edid0 found\n");
     }
+  }
+  
+  if (EdidFound) {
+    BiosVideoPrivate->EdidDiscovered.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
+    Status = gBS->AllocatePool (
+                    EfiBootServicesData,
+                    VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
+                    (VOID**) &BiosVideoPrivate->EdidDiscovered.Edid
+                    );
+    if (EFI_ERROR (Status)) {
+      goto Done;
+    }
+    gBS->CopyMem (
+           BiosVideoPrivate->EdidDiscovered.Edid,
+           BiosVideoPrivate->VbeEdidDataBlock,
+           VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
+           );
+
+    BiosVideoPrivate->EdidActive.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
+    Status = gBS->AllocatePool (
+                    EfiBootServicesData,
+                    VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
+                    (VOID**)&BiosVideoPrivate->EdidActive.Edid
+                    );
+    if (EFI_ERROR (Status)) {
+      goto Done;
+    }
+    gBS->CopyMem (
+           BiosVideoPrivate->EdidActive.Edid,
+           BiosVideoPrivate->VbeEdidDataBlock,
+           VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
+           );
+  } else {
+    BiosVideoPrivate->EdidDiscovered.SizeOfEdid = 0;
+    BiosVideoPrivate->EdidDiscovered.Edid = NULL;
+
+    BiosVideoPrivate->EdidActive.SizeOfEdid = 0;
+    BiosVideoPrivate->EdidActive.Edid = NULL;
+    DBG ("BiosVideo: Edid not found\n");
   }
 
   //
