@@ -69,8 +69,8 @@
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLang
 
 [BuildOptions.common]
-  GCC:*_*_*_CC_FLAGS = -DFSTYPE=hfs -DEFI_LOG_ENABLED=1
+  GCC:*_*_*_CC_FLAGS = -DHOST_EFI -DFSTYPE=hfs -DEFI_LOG_ENABLED=1
 # -DFSW_DEBUG_LEVEL=3
-  INTEL:*_*_*_CC_FLAGS = -DFSTYPE=hfs
-  MSFT:*_*_*_CC_FLAGS = -DFSTYPE=hfs
+  INTEL:*_*_*_CC_FLAGS = -DHOST_EFI -DFSTYPE=hfs
+  MSFT:*_*_*_CC_FLAGS = -DHOST_EFI -DFSTYPE=hfs
 
