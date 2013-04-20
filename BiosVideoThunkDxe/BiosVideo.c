@@ -860,7 +860,6 @@ ParseEdidData (
   UINT16 HBorderPixels, VBorderLines;
   UINT64 VFreq, HFreq;
   UINT32 HTotal, VTotal;
-  UINT32 HTotal, VTotal;
   BOOLEAN Interlaced;
   BOOLEAN HSync;
   BOOLEAN VSync;
