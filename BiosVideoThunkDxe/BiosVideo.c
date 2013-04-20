@@ -850,9 +850,19 @@ ParseEdidData (
   UINT32 Index;
   UINT32 Index2;
   UINT32 TimingBits;
+  UINT32 PixelClock;
   UINT8  *BufferIndex;
   UINT16 HorizontalResolution;
   UINT16 VerticalResolution;
+  UINT16 HBlanking, HSyncOffset, HSyncPulse;
+  UINT16 VBlanking, VSyncOffset, VSyncPulse;
+  UINT16 HDisplaySize, VDisplaySize;
+  UINT16 HBorderPixels, VBorderLines;
+  float VFreq, HFreq;
+  UINT32 HTotal, VTotal;
+  BOOLEAN Interlaced;
+  BOOLEAN HSync;
+  BOOLEAN VSync;
   UINT8  AspectRatio;
   UINT8  RefreshRate;
   VESA_BIOS_EXTENSIONS_EDID_TIMING     TempTiming;
@@ -935,51 +945,44 @@ ParseEdidData (
     }
   }
   // thnx Slice (Detailed Timing)
-	BufferIndex = &EdidDataBlock->DetailedTimingDescriptions[0];
-	for (Index = 0; Index < 4; Index ++, BufferIndex += DETAILED_TIMING_DESCRIPTION_SIZE) {
-		if ((BufferIndex[0] != 0x00) || (BufferIndex[1] != 0x00) ||
+  BufferIndex = &EdidDataBlock->DetailedTimingDescriptions[0];
+  for (Index = 0; Index < 4; Index ++, BufferIndex += DETAILED_TIMING_DESCRIPTION_SIZE) {
+    if ((BufferIndex[0] != 0x00) || (BufferIndex[1] != 0x00) ||
         (BufferIndex[2] != 0x00) || (BufferIndex[4] != 0x00)) {
-			TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
-			TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
-			TempTiming.RefreshRate = 60; //doesn't matter, it's temporary
+      TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
+      TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
+      TempTiming.RefreshRate = 60; //doesn't matter, it's temporary
 
-      UINT32 PixelClock;
       PixelClock = (UINT32) (((BufferIndex[1] << 8) | BufferIndex[0]) * 10000);
       DBG("BiosVideo: PixelClock = %d\n", PixelClock);
       DBG("BiosVideo: DotClock = %d\n", (PixelClock/1000000));
 
-      UINT16 HBlanking, HSyncOffset, HSyncPulse;
       HBlanking = (UINT16) (((BufferIndex[4] & 0x0F) << 8) | BufferIndex[3]);
       HSyncOffset = (UINT16) (((BufferIndex[11] & 0xC0) << 2) | BufferIndex[8]);
       HSyncPulse  = (UINT16) (((BufferIndex[11] & 0x30) << 4) | BufferIndex[9]);
-			DBG("BiosVideo: HBlanking = %d, HSyncOffset = %d, HSyncPulse = %d\n",
+      DBG("BiosVideo: HBlanking = %d, HSyncOffset = %d, HSyncPulse = %d\n",
           HBlanking, HSyncOffset, HSyncPulse);
 
-      UINT16 VBlanking, VSyncOffset, VSyncPulse;
       VBlanking = (UINT16) (((BufferIndex[7] & 0x0F) << 8) | BufferIndex[6]);
       VSyncOffset = (UINT16) (((BufferIndex[11] & 0x0C) << 2) | ((BufferIndex[10] & 0xF0) >> 4));
       VSyncPulse  = (UINT16) (((BufferIndex[11] & 0x03) << 4) | (BufferIndex[10] & 0x0F));
-			DBG("BiosVideo: VBlanking = %d, VSyncOffset = %d, VSyncPulse = %d\n",
+      DBG("BiosVideo: VBlanking = %d, VSyncOffset = %d, VSyncPulse = %d\n",
            VBlanking, VSyncOffset, VSyncPulse);
 
-      UINT16 HDisplaySize, VDisplaySize;
       HDisplaySize = (UINT16) (((BufferIndex[14] & 0xF0) << 4) | BufferIndex[12]);
       VDisplaySize = (UINT16) (((BufferIndex[14] & 0x0F) << 8) | BufferIndex[13]);
-			DBG("BiosVideo: HDisplaySize = %d mm, VDisplaySize = %d mm\n",
+      DBG("BiosVideo: HDisplaySize = %d mm, VDisplaySize = %d mm\n",
            HDisplaySize, VDisplaySize);
 
-      UINT16 HBorderPixels, VBorderLines;
       HBorderPixels = BufferIndex[15];
       VBorderLines  = BufferIndex[16];
-			DBG("BiosVideo: HBorderPixels = %d, VBorderLines = %d\n",
+      DBG("BiosVideo: HBorderPixels = %d, VBorderLines = %d\n",
            HBorderPixels, VBorderLines);
 
-      float VFreq, HFreq;
-      UINT32 HTotal, VTotal;
       HTotal = TempTiming.HorizontalResolution + HBlanking;
       VTotal = TempTiming.VerticalResolution + VBlanking;
-      VFreq = (PixelClock * 10000) / (HTotal * VTotal);
-      HFreq = (PixelClock * 10000) / (HTotal * 1000);
+      VFreq =  (float) ((PixelClock * 10000) / (HTotal * VTotal));
+      HFreq =  (float) ((PixelClock * 10000) / (HTotal * 1000));
       DBG("BiosVideo: VFreq = %d, HFreq = %d\n", VFreq, HFreq);
       DBG("BiosVideo: HTimings %d, %d, %d, %d\n",
           TempTiming.HorizontalResolution,
@@ -992,7 +995,6 @@ ParseEdidData (
           TempTiming.VerticalResolution + VSyncOffset + VSyncPulse,
           VTotal);
 
-      BOOLEAN Interlaced;
       Interlaced = ((BufferIndex[17] & 0x80) == 0x80);
       if (Interlaced) {
         DBG("BiosVideo: Interlaced, ");
@@ -1000,7 +1002,6 @@ ParseEdidData (
         DBG("BiosVideo: Non-Interlaced, ");
       }
 
-      BOOLEAN HSync;
       HSync = ((BufferIndex[17] & 0x04) == 0x04);
       if (HSync) {
         DBG("HSync+, ");
@@ -1008,7 +1009,6 @@ ParseEdidData (
         DBG("HSync-, ");
       }
 
-      BOOLEAN VSync;
       VSync = ((BufferIndex[17] & 0x02) == 0x02);
       if (VSync) {
         DBG("VSync+\n");
@@ -1016,13 +1016,13 @@ ParseEdidData (
         DBG("VSync-\n");
       }
 
-			DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%d\n",
+      DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%d\n",
           TempTiming.HorizontalResolution,
           TempTiming.VerticalResolution);
       ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
       ValidEdidTiming->ValidNumber ++;
-		} else if (BufferIndex[3] == 0xFA) {
-			for (Index2 = 0; Index2 < 6; Index2 ++) {
+    } else if (BufferIndex[3] == 0xFA) {
+      for (Index2 = 0; Index2 < 6; Index2 ++) {
         HorizontalResolution = (UINT8) (BufferIndex[0] * 8 + 248);
         AspectRatio = (UINT8) (BufferIndex[1] >> 6);
         switch (AspectRatio) {
@@ -1051,9 +1051,9 @@ ParseEdidData (
             TempTiming.VerticalResolution);
         ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
         ValidEdidTiming->ValidNumber ++;
-			}
-		} 
-	}
+      }
+    } 
+  }
 
   return TRUE;
 }
@@ -1549,8 +1549,8 @@ BiosVideoCheckForVbe (
         ((UINTN) BiosVideoPrivate->VbeInformationBlock->VideoModePtr & 0x0000ffff)
     );
 #else
-	VMPtr16 = (UINT16 *)&BiosVideoPrivate->VbeInformationBlock->VideoModePtr;
-	ModeNumberPtr = (UINT16 *)(UINTN)(VMPtr16[0] | ((UINTN)VMPtr16[1] << 4));
+  VMPtr16 = (UINT16 *)&BiosVideoPrivate->VbeInformationBlock->VideoModePtr;
+  ModeNumberPtr = (UINT16 *)(UINTN)(VMPtr16[0] | ((UINTN)VMPtr16[1] << 4));
 #endif
 
   PreferMode = 0;
