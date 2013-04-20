@@ -858,7 +858,8 @@ ParseEdidData (
   UINT16 VBlanking, VSyncOffset, VSyncPulse;
   UINT16 HDisplaySize, VDisplaySize;
   UINT16 HBorderPixels, VBorderLines;
-  float VFreq, HFreq;
+  UINT64 VFreq, HFreq;
+  UINT32 HTotal, VTotal;
   UINT32 HTotal, VTotal;
   BOOLEAN Interlaced;
   BOOLEAN HSync;
@@ -949,14 +950,8 @@ ParseEdidData (
   for (Index = 0; Index < 4; Index ++, BufferIndex += DETAILED_TIMING_DESCRIPTION_SIZE) {
     if ((BufferIndex[0] != 0x00) || (BufferIndex[1] != 0x00) ||
         (BufferIndex[2] != 0x00) || (BufferIndex[4] != 0x00)) {
-<<<<<<< HEAD
-      TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
-      TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
-      TempTiming.RefreshRate = 60; //doesn't matter, it's temporary
-=======
 			TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
 			TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
->>>>>>> correct calculation VFreq (in 0.01 Hz units), HFreq (kHz*100) and refresh rate (Hz)
 
       PixelClock = (UINT32) (((BufferIndex[1] << 8) | BufferIndex[0]) * 10000);
       DBG("BiosVideo: PixelClock = %d\n", PixelClock);
@@ -984,20 +979,11 @@ ParseEdidData (
       DBG("BiosVideo: HBorderPixels = %d, VBorderLines = %d\n",
            HBorderPixels, VBorderLines);
 
-<<<<<<< HEAD
-      HTotal = TempTiming.HorizontalResolution + HBlanking;
-      VTotal = TempTiming.VerticalResolution + VBlanking;
-      VFreq =  (float) ((PixelClock * 10000) / (HTotal * VTotal));
-      HFreq =  (float) ((PixelClock * 10000) / (HTotal * 1000));
-=======
-      UINT64 VFreq, HFreq;
-      UINT32 HTotal, VTotal;
       HTotal = TempTiming.HorizontalResolution + HBlanking;
       VTotal = TempTiming.VerticalResolution + VBlanking;
       VFreq = DivU64x32 (MultU64x32 (PixelClock, 100), MultU64x32 (HTotal, VTotal));
       HFreq = DivU64x32 (MultU64x32 (PixelClock, 100), MultU64x32 (HTotal, 1000));
 			TempTiming.RefreshRate = VFreq / 100;
->>>>>>> correct calculation VFreq (in 0.01 Hz units), HFreq (kHz*100) and refresh rate (Hz)
       DBG("BiosVideo: VFreq = %d, HFreq = %d\n", VFreq, HFreq);
       DBG("BiosVideo: RefreshRate = %d Hz\n", TempTiming.RefreshRate);
       DBG("BiosVideo: HTimings %d, %d, %d, %d\n",
