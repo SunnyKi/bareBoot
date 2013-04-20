@@ -222,8 +222,10 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Supported(IN EFI_DRIVER_BINDING_PROTOCOL
     // we check for both DiskIO and BlockIO protocols
 
     // first, open DiskIO
+#ifdef EFI_LOG_ENABLED
     LogFlowFuncEnter();
     LogFlowFuncMarkDP(RemainingDevicePath);
+#endif
 
     Status = BS->OpenProtocol(ControllerHandle,
                               &PROTO_NAME(DiskIoProtocol),
@@ -233,7 +235,9 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Supported(IN EFI_DRIVER_BINDING_PROTOCOL
                               EFI_OPEN_PROTOCOL_GET_PROTOCOL);
     if (EFI_ERROR(Status))
     {
+#ifdef EFI_LOG_ENABLED
         LogFlowFuncLeaveRC(Status);
+#endif
         return Status;
     }
 
@@ -250,7 +254,9 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Supported(IN EFI_DRIVER_BINDING_PROTOCOL
                               This->DriverBindingHandle,
                               ControllerHandle,
                               EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
+#ifdef EFI_LOG_ENABLED
     LogFlowFuncLeaveRC(Status);
+#endif
     return Status;
 }
 
@@ -260,7 +266,9 @@ static EFI_STATUS fsw_efi_ReMount(IN FSW_VOLUME_DATA *pVolume,
                                        EFI_BLOCK_IO       *pBlockIo)
 {
     EFI_STATUS Status;
+#ifdef EFI_LOG_ENABLED
     LogFlowFuncEnter();
+#endif
     pVolume->Signature       = FSW_VOLUME_DATA_SIGNATURE;
     pVolume->Handle          = ControllerHandle;
     pVolume->DiskIo          = pDiskIo;
@@ -272,7 +280,9 @@ static EFI_STATUS fsw_efi_ReMount(IN FSW_VOLUME_DATA *pVolume,
                                           &FSW_FSTYPE_TABLE_NAME(FSTYPE), &pVolume->vol),
                                 pVolume);
 
+#ifdef EFI_LOG_ENABLED
     LogFlowFuncMarkVar(Status, "%r");
+#endif
     if (!EFI_ERROR(Status)) {
         // register the SimpleFileSystem protocol
         pVolume->FileSystem.Revision     = EFI_FILE_IO_INTERFACE_REVISION;
@@ -283,7 +293,9 @@ static EFI_STATUS fsw_efi_ReMount(IN FSW_VOLUME_DATA *pVolume,
         if (EFI_ERROR(Status))
             Print(L"Fsw ERROR: InstallMultipleProtocolInterfaces returned %x\n", Status);
     }
+#ifdef EFI_LOG_ENABLED
     LogFlowFuncLeaveRC(Status);
+#endif
     return Status;
 }
 
@@ -309,7 +321,9 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start(IN EFI_DRIVER_BINDING_PROTOCOL  *T
     EFI_DISK_IO         *DiskIo;
     FSW_VOLUME_DATA     *Volume;
 
+#ifdef EFI_LOG_ENABLED
     LogFlowFuncEnter();
+#endif
     // open consumed protocols
     Status = BS->OpenProtocol(ControllerHandle,
                               &PROTO_NAME(BlockIoProtocol),
@@ -318,7 +332,9 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start(IN EFI_DRIVER_BINDING_PROTOCOL  *T
                               ControllerHandle,
                               EFI_OPEN_PROTOCOL_GET_PROTOCOL);   // NOTE: we only want to look at the MediaId
     if (EFI_ERROR(Status)) {
+#ifdef EFI_LOG_ENABLED
         LogFlowFuncLeaveRC(Status);
+#endif
         return Status;
     }
 
@@ -329,7 +345,9 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start(IN EFI_DRIVER_BINDING_PROTOCOL  *T
                               ControllerHandle,
                               EFI_OPEN_PROTOCOL_BY_DRIVER);
     if (EFI_ERROR(Status)) {
+#ifdef EFI_LOG_ENABLED
         LogFlowFuncLeaveRC(Status);
+#endif
         return Status;
     }
 
@@ -354,7 +372,9 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start(IN EFI_DRIVER_BINDING_PROTOCOL  *T
                               ControllerHandle);
     }
 
+#ifdef EFI_LOG_ENABLED
     LogFlowFuncLeaveRC(Status);
+#endif
     return Status;
 }
 
