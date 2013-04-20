@@ -1489,10 +1489,10 @@ BiosVideoCheckForVbe (
     if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
                        (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
                        &ValidEdidTiming) == TRUE) {
-      ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
-    } else {
       EdidFound = TRUE;
       DBG ("BiosVideo: Edid1 found\n");
+    } else {
+      ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
     }
   }
   
