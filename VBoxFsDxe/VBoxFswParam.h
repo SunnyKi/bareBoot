@@ -1,4 +1,4 @@
-/* $Id: VBoxFswParam.h 29125 2010-05-06 09:43:05Z vboxsync $ */
+/* $Id: VBoxFswParam.h $ */
 /** @file
  * VBoxFswParam.h
  */
@@ -20,7 +20,6 @@
 /*
  * Here is common declarations for EDK<->EDK2 compatibility
  */
-# include <Base.h>
 # include <Uefi.h>
 # include <Library/DebugLib.h>
 # include <Library/BaseLib.h>

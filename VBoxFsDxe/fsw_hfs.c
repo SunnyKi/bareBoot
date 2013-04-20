@@ -1,4 +1,4 @@
-/* $Id: fsw_hfs.c 33540 2010-10-28 09:27:05Z vboxsync $ */
+/* $Id: fsw_hfs.c $ */
 /** @file
  * fsw_hfs.c - HFS file system driver code, see
  *
@@ -29,7 +29,15 @@
 #define DPRINT(x) printf(x)
 #define DPRINT2(x,y) printf(x,y)
 #define BP(msg)    do { printf("ERROR: %s", msg); asm("int3"); } while (0)
-#else
+#endif
+
+#ifdef HOST_MSWIN
+#define DPRINT(x) printf(x)
+#define DPRINT2(x,y) printf(x,y)
+#define BP(msg)    do { printf("ERROR: %s", msg); fflush(stdout); __debugbreak(); } while (0)
+#endif
+
+#ifndef DPRINT
 #define CONCAT(x,y) x##y
 #define DPRINT(x) Print(CONCAT(L,x))
 #define DPRINT2(x,y) Print(CONCAT(L,x), y)
@@ -81,16 +89,16 @@ struct fsw_fstype_table   FSW_FSTYPE_TABLE_NAME(hfs) = {
     sizeof(struct fsw_hfs_volume),
     sizeof(struct fsw_hfs_dnode),
 
-    fsw_hfs_volume_mount, // volume open
-    fsw_hfs_volume_free,  // volume close
-    fsw_hfs_volume_stat,  // volume info: total_bytes, free_bytes
-    fsw_hfs_dnode_fill,   //return FSW_SUCCESS;
-    fsw_hfs_dnode_free,	  // empty
-    fsw_hfs_dnode_stat,	 //size and times
-    fsw_hfs_get_extent,	 // get the physical disk block number for the requested logical block number
-    fsw_hfs_dir_lookup,  //retrieve the directory entry with the given name
-    fsw_hfs_dir_read,	// next directory entry when reading a directory
-    fsw_hfs_readlink,   // return FSW_UNSUPPORTED;
+    fsw_hfs_volume_mount,
+    fsw_hfs_volume_free,
+    fsw_hfs_volume_stat,
+    fsw_hfs_dnode_fill,
+    fsw_hfs_dnode_free,
+    fsw_hfs_dnode_stat,
+    fsw_hfs_get_extent,
+    fsw_hfs_dir_lookup,
+    fsw_hfs_dir_read,
+    fsw_hfs_readlink,
 };
 
 static fsw_s32
@@ -111,8 +119,7 @@ fsw_hfs_read_block (struct fsw_hfs_dnode    * dno,
         return status;
 
     phys_bno = extent.phys_start;
-  //Slice - increase cache level from 0 to 3
-    status = fsw_block_get(dno->g.vol, phys_bno, 3, (void **)&buffer);
+    status = fsw_block_get(dno->g.vol, phys_bno, 0, (void **)&buffer);
     if (status)
         return status;
 
@@ -173,7 +180,7 @@ fsw_hfs_compute_shift(fsw_u32 size)
             return i - 1;
     }
 
-//    BP("BUG\n");
+    BP("BUG\n");
     return 0;
 }
 
@@ -181,37 +188,6 @@ fsw_hfs_compute_shift(fsw_u32 size)
  * Mount an HFS+ volume. Reads the superblock and constructs the
  * root directory dnode.
  */
-//algo from Chameleon
-/*
-void
-HFSGetDescription(CICell ih, char *str, long strMaxLen)
-{
-  
-  UInt16 nodeSize;
-  UInt32 firstLeafNode;
-  long long dirIndex;
-  char *name;
-  long flags, time;
-  
-  if (HFSInitPartition(ih) == -1)  { return; }
-  
-  // Fill some crucial data structures by side effect. 
-  dirIndex = 0;
-  HFSGetDirEntry(ih, "/", &dirIndex, &name, &flags, &time, 0, 0);
-  
-  // Now we can loook up the volume name node. 
-  nodeSize = be16_to_cpu(gBTHeaders[kBTreeCatalog]->nodeSize);
-  firstLeafNode = SWAP_BE32(gBTHeaders[kBTreeCatalog]->firstLeafNode);
-  
-  dirIndex = (long long) firstLeafNode * nodeSize;
-  
-  GetCatalogEntry(&dirIndex, &name, &flags, &time, 0, 0);
-  
-  strncpy(str, name, strMaxLen);
-  str[strMaxLen] = '\0';
-}
-*/
-
 
 static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
 {
@@ -220,8 +196,6 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
     HFSPlusVolumeHeader   *voldesc;
     fsw_u32                blockno;
     struct fsw_string      s;
-  HFSMasterDirectoryBlock* mdb;
-  UINTN i;
 
     rv = FSW_UNSUPPORTED;
 
@@ -246,21 +220,20 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
         status = fsw_block_get(vol, blockno, 0, &buffer);
         CHECK(status);
         voldesc = (HFSPlusVolumeHeader *)buffer;
-        mdb = (HFSMasterDirectoryBlock*)buffer;
         signature = be16_to_cpu(voldesc->signature);
 
-        if ((signature == kHFSPlusSigWord) || (signature == kHFSXSigWord)) //H+ or HX
+        if ((signature == kHFSPlusSigWord) || (signature == kHFSXSigWord))
         {
             if (vol->hfs_kind == 0)
             {
-    //            DPRINT("found HFS+\n");
+                DPRINT("found HFS+\n");
                 vol->hfs_kind = FSW_HFS_PLUS;
             }
         }
-        else if (signature == kHFSSigWord) // 'BD'
+        else if (signature == kHFSSigWord)
         {
-//            HFSMasterDirectoryBlock* mdb = (HFSMasterDirectoryBlock*)buffer;
-//VolumeName = mdb->drVN 28bytes
+            HFSMasterDirectoryBlock* mdb = (HFSMasterDirectoryBlock*)buffer;
+
             if (be16_to_cpu(mdb->drEmbedSigWord) == kHFSPlusSigWord)
             {
                 DPRINT("found HFS+ inside HFS, untested\n");
@@ -297,35 +270,27 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
         voldesc = NULL;
         fsw_set_blocksize(vol, block_size, block_size);
 
-        /* get volume name */
-      for (i = kHFSMaxVolumeNameChars; i > 0; i--)
-        if (mdb->drVN[i-1] != ' ')
-          break;
-      
+        /* Set default volume name */
         s.type = FSW_STRING_TYPE_ISO88591;
-        s.size = s.len = 0;
-      s.data = NULL; //&mdb->drVN; //"HFS+ volume";
-      
-       //fsw_status_t fsw_strdup_coerce(struct fsw_string *dest, int type, struct fsw_string *src)
+        s.size = s.len = kHFSMaxVolumeNameChars;
+        s.data = "HFS+ volume";
         status = fsw_strdup_coerce(&vol->g.label, vol->g.host_string_type, &s);
         CHECK(status);
 
         /* Setup catalog dnode */
         status = fsw_dnode_create_root(vol, kHFSCatalogFileID, &vol->catalog_tree.file);
         CHECK(status);
-      //Slice - why copy structure?
         fsw_memcpy (vol->catalog_tree.file->extents,
                     vol->primary_voldesc->catalogFile.extents,
-                    sizeof vol->catalog_tree.file->extents); 
-
+                    sizeof vol->catalog_tree.file->extents);
         vol->catalog_tree.file->g.size =
                 be64_to_cpu(vol->primary_voldesc->catalogFile.logicalSize);
 
         /* Setup extents overflow file */
         status = fsw_dnode_create_root(vol, kHFSExtentsFileID, &vol->extents_tree.file);
-       fsw_memcpy (vol->extents_tree.file->extents,
+        fsw_memcpy (vol->extents_tree.file->extents,
                     vol->primary_voldesc->extentsFile.extents,
-                    sizeof vol->extents_tree.file->extents); 
+                    sizeof vol->extents_tree.file->extents);
         vol->extents_tree.file->g.size =
                 be64_to_cpu(vol->primary_voldesc->extentsFile.logicalSize);
 
@@ -351,6 +316,40 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
         vol->catalog_tree.root_node = be32_to_cpu (tree_header.rootNode);
         vol->catalog_tree.node_size = be16_to_cpu (tree_header.nodeSize);
 
+	/* Take Volume Name before tree_header overwritten */
+	{
+		fsw_u32 firstLeafNum;
+		fsw_u64 catfOffset;
+		fsw_u8 cbuff[sizeof (BTNodeDescriptor) + sizeof (HFSPlusCatalogKey)];
+
+		firstLeafNum = be32_to_cpu(tree_header.firstLeafNode);
+		catfOffset = firstLeafNum * vol->catalog_tree.node_size;
+
+		r = fsw_hfs_read_file(vol->catalog_tree.file, catfOffset, sizeof (cbuff), cbuff);
+
+		if (r == sizeof (cbuff))
+		{
+			BTNodeDescriptor* btnd;
+			HFSPlusCatalogKey* ck;
+
+			btnd = (BTNodeDescriptor*) cbuff;
+			ck = (HFSPlusCatalogKey*) (cbuff + sizeof(BTNodeDescriptor));
+			if (btnd->kind == kBTLeafNode &&
+					be32_to_cpu (ck->parentID) == kHFSRootParentID) 
+			{
+				struct fsw_string vn;
+
+				vn.type = FSW_STRING_TYPE_UTF16_SWAPPED;
+				vn.len = be16_to_cpu (ck->nodeName.length) + 1; /* Zero at the end */
+				vn.size = vn.len * sizeof (fsw_u16);
+				vn.data = ck->nodeName.unicode;
+				fsw_strfree (&vol->g.label);
+				status = fsw_strdup_coerce(&vol->g.label, vol->g.host_string_type, &vn);
+				CHECK(status);
+			}
+		}
+	}
+
         /* Read extents overflow file */
         r = fsw_hfs_read_file(vol->extents_tree.file,
                               sizeof (BTNodeDescriptor),
@@ -375,46 +374,6 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
 
     return rv;
 }
-//Here is a method to obtain Volume label from Apple
-//how to implement it?
-/*
-UInt16 nodeSize;
-UInt32 firstLeafNode;
-long long dirIndex;
-char *name;
-long flags, time;
- char              *nodeBuf, *testKey, *entry;
-
-
-if (HFSInitPartition(ih) == -1)  { return; }
-
-// Fill some crucial data structures by side effect. 
-dirIndex = 0;
-HFSGetDirEntry(ih, "/", &dirIndex, &name, &flags, &time, 0, 0);
-
-// Now we can loook up the volume name node.
-nodeSize = SWAP_BE16(gBTHeaders[kBTreeCatalog]->nodeSize);
-firstLeafNode = SWAP_BE32(gBTHeaders[kBTreeCatalog]->firstLeafNode);
-
-dirIndex = (long long) firstLeafNode * nodeSize;
- index   = (long) (*dirIndex % nodeSize); == 0
- curNode = (long) (*dirIndex / nodeSize); == firstLeafNode
-
-//GetCatalogEntry(&dirIndex, &name, &flags, &time, 0, 0);
- // Read the BTree node and get the record for index.
- ReadExtent(extent, extentSize, kHFSCatalogFileID,
- (long long) curNode * nodeSize, nodeSize, nodeBuf, 1);
- GetBTreeRecord(index, nodeBuf, nodeSize, &testKey, &entry);
- 
- utf_encodestr(((HFSPlusCatalogKey *)testKey)->nodeName.unicode,
- SWAP_BE16(((HFSPlusCatalogKey *)testKey)->nodeName.length),
- (u_int8_t *)gTempStr, 256, OSBigEndian);
- 
- *name = gTempStr; 
-
-strncpy(str, name, strMaxLen);
-str[strMaxLen] = '\0';
-*/
 
 /**
  * Free the volume data structure. Called by the core after an unmount or after
@@ -428,6 +387,16 @@ static void fsw_hfs_volume_free(struct fsw_hfs_volume *vol)
     {
         fsw_free(vol->primary_voldesc);
         vol->primary_voldesc = NULL;
+    }
+    if (vol->catalog_tree.file)
+    {
+        fsw_dnode_release((struct fsw_dnode*)(vol->catalog_tree.file));
+        vol->catalog_tree.file = NULL;
+    }
+    if (vol->extents_tree.file)
+    {
+        fsw_dnode_release((struct fsw_dnode*)(vol->extents_tree.file));
+        vol->extents_tree.file = NULL;
     }
 }
 
@@ -560,7 +529,7 @@ fsw_hfs_btree_search (struct fsw_hfs_btree * btree,
         return status;
     node = (BTNodeDescriptor*)buffer;
 
-    while (1)
+    for (;;)
     {
         int cmp = 0;
         int match;
@@ -689,6 +658,7 @@ fsw_hfs_btree_search (struct fsw_hfs_btree * btree,
 
     return status;
 }
+
 typedef struct
 {
     fsw_u32                 id;
@@ -804,7 +774,7 @@ fsw_hfs_btree_iterate_node (struct fsw_hfs_btree * btree,
   if (status)
       return status;
 
-  while (1)
+  for (;;)
   {
       fsw_u32 i;
       fsw_u32 count =  be16_to_cpu(node->numRecords);
@@ -912,7 +882,7 @@ fsw_hfs_cmp_catkey (BTreeKey *key1, BTreeKey *key2)
   key1Len = be16_to_cpu (ckey1->nodeName.length);
   apos = bpos = 0;
 
-  while(1)
+  for (;;)
   {
     /* get next valid character from ckey1 */
     for (lc = 0; lc == 0 && apos < key1Len; apos++) {
@@ -963,7 +933,7 @@ fsw_hfs_cmpi_catkey (BTreeKey *key1, BTreeKey *key2)
 
   apos = bpos = 0;
 
-  while(1)
+  for (;;)
   {
     /* get next valid character from ckey1 */
     for (lc = 0; lc == 0 && apos < key1Len; apos++) {
@@ -1008,7 +978,7 @@ static fsw_status_t fsw_hfs_get_extent(struct fsw_hfs_volume * vol,
     /* we only care about data forks atm, do we? */
     exts = &dno->extents;
 
-    while (1)
+    for (;;)
     {
         struct HFSPlusExtentKey* key;
         struct HFSPlusExtentKey  overflowkey;
@@ -1051,14 +1021,13 @@ static fsw_status_t fsw_hfs_get_extent(struct fsw_hfs_volume * vol,
     return status;
 }
 
+#ifdef HFS_FILE_BLACKLIST
 static const fsw_u16* g_blacklist[] =
 {
-    //L"AppleIntelCPUPowerManagement.kext",
+    L"AppleIntelCPUPowerManagement.kext",
     NULL
 };
-
-
-//#define HFS_FILE_INJECTION
+#endif
 
 #ifdef HFS_FILE_INJECTION
 static struct
@@ -1127,10 +1096,13 @@ static fsw_status_t fsw_hfs_dir_lookup(struct fsw_hfs_volume * vol,
     fsw_u16                    rec_type;
     BTNodeDescriptor *         node = NULL;
     struct fsw_string          rec_name;
-    int                        free_data = 0, i;
+    int                        free_data = 0;
     HFSPlusCatalogKey*         file_key;
     file_info_t                file_info;
     fsw_u8*                    base;
+#ifdef HFS_FILE_BLACKLIST
+    int                        i;
+#endif
 
 
     fsw_memzero(&file_info, sizeof file_info);
@@ -1154,6 +1126,7 @@ static fsw_status_t fsw_hfs_dir_lookup(struct fsw_hfs_volume * vol,
         fsw_memcpy(catkey.nodeName.unicode, rec_name.data, rec_name.size);
     }
 
+#ifdef HFS_FILE_BLACKLIST
     /* Dirty hack: blacklisting of certain files on FS driver level */
     for (i = 0; g_blacklist[i]; i++)
     {
@@ -1164,6 +1137,7 @@ static fsw_status_t fsw_hfs_dir_lookup(struct fsw_hfs_volume * vol,
             goto done;
         }
     }
+#endif
 
 #ifdef HFS_FILE_INJECTION
     if (fsw_hfs_inject(vol,
@@ -1298,10 +1272,9 @@ static fsw_status_t fsw_hfs_dir_read(struct fsw_hfs_volume *vol,
 
     status = create_hfs_dnode(dno, &param.file_info, child_dno_out);
 
-    if (status)
-        goto done;
-
  done:
+    if (node)
+        fsw_free(node);
     fsw_strfree(&rec_name);
 
     return status;

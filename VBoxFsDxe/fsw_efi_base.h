@@ -1,10 +1,10 @@
-/* $Id: fsw_efi_base.h 29125 2010-05-06 09:43:05Z vboxsync $ */
+/* $Id: fsw_efi_base.h $ */
 /** @file
  * fsw_efi_base.h - Base definitions for the EFI host environment.
  */
 
 /*
- * Copyright (C) 2010 Oracle Corporation
+ * Copyright (C) 2010-2011 Oracle Corporation
  *
  * This file is part of VirtualBox Open Source Edition (OSE), as
  * available from http://www.virtualbox.org. This file is free software;
@@ -83,6 +83,11 @@ typedef UINT64  fsw_u64;
 #define fsw_memzero(dest,size) ZeroMem(dest,size)
 #define fsw_memcpy(dest,src,size) CopyMem(dest,src,size)
 #define fsw_memeq(p1,p2,size) (CompareMem(p1,p2,size) == 0)
+
+// message printing
+
+#define FSW_MSGSTR(s) DEBUG_INFO, s
+#define FSW_MSGFUNC DebugPrint
 
 // 64-bit hooks
 

@@ -1,4 +1,4 @@
-/* $Id: fsw_efi_lib.c 29125 2010-05-06 09:43:05Z vboxsync $ */
+/* $Id: fsw_efi_lib.c $ */
 /** @file
  * fsw_efi_lib.c - EFI host environment library functions.
  */

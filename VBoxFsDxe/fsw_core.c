@@ -1,4 +1,4 @@
-/* $Id: fsw_core.c 29125 2010-05-06 09:43:05Z vboxsync $ */
+/* $Id: fsw_core.c $ */
 /** @file
  * fsw_core.c - Core file system wrapper abstraction layer code.
  */
@@ -204,7 +204,7 @@ fsw_status_t fsw_block_get(struct VOLSTRUCTNAME *vol, fsw_u32 phys_bno, fsw_u32 
 
     // find a free entry in the cache table
     for (i = 0; i < vol->bcache_size; i++) {
-        if (vol->bcache[i].phys_bno == (fsw_u32)FSW_INVALID_BNO)
+        if (vol->bcache[i].phys_bno == FSW_INVALID_BNO)
             break;
     }
     if (i >= vol->bcache_size) {
@@ -231,7 +231,7 @@ fsw_status_t fsw_block_get(struct VOLSTRUCTNAME *vol, fsw_u32 phys_bno, fsw_u32 
         for (i = vol->bcache_size; i < new_bcache_size; i++) {
             new_bcache[i].refcount = 0;
             new_bcache[i].cache_level = 0;
-            new_bcache[i].phys_bno = (fsw_u32)FSW_INVALID_BNO;
+            new_bcache[i].phys_bno = FSW_INVALID_BNO;
             new_bcache[i].data = NULL;
         }
         i = vol->bcache_size;
@@ -242,7 +242,7 @@ fsw_status_t fsw_block_get(struct VOLSTRUCTNAME *vol, fsw_u32 phys_bno, fsw_u32 
         vol->bcache = new_bcache;
         vol->bcache_size = new_bcache_size;
     }
-    vol->bcache[i].phys_bno = (fsw_u32)FSW_INVALID_BNO;
+    vol->bcache[i].phys_bno = FSW_INVALID_BNO;
 
     // read the data
     if (vol->bcache[i].data == NULL) {
@@ -552,6 +552,10 @@ fsw_status_t fsw_dnode_lookup_path(struct fsw_dnode *dno,
         // parse next path component
         fsw_strsplit(&lookup_name, &remaining_path, separator);
 
+        FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: split into %d '%s' and %d '%s'\n"),
+                       lookup_name.len, lookup_name.data,
+                       remaining_path.len, remaining_path.data));
+
         if (fsw_strlen(&lookup_name) == 0) {        // empty path component
             if (root_if_empty)
                 child_dno = vol->root;
@@ -618,12 +622,14 @@ fsw_status_t fsw_dnode_lookup_path(struct fsw_dnode *dno,
         dno = child_dno;   // is already retained
         child_dno = NULL;
 
+        FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: now at inode %d\n"), dno->dnode_id));
     }
 
     *child_dno_out = dno;
     return FSW_SUCCESS;
 
 errorexit:
+    FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: leaving with error %d\n"), status));
     fsw_dnode_release(dno);
     if (child_dno != NULL)
         fsw_dnode_release(child_dno);
@@ -746,7 +752,7 @@ fsw_status_t fsw_dnode_resolve(struct fsw_dnode *dno, struct fsw_dnode **target_
 
     fsw_dnode_retain(dno);
 
-    while (1) {
+    for (;;) {
         // get full information
         status = fsw_dnode_fill(dno);
         if (status)

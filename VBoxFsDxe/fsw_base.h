@@ -1,4 +1,4 @@
-/* $Id: fsw_base.h 29125 2010-05-06 09:43:05Z vboxsync $ */
+/* $Id: fsw_base.h $ */
 /** @file
  * fsw_base.h - Base definitions switch.
  */
@@ -51,12 +51,19 @@
 
 #ifndef _FSW_BASE_H_
 #define _FSW_BASE_H_
-//#define HOST_EFI 1
-#define VBOX
 
 #ifdef VBOX
 #include "VBoxFswParam.h"
 #endif
+
+#ifndef FSW_DEBUG_LEVEL
+/**
+ * Global debugging level. Can be set locally for the scope of a single
+ * file by defining the macro before fsw_base.h is included.
+ */
+#define FSW_DEBUG_LEVEL 1
+#endif
+
 
 #ifdef HOST_EFI
 #include "fsw_efi_base.h"
@@ -65,6 +72,31 @@
 #ifdef HOST_POSIX
 #include "fsw_posix_base.h"
 #endif
+
+#ifdef HOST_MSWIN
+#include "fsw_mswin_base.h"
+#endif
+
+// message printing
+
+#if FSW_DEBUG_LEVEL >= 1
+#define FSW_MSG_ASSERT(params) FSW_MSGFUNC params
+#else
+#define FSW_MSG_ASSERT(params)
+#endif
+
+#if FSW_DEBUG_LEVEL >= 2
+#define FSW_MSG_DEBUG(params) FSW_MSGFUNC params
+#else
+#define FSW_MSG_DEBUG(params)
+#endif
+
+#if FSW_DEBUG_LEVEL >= 3
+#define FSW_MSG_DEBUGV(params) FSW_MSGFUNC params
+#else
+#define FSW_MSG_DEBUGV(params)
+#endif
+
 
 // Documentation for system-dependent defines
 

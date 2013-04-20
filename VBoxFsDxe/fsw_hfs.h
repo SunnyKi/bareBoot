@@ -1,4 +1,4 @@
-/* $Id: fsw_hfs.h 29125 2010-05-06 09:43:05Z vboxsync $ */
+/* $Id: fsw_hfs.h $ */
 /** @file
  * fsw_hfs.h - HFS file system driver header.
  */
@@ -131,51 +131,59 @@ struct fsw_hfs_volume
 };
 
 /* Endianess swappers */
-static __inline fsw_u16
+static inline fsw_u16
 swab16(fsw_u16 x)
 {
-    return SwapBytes16(x);
+    return x<<8 | x>>8;
 }
 
-static __inline fsw_u32
+static inline fsw_u32
 swab32(fsw_u32 x)
 {
-    return SwapBytes32(x);
+    return x<<24 | x>>24 |
+            (x & (fsw_u32)0x0000ff00UL)<<8 |
+            (x & (fsw_u32)0x00ff0000UL)>>8;
 }
 
 
-static __inline fsw_u64
+static inline fsw_u64
 swab64(fsw_u64 x)
 {
-    return SwapBytes64(x);
+    return x<<56 | x>>56 |
+            (x & (fsw_u64)0x000000000000ff00ULL)<<40 |
+            (x & (fsw_u64)0x0000000000ff0000ULL)<<24 |
+            (x & (fsw_u64)0x00000000ff000000ULL)<< 8 |
+            (x & (fsw_u64)0x000000ff00000000ULL)>> 8 |
+            (x & (fsw_u64)0x0000ff0000000000ULL)>>24 |
+            (x & (fsw_u64)0x00ff000000000000ULL)>>40;
 }
 
-static __inline fsw_u16
+static inline fsw_u16
 be16_to_cpu(fsw_u16 x)
 {
     return swab16(x);
 }
 
-static __inline fsw_u16
+static inline fsw_u16
 cpu_to_be16(fsw_u16 x)
 {
     return swab16(x);
 }
 
 
-static __inline fsw_u32
+static inline fsw_u32
 cpu_to_be32(fsw_u32 x)
 {
     return swab32(x);
 }
 
-static __inline fsw_u32
+static inline fsw_u32
 be32_to_cpu(fsw_u32 x)
 {
     return swab32(x);
 }
 
-static __inline fsw_u64
+static inline fsw_u64
 be64_to_cpu(fsw_u64 x)
 {
     return swab64(x);

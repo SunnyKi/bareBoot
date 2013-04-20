@@ -1,4 +1,4 @@
-/* $Id: fsw_efi.h 33540 2010-10-28 09:27:05Z vboxsync $ */
+/* $Id: fsw_efi.h $ */
 /** @file
  * fsw_efi.h - EFI host environment header.
  */
@@ -87,7 +87,7 @@ typedef struct {
 
     EFI_FILE                    FileHandle;     //!< Published EFI protocol interface structure
 
-    UINT64                       Type;           //!< File type used for dispatching
+    UINTN                       Type;           //!< File type used for dispatching
     struct fsw_shandle          shand;          //!< FSW handle for this file
 
 } FSW_FILE_DATA;

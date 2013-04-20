@@ -1,10 +1,10 @@
-/* $Id: fsw_core.h 33540 2010-10-28 09:27:05Z vboxsync $ */
+/* $Id: fsw_core.h $ */
 /** @file
  * fsw_core.h - Core file system wrapper abstraction layer header.
  */
 
 /*
- * Copyright (C) 2010 Oracle Corporation
+ * Copyright (C) 2010-2012 Oracle Corporation
  *
  * This file is part of VirtualBox Open Source Edition (OSE), as
  * available from http://www.virtualbox.org. This file is free software;
@@ -71,7 +71,7 @@
 #define FSW_FSTYPE_TABLE_NAME(t) FSW_CONCAT3(fsw_,t,_table)
 
 /** Indicates that the block cache entry is empty. */
-#define FSW_INVALID_BNO (~0UL)
+#define FSW_INVALID_BNO (~0U)
 
 
 //
@@ -290,7 +290,7 @@ enum {
  */
 
 struct fsw_extent {
-    fsw_u32     type;               //!< Type of extent specification
+    int         type;               //!< Type of extent specification
     fsw_u32     log_start;          //!< Starting logical block number
     fsw_u32     log_count;          //!< Logical block count
     fsw_u32     phys_start;         //!< Starting physical block number (for FSW_EXTENT_TYPE_PHYSBLOCK only)

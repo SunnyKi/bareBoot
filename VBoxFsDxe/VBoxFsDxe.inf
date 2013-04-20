@@ -1,4 +1,4 @@
-# $Id: VBoxFsDxe.inf 29125 2010-05-06 09:43:05Z vboxsync $
+# $Id: VBoxFsDxe.inf $
 ## @file
 # VBoxFsDxe - VBox filesystem wrapper.
 #
@@ -37,7 +37,7 @@
 [Packages]
         MdePkg/MdePkg.dec
         IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
-#        VBoxPkg/VBoxPkg.dec
+        VBoxPkg/VBoxPkg.dec
 
 [LibraryClasses]
    UefiRuntimeServicesTableLib
@@ -67,6 +67,3 @@
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLang
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLang
 
-[BuildOptions]
-  XCODE:*_*_*_CC_FLAGS = -Os
-  GCC:*_*_*_CC_FLAGS = -Os

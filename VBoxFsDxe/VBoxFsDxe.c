@@ -1,4 +1,4 @@
-/* $Id: VBoxFsDxe.c 29125 2010-05-06 09:43:05Z vboxsync $ */
+/* $Id: VBoxFsDxe.c $ */
 /** @file
  * VBoxFsDxe.c - VirtualBox FS wrapper
  */

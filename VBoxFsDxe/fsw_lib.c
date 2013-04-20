@@ -1,4 +1,4 @@
-/* $Id: fsw_lib.c 33540 2010-10-28 09:27:05Z vboxsync $ */
+/* $Id: fsw_lib.c $ */
 /** @file
  * fsw_lib.c - Core file system wrapper library functions.
  */
