@@ -92,6 +92,7 @@ typedef UINT64  fsw_u64;
 // 64-bit hooks
 
 #define FSW_U64_SHR(val,shiftbits) RShiftU64((val), (shiftbits))
+#define FSW_U64_SHL(val,shiftbits) LShiftU64((val), (shiftbits))
 #define FSW_U64_DIV(val,divisor) DivU64x32((val), (divisor), NULL)
 
 
