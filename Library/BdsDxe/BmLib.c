@@ -250,7 +250,6 @@ EfiLibFileSystemVolumeLabelInfo (
                       &BufferSize,
                       Buffer
                       );
-    DEBUG ((DEBUG_INFO, __FUNCTION__ ": getinfo returned [%r]\n", Status));
   }
 
   return Buffer;
@@ -292,7 +291,6 @@ EfiLibFileSystemInfo (
                       &BufferSize,
                       Buffer
                       );
-    DEBUG ((DEBUG_INFO, __FUNCTION__ ": getinfo returned [%r]\n", Status));
   }
 
   return Buffer;
