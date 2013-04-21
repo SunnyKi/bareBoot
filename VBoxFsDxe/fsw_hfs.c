@@ -340,7 +340,7 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
 				struct fsw_string vn;
 
 				vn.type = FSW_STRING_TYPE_UTF16_SWAPPED;
-				vn.len = be16_to_cpu (ck->nodeName.length) + 1; /* Zero at the end */
+				vn.len = be16_to_cpu (ck->nodeName.length);
 				vn.size = vn.len * sizeof (fsw_u16);
 				vn.data = ck->nodeName.unicode;
 				fsw_strfree (&vol->g.label);
