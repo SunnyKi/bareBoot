@@ -226,7 +226,7 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
         {
             if (vol->hfs_kind == 0)
             {
-                DPRINT("found HFS+\n");
+                FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": Found HFS+\n")));
                 vol->hfs_kind = FSW_HFS_PLUS;
             }
         }
@@ -236,7 +236,7 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
 
             if (be16_to_cpu(mdb->drEmbedSigWord) == kHFSPlusSigWord)
             {
-                DPRINT("found HFS+ inside HFS, untested\n");
+                FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": Found HFS+ inside HFS, untested\n")));
                 vol->hfs_kind = FSW_HFS_PLUS_EMB;
                 vol->emb_block_off = be32_to_cpu(mdb->drEmbedExtent.startBlock);
                 blockno += vol->emb_block_off;
@@ -245,7 +245,7 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
             }
             else
             {
-                DPRINT("found plain HFS, unsupported\n");
+                FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": Found plain HFS, unsupported\n")));
                 vol->hfs_kind = FSW_HFS_PLAIN;
             }
             rv = FSW_UNSUPPORTED;
@@ -1137,7 +1137,7 @@ static fsw_status_t fsw_hfs_dir_lookup(struct fsw_hfs_volume * vol,
     {
         if (fsw_memeq(g_blacklist[i], catkey.nodeName.unicode, catkey.nodeName.length*2))
         {
-            DPRINT2("Blacklisted %s\n", g_blacklist[i]);
+            FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": blacklisted `%s'\n"), g_blacklist[i]));
             status = FSW_NOT_FOUND;
             goto done;
         }
