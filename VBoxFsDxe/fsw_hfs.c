@@ -226,7 +226,7 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
         {
             if (vol->hfs_kind == 0)
             {
-                FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": Found HFS+\n")));
+                FSW_MSG_DEBUGV((FSW_MSGSTR("fsw_hfs: Found HFS+\n")));
                 vol->hfs_kind = FSW_HFS_PLUS;
             }
         }
@@ -236,7 +236,7 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
 
             if (be16_to_cpu(mdb->drEmbedSigWord) == kHFSPlusSigWord)
             {
-                FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": Found HFS+ inside HFS, untested\n")));
+                FSW_MSG_DEBUGV((FSW_MSGSTR("fsw_hfs: Found HFS+ inside HFS, untested\n")));
                 vol->hfs_kind = FSW_HFS_PLUS_EMB;
                 vol->emb_block_off = be32_to_cpu(mdb->drEmbedExtent.startBlock);
                 blockno += vol->emb_block_off;
@@ -245,7 +245,7 @@ static fsw_status_t fsw_hfs_volume_mount(struct fsw_hfs_volume *vol)
             }
             else
             {
-                FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": Found plain HFS, unsupported\n")));
+                FSW_MSG_DEBUGV((FSW_MSGSTR("fsw_hfs: Found plain HFS, unsupported\n")));
                 vol->hfs_kind = FSW_HFS_PLAIN;
             }
             rv = FSW_UNSUPPORTED;
