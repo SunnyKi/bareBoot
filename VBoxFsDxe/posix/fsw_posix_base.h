@@ -82,7 +82,6 @@ typedef uint64_t      fsw_u64;
 
 #define FSW_U64_SHR(val,shiftbits) ((val) >> (shiftbits))
 #define FSW_U64_DIV(val,divisor) ((val) / (divisor))
-#define DEBUG(x)
 
 #define RShiftU64(val, shift) ((val) >> (shift))
 #define LShiftU64(val, shift) ((val) << (shift))
