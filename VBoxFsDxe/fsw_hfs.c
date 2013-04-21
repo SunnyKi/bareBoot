@@ -407,11 +407,11 @@ static void fsw_hfs_volume_free(struct fsw_hfs_volume *vol)
 static fsw_status_t fsw_hfs_volume_stat(struct fsw_hfs_volume *vol, struct fsw_volume_stat *sb)
 {
 #ifdef HOST_EFI
-    sb->total_bytes = be32_to_cpu(vol->primary_voldesc->totalBlocks) << vol->block_size_shift;
-    sb->free_bytes = be32_to_cpu(vol->primary_voldesc->freeBlocks) << vol->block_size_shift;
-#else
     sb->total_bytes = FSW_U64_SHL(be32_to_cpu(vol->primary_voldesc->totalBlocks), vol->block_size_shift);
     sb->free_bytes = FSW_U64_SHL (be32_to_cpu(vol->primary_voldesc->freeBlocks), vol->block_size_shift);
+#else
+    sb->total_bytes = be32_to_cpu(vol->primary_voldesc->totalBlocks) << vol->block_size_shift;
+    sb->free_bytes = be32_to_cpu(vol->primary_voldesc->freeBlocks) << vol->block_size_shift;
 #endif
     return FSW_SUCCESS;
 }
