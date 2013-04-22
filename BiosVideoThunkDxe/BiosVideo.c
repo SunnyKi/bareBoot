@@ -27,8 +27,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
 #endif
 
+#if 0
 BOOLEAN mNoDetailedTiming;
-
+#endif
 //
 // EFI Driver Binding Protocol Instance
 //
@@ -956,41 +957,38 @@ ParseEdidData (
         (BufferIndex[2] != 0x00) || (BufferIndex[4] != 0x00)) {
       TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
       TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
-
-      DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%d\n",
-          TempTiming.HorizontalResolution,
-          TempTiming.VerticalResolution);
-
       PixelClock = (UINT32) (((BufferIndex[1] << 8) | BufferIndex[0]) * 10000);
-      DBG("BiosVideo: DotClock = %d MHz\n", (PixelClock/1000000));
-
       HBlanking = (UINT16) (((BufferIndex[4] & 0x0F) << 8) | BufferIndex[3]);
       HSyncOffset = (UINT16) (((BufferIndex[11] & 0xC0) << 2) | BufferIndex[8]);
       HSyncPulse  = (UINT16) (((BufferIndex[11] & 0x30) << 4) | BufferIndex[9]);
-      DBG("BiosVideo: HBlanking = %d, HSyncOffset = %d, HSyncPulse = %d\n",
-          HBlanking, HSyncOffset, HSyncPulse);
-
       VBlanking = (UINT16) (((BufferIndex[7] & 0x0F) << 8) | BufferIndex[6]);
       VSyncOffset = (UINT16) (((BufferIndex[11] & 0x0C) << 2) | ((BufferIndex[10] & 0xF0) >> 4));
       VSyncPulse  = (UINT16) (((BufferIndex[11] & 0x03) << 4) | (BufferIndex[10] & 0x0F));
-      DBG("BiosVideo: VBlanking = %d, VSyncOffset = %d, VSyncPulse = %d\n",
-           VBlanking, VSyncOffset, VSyncPulse);
-
       HDisplaySize = (UINT16) (((BufferIndex[14] & 0xF0) << 4) | BufferIndex[12]);
       VDisplaySize = (UINT16) (((BufferIndex[14] & 0x0F) << 8) | BufferIndex[13]);
-      DBG("BiosVideo: HDisplaySize = %d mm, VDisplaySize = %d mm\n",
-           HDisplaySize, VDisplaySize);
-
       HBorderPixels = BufferIndex[15];
       VBorderLines  = BufferIndex[16];
-      DBG("BiosVideo: HBorderPixels = %d, VBorderLines = %d\n",
-           HBorderPixels, VBorderLines);
-
       HTotal = TempTiming.HorizontalResolution + HBlanking;
       VTotal = TempTiming.VerticalResolution + VBlanking;
       VFreq = DivU64x32 (MultU64x32 (PixelClock, 100), (UINT32) MultU64x32 (HTotal, VTotal));
       HFreq = DivU64x32 (MultU64x32 (PixelClock, 100), (UINT32) MultU64x32 (HTotal, 1000));
       TempTiming.RefreshRate = (UINT16) DivU64x32 (VFreq, 100);
+      Interlaced = ((BufferIndex[17] & 0x80) == 0x80);
+      HSync = ((BufferIndex[17] & 0x04) == 0x04);
+      VSync = ((BufferIndex[17] & 0x02) == 0x02);
+
+      DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%d\n",
+          TempTiming.HorizontalResolution,
+          TempTiming.VerticalResolution);
+      DBG("BiosVideo: DotClock = %d MHz\n", (PixelClock/1000000));
+      DBG("BiosVideo: HBlanking = %d, HSyncOffset = %d, HSyncPulse = %d\n",
+          HBlanking, HSyncOffset, HSyncPulse);
+      DBG("BiosVideo: VBlanking = %d, VSyncOffset = %d, VSyncPulse = %d\n",
+          VBlanking, VSyncOffset, VSyncPulse);
+      DBG("BiosVideo: HDisplaySize = %d mm, VDisplaySize = %d mm\n",
+          HDisplaySize, VDisplaySize);
+      DBG("BiosVideo: HBorderPixels = %d, VBorderLines = %d\n",
+          HBorderPixels, VBorderLines);
       DBG("BiosVideo: VFreq = %d, HFreq = %d\n", VFreq, HFreq);
       DBG("BiosVideo: RefreshRate = %d Hz\n", TempTiming.RefreshRate);
       DBG("BiosVideo: HTimings %d, %d, %d, %d\n",
@@ -1003,22 +1001,16 @@ ParseEdidData (
           TempTiming.VerticalResolution + VSyncOffset,
           TempTiming.VerticalResolution + VSyncOffset + VSyncPulse,
           VTotal);
-
-      Interlaced = ((BufferIndex[17] & 0x80) == 0x80);
       if (Interlaced) {
         DBG("BiosVideo: Interlaced, ");
       } else {
         DBG("BiosVideo: Non-Interlaced, ");
       }
-
-      HSync = ((BufferIndex[17] & 0x04) == 0x04);
       if (HSync) {
         DBG("HSync+, ");
       } else {
         DBG("HSync-, ");
       }
-
-      VSync = ((BufferIndex[17] & 0x02) == 0x02);
       if (VSync) {
         DBG("VSync+\n");
       } else {
@@ -1027,7 +1019,7 @@ ParseEdidData (
 
       ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
       ValidEdidTiming->ValidNumber ++;
-
+#if 0
       VbeCrtcBlock->HorizontalTotal     = HTotal;
       VbeCrtcBlock->HorizontalSyncStart = (UINT16) (TempTiming.HorizontalResolution + HSyncOffset);
       VbeCrtcBlock->HorizontalSyncEnd   = (UINT16) (TempTiming.HorizontalResolution + HSyncOffset + HSyncPulse);
@@ -1039,7 +1031,7 @@ ParseEdidData (
       VbeCrtcBlock->RefreshRate         = (UINT16) VFreq;
 
       mNoDetailedTiming = FALSE;
-
+#endif
     } else if (BufferIndex[3] == 0xFA) {
       for (Index2 = 0; Index2 < 6; Index2 ++) {
         HorizontalResolution = (UINT8) (BufferIndex[0] * 8 + 248);
@@ -1483,8 +1475,9 @@ BiosVideoCheckForVbe (
   DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
 
   EdidFound = FALSE;
+#if 0
   mNoDetailedTiming = TRUE;
-
+#endif
   if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
     if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
                        (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
@@ -2135,7 +2128,9 @@ BiosVideoGraphicsOutputSetMode (
   //
   gBS->SetMem (&Regs, sizeof (Regs), 0);
 
+#if 0
   if (mNoDetailedTiming) {
+#endif
     if (ModeData->VbeModeNumber < 0x100) {
       //
       // Allocate a working buffer for BLT operations to the VGA frame buffer
@@ -2200,6 +2195,7 @@ BiosVideoGraphicsOutputSetMode (
         return Status;
       }
     }
+#if 0
   } else {
     BiosVideoPrivate->VbeFrameBuffer = NULL;
     Status = gBS->AllocatePool (
@@ -2234,6 +2230,7 @@ BiosVideoGraphicsOutputSetMode (
       return Status;
     }
   }
+#endif
 
   This->Mode->Mode = ModeNumber;
   This->Mode->Info->Version = 0;
