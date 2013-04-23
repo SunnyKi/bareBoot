@@ -60,23 +60,23 @@
  */
 
 typedef struct {
-    UINT64                      Signature;      //!< Used to identify this structure
+    UINT64                          Signature;      //!< Used to identify this structure
 
-    EFI_FILE_IO_INTERFACE       FileSystem;     //!< Published EFI protocol interface structure
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL FileSystem;     //!< Published EFI protocol interface structure
 
-    EFI_HANDLE                  Handle;         //!< The device handle the protocol is attached to
-    EFI_DISK_IO                 *DiskIo;        //!< The Disk I/O protocol we use for disk access
-    UINT32                      MediaId;        //!< The media ID from the Block I/O protocol
-    EFI_STATUS                  LastIOStatus;   //!< Last status from Disk I/O
+    EFI_HANDLE                      Handle;         //!< The device handle the protocol is attached to
+    EFI_DISK_IO_PROTOCOL            *DiskIo;        //!< The Disk I/O protocol we use for disk access
+    UINT32                          MediaId;        //!< The media ID from the Block I/O protocol
+    EFI_STATUS                      LastIOStatus;   //!< Last status from Disk I/O
 
-    struct fsw_volume           *vol;           //!< FSW volume structure
+    struct fsw_volume               *vol;           //!< FSW volume structure
 
 } FSW_VOLUME_DATA;
 
 /** Signature for the volume structure. */
 #define FSW_VOLUME_DATA_SIGNATURE  EFI_SIGNATURE_32 ('f', 's', 'w', 'V')
 /** Access macro for the volume structure. */
-#define FSW_VOLUME_FROM_FILE_SYSTEM(a)  CR (a, FSW_VOLUME_DATA, FileSystem, FSW_VOLUME_DATA_SIGNATURE)
+#define FSW_VOLUME_FROM_VOL_INTERFACE(a)  CR (a, FSW_VOLUME_DATA, FileSystem, FSW_VOLUME_DATA_SIGNATURE)
 
 /**
  * EFI Host: Private structure for a EFI_FILE interface.

@@ -94,7 +94,7 @@ fsw_status_t fsw_efi_read_block(struct fsw_volume *vol, fsw_u32 phys_bno, void *
 
 EFI_STATUS fsw_efi_map_status(fsw_status_t fsw_status, FSW_VOLUME_DATA *Volume);
 
-EFI_STATUS EFIAPI fsw_efi_FileSystem_OpenVolume(IN EFI_FILE_IO_INTERFACE *This,
+EFI_STATUS EFIAPI fsw_efi_FileSystem_OpenVolume(IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
                                                 OUT EFI_FILE **Root);
 EFI_STATUS fsw_efi_dnode_to_FileHandle(IN struct fsw_dnode *dno,
                                        OUT EFI_FILE **NewFileHandle);
@@ -144,11 +144,19 @@ EFI_DRIVER_BINDING_PROTOCOL fsw_efi_DriverBinding_table = {
  * Interface structure for the EFI Component Name protocol.
  */
 
-EFI_COMPONENT_NAME_PROTOCOL fsw_efi_ComponentName_table = {
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL fsw_efi_ComponentName_table = {
     fsw_efi_ComponentName_GetDriverName,
     fsw_efi_ComponentName_GetControllerName,
     "eng"
 };
+
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL fsw_efi_ComponentName2_table = {
+  (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) fsw_efi_ComponentName_GetDriverName,
+  (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) fsw_efi_ComponentName_GetControllerName,
+  "en"
+};
+
+EFI_LOCK fsw_efi_Lock = EFI_INITIALIZE_LOCK_VARIABLE(TPL_CALLBACK);
 
 /**
  * Dispatch table for our FSW host driver.
@@ -163,7 +171,15 @@ struct fsw_host_table   fsw_efi_host_table = {
 
 extern struct fsw_fstype_table   FSW_FSTYPE_TABLE_NAME(FSTYPE);
 
+EFI_STATUS fsw_efi_AcquireLockOrFail(VOID)
+{
+    return EfiAcquireLockOrFail (&fsw_efi_Lock);
+}
 
+VOID fsw_efi_ReleaseLock(VOID)
+{
+    EfiReleaseLock (&fsw_efi_Lock);
+}
 
 /**
  * Image entry point. Installs the Driver Binding and Component Name protocols
@@ -175,33 +191,15 @@ EFI_STATUS EFIAPI fsw_efi_main(IN EFI_HANDLE         ImageHandle,
 {
     EFI_STATUS  Status;
 
-#ifndef VBOX
-    InitializeLib(ImageHandle, SystemTable);
-#endif
-
-    // complete Driver Binding protocol instance
-    fsw_efi_DriverBinding_table.ImageHandle          = ImageHandle;
-    fsw_efi_DriverBinding_table.DriverBindingHandle  = ImageHandle;
-    // install Driver Binding protocol
-    Status = BS->InstallProtocolInterface(&fsw_efi_DriverBinding_table.DriverBindingHandle,
-                                          &PROTO_NAME(DriverBindingProtocol),
-                                          EFI_NATIVE_INTERFACE,
-                                          &fsw_efi_DriverBinding_table);
-    if (EFI_ERROR (Status)) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": InstallProtocolInterface(DriverBindingProtocol) returned %r\n"), Status));
-        return Status;
-    }
-
-    // install Component Name protocol
-    Status = BS->InstallProtocolInterface(&fsw_efi_DriverBinding_table.DriverBindingHandle,
-                                          &PROTO_NAME(ComponentNameProtocol),
-                                          EFI_NATIVE_INTERFACE,
-                                          &fsw_efi_ComponentName_table);
-    if (EFI_ERROR (Status)) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": InstallProtocolInterface(ComponentNameProtocol) returned %r\n"), Status));
-        return Status;
-    }
-
+    Status = EfiLibInstallDriverBindingComponentName2 (
+             ImageHandle,
+             SystemTable,
+             &fsw_efi_DriverBinding_table,
+             ImageHandle,
+             &fsw_efi_ComponentName_table,
+             &fsw_efi_ComponentName2_table
+             );
+    ASSERT_EFI_ERROR (Status);
     return EFI_SUCCESS;
 }
 
@@ -216,17 +214,8 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Supported(IN EFI_DRIVER_BINDING_PROTOCOL
                                                   IN EFI_HANDLE                   ControllerHandle,
                                                   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath)
 {
-    EFI_STATUS          Status;
-    EFI_DISK_IO         *DiskIo;
-    EFI_BLOCK_IO        *BlockIo;
-
-    // we check for both DiskIO and BlockIO protocols
-
-    // first, open DiskIO
-#ifdef EFI_LOG_ENABLED
-    LogFlowFuncEnter();
-    LogFlowFuncMarkDP(RemainingDevicePath);
-#endif
+    EFI_STATUS           Status;
+    EFI_DISK_IO_PROTOCOL *DiskIo;
 
     Status = BS->OpenProtocol(ControllerHandle,
                               &PROTO_NAME(DiskIoProtocol),
@@ -234,92 +223,79 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Supported(IN EFI_DRIVER_BINDING_PROTOCOL
                               This->DriverBindingHandle,
                               ControllerHandle,
                               EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": OpenProtocol(DiskIoProtocol) returned %r\n"), Status));
-    if (EFI_ERROR(Status))
-    {
-#ifdef EFI_LOG_ENABLED
-        LogFlowFuncLeaveRC(Status);
-#endif
-        return Status;
+    if (EFI_ERROR(Status)) {
+        goto Done;
     }
 
-    // we were just checking, close it again
-    Status = BS->CloseProtocol(ControllerHandle,
+    BS->CloseProtocol(ControllerHandle,
                       &PROTO_NAME(DiskIoProtocol),
                       This->DriverBindingHandle,
                       ControllerHandle);
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": CloseProtocol(DiskIoProtocol) returned %r\n"), Status));
 
-    // next, check BlockIO
     Status = BS->OpenProtocol(ControllerHandle,
                               &PROTO_NAME(BlockIoProtocol),
-                              (VOID **) &BlockIo,
+                              NULL,
                               This->DriverBindingHandle,
                               ControllerHandle,
-                              EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": OpenProtocol(BlockIoProtocol) returned %r\n"), Status));
-    if (EFI_ERROR(Status))
-    {
-#ifdef EFI_LOG_ENABLED
-        LogFlowFuncLeaveRC(Status);
-#endif
-        return Status;
-    }
+                              EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
 
-    // we were just checking, close it again
-    Status = BS->CloseProtocol(ControllerHandle,
-                      &PROTO_NAME(BlockIoProtocol),
-                      This->DriverBindingHandle,
-                      ControllerHandle);
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": CloseProtocol(BlockIoProtocol) returned %r\n"), Status));
-
-#ifdef EFI_LOG_ENABLED
-    LogFlowFuncLeaveRC(Status);
-#endif
+Done:
     return Status;
 }
 
-static EFI_STATUS fsw_efi_ReMount(IN FSW_VOLUME_DATA *pVolume,
-                                       IN EFI_HANDLE      ControllerHandle,
-                                       EFI_DISK_IO        *pDiskIo,
-                                       EFI_BLOCK_IO       *pBlockIo)
+VOID fsw_efi_DetachVolume(IN FSW_VOLUME_DATA *pVolume)
 {
-    EFI_STATUS Status;
+    // uninstall Simple File System protocol
+    BS->UninstallMultipleProtocolInterfaces(pVolume->Handle,
+                                                     &PROTO_NAME(SimpleFileSystemProtocol),
+                                                     &pVolume->FileSystem,
+                                                     NULL);
+    // release private data structure
+    if (pVolume->vol != NULL)
+        fsw_unmount(pVolume->vol);
+    FreePool(pVolume);
+}
 
-#ifdef EFI_LOG_ENABLED
-    LogFlowFuncEnter();
-#endif
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": pvol %p, chandle %p, pdisk %p, pblock %p\n"), pVolume, ControllerHandle, pDiskIo, pBlockIo));
+EFI_STATUS fsw_efi_AttachVolume(IN EFI_HANDLE            ControllerHandle,
+                                  IN EFI_DISK_IO_PROTOCOL  *pDiskIo,
+                                  IN EFI_BLOCK_IO_PROTOCOL *pBlockIo)
+{
+    EFI_STATUS      Status;
+    FSW_VOLUME_DATA *pVolume;
 
-    pVolume->Signature       = FSW_VOLUME_DATA_SIGNATURE;
-    pVolume->Handle          = ControllerHandle;
-    pVolume->DiskIo          = pDiskIo;
-    pVolume->MediaId         = pBlockIo->Media->MediaId;
-    pVolume->LastIOStatus    = EFI_SUCCESS;
+    pVolume = AllocateZeroPool(sizeof(FSW_VOLUME_DATA));
+    if (pVolume == NULL) {
+        return EFI_OUT_OF_RESOURCES;
+    }
 
-    // mount the filesystem
+    pVolume->Signature                  = FSW_VOLUME_DATA_SIGNATURE;
+    pVolume->Handle                     = ControllerHandle;
+    pVolume->DiskIo                     = pDiskIo;
+    pVolume->MediaId                    = pBlockIo->Media->MediaId;
+    pVolume->FileSystem.Revision        = EFI_SIMPLE_FILE_SYSTEM_PROTOCOL_REVISION;
+    pVolume->FileSystem.OpenVolume      = fsw_efi_FileSystem_OpenVolume;
+    pVolume->LastIOStatus               = EFI_SUCCESS;
+
     Status = fsw_efi_map_status(fsw_mount(pVolume, &fsw_efi_host_table,
                                           &FSW_FSTYPE_TABLE_NAME(FSTYPE), &pVolume->vol),
                                 pVolume);
-
-#ifdef EFI_LOG_ENABLED
-    LogFlowFuncMarkVar(Status, "%r");
-#endif
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": fsw_mount returned %r\n"), Status));
-    if (!EFI_ERROR(Status)) {
-        // register the SimpleFileSystem protocol
-        pVolume->FileSystem.Revision     = EFI_FILE_IO_INTERFACE_REVISION;
-        pVolume->FileSystem.OpenVolume   = fsw_efi_FileSystem_OpenVolume;
-        Status = BS->InstallMultipleProtocolInterfaces(&ControllerHandle,
-                                                       &PROTO_NAME(SimpleFileSystemProtocol), &pVolume->FileSystem,
-                                                       NULL, NULL);
-        if (EFI_ERROR(Status)) {
-            FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": InstallMultipleProtocolInterfaces(SFSP, %p) returned %r\n"), &pVolume->FileSystem, Status));
-	}
+    if (EFI_ERROR(Status)) {
+        goto Done;
     }
-#ifdef EFI_LOG_ENABLED
-    LogFlowFuncLeaveRC(Status);
-#endif
+
+    Status = BS->InstallMultipleProtocolInterfaces(
+                     &pVolume->Handle,
+                     &PROTO_NAME(SimpleFileSystemProtocol),
+                     &pVolume->FileSystem,
+                     NULL); 
+    if (EFI_ERROR(Status)) {
+        goto Done;
+    }
+    DEBUG((EFI_D_INIT, __FUNCTION__ ": Installed volume on %p\n", ControllerHandle));
+Done:
+    if (EFI_ERROR(Status)) {
+        fsw_efi_DetachVolume(pVolume);
+    }
     return Status;
 }
 
@@ -340,16 +316,19 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start(IN EFI_DRIVER_BINDING_PROTOCOL  *T
                                               IN EFI_HANDLE                   ControllerHandle,
                                               IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath)
 {
-    EFI_STATUS          Status;
-    EFI_STATUS          Status2;
-    EFI_BLOCK_IO        *BlockIo;
-    EFI_DISK_IO         *DiskIo;
-    FSW_VOLUME_DATA     *Volume;
+    EFI_STATUS            Status;
+    EFI_STATUS            Status2;
+    EFI_BLOCK_IO_PROTOCOL *BlockIo;
+    EFI_DISK_IO_PROTOCOL  *DiskIo;
+    BOOLEAN               LockedByMe;
 
-#ifdef EFI_LOG_ENABLED
-    LogFlowFuncEnter();
-#endif
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": this %p, chandle %p, rdp %p\n"), This, ControllerHandle, RemainingDevicePath));
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
+    LockedByMe = FALSE;
+
+    Status = fsw_efi_AcquireLockOrFail();
+    if (!EFI_ERROR(Status)) {
+      LockedByMe = TRUE;
+    }
     // open consumed protocols
     Status = BS->OpenProtocol(ControllerHandle,
                               &PROTO_NAME(BlockIoProtocol),
@@ -358,11 +337,7 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start(IN EFI_DRIVER_BINDING_PROTOCOL  *T
                               ControllerHandle,
                               EFI_OPEN_PROTOCOL_GET_PROTOCOL);   // NOTE: we only want to look at the MediaId
     if (EFI_ERROR(Status)) {
-#ifdef EFI_LOG_ENABLED
-        LogFlowFuncLeaveRC(Status);
-#endif
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": OpenProtocol(BlockIoProtocol) returned %r\n"), Status));
-        return Status;
+        goto Exit;
     }
 
     Status = BS->OpenProtocol(ControllerHandle,
@@ -372,40 +347,36 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start(IN EFI_DRIVER_BINDING_PROTOCOL  *T
                               ControllerHandle,
                               EFI_OPEN_PROTOCOL_BY_DRIVER);
     if (EFI_ERROR(Status)) {
-#ifdef EFI_LOG_ENABLED
-        LogFlowFuncLeaveRC(Status);
-#endif
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": OpenProtocol(DiskIoProtocol) returned %r\n"), Status));
-        return Status;
+        goto Exit;
     }
 
-    // allocate volume structure
-    Volume = AllocateZeroPool(sizeof(FSW_VOLUME_DATA));
-    Status = fsw_efi_ReMount(Volume, ControllerHandle, DiskIo, BlockIo);
+    Status = fsw_efi_AttachVolume(ControllerHandle, DiskIo, BlockIo);
 
     // on errors, close the opened protocols
     if (EFI_ERROR(Status)) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": fsw_efi_ReMount() returned %r\n"), Status));
-        if (Volume->vol != NULL)
-            fsw_unmount(Volume->vol);
-        FreePool(Volume);
-
-#if 0
-        if (Status == EFI_MEDIA_CHANGED)
-            Status = fsw_efi_ReMount(Volume, ControllerHandle, DiskIo, BlockIo);
-        else
-#endif
-            Status2 = BS->CloseProtocol(ControllerHandle,
-                              &PROTO_NAME(DiskIoProtocol),
-                              This->DriverBindingHandle,
-                              ControllerHandle);
-            FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": CloseProtocol(DiskIoProtocol) returned %r\n"), Status));
+        Status2 = gBS->OpenProtocol (
+                    ControllerHandle,
+                    &PROTO_NAME(SimpleFileSystemProtocol),
+                    NULL,
+                    This->DriverBindingHandle,
+                    ControllerHandle,
+                    EFI_OPEN_PROTOCOL_TEST_PROTOCOL
+                    );
+        if (EFI_ERROR (Status2)) {
+          BS->CloseProtocol (
+             ControllerHandle,
+             &PROTO_NAME(DiskIoProtocol),
+             This->DriverBindingHandle,
+             ControllerHandle
+             );
+        }
     }
 
-#ifdef EFI_LOG_ENABLED
-    LogFlowFuncLeaveRC(Status);
-#endif
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
+Exit:
+    if (LockedByMe) {
+        fsw_efi_ReleaseLock();
+    }
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
     return Status;
 }
 
@@ -424,48 +395,28 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Stop(IN  EFI_DRIVER_BINDING_PROTOCOL  *T
                                              IN  UINTN                        NumberOfChildren,
                                              IN  EFI_HANDLE                   *ChildHandleBuffer)
 {
-    EFI_STATUS          Status;
-    EFI_FILE_IO_INTERFACE *FileSystem;
-    FSW_VOLUME_DATA     *Volume;
+    EFI_STATUS                      Status;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *FileSystem;
+    FSW_VOLUME_DATA                 *Volume;
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ "\n")));
-
-    // get the installed SimpleFileSystem interface
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
     Status = BS->OpenProtocol(ControllerHandle,
                               &PROTO_NAME(SimpleFileSystemProtocol),
                               (VOID **) &FileSystem,
                               This->DriverBindingHandle,
                               ControllerHandle,
                               EFI_OPEN_PROTOCOL_GET_PROTOCOL);
-    if (EFI_ERROR(Status)) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": OpenProtocol(SimpleFileSystemProtocol) returned %r\n"), Status));
-        return EFI_UNSUPPORTED;
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": protocol opened with %r\n"), Status));
+    if (!EFI_ERROR(Status)) {
+        Volume = FSW_VOLUME_FROM_VOL_INTERFACE(FileSystem);
+        fsw_efi_DetachVolume(Volume);
     }
 
-    // get private data structure
-    Volume = FSW_VOLUME_FROM_FILE_SYSTEM(FileSystem);
-
-    // uninstall Simple File System protocol
-    Status = BS->UninstallMultipleProtocolInterfaces(ControllerHandle,
-                                                     &PROTO_NAME(SimpleFileSystemProtocol), &Volume->FileSystem,
-                                                     NULL, NULL);
-    if (EFI_ERROR(Status)) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": UninstallMultipleProtocolInterfaces(SimpleFileSystemProtocol) returned %r\n"), Status));
-        return Status;
-    }
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": protocol uninstalled successfully\n")));
-
-    // release private data structure
-    if (Volume->vol != NULL)
-        fsw_unmount(Volume->vol);
-    FreePool(Volume);
-
-    // close the consumed protocols
     Status = BS->CloseProtocol(ControllerHandle,
                                &PROTO_NAME(DiskIoProtocol),
                                This->DriverBindingHandle,
                                ControllerHandle);
-
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
     return Status;
 }
 
@@ -527,7 +478,7 @@ fsw_status_t fsw_efi_read_block(struct fsw_volume *vol, fsw_u32 phys_bno, void *
     EFI_STATUS          Status;
     FSW_VOLUME_DATA     *Volume = (FSW_VOLUME_DATA *)vol->host_data;
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR("fsw_efi_read_block: %d (%d)\n"), phys_bno, vol->phys_blocksize));
+    FSW_MSG_DEBUG((FSW_MSGSTR("fsw_efi_read_block: %d (%d)\n"), phys_bno, vol->phys_blocksize));
 
     // read from disk
     Status = Volume->DiskIo->ReadDisk(Volume->DiskIo, Volume->MediaId,
@@ -536,7 +487,7 @@ fsw_status_t fsw_efi_read_block(struct fsw_volume *vol, fsw_u32 phys_bno, void *
                                       buffer);
     Volume->LastIOStatus = Status;
     if (EFI_ERROR(Status)) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": ReadDisk() returned %r\n"), Status));
+        FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": ReadDisk() returned %r\n"), Status));
         return FSW_IO_ERROR;
     }
     return FSW_SUCCESS;
@@ -575,16 +526,17 @@ EFI_STATUS fsw_efi_map_status(fsw_status_t fsw_status, FSW_VOLUME_DATA *Volume)
  * handle is closed by the client using it.
  */
 
-EFI_STATUS EFIAPI fsw_efi_FileSystem_OpenVolume(IN EFI_FILE_IO_INTERFACE *This,
+EFI_STATUS EFIAPI fsw_efi_FileSystem_OpenVolume(IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *This,
                                                 OUT EFI_FILE **Root)
 {
     EFI_STATUS          Status;
-    FSW_VOLUME_DATA     *Volume = FSW_VOLUME_FROM_FILE_SYSTEM(This);
+    FSW_VOLUME_DATA     *Volume = FSW_VOLUME_FROM_VOL_INTERFACE(This);
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ "\n")));
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
 
     Status = fsw_efi_dnode_to_FileHandle(Volume->vol->root, Root);
 
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
     return Status;
 }
 
@@ -599,12 +551,20 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_Open(IN EFI_FILE *This,
                                           IN UINT64 OpenMode,
                                           IN UINT64 Attributes)
 {
-    FSW_FILE_DATA      *File = FSW_FILE_FROM_FILE_HANDLE(This);
+    EFI_STATUS          Status;
+    FSW_FILE_DATA      *File;
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
+    Status = EFI_UNSUPPORTED;
+    File = FSW_FILE_FROM_FILE_HANDLE(This);
 
     if (File->Type == FSW_EFI_FILE_TYPE_DIR)
-        return fsw_efi_dir_open(File, NewHandle, FileName, OpenMode, Attributes);
+        Status = fsw_efi_dir_open(File, NewHandle, FileName, OpenMode, Attributes);
+
     // not supported for regular files
-    return EFI_UNSUPPORTED;
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
+    return Status;
 }
 
 /**
@@ -614,13 +574,15 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_Open(IN EFI_FILE *This,
 
 EFI_STATUS EFIAPI fsw_efi_FileHandle_Close(IN EFI_FILE *This)
 {
-    FSW_FILE_DATA      *File = FSW_FILE_FROM_FILE_HANDLE(This);
+    FSW_FILE_DATA      *File;
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ "\n")));
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
 
+    File = FSW_FILE_FROM_FILE_HANDLE(This);
     fsw_shandle_close(&File->shand);
     FreePool(File);
 
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with Success\n")));
     return EFI_SUCCESS;
 }
 
@@ -633,12 +595,14 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_Delete(IN EFI_FILE *This)
 {
     EFI_STATUS          Status;
 
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
     Status = This->Close(This);
     if (Status == EFI_SUCCESS) {
         // this driver is read-only
         Status = EFI_WARN_DELETE_FAILURE;
     }
 
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
     return Status;
 }
 
@@ -651,13 +615,20 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_Read(IN EFI_FILE *This,
                                           IN OUT UINTN *BufferSize,
                                           OUT VOID *Buffer)
 {
-    FSW_FILE_DATA      *File = FSW_FILE_FROM_FILE_HANDLE(This);
+    EFI_STATUS          Status;
+    FSW_FILE_DATA      *File;
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
+    Status = EFI_UNSUPPORTED;
+    File = FSW_FILE_FROM_FILE_HANDLE(This);
 
     if (File->Type == FSW_EFI_FILE_TYPE_FILE)
-        return fsw_efi_file_read(File, BufferSize, Buffer);
+        Status = fsw_efi_file_read(File, BufferSize, Buffer);
     else if (File->Type == FSW_EFI_FILE_TYPE_DIR)
-        return fsw_efi_dir_read(File, BufferSize, Buffer);
-    return EFI_UNSUPPORTED;
+        Status = fsw_efi_dir_read(File, BufferSize, Buffer);
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
+    return Status;
 }
 
 /**
@@ -669,7 +640,9 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_Write(IN EFI_FILE *This,
                                            IN OUT UINTN *BufferSize,
                                            IN VOID *Buffer)
 {
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
     // this driver is read-only
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with Write Protected\n")));
     return EFI_WRITE_PROTECTED;
 }
 
@@ -681,12 +654,19 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_Write(IN EFI_FILE *This,
 EFI_STATUS EFIAPI fsw_efi_FileHandle_GetPosition(IN EFI_FILE *This,
                                                  OUT UINT64 *Position)
 {
-    FSW_FILE_DATA      *File = FSW_FILE_FROM_FILE_HANDLE(This);
+    EFI_STATUS          Status;
+    FSW_FILE_DATA      *File;
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
+    Status = EFI_UNSUPPORTED;
+    File = FSW_FILE_FROM_FILE_HANDLE(This);
 
     if (File->Type == FSW_EFI_FILE_TYPE_FILE)
-        return fsw_efi_file_getpos(File, Position);
+        Status = fsw_efi_file_getpos(File, Position);
     // not defined for directories
-    return EFI_UNSUPPORTED;
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
+    return Status;
 }
 
 /**
@@ -697,13 +677,20 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_GetPosition(IN EFI_FILE *This,
 EFI_STATUS EFIAPI fsw_efi_FileHandle_SetPosition(IN EFI_FILE *This,
                                                  IN UINT64 Position)
 {
-    FSW_FILE_DATA      *File = FSW_FILE_FROM_FILE_HANDLE(This);
+    EFI_STATUS          Status;
+    FSW_FILE_DATA      *File;
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
+    Status = EFI_UNSUPPORTED;
+    File = FSW_FILE_FROM_FILE_HANDLE(This);
 
     if (File->Type == FSW_EFI_FILE_TYPE_FILE)
-        return fsw_efi_file_setpos(File, Position);
+        Status = fsw_efi_file_setpos(File, Position);
     else if (File->Type == FSW_EFI_FILE_TYPE_DIR)
-        return fsw_efi_dir_setpos(File, Position);
-    return EFI_UNSUPPORTED;
+        Status = fsw_efi_dir_setpos(File, Position);
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
+    return Status;
 }
 
 /**
@@ -716,9 +703,16 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_GetInfo(IN EFI_FILE *This,
                                              IN OUT UINTN *BufferSize,
                                              OUT VOID *Buffer)
 {
-    FSW_FILE_DATA      *File = FSW_FILE_FROM_FILE_HANDLE(This);
+    EFI_STATUS          Status;
+    FSW_FILE_DATA      *File;
 
-    return fsw_efi_dnode_getinfo(File, InformationType, BufferSize, Buffer);
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter for %g\n"), InformationType));
+    File = FSW_FILE_FROM_FILE_HANDLE(This);
+
+    Status = fsw_efi_dnode_getinfo(File, InformationType, BufferSize, Buffer);
+
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
+    return Status;
 }
 
 /**
@@ -731,7 +725,9 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_SetInfo(IN EFI_FILE *This,
                                              IN UINTN BufferSize,
                                              IN VOID *Buffer)
 {
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
     // this driver is read-only
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with Write Protected\n")));
     return EFI_WRITE_PROTECTED;
 }
 
@@ -742,7 +738,9 @@ EFI_STATUS EFIAPI fsw_efi_FileHandle_SetInfo(IN EFI_FILE *This,
 
 EFI_STATUS EFIAPI fsw_efi_FileHandle_Flush(IN EFI_FILE *This)
 {
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
     // this driver is read-only
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with Write Protected\n")));
     return EFI_WRITE_PROTECTED;
 }
 
@@ -758,15 +756,18 @@ EFI_STATUS fsw_efi_dnode_to_FileHandle(IN struct fsw_dnode *dno,
     EFI_STATUS          Status;
     FSW_FILE_DATA       *File;
 
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter\n")));
     // make sure the dnode has complete info
     Status = fsw_efi_map_status(fsw_dnode_fill(dno), (FSW_VOLUME_DATA *)dno->vol->host_data);
     if (EFI_ERROR(Status)) {
-        return Status;
+        goto Done;
     }
 
     // check type
-    if (dno->type != FSW_DNODE_TYPE_FILE && dno->type != FSW_DNODE_TYPE_DIR)
-        return EFI_UNSUPPORTED;
+    if (dno->type != FSW_DNODE_TYPE_FILE && dno->type != FSW_DNODE_TYPE_DIR) {
+        Status = EFI_UNSUPPORTED;
+	goto Done;
+    }
 
     // allocate file structure
     File = AllocateZeroPool(sizeof(FSW_FILE_DATA));
@@ -781,7 +782,7 @@ EFI_STATUS fsw_efi_dnode_to_FileHandle(IN struct fsw_dnode *dno,
                                 (FSW_VOLUME_DATA *)dno->vol->host_data);
     if (EFI_ERROR(Status)) {
         FreePool(File);
-        return Status;
+        goto Done;
     }
 
     // populate the file handle
@@ -798,7 +799,11 @@ EFI_STATUS fsw_efi_dnode_to_FileHandle(IN struct fsw_dnode *dno,
     File->FileHandle.Flush       = fsw_efi_FileHandle_Flush;
 
     *NewFileHandle = &File->FileHandle;
-    return EFI_SUCCESS;
+    Status = EFI_SUCCESS;
+
+Done:
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
+    return Status;
 }
 
 /**
@@ -812,13 +817,14 @@ EFI_STATUS fsw_efi_file_read(IN FSW_FILE_DATA *File,
     EFI_STATUS          Status;
     fsw_u32             buffer_size;
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": read %d bytes\n"), *BufferSize));
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter to read %d bytes\n"), *BufferSize));
 
     buffer_size = *BufferSize;
     Status = fsw_efi_map_status(fsw_shandle_read(&File->shand, &buffer_size, Buffer),
                                 (FSW_VOLUME_DATA *)File->shand.dnode->vol->host_data);
     *BufferSize = buffer_size;
 
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
     return Status;
 }
 
@@ -868,7 +874,7 @@ EFI_STATUS fsw_efi_dir_open(IN FSW_FILE_DATA *File,
     struct fsw_dnode    *target_dno;
     struct fsw_string   lookup_path;
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": `%s'\n"), FileName));
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": `%s'\n"), FileName));
 
     if (OpenMode != EFI_FILE_MODE_READ)
         return EFI_WRITE_PROTECTED;
@@ -911,7 +917,7 @@ EFI_STATUS fsw_efi_dir_read(IN FSW_FILE_DATA *File,
     FSW_VOLUME_DATA     *Volume = (FSW_VOLUME_DATA *)File->shand.dnode->vol->host_data;
     struct fsw_dnode    *dno;
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ "...\n")));
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ "...\n")));
 
     // read the next entry
     Status = fsw_efi_map_status(fsw_dnode_dir_read(&File->shand, &dno),
@@ -919,7 +925,7 @@ EFI_STATUS fsw_efi_dir_read(IN FSW_FILE_DATA *File,
     if (Status == EFI_NOT_FOUND) {
         // end of directory
         *BufferSize = 0;
-        FSW_MSG_DEBUGV((FSW_MSGSTR("... no more entries\n")));
+        FSW_MSG_DEBUG((FSW_MSGSTR("... no more entries\n")));
         return EFI_SUCCESS;
     }
     if (EFI_ERROR(Status))
@@ -961,24 +967,27 @@ EFI_STATUS fsw_efi_dnode_getinfo(IN FSW_FILE_DATA *File,
                                  OUT VOID *Buffer)
 {
     EFI_STATUS          Status;
-    FSW_VOLUME_DATA     *Volume = (FSW_VOLUME_DATA *)File->shand.dnode->vol->host_data;
+    FSW_VOLUME_DATA     *Volume;
     EFI_FILE_SYSTEM_INFO *FSInfo;
     UINTN               RequiredSize;
     struct fsw_volume_stat vsb;
 
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter for %g\n"), InformationType));
+    Volume = (FSW_VOLUME_DATA *)File->shand.dnode->vol->host_data;
     if (CompareGuid(InformationType, &GUID_NAME(FileInfo))) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": FILE_INFO\n")));
+        FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": FILE_INFO\n")));
 
         Status = fsw_efi_dnode_fill_FileInfo(Volume, File->shand.dnode, BufferSize, Buffer);
 
-    } else if (CompareGuid(InformationType, &GUID_NAME(FileSystemInfo)) == 0) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": FILE_SYSTEM_INFO\n")));
+    } else if (CompareGuid(InformationType, &GUID_NAME(FileSystemInfo))) {
+        FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": FILE_SYSTEM_INFO\n")));
 
         // check buffer size
         RequiredSize = fsw_efi_strsize(&Volume->vol->label) + SIZE_OF_EFI_FILE_SYSTEM_INFO;
         if (*BufferSize < RequiredSize) {
             *BufferSize = RequiredSize;
-            return EFI_BUFFER_TOO_SMALL;
+            Status = EFI_BUFFER_TOO_SMALL;
+	    goto Done;
         }
 
         // fill structure
@@ -987,13 +996,14 @@ EFI_STATUS fsw_efi_dnode_getinfo(IN FSW_FILE_DATA *File,
         FSInfo->ReadOnly    = TRUE;
         FSInfo->BlockSize   = Volume->vol->log_blocksize;
         fsw_efi_strcpy(FSInfo->VolumeLabel, &Volume->vol->label);
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": Volume Label [%s]\n"), FSInfo->VolumeLabel));
+        FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": Volume Label [%s]\n"), FSInfo->VolumeLabel));
 
         // get the missing info from the fs driver
         ZeroMem(&vsb, sizeof(struct fsw_volume_stat));
         Status = fsw_efi_map_status(fsw_volume_stat(Volume->vol, &vsb), Volume);
-        if (EFI_ERROR(Status))
-            return Status;
+        if (EFI_ERROR(Status)) {
+            goto Done;
+	}
         FSInfo->VolumeSize  = vsb.total_bytes;
         FSInfo->FreeSpace   = vsb.free_bytes;
 
@@ -1002,13 +1012,14 @@ EFI_STATUS fsw_efi_dnode_getinfo(IN FSW_FILE_DATA *File,
         Status = EFI_SUCCESS;
 
     } else if (CompareGuid(InformationType, &GUID_NAME(FileSystemVolumeLabelInfoId))) {
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": FILE_SYSTEM_VOLUME_LABEL\n")));
+        FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": FILE_SYSTEM_VOLUME_LABEL\n")));
 
         // check buffer size
         RequiredSize = SIZE_OF_EFI_FILE_SYSTEM_VOLUME_LABEL_INFO + fsw_efi_strsize(&Volume->vol->label);
         if (*BufferSize < RequiredSize) {
             *BufferSize = RequiredSize;
-            return EFI_BUFFER_TOO_SMALL;
+            Status = EFI_BUFFER_TOO_SMALL;
+	    goto Done;
         }
 
         // copy volume label
@@ -1022,6 +1033,8 @@ EFI_STATUS fsw_efi_dnode_getinfo(IN FSW_FILE_DATA *File,
         Status = EFI_UNSUPPORTED;
     }
 
+Done:
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": leaving with %r\n"), Status));
     return Status;
 }
 
@@ -1083,7 +1096,7 @@ EFI_STATUS fsw_efi_dnode_fill_FileInfo(IN FSW_VOLUME_DATA *Volume,
     if (*BufferSize < RequiredSize) {
         // TODO: wind back the directory in this case
 
-        FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": ... BUFFER TOO SMALL\n")));
+        FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": ... BUFFER TOO SMALL\n")));
         *BufferSize = RequiredSize;
         return EFI_BUFFER_TOO_SMALL;
     }
@@ -1110,7 +1123,7 @@ EFI_STATUS fsw_efi_dnode_fill_FileInfo(IN FSW_VOLUME_DATA *Volume,
 
     // prepare for return
     *BufferSize = RequiredSize;
-    FSW_MSG_DEBUGV((FSW_MSGSTR(__FUNCTION__ ": ... returning `%s'\n"), FileInfo->FileName));
+    FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": ... returning `%s'\n"), FileInfo->FileName));
     return EFI_SUCCESS;
 }
 
