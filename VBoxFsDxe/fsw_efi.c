@@ -291,7 +291,7 @@ EFI_STATUS fsw_efi_AttachVolume(IN EFI_HANDLE            ControllerHandle,
     if (EFI_ERROR(Status)) {
         goto Done;
     }
-    DEBUG((EFI_D_INIT, __FUNCTION__ ": Installed volume on %p\n", ControllerHandle));
+    DEBUG((EFI_D_INIT, "fsw_efi: Installed volume on %p\n", ControllerHandle));
 Done:
     if (EFI_ERROR(Status)) {
         fsw_efi_DetachVolume(pVolume);
