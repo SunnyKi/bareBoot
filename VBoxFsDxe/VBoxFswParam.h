@@ -54,15 +54,5 @@
 # define EFI_SIGNATURE_32(a, b, c, d) SIGNATURE_32(a, b, c, d)
 # define DivU64x32(x,y,z) DivU64x32((x),(y))
 
-
-INTN CompareGuidEdk1(
-  IN EFI_GUID     *Guid1,
-  IN EFI_GUID     *Guid2
-                     );
-
-//#define CompareGuid(x, y) CompareGuidEdk1((x),(y))
-# define HOST_EFI 1
-//# define FSW_DEBUG_LEVEL 3
-
 int fsw_streq_ISO88591_UTF16(void *s1data, void *s2data, int len);
 #endif
