@@ -819,7 +819,7 @@ EFI_STATUS fsw_efi_file_read(IN FSW_FILE_DATA *File,
 
     FSW_MSG_DEBUG((FSW_MSGSTR(__FUNCTION__ ": enter to read %d bytes\n"), *BufferSize));
 
-    buffer_size = *BufferSize;
+    buffer_size = (fsw_u32)(*BufferSize);
     Status = fsw_efi_map_status(fsw_shandle_read(&File->shand, &buffer_size, Buffer),
                                 (FSW_VOLUME_DATA *)File->shand.dnode->vol->host_data);
     *BufferSize = buffer_size;
@@ -880,7 +880,7 @@ EFI_STATUS fsw_efi_dir_open(IN FSW_FILE_DATA *File,
         return EFI_WRITE_PROTECTED;
 
     lookup_path.type = FSW_STRING_TYPE_UTF16;
-    lookup_path.len  = StrLen(FileName);
+    lookup_path.len  = (int)StrLen(FileName);
     lookup_path.size = lookup_path.len * sizeof(fsw_u16);
     lookup_path.data = FileName;
 
