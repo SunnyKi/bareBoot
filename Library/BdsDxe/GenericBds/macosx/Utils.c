@@ -722,7 +722,7 @@ GetDataSetting (
 
   data = NULL;
 
-  prop = plDictFind (dict, propName, AsciiStrLen(propName), plKindAny);
+  prop = plDictFind (dict, propName, (unsigned int)AsciiStrLen(propName), plKindAny);
 
   if (prop == NULL) {
     return NULL;
@@ -882,7 +882,7 @@ GetNumProperty (
 {
   VOID* dentry;
 
-  dentry = plDictFind (dict, key, AsciiStrLen(key), plKindInteger);
+  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindInteger);
   if (dentry != NULL) {
     def = (UINTN) plIntegerGet (dentry);
   }
@@ -898,7 +898,7 @@ GetBoolProperty (
 {
   VOID* dentry;
 
-  dentry = plDictFind (dict, key, AsciiStrLen(key), plKindBool);
+  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindBool);
   if (dentry != NULL) {
     return plBoolGet (dentry) ? TRUE : FALSE;
   }
@@ -915,7 +915,7 @@ GetAsciiProperty (
   VOID* dentry;
   UINTN slen;
 
-  dentry = plDictFind (dict, key, AsciiStrLen(key), plKindString);
+  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindString);
   if (dentry != NULL) {
     slen = plNodeGetSize (dentry);
     CopyMem (aptr, plNodeGetBytes(dentry), slen);
@@ -934,7 +934,7 @@ GetUnicodeProperty (
   CHAR8* tbuf;
   UINTN tsiz;
 
-  dentry = plDictFind (dict, key, AsciiStrLen(key), plKindString);
+  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindString);
   if (dentry != NULL) {
     tsiz = plNodeGetSize (dentry);
     tbuf = AllocateCopyPool (tsiz + 1, plNodeGetBytes (dentry));
@@ -959,7 +959,7 @@ GetStringProperty (
   UINTN tsiz;
 
   tbuf = NULL;
-  dentry = plDictFind (dict, key, AsciiStrLen(key), plKindString);
+  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindString);
   if (dentry != NULL) {
     tsiz = plNodeGetSize (dentry);
     tbuf = AllocateCopyPool (tsiz + 1, plNodeGetBytes (dentry));
