@@ -65,7 +65,7 @@ _plstr2vlong(char* vbuf, unsigned int bsz) {
 		negative = 0;
 		wptr = wbuffer;
 	}
-	wsize -= wptr - wbuffer;
+	wsize -= (unsigned int)(wptr - wbuffer);
 	if (ScanMem8(wptr, wsize, 'x') != NULL || ScanMem8(wptr, wsize, 'X') != NULL ) {
 		rval = AsciiStrHexToUint64(wptr);
 	} else {
