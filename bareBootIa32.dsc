@@ -38,6 +38,20 @@
 #
 ################################################################################
 [LibraryClasses]
+!ifdef $(SOURCE_DEBUG_ENABLE)
+  DebugAgentLib|SourceLevelDebugPkg/Library/DebugAgent/DxeDebugAgentLib.inf
+  DebugCommunicationLib|SourceLevelDebugPkg/Library/DebugCommunicationLibSerialPort/DebugCommunicationLibSerialPort.inf
+  PeCoffExtraActionLib|SourceLevelDebugPkg/Library/PeCoffExtraActionLibDebug/PeCoffExtraActionLibDebug.inf
+  ResetSystemLib|MdeModulePkg/Library/BaseResetSystemLibNull/BaseResetSystemLibNull.inf
+  PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
+!else
+  DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
+  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
+  PeCoffLib|bareBoot/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
+  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+!endif
+
   #
   # Entry point
   #
@@ -58,16 +72,13 @@
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
-  #PeCoffLib|MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
-  PeCoffLib|bareBoot/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
-#  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
 #  EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
 #  PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
 #  SmbusLib|MdePkg/Library/DxeSmbusLib/DxeSmbusLib.inf
 #  S3BootScriptLib|MdeModulePkg/Library/PiDxeS3BootScriptLib/DxeS3BootScriptLib.inf
 
 #  IoApicLib|PcAtChipsetPkg/Library/BaseIoApicLib/BaseIoApicLib.inf
-#
+
   LocalApicLib|UefiCpuPkg/Library/BaseXApicLib/BaseXApicLib.inf
 
   PeCoffGetEntryPointLib|MdePkg/Library/BasePeCoffGetEntryPointLib/BasePeCoffGetEntryPointLib.inf
@@ -96,7 +107,6 @@
 
   SecurityManagementLib|MdeModulePkg/Library/DxeSecurityManagementLib/DxeSecurityManagementLib.inf
   CapsuleLib|MdeModulePkg/Library/DxeCapsuleLibNull/DxeCapsuleLibNull.inf
-  PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   #
   # Platform
   #
@@ -105,7 +115,6 @@
   # Misc
   #
   PerformanceLib|MdePkg/Library/BasePerformanceLibNull/BasePerformanceLibNull.inf
-  DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   PcdLib|MdePkg/Library/BasePcdLibNull/BasePcdLibNull.inf
   MemoryAllocationLib|MdePkg/Library/UefiMemoryAllocationLib/UefiMemoryAllocationLib.inf
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
@@ -123,10 +132,8 @@
   # To save size, use NULL library for DebugLib and ReportStatusCodeLib.
   # If need status code output, do library instance overriden as below DxeMain.inf does
   #
-#  DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
-#  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
-  DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
-  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf
+
+  DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   MemLogLib|bareBoot/Library/MemLogLibDefault/MemLogLibDefault.inf
   PListLib|bareBoot/Library/PListLib/PListLib.inf
@@ -275,3 +282,6 @@
 #
 ###################################################################################################
 [BuildOptions]
+!ifdef $(SOURCE_DEBUG_ENABLE)
+  *_*_*_GENFW_FLAGS = --keepexceptiontable
+!endif
