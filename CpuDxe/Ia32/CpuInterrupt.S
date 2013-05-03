@@ -319,7 +319,7 @@ commonIdtEntry:
 ## UINT32  Gs, Fs, Es, Ds, Cs, Ss#
   movw  %ss,%ax
   push  %eax
-  movzx 4*4(%ebp),%eax
+  movzwl 4*4(%ebp),%eax
   push %eax
   movw  %ds,%ax
   push %eax
