@@ -144,7 +144,10 @@ LegacyBiosInt86 (
   IA32_REGISTER_SET     ThunkRegSet;
   BOOLEAN               Ret;
   UINT16                *Stack16;
+  volatile UINT32       *IVTPtr;
   
+  IVTPtr = NULL;
+
   ZeroMem (&ThunkRegSet, sizeof (ThunkRegSet));
   ThunkRegSet.E.EFLAGS.Bits.Reserved_0 = 1;
   ThunkRegSet.E.EFLAGS.Bits.Reserved_1 = 0;
@@ -185,8 +188,10 @@ LegacyBiosInt86 (
   ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
   ThunkRegSet.E.ESP  = (UINT16) (UINTN) Stack16;
 
-  ThunkRegSet.E.Eip  = (UINT16)((UINT32 *)NULL)[BiosInt];
-  ThunkRegSet.E.CS   = (UINT16)(((UINT32 *)NULL)[BiosInt] >> 16);
+
+  ThunkRegSet.E.Eip  = (UINT16) IVTPtr[BiosInt];
+  ThunkRegSet.E.CS   = (UINT16) (IVTPtr[BiosInt] >> 16);
+
   BiosDev->ThunkContext->RealModeState = &ThunkRegSet;
   AsmThunk16 (BiosDev->ThunkContext);
   
