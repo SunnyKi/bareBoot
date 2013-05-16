@@ -19,19 +19,12 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "macosx/macosx.h"
 
 #define CLOVER_MEDIA_FILE_NAME_IA32    L"\\EFI\\BOOT\\CLOVERIA32.EFI"
-#define CLOVER_MEDIA_FILE_NAME_IA64    L"\\EFI\\BOOT\\CLOVERIA64.EFI"
 #define CLOVER_MEDIA_FILE_NAME_X64     L"\\EFI\\BOOT\\CLOVERX64.EFI"
-#define CLOVER_MEDIA_FILE_NAME_ARM     L"\\EFI\\BOOT\\CLOVERARM.EFI"
 
 #if   defined (MDE_CPU_IA32)
 #define CLOVER_MEDIA_FILE_NAME   CLOVER_MEDIA_FILE_NAME_IA32
-#elif defined (MDE_CPU_IPF)
-#define CLOVER_MEDIA_FILE_NAME   CLOVER_MEDIA_FILE_NAME_IA64
 #elif defined (MDE_CPU_X64)
 #define CLOVER_MEDIA_FILE_NAME   CLOVER_MEDIA_FILE_NAME_X64
-#elif defined (MDE_CPU_EBC)
-#elif defined (MDE_CPU_ARM)
-#define CLOVER_MEDIA_FILE_NAME   CLOVER_MEDIA_FILE_NAME_ARM
 #else
 #error Unknown Processor Type
 #endif
@@ -39,12 +32,33 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define MACOSX_LOADER_PATH              L"\\System\\Library\\CoreServices\\boot.efi"
 #define MACOSX_RECOVERY_LOADER_PATH     L"\\com.apple.recovery.boot\\boot.efi"
 #define MACOSX_INSTALL_PATH             L"\\OS X Install Data\\boot.efi"
+#if 0
 #define WINDOWS_LOADER_PATH             L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi"
 #define SUSE_LOADER_PATH                L"\\EFI\\SuSE\\elilo.efi"
+#define OPENSUSE_LOADER_PATH            L"\\EFI\\opensuse\\grubx64.efi"
 #define UBUNTU_LOADER_PATH              L"\\EFI\\Ubuntu\\grubx64.efi"
 #define REDHAT_LOADER_PATH              L"\\EFI\\RedHat\\grub.efi"
 #define SHELL_PATH                      L"\\EFI\\TOOLS\\shell64.efi"
 #define ALT_WINDOWS_LOADER_PATH         L"\\EFI\\MS\\Boot\\bootmgfw.efi"
+#endif
+
+#define MAX_LOADER_PATHS  12
+
+CHAR16* mLoaderPath[] = {
+  CLOVER_MEDIA_FILE_NAME,
+  EFI_REMOVABLE_MEDIA_FILE_NAME,
+  MACOSX_LOADER_PATH,
+  MACOSX_RECOVERY_LOADER_PATH,
+  MACOSX_INSTALL_PATH,
+  L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi",
+  L"\\EFI\\SuSE\\elilo.efi",
+  L"\\EFI\\opensuse\\grubx64.efi",
+  L"\\EFI\\Ubuntu\\grubx64.efi",
+  L"\\EFI\\RedHat\\grub.efi",
+  L"\\EFI\\TOOLS\\shell64.efi",
+  L"\\EFI\\MS\\Boot\\bootmgfw.efi"
+};
+
 
 BOOLEAN mEnumBootDevice = FALSE;
 
@@ -82,6 +96,7 @@ BdsLibBootViaBootOption (
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   UINT8                     Index;
+  CHAR16                    *TmpLoadPath;
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
@@ -89,8 +104,8 @@ BdsLibBootViaBootOption (
 
   BdsSetMemoryTypeInformationVariable ();
   ASSERT (Option->DevicePath != NULL);
-
   EfiSignalEventReadyToBoot();
+
   Status = gBS->LoadImage (
                   TRUE,
                   gImageHandle,
@@ -99,156 +114,62 @@ BdsLibBootViaBootOption (
                   0,
                   &ImageHandle
                 );
-    if (EFI_ERROR (Status)) {
-      Handle = BdsLibGetBootableHandle(DevicePath);
-      if (Handle == NULL) {
-        goto Done;
+  
+  if (EFI_ERROR (Status)) {
+    Handle = BdsLibGetBootableHandle(DevicePath);
+    if (Handle == NULL) {
+      goto Done;
+    }
+    FilePath = NULL;
+
+    TmpLoadPath = NULL;
+
+    if (StrCmp (LoadOptions, L"All") == 0) {
+      for (Index =  0; Index < MAX_LOADER_PATHS; Index++) {
+        FilePath = FileDevicePath (Handle, mLoaderPath[Index]);
+        if (FilePath != NULL) {
+          Status = gBS->LoadImage (
+                                   TRUE,
+                                   gImageHandle,
+                                   FilePath,
+                                   NULL,
+                                   0,
+                                   &ImageHandle
+                                   );
+          if (!EFI_ERROR (Status)) {
+            TmpLoadPath = mLoaderPath[Index];
+            break;
+          }
+        }
       }
-      FilePath = NULL;
-      if ((StrCmp(LoadOptions, MACOSX_LOADER_PATH) == 0) ||
-          (StrCmp(LoadOptions, MACOSX_RECOVERY_LOADER_PATH) == 0) ||
-          (StrCmp(LoadOptions, MACOSX_INSTALL_PATH) == 0)) {
-            FilePath = FileDevicePath (Handle, LoadOptions);
-            if (FilePath != NULL) {
-              Status = gBS->LoadImage (
-                              TRUE,
-                              gImageHandle,
-                              FilePath,
-                              NULL,
-                              0,
-                              &ImageHandle
-                            );      
-              if (!EFI_ERROR (Status)) goto MacOS;
-            }
+    } else {
+      FilePath = FileDevicePath (Handle, LoadOptions);
+      if (FilePath != NULL) {
+        Status = gBS->LoadImage (
+                                 TRUE,
+                                 gImageHandle,
+                                 FilePath,
+                                 NULL,
+                                 0,
+                                 &ImageHandle
+                                 );
+        if (!EFI_ERROR (Status)) {
+          TmpLoadPath = LoadOptions;
+        }
+      }
+    }
+
+    if (TmpLoadPath != NULL) {
+      if ((StrCmp (TmpLoadPath, MACOSX_LOADER_PATH) == 0) ||
+          (StrCmp (TmpLoadPath, MACOSX_RECOVERY_LOADER_PATH) == 0) ||
+          (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH) == 0)) {
+        goto MacOS;
       } else {
-        FilePath = FileDevicePath (Handle, LoadOptions);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );      
-          if (!EFI_ERROR (Status)) goto Next;
-        }
+        goto Next;
       }
-//  ----=================================================----      
-     if (StrCmp(LoadOptions, L"All") == 0) {
-        FilePath = FileDevicePath (Handle, MACOSX_LOADER_PATH);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );      
-          if (!EFI_ERROR (Status)) goto MacOS;
-        }
-        FilePath = FileDevicePath (Handle, MACOSX_RECOVERY_LOADER_PATH);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );      
-          if (!EFI_ERROR (Status)) goto MacOS;
-        }
-
-        FilePath = FileDevicePath (Handle, MACOSX_INSTALL_PATH);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );
-          if (!EFI_ERROR (Status)) goto MacOS;
-        }
-
-        FilePath = FileDevicePath (Handle, SUSE_LOADER_PATH);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );
-          if (!EFI_ERROR (Status)) goto Next;
-        }          
-        FilePath = FileDevicePath (Handle, UBUNTU_LOADER_PATH);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );
-          if (!EFI_ERROR (Status)) goto Next;
-        }
-        FilePath = FileDevicePath (Handle, REDHAT_LOADER_PATH);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );
-          if (!EFI_ERROR (Status)) goto Next;
-        }
-        FilePath = FileDevicePath (Handle, EFI_REMOVABLE_MEDIA_FILE_NAME);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );
-          if (!EFI_ERROR (Status)) goto Next;
-        } 
-        FilePath = FileDevicePath (Handle, WINDOWS_LOADER_PATH);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );
-          if (!EFI_ERROR (Status)) goto Next;
-        }
-        FilePath = FileDevicePath (Handle, CLOVER_MEDIA_FILE_NAME);
-        if (FilePath != NULL) {
-          Status = gBS->LoadImage (
-                                   TRUE,
-                                   gImageHandle,
-                                   FilePath,
-                                   NULL,
-                                   0,
-                                   &ImageHandle
-                                   );      
-          if (EFI_ERROR (Status)) goto Done; else goto Next;
-        }    
-      } 
-    } else goto Next;
-    goto Done;
+    }
+  } else goto Next;
+  goto Done;
 
 MacOS:
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting InitializeConsoleSim\n"));
@@ -582,7 +503,7 @@ BdsLibEnumerateAllBootOption (
   CHAR8                         *LastLang;
 #endif
   BOOLEAN                       ConfigNotFound;
-  UINTN                         Index;
+  UINTN                         Index, Index2;
   UINTN                         FvHandleCount;
   EFI_HANDLE                    *FvHandleBuffer;
   EFI_FV_FILETYPE               Type;
@@ -789,10 +710,20 @@ BdsLibEnumerateAllBootOption (
 
       VolumeName = BdsLibGetVolumeName (FHandle, Index);
 
+      for (Index2 =  0; Index2 < MAX_LOADER_PATHS; Index2++) {
+        if ((StrCmp (mLoaderPath[Index2], MACOSX_LOADER_PATH) == 0) ||
+            (StrCmp (mLoaderPath[Index2], MACOSX_RECOVERY_LOADER_PATH) == 0)) {
+          BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], NULL, VolumeName, BdsBootOptionList, TRUE);
+        } else {
+          BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], mLoaderPath[Index2], VolumeName, BdsBootOptionList, TRUE);
+        }
+      }
+#if 0
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_LOADER_PATH, NULL, VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_RECOVERY_LOADER_PATH, NULL, VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_INSTALL_PATH, L"OS X Install Data", VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SUSE_LOADER_PATH, L"OpenSuSE EFI Loader", VolumeName, BdsBootOptionList, TRUE);
+      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], OPENSUSE_LOADER_PATH, L"OpenSuSE EFI Loader", VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], UBUNTU_LOADER_PATH, L"Ubuntu EFI Loader", VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], REDHAT_LOADER_PATH, L"RedHat EFI Loader", VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], EFI_REMOVABLE_MEDIA_FILE_NAME, L"EFI boot Loader", VolumeName, BdsBootOptionList, TRUE);
@@ -800,6 +731,7 @@ BdsLibEnumerateAllBootOption (
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], ALT_WINDOWS_LOADER_PATH, L"Alt Windows EFI Loader", VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], CLOVER_MEDIA_FILE_NAME, L"Clover EFI", VolumeName, BdsBootOptionList, TRUE);
       BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SHELL_PATH, L"[EFI SHell]", VolumeName, BdsBootOptionList, TRUE);
+#endif
 
       FreePool (VolumeName);
     }
@@ -992,7 +924,7 @@ BdsLibGetBootableHandle (
   EFI_HANDLE                      *SimpleFileSystemHandles;
 
   UINTN                           NumberSimpleFileSystemHandles;
-  UINTN                           Index;
+  UINTN                           Index, Index2;
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
 
@@ -1117,12 +1049,21 @@ BdsLibGetBootableHandle (
                                      &FHandle
                                      );
       }
+
+      for (Index2 =  0; Index2 < MAX_LOADER_PATHS; Index2++) {
+        if (FileExists(FHandle, mLoaderPath[Index2])) {
+          ReturnHandle = SimpleFileSystemHandles[Index];
+          break;
+        }
+      }
+#if 0
       if ((FileExists(FHandle, MACOSX_LOADER_PATH)) ||
           (FileExists(FHandle, MACOSX_RECOVERY_LOADER_PATH)) ||
           (FileExists(FHandle, MACOSX_INSTALL_PATH)) ||
           (FileExists(FHandle, WINDOWS_LOADER_PATH)) ||
           (FileExists(FHandle, ALT_WINDOWS_LOADER_PATH)) ||
           (FileExists(FHandle, SUSE_LOADER_PATH)) ||
+          (FileExists(FHandle, OPENSUSE_LOADER_PATH)) ||
           (FileExists(FHandle, UBUNTU_LOADER_PATH)) ||
           (FileExists(FHandle, REDHAT_LOADER_PATH)) ||
           (FileExists(FHandle, CLOVER_MEDIA_FILE_NAME)) ||
@@ -1132,6 +1073,7 @@ BdsLibGetBootableHandle (
         ReturnHandle = SimpleFileSystemHandles[Index];
         break;
       }
+#endif
     }
   }
   DBG ("    BdsBoot: Get the device path size of SimpleFileSystem handle finished\n");
