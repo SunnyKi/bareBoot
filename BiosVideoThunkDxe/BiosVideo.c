@@ -1654,16 +1654,22 @@ BiosVideoCheckForVbe (
       continue;
     }
 
+    ModeFound = FALSE;
+
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1024) {
       continue;
+    } else if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1440) {
+      DBG ("BiosVideo: VBE mode as insurance %d (%dx%d)\n",
+           ModeNumber,
+           BiosVideoPrivate->VbeModeInformationBlock->XResolution,
+           BiosVideoPrivate->VbeModeInformationBlock->YResolution);
+      ModeFound = TRUE;
     }
 
     DBG ("BiosVideo: XResolution = %d, YResolution = %d, ModeNumber = %d\n",
          BiosVideoPrivate->VbeModeInformationBlock->XResolution,
          BiosVideoPrivate->VbeModeInformationBlock->YResolution,
          ModeNumber);
-
-    ModeFound = FALSE;
 
     if (EdidFound && (ValidEdidTiming.ValidNumber > 0)) {
       //
@@ -1683,7 +1689,6 @@ BiosVideoCheckForVbe (
     // Select a reasonable mode to be set for current display mode
     //
     if (!EdidFound) {
-      DBG ("BiosVideo: Edid not found? sorry guys, but we want try to set maximum VBE mode...\n");
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
           ) {
