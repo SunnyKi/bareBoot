@@ -3,7 +3,11 @@
  */
 
 #include "macosx.h"
+#if 0
 #include "DataHubRecords.h"
+#else
+#include <Guid/DataHubRecords.h>
+#endif
 
 EFI_GUID gEfiAppleFirmwarePasswordProtocolGuid  = {0x8FFEEB3A, 0x4C98, 0x4630, {0x80, 0x3F, 0x74, 0x0F, 0x95, 0x67, 0x09, 0x1D}};
 EFI_GUID gEfiGlobalVarGuid                      = {0x8BE4DF61, 0x93CA, 0x11D2, {0xAA, 0x0D, 0x00, 0xE0, 0x98, 0x03, 0x2B, 0x8C}};
@@ -109,21 +113,20 @@ SetVariablesForOSX (
 )
 {
   EFI_STATUS  Status;
-  UINT16      *BootNext;
   UINT32      FwFeatures;
   UINT32      FwFeaturesMask;
 #if 0
+  UINT16      *BootNext;
   UINT32      BackgroundClear;
   CHAR8       *None;
 #endif
 
-  BootNext = NULL; //it already presents in EFI FW. First GetVariable ?
   FwFeatures      = 0xc0007417;
   FwFeaturesMask  = 0xc0007fff;
 #if 0
+  BootNext = NULL; //it already presents in EFI FW. First GetVariable ?
   BackgroundClear = 0x00000000;
   None = "none";
-#endif
 
   Status = gRS->SetVariable(L"ROM", &gEfiAppleNvramGuid, 0, 0, NULL);
 
@@ -134,6 +137,7 @@ SetVariablesForOSX (
                   sizeof (BootNext),
                   &BootNext
                 );
+#endif
 
   Status = gRS->SetVariable (
                   L"FirmwareFeatures",
@@ -224,9 +228,11 @@ SetupDataForOSX (
 {
   EFI_STATUS      Status;
   UINT32          devPathSupportedVal;
+#if 0
   UINT64          FrontSideBus;
   UINT64          CpuSpeed;
   UINT64          TSCFrequency;
+#endif
   CHAR16*         productName;
   CHAR16*         serialNumber;
 
@@ -239,15 +245,17 @@ SetupDataForOSX (
     return EFI_NOT_FOUND;
   }
 
-  devPathSupportedVal = 1;
+#if 0
   FrontSideBus    = gCPUStructure.FSBFrequency;
   CpuSpeed        = gCPUStructure.CPUFrequency;
   TSCFrequency    = gCPUStructure.TSCFrequency;
+#endif
 
+  devPathSupportedVal = 1;
   AsciiStrToUnicodeStr (gSettings.ProductName, productName);
   AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
 
-  Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &FrontSideBus, sizeof (UINT64));
+  Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &gCPUStructure.FSBFrequency, sizeof (gCPUStructure.FSBFrequency));
 #if 0
   Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"TSCFrequency", &TSCFrequency, sizeof (UINT64));
   Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"CPUFrequency", &CpuSpeed, sizeof (UINT64));
