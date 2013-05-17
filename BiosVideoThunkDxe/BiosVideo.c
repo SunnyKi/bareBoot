@@ -1442,7 +1442,6 @@ BiosVideoCheckForVbe (
   if ((Regs.X.BX & 0x2)) {
     DBG ("BiosVideo: DDC 2 supported\n");
   }
-#endif
 
   //
   // Read EDID information
@@ -1474,7 +1473,6 @@ BiosVideoCheckForVbe (
   DBG ("BiosVideo: block 1 read with status 0x%x\n", Regs.X.AX);
   DBG ("BiosVideo: block 1 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
 
-  EdidFound = FALSE;
 #if 0
   mNoDetailedTiming = TRUE;
 #endif
@@ -1488,7 +1486,10 @@ BiosVideoCheckForVbe (
       ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
     }
   }
-  
+#endif
+
+  EdidFound = FALSE;
+
   gBS->SetMem (&Regs, sizeof (Regs), 0);
   Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
   Regs.X.BX = 1;
