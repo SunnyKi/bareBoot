@@ -709,6 +709,7 @@ BdsLibEnumerateAllBootOption (
       }
 
       VolumeName = BdsLibGetVolumeName (FHandle, Index);
+      DBG ("BdsBoot: %d VolumeName: %s\n", Index, VolumeName);
 
       for (Index2 =  0; Index2 < MAX_LOADER_PATHS; Index2++) {
         if ((StrCmp (mLoaderPath[Index2], MACOSX_LOADER_PATH) == 0) ||
