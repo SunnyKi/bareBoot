@@ -597,6 +597,12 @@ egSaveFile (
     return EFI_NOT_FOUND;
   }
 
+  Status = BaseDir->Open(BaseDir, &FileHandle, FileName, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+
+  if (!EFI_ERROR(Status)) {
+    FileHandle->Delete (FileHandle);
+  }
+  
   Status = BaseDir->Open(BaseDir, &FileHandle, FileName,
                          EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
   if (EFI_ERROR(Status))
