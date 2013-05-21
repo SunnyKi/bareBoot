@@ -1659,7 +1659,7 @@ BiosVideoCheckForVbe (
 
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1024) {
       continue;
-    } else if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1440) {
+    } else if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1300) {
       DBG ("BiosVideo: VBE mode as insurance %d (%dx%d)\n",
            ModeNumber,
            BiosVideoPrivate->VbeModeInformationBlock->XResolution,
@@ -1672,7 +1672,7 @@ BiosVideoCheckForVbe (
          BiosVideoPrivate->VbeModeInformationBlock->YResolution,
          ModeNumber);
 
-    if (EdidFound && (ValidEdidTiming.ValidNumber > 0)) {
+    if (EdidFound && (ValidEdidTiming.ValidNumber > 0) && !ModeFound) {
       //
       // EDID exist, check whether this mode match with any mode in EDID
       //
@@ -2155,6 +2155,7 @@ BiosVideoGraphicsOutputSetMode (
       //
       Regs.X.AX = ModeData->VbeModeNumber;
       LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+      DBG ("BiosVideo: Set VGA Mode\n");
 
     } else {
       //
@@ -2186,9 +2187,11 @@ BiosVideoGraphicsOutputSetMode (
       if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
         return EFI_DEVICE_ERROR;
       }
+      DBG ("BiosVideo: Set VBE Mode succeeded\n");
       //
       // Initialize the state of the VbeFrameBuffer
       //
+#if 0
       Status = BiosVideoPrivate->PciIo->Mem.Read (
                                               BiosVideoPrivate->PciIo,
                                               EfiPciIoWidthUint32,
@@ -2200,6 +2203,8 @@ BiosVideoGraphicsOutputSetMode (
       if (EFI_ERROR (Status)) {
         return Status;
       }
+      DBG ("BiosVideo: Initialize the state of the VbeFrameBuffer succeeded\n");
+#endif
     }
 #if 0
   } else {
