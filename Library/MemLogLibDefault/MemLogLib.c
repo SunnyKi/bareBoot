@@ -54,9 +54,9 @@ CHAR8     mTimingTxt[32];
 
 
 /**
-  Inits mem log.
+  Produce current time as ascii text string
 
-  @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
+  @retval pointer to statuc buffer with current time or zero length string
 
 **/
 CHAR8*
@@ -86,8 +86,6 @@ GetTiming(VOID)
 	
 	return mTimingTxt;
 }
-
-
 
 /**
   Inits mem log.
