@@ -257,7 +257,6 @@
 
 
   # Bios Thunk
-  bareBoot/BiosVideo/BiosVideo.inf
   bareBoot/BiosVideoThunkDxe/BiosVideo.inf
 
   # HFS+
