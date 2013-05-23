@@ -176,8 +176,12 @@ PartitionInstallAppleChildHandles (
 
  done:
   
-  FreePool (AppleHeader);
-  FreePool (AppleEntry);
+  if (AppleHeader != NULL) {
+    FreePool (AppleHeader);
+  }
+  if (AppleEntry != NULL) {
+    FreePool (AppleEntry);
+  }
 
   return Status;
 }
