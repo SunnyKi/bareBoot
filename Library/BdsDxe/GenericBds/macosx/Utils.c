@@ -1271,6 +1271,8 @@ GetUserSettings (
     gSettings.NrKexts = (UINT32) plNodeGetSize (array);
     if ((gSettings.NrKexts <= 100)) {
       for (i = 0; i < gSettings.NrKexts; i++) {
+        gSettings.AnyKextDataLen[i] = 0;
+        len = 0;
         dictPointer = plNodeGetItem (array, i);
         gSettings.AnyKext[i] = GetStringProperty (dictPointer, "Name");
         // check if this is Info.plist patch or kext binary patch
@@ -1278,12 +1280,14 @@ GetUserSettings (
         if (gSettings.AnyKextInfoPlistPatch[i]) {
           // Info.plist
           // Find and Replace should be in <string>...</string>
-          gSettings.AnyKextDataLen[i] = 0;
           gSettings.AnyKextData[i] = GetStringProperty (dictPointer, "Find");
           if (gSettings.AnyKextData[i] != NULL) {
             gSettings.AnyKextDataLen[i] = AsciiStrLen (gSettings.AnyKextData[i]);
           }
           gSettings.AnyKextPatch[i] = GetStringProperty (dictPointer, "Replace");
+          if (gSettings.AnyKextPatch[i] != NULL) {
+            len = AsciiStrLen (gSettings.AnyKextPatch[i]);
+          }
         } else {
           // kext binary patch
           // Find and Replace should be in <data>...</data> or <string>...</string>
@@ -1291,8 +1295,8 @@ GetUserSettings (
           gSettings.AnyKextPatch[i] = GetDataSetting (dictPointer, "Replace", &len);
         }
         if (gSettings.AnyKextDataLen[i] != len || len == 0) {
-          gSettings.AnyKext[i][0] = '\0'; //just erase name
-          continue; //same i
+          gSettings.AnyKextDataLen[i] = 0;
+          continue;
         }
         gSettings.KPKextPatchesNeeded = TRUE;
       }
