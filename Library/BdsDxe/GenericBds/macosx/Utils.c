@@ -1306,11 +1306,7 @@ GetUserSettings (
   DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
 #ifdef BOOT_DEBUG
   for (i = 0; i < gSettings.NrKexts; i++) {
-    CHAR16  Buffer1[100];
-
-    ZeroMem (Buffer1, sizeof (Buffer1));
-    AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
-    DBG ("  %d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
+    DBG ("  %d. name = %a, lenght = %d, %a\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i], gSettings.AnyKextInfoPlistPatch[i]?"KextInfoPlistPatch ":"");
   }
 #endif
 
