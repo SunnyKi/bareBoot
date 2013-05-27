@@ -486,11 +486,7 @@ PatchKext (
         (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
       AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
 #ifdef KEXT_PATCH_DEBUG
-      CHAR16  Buffer1[100];
-
-      ZeroMem (Buffer1, sizeof (Buffer1));
-      AsciiStrToUnicodeStr (gSettings.AnyKext[i], Buffer1);
-      Print (L"  %d. name = %s, lenght = %d\n", (i + 1), Buffer1, gSettings.AnyKextDataLen[i]);
+      Print (L"  %d. name = %a, lenght = %d\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
       Pause (NULL);
 #endif
     }
