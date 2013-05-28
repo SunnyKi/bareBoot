@@ -859,7 +859,7 @@ PatchMemoryTables (
         newSmbiosTable.Type130->Hdr.Handle = NumberOfRecords;
         Handle = LogSmbiosTable (newSmbiosTable);
         
-        DBG ("Smbios: Type130 Lenght = 0x%x, Handle = 0x%x, Size = 0x%x\n",
+        DBG ("Smbios: Type130 Length = 0x%x, Handle = 0x%x, Size = 0x%x\n",
              newSmbiosTable.Type130->Hdr.Length,
              Handle,
              newSmbiosTable.Type130->Size

@@ -486,7 +486,7 @@ PatchKext (
         (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
       AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
 #ifdef KEXT_PATCH_DEBUG
-      Print (L"  %d. name = %a, lenght = %d\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
+      Print (L"  %d. name = %a, length = %d\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
       Pause (NULL);
 #endif
     }
