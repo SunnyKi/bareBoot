@@ -1306,7 +1306,7 @@ GetUserSettings (
   DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
 #ifdef BOOT_DEBUG
   for (i = 0; i < gSettings.NrKexts; i++) {
-    DBG ("  %d. name = %a, lenght = %d, %a\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i], gSettings.AnyKextInfoPlistPatch[i]?"KextInfoPlistPatch ":"");
+    DBG ("  %d. name = %a, length = %d, %a\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i], gSettings.AnyKextInfoPlistPatch[i]?"KextInfoPlistPatch ":"");
   }
 #endif
 
