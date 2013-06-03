@@ -380,7 +380,10 @@ typedef struct {
   UINT64  ResetAddr;
   UINT8   ResetVal;
   BOOLEAN DropSSDT;
+  BOOLEAN DropDMAR;
+#if 0
   BOOLEAN PatchAPIC;
+#endif
   UINT8   PMProfile;
   // Graphics
   BOOLEAN GraphicsInjector;

@@ -1155,7 +1155,10 @@ GetUserSettings (
   dictPointer = plDictFind (plist, "ACPI", 4, plKindDict);
 
   gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
+  gSettings.DropDMAR = GetBoolProperty (dictPointer, "DropDMAR", FALSE);
+#if 0
   gSettings.PatchAPIC = GetBoolProperty (dictPointer, "PatchAPIC", FALSE);
+#endif
   // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
   gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
   gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);

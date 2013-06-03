@@ -27,7 +27,9 @@ initial concept of DSDT patching by mackerintel
 #define TAMG_SIGN           SIGNATURE_32('T','A','M','G')
 #define ASF_SIGN            SIGNATURE_32('A','S','F','!')
 #define APIC_SIGN           SIGNATURE_32('A','P','I','C')
+#define DMAR_SIGN           SIGNATURE_32('D','M','A','R')
 #define NUM_TABLES          19
+#define PATHTOACPITABLESSIZE 250
 
 CONST CHAR8 oemID[6]       = HPET_OEM_ID;
 CONST CHAR8 oemTableID[8]  = HPET_OEM_TABLE_ID;
@@ -269,6 +271,7 @@ PatchACPI (
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
 
+#if 0
   EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
   EFI_ACPI_DESCRIPTION_HEADER                           *NewApicTable;
   EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER   *ApicHeader;
@@ -288,7 +291,9 @@ PatchACPI (
   UINT8                                                 ProcCount;
   UINT8                                                 Type;
 
-#define PATHTOACPITABLESSIZE 250
+  NewApicTable  = NULL;
+  ApicTable     = NULL;
+#endif
 
   buffer        = NULL;
   bufferLen     = 0;
@@ -303,8 +308,6 @@ PatchACPI (
   RsdPointer    = NULL;
   Status        = EFI_SUCCESS;
   xf            = NULL;
-  NewApicTable  = NULL;
-  ApicTable     = NULL;
 
   for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
     if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi20TableGuid)) {
@@ -394,7 +397,7 @@ PatchACPI (
     Print (L"no FADT entry in RSDT\n");
     return EFI_NOT_FOUND;
   }
-  
+#if 0
   // -===== APIC =====-
   if (gSettings.PatchAPIC) {
     xf = ScanXSDT (APIC_SIGN);
@@ -559,7 +562,7 @@ PatchACPI (
       DBG ("No APIC table Found or parse error !!!\r\n");
     }  
   }
-  
+#endif
   // --------------------
   
   BiosDsdt = FadtPointer->XDsdt;
@@ -722,6 +725,12 @@ PatchACPI (
     if (Xsdt != NULL) {
       Xsdt->Entry = (UINT64) ((UINT32) (UINTN) newFadt);
     }
+  }
+
+  // DropDMAR = Yes
+  if (gSettings.DropDMAR) {
+    DropTableFromRSDT (DMAR_SIGN);
+    DropTableFromXSDT (DMAR_SIGN);
   }
 
   // DropSSDT = Yes
