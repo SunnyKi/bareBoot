@@ -1239,6 +1239,36 @@ EnableSmbus (
 }
 #endif
 
+CHAR16*
+MakeProductNameDir (
+  IN CHAR16 *ProductName
+  )
+{
+  CHAR16 *tp;
+
+  if (ProductName == NULL) {
+    return NULL;
+  }
+
+  tp = ProductName + StrLen (ProductName);
+
+  /* Trim trailing nonprintables */
+  while (tp >= ProductName && (*tp <= L' ' || *tp == 0x00FF)) {
+    *tp = 0x0000;
+    tp--;
+  }
+  if (StrLen (ProductName) < 1) {
+    FreePool (ProductName);
+    return NULL;
+  }
+  tp = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (ProductName) + StrSize (L"\\"));
+  StrCpy (tp, L"\\EFI\\bareboot\\");
+  StrCat (tp, ProductName);
+  StrCat (tp, L"\\");
+  FreePool (ProductName);
+  return tp;
+}
+
 VOID
 EFIAPI
 PlatformBdsPolicyBehavior (
@@ -1330,27 +1360,15 @@ Returns:
   DBG ("BdsPlatorm: DMI TableType2->ProductName = '%s'\n", TmpString2);
 
   gPNDirExists = FALSE;
-  gProductNameDir = NULL;
-  gProductNameDir2 = NULL;
   gPNConfigPlist = NULL;
   gPNAcpiDir = NULL;
 
-  if (TmpString1 != NULL) {
-    gProductNameDir = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (TmpString1) + StrSize (L"\\"));
-    StrCpy (gProductNameDir, L"\\EFI\\bareboot\\");
-    StrCat (gProductNameDir, TmpString1);
-    StrCat (gProductNameDir, L"\\");
-    FreePool (TmpString1);
-  }
+  gProductNameDir = MakeProductNameDir (TmpString1);
 
-  if (TmpString2 != NULL) {
-    gProductNameDir2 = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (TmpString2) + StrSize (L"\\"));
-    StrCpy (gProductNameDir2, L"\\EFI\\bareboot\\");
-    StrCat (gProductNameDir2, TmpString2);
-    StrCat (gProductNameDir2, L"\\");
-    FreePool (TmpString2);
-  }
   DBG ("BdsPlatorm: ProductNameDir = '%s'\n", gProductNameDir);
+
+  gProductNameDir2 = MakeProductNameDir (TmpString2);
+
   DBG ("BdsPlatorm: ProductNameDir2 = '%s'\n", gProductNameDir2);
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");
