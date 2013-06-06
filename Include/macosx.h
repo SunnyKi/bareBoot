@@ -35,7 +35,6 @@
 
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiRuntimeServicesTableLib.h>
-#include <Library/MemLogLib.h>
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/HobLib.h>
@@ -44,6 +43,8 @@
 #include <Library/UefiLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
+
+#include <Library/MemLogLib.h>
 
 #if 0
 #define KEXT_PATCH_DEBUG

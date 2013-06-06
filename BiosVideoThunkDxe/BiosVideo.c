@@ -16,7 +16,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <macosx.h>
 
 #include "BiosVideo.h"
-#include <Library/MemLogLib.h>
 
 #if 0
 BOOLEAN mNoDetailedTiming;
