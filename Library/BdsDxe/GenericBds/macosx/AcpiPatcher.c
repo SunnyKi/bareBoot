@@ -31,10 +31,6 @@ initial concept of DSDT patching by mackerintel
 #define NUM_TABLES          19
 #define PATHTOACPITABLESSIZE 250
 
-CONST CHAR8 oemID[6]       = HPET_OEM_ID;
-CONST CHAR8 oemTableID[8]  = HPET_OEM_TABLE_ID;
-CONST CHAR8 creatorID[4]   = HPET_CREATOR_ID;
-
 RSDT_TABLE                    *Rsdt = NULL;
 XSDT_TABLE                    *Xsdt = NULL;
 

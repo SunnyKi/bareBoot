@@ -63,12 +63,6 @@
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))
 #define MAX_NUM_DEVICES 64
 
-#define XXXX_SIGN        SIGNATURE_32('X','X','X','X')
-#define HPET_SIGN        SIGNATURE_32('H','P','E','T')
-#define HPET_OEM_ID        { 'A', 'P', 'P', 'L', 'E', ' ' }
-#define HPET_OEM_TABLE_ID  { 'A', 'p', 'p', 'l', 'e', '0', '0', ' ' }
-#define HPET_CREATOR_ID    { 'L', 'o', 'k', 'i' }
-
 #define CLKNUM              1193182         /* formerly 1193167 1193182 */
 #define CALIBRATE_TIME_MSEC 30 /* msecs */
 #define CALIBRATE_LATCH     ((CLKNUM * CALIBRATE_TIME_MSEC + 1000/2)/1000)
