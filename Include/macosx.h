@@ -265,45 +265,6 @@
 #define REG32(base, reg)  ((volatile UINT32 *)(UINTN)base)[(reg) >> 2]
 #define WRITEREG32(base, reg, value) REG32(base, reg) = value
 
-#define AML_CHUNK_NONE    0xff
-#define AML_CHUNK_ZERO    0x00
-#define AML_CHUNK_ONE     0x01
-#define AML_CHUNK_ALIAS   0x06
-#define AML_CHUNK_NAME    0x08
-#define AML_CHUNK_BYTE    0x0A
-#define AML_CHUNK_WORD    0x0B
-#define AML_CHUNK_DWORD   0x0C
-#define AML_CHUNK_STRING  0x0D
-#define AML_CHUNK_QWORD   0x0E
-#define AML_CHUNK_SCOPE   0x10
-#define AML_CHUNK_PACKAGE 0x12
-#define AML_CHUNK_METHOD  0x14
-#define AML_CHUNK_RETURN  0xA4
-
-struct aml_chunk {
-  UINT8     Type;
-  UINT16    Length;
-  CHAR8*    Buffer;
-  UINT16    Size;
-  struct aml_chunk* Next;
-  struct aml_chunk* First;
-  struct aml_chunk* Last;
-};
-
-typedef struct aml_chunk AML_CHUNK;
-
-struct p_state {
-  union {
-    UINT16 Control;
-    struct {
-      UINT8 VID;  // Voltage ID
-      UINT8 FID;  // Frequency ID
-    };
-  };
-  UINT32    CID;    // Compare ID
-  UINT32  Frequency;
-};
-
 #pragma pack(1)
 
 typedef struct {
