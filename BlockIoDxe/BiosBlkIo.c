@@ -18,9 +18,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
-#include "BiosBlkIo.h"
+#include <macosx.h>
 
-#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
+#include "BiosBlkIo.h"
 
 //
 // Global data declaration

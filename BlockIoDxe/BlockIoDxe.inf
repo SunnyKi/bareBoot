@@ -39,20 +39,20 @@
   UefiLib
   DevicePathLib
   MemoryAllocationLib
-    MemLogLib
+  MemLogLib
 
 
 [Protocols]
   gEfiBlockIoProtocolGuid
   gEfiDevicePathProtocolGuid
   gEfiPciIoProtocolGuid
+  gEfiLegacy8259ProtocolGuid					 # PROTOCOL TO_START
 //  gEfiLegacyBiosProtocolGuid
-     gEfiLegacy8259ProtocolGuid					 # PROTOCOL TO_START
 
 
 [Guids]
-//  gEfiLegacyBiosGuid
   gBlockIoVendorGuid
+//  gEfiLegacyBiosGuid
 
 [Packages]
   bareBoot/bareBoot.dec
