@@ -13,8 +13,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "InternalBdsLib.h"
-#include "macosx/macosx.h"
-
 
 #define MAX_STRING_LEN        200
 

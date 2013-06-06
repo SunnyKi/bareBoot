@@ -3,7 +3,8 @@
  *
  */
 
-#include "macosx.h"
+#include <macosx.h>
+
 #include "kernel_patcher.h"
 #if 0
 #include "LoaderUefi.h"

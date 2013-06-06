@@ -71,6 +71,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <GenericBdsLib.h>
 #include <PlatformBdsLib.h>
 
+#include <macosx.h>
+
 #pragma pack(1)
 
 ///

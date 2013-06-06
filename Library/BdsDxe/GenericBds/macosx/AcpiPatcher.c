@@ -17,7 +17,7 @@ initial concept of DSDT patching by mackerintel
  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "macosx.h"
+#include <macosx.h>
 
 #define XXXX_SIGN           SIGNATURE_32('X','X','X','X')
 #define HPET_SIGN           SIGNATURE_32('H','P','E','T')

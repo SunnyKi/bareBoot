@@ -13,19 +13,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
+#include <macosx.h>
+
 #include "BiosVideo.h"
 #include <Library/MemLogLib.h>
-
-#if 1
-#define BOOT_DEBUG
-#endif
-
-#ifndef BOOT_DEBUG
-#define DBG(...)
-#else
-#define BOOT_LOG L"EFI\\bareboot\\boot.log"
-#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
-#endif
 
 #if 0
 BOOLEAN mNoDetailedTiming;

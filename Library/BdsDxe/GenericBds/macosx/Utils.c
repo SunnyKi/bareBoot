@@ -3,9 +3,10 @@
  * Utils.c - VirtualBox Console control emulation
  */
 
-#include "macosx.h"
-
+#include <macosx.h>
 #include <Library/plist.h>
+
+#include "../InternalBdsLib.h"
 
 BOOLEAN
 EfiGrowBuffer (

@@ -6,7 +6,8 @@
  */
 // UEFI adaptation by usr-sse2
 
-#include "macosx.h"
+#include <macosx.h>
+
 #include "device_inject.h"
 #include "nvidia.h"
 #include "ati.h"

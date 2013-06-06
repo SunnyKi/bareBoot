@@ -14,10 +14,7 @@
  some more adoptations for Apple's OS
  */
 
-/*******************************************************************************
- *   Header Files                                                               *
- *******************************************************************************/
-#include "macosx.h"
+#include <macosx.h>
 
 #define DEVICE_PROPERTIES_SIGNATURE SIGNATURE_64('A','P','P','L','E','D','E','V')
 EFI_GUID gDevicePropertiesGuid                  = {0x91BD12FE, 0xF6C3, 0x44FB, {0xA5, 0xB7, 0x51, 0x22, 0xAB, 0x30, 0x3A, 0xE0}};

@@ -14,7 +14,8 @@
  * Slice 2011  remade for UEFI
  */
 
-#include "macosx.h"
+#include <macosx.h>
+
 #include "spd.h"
 #include "memvendors.h"
 #include "Library/IoLib.h"
@@ -56,6 +57,7 @@ UINT8 spd_mem_to_smbios[] = {
 };
 
 INTN mapping [] = {0, 2, 1, 3, 4, 6, 5, 7, 8, 10, 9, 11};
+PCI_TYPE00                      mPci;
 
 /** Read one byte from the intel i2c, used for reading SPD on intel chipsets only. */
 
@@ -385,8 +387,8 @@ read_smb_intel (
   BOOLEAN         fullBanks;
   UINT16          vid, did;
 
-  vid = gPci.Hdr.VendorId;
-  did = gPci.Hdr.DeviceId;
+  vid = mPci.Hdr.VendorId;
+  did = mPci.Hdr.DeviceId;
   Status = PciIo->Pci.Read (
              PciIo,
              EfiPciIoWidthUint16,
@@ -518,15 +520,15 @@ ScanSPD (
                          PciIo,
                          EfiPciIoWidthUint32,
                          0,
-                         sizeof (gPci) / sizeof (UINT32),
-                         &gPci
+                         sizeof (mPci) / sizeof (UINT32),
+                         &mPci
                        );
 #if 0
               // SmBus controller has class = 0x0c0500
-              if ((gPci.Hdr.ClassCode[2] == 0x0c) && (gPci.Hdr.ClassCode[1] == 5)
-                   && (gPci.Hdr.ClassCode[0] == 0) && (gPci.Hdr.VendorId == 0x8086)) {
+              if ((mPci.Hdr.ClassCode[2] == 0x0c) && (mPci.Hdr.ClassCode[1] == 5)
+                   && (mPci.Hdr.ClassCode[0] == 0) && (mPci.Hdr.VendorId == 0x8086)) {
 #endif
-              if (gPci.Hdr.VendorId == 0x8086) {
+              if (mPci.Hdr.VendorId == 0x8086) {
                 Status = PciIo->GetLocation (PciIo, &Segment, &Bus, &Device, &Function);
                 if ((Bus == 0) && (Device == 0x1F) && (Function == 3)) {
                   read_smb_intel (PciIo);

@@ -12,7 +12,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
-#include "macosx/macosx.h"
 #include "InternalBdsLib.h"
 
 #define EFI_HANDLE_TYPE_UNKNOWN                     0x000

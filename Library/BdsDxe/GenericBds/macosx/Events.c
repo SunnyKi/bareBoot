@@ -10,9 +10,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 */
 
+#include <macosx.h>
 #include <Library/IoLib.h>
 
-#include "macosx.h"
 #include "kernel_patcher.h"
 
 EFI_EVENT   mVirtualAddressChangeEvent = NULL;

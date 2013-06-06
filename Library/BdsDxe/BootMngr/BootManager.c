@@ -14,7 +14,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "BootManager.h"
 #include "../../../Version.h"
-#include "../GenericBds/macosx/macosx.h"
 
 UINT16             mKeyInput;
 BDS_COMMON_OPTION  *gOption;

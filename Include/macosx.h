@@ -6,38 +6,52 @@
 #define _MACOSX_H_
 
 #include <Uefi.h>
+#include <FrameworkDxe.h>
+
 #include <Guid/Acpi.h>
 #include <Guid/EventGroup.h>
 #include <Guid/SmBios.h>
 #include <Guid/Mps.h>
-#include <Library/UefiBootServicesTableLib.h>
+#include <Guid/FileInfo.h>
+
 #include <Protocol/Cpu.h>
 #include <Protocol/CpuIo.h>
 #include <Protocol/Smbios.h>
 #include <Protocol/DataHub.h>
+#include <Protocol/PciIo.h>
+#include <Protocol/GraphicsOutput.h>
+#include <Protocol/UgaDraw.h>
+#include <Protocol/EdidDiscovered.h>
+#include <Protocol/SimpleFileSystem.h>
+
+#include <IndustryStandard/Pci.h>
+#include <IndustryStandard/HighPrecisionEventTimerTable.h>
 #include <IndustryStandard/Acpi10.h>
 #include <IndustryStandard/Acpi20.h>
 #if 0
 #include <IndustryStandard/Acpi30.h>
 #include <IndustryStandard/Acpi40.h>
 #endif
-#include <IndustryStandard/HighPrecisionEventTimerTable.h>
-#include <Protocol/EdidDiscovered.h>
-#include <Library/MemLogLib.h>
 
-#include "InternalBdsLib.h"
-#include "SmBios.h"
-#include "DataHubRecords.h"
-#include "boot.h"
-#include "device_inject.h"
+#include <Library/UefiBootServicesTableLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
+#include <Library/MemLogLib.h>
+#include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/HobLib.h>
+#include <Library/MemoryAllocationLib.h>
+#include <Library/PrintLib.h>
+#include <Library/UefiLib.h>
+#include <Library/DebugLib.h>
+#include <Library/DevicePathLib.h>
 
 #if 0
 #define KEXT_PATCH_DEBUG
 #endif
+
 #if 1
 #define BOOT_DEBUG
 #endif
-
 #ifndef BOOT_DEBUG
 #define DBG(...)
 #else
@@ -69,11 +83,6 @@
 #define CPUID_87  7
 #define CPUID_0B  8
 #define CPUID_MAX 9
-
-#define EAX 0
-#define EBX 1
-#define ECX 2
-#define EDX 3
 
 /* Decimal powers: */
 #define kilo (1000ULL)
@@ -504,7 +513,6 @@ typedef struct {
 
 MEM_STRUCTURE                   *gRAM;
 EFI_RUNTIME_SERVICES            *gRS;
-PCI_TYPE00                      gPci;
 EFI_FILE_HANDLE                 gRootFHandle;
 SETTINGS_DATA                   gSettings;
 EFI_GUID                        gUuid;

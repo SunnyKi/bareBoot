@@ -26,7 +26,8 @@
  * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
 
-#include "macosx.h"
+#include <macosx.h>
+
 #include "device_tree.h"
 
 #define round_long(x)	(((x) + 3UL) & ~(3UL))

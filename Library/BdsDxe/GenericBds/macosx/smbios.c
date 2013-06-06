@@ -19,7 +19,9 @@
  SmbiosGen.c
  **/
 
-#include "macosx.h"
+#include <macosx.h>
+
+#include "SmBios.h"
 
 #define MAX_HANDLE        0xFEFF
 #define SMBIOS_PTR        SIGNATURE_32('_','S','M','_')

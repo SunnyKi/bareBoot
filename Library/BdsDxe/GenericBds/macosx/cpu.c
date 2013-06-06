@@ -33,8 +33,13 @@
  * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
 
+#include <macosx.h>
 #include "Library/IoLib.h"
-#include "macosx.h"
+
+#define EAX 0
+#define EBX 1
+#define ECX 2
+#define EDX 3
 
 VOID
 SetPIT2Mode0 (

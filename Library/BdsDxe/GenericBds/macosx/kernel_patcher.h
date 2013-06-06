@@ -3,6 +3,8 @@
  *
  */
 
+#include "boot.h"
+
 #ifndef __LIBSAIO_KERNEL_PATCHER_H
 #define __LIBSAIO_KERNEL_PATCHER_H
 

@@ -16,8 +16,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "InternalBdsLib.h"
 #include "BootMaintLib.h"
 
-#include "macosx/macosx.h"
-
 #define CLOVER_MEDIA_FILE_NAME_IA32    L"\\EFI\\BOOT\\CLOVERIA32.EFI"
 #define CLOVER_MEDIA_FILE_NAME_X64     L"\\EFI\\BOOT\\CLOVERX64.EFI"
 
