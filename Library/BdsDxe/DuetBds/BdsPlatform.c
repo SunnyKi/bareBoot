@@ -128,7 +128,17 @@ UpdateMemoryMap (
   // Add ACPINVS, ACPIReclaim, and Reserved memory to MemoryMap
   //
   FirstNonConventionalAddr = 0xFFFFFFFF;
+  DBG ("Index  Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
   for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
+    DBG ("%02d     %02d    %016lx  %016lx  %016lx  %016lx  %08x\n",
+         Index,
+         MemoryDescHob.MemDesc[Index].Type,
+         MemoryDescHob.MemDesc[Index].PhysicalStart,
+         MemoryDescHob.MemDesc[Index].PhysicalStart + MemoryDescHob.MemDesc[Index].NumberOfPages * 4096,
+         MemoryDescHob.MemDesc[Index].NumberOfPages,
+         MemoryDescHob.MemDesc[Index].VirtualStart,
+         MemoryDescHob.MemDesc[Index].Attribute);
+    
     if (MemoryDescHob.MemDesc[Index].PhysicalStart < 0x100000) {
       continue;
     }
