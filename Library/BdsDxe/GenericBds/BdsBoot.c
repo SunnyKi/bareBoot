@@ -204,7 +204,6 @@ MacOS:
   SetupDataForOSX ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting EventsInitialize\n"));
   EventsInitialize ();
-
   DBG ("gST->Hdr.Signature = 0x%x\n", gST->Hdr.Signature);
   DBG ("gST->Hdr.Revision = 0x%x\n", gST->Hdr.Revision);
   DBG ("gST->Hdr.HeaderSize = 0x%x\n", gST->Hdr.HeaderSize);
@@ -240,9 +239,6 @@ MacOS:
     DBG ("gST->ConfigurationTable[Index].VendorGuid = %s\n", &Buffer1);
     DBG ("gST->ConfigurationTable[Index].VendorTable = 0x%x size = 0x%x\n", gST->ConfigurationTable[Index].VendorTable, sizeof( gST->ConfigurationTable[Index].VendorTable));
   }
-#ifdef BOOT_DEBUG
-  SaveBooterLog (gRootFHandle, BOOT_LOG);
-#endif
 
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
@@ -251,16 +247,23 @@ MacOS:
   
   if (StrLen(buffer) > 0) 
   {
-    ImageInfo->LoadOptionsSize  = (UINT32)StrSize(buffer);
+    ImageInfo->LoadOptionsSize  = (UINT32) StrSize(buffer);
     ImageInfo->LoadOptions      = buffer;
   }
 
   if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
     gST->ConOut = NULL; 
-  } 
+  }
+
+  WithKexts = LoadKexts ();
+#ifdef BOOT_DEBUG
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
+
 #if 0
   gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);
 #endif
+
 Next:
   if (ImageHandle == NULL) {
     goto Done;

@@ -7,6 +7,7 @@
 #include <Library/plist.h>
 
 #include "../InternalBdsLib.h"
+#include "../../BootMaintLib.h"
 
 BOOLEAN
 EfiGrowBuffer (
@@ -19,6 +20,7 @@ CHAR8*  DefaultMemEntry = "N/A";
 CHAR8*  DefaultSerial = "CT288GT9VT6";
 CHAR8*  BiosVendor = "Apple Inc.";
 CHAR8*  AppleManufacturer = "Apple Computer, Inc.";
+EFI_UNICODE_COLLATION_PROTOCOL  *gUnicodeCollation = NULL;
 
 CHAR8* AppleFirmwareVersion[24] = {
   "MB11.88Z.0061.B03.0809221748",
@@ -634,6 +636,187 @@ SaveBooterLog (
   
   return egSaveFile(BaseDir, FileName, (UINT8*) MemLogBuffer, MemLogLen);
 }
+
+EFI_STATUS
+InitializeUnicodeCollationProtocol (
+  VOID
+)
+{
+	EFI_STATUS  Status;
+
+	if (gUnicodeCollation != NULL) {
+		return EFI_SUCCESS;
+	}
+
+	//
+	// BUGBUG: Proper impelmentation is to locate all Unicode Collation Protocol
+	// instances first and then select one which support English language.
+	// Current implementation just pick the first instance.
+	//
+	Status = gBS->LocateProtocol (
+                  &gEfiUnicodeCollation2ProtocolGuid,
+                  NULL,
+                  (VOID **) &gUnicodeCollation
+                  );
+  if (EFI_ERROR(Status)) {
+    Status = gBS->LocateProtocol (
+                    &gEfiUnicodeCollationProtocolGuid,
+                    NULL,
+                    (VOID **) &gUnicodeCollation
+                    );
+
+  }
+	return Status;
+}
+
+BOOLEAN
+MetaiMatch (
+  IN CHAR16   *String,
+  IN CHAR16   *Pattern
+)
+{
+	if (!gUnicodeCollation) {
+		// quick fix for driver loading on UEFIs without UnicodeCollation
+		//return FALSE;
+		return TRUE;
+	}
+	return gUnicodeCollation->MetaiMatch (gUnicodeCollation, String, Pattern);
+}
+
+EFI_STATUS
+DirNextEntry (
+  IN EFI_FILE *Directory,
+  IN OUT EFI_FILE_INFO **DirEntry,
+  IN UINTN FilterMode
+)
+{
+  EFI_STATUS Status;
+  VOID *Buffer;
+  UINTN LastBufferSize, BufferSize;
+  INTN IterCount;
+
+  for (;;) {
+
+    // free pointer from last call
+    if (*DirEntry != NULL) {
+      FreePool(*DirEntry);
+      *DirEntry = NULL;
+    }
+
+    // read next directory entry
+    LastBufferSize = BufferSize = 256;
+    Buffer = AllocateZeroPool (BufferSize);
+    for (IterCount = 0; ; IterCount++) {
+      Status = Directory->Read(Directory, &BufferSize, Buffer);
+      if (Status != EFI_BUFFER_TOO_SMALL || IterCount >= 4)
+        break;
+      if (BufferSize <= LastBufferSize) {
+        BufferSize = LastBufferSize * 2;
+      }
+      Buffer = EfiReallocatePool(Buffer, LastBufferSize, BufferSize);
+      LastBufferSize = BufferSize;
+    }
+    if (EFI_ERROR(Status)) {
+      FreePool(Buffer);
+      break;
+    }
+
+    // check for end of listing
+    if (BufferSize == 0) {    // end of directory listing
+      FreePool(Buffer);
+      break;
+    }
+
+    // entry is ready to be returned
+    *DirEntry = (EFI_FILE_INFO *)Buffer;
+    if (*DirEntry) {
+      // filter results
+      if (FilterMode == 1) {   // only return directories
+        if (((*DirEntry)->Attribute & EFI_FILE_DIRECTORY))
+          break;
+      } else if (FilterMode == 2) {   // only return files
+        if (((*DirEntry)->Attribute & EFI_FILE_DIRECTORY) == 0)
+          break;
+      } else                   // no filter or unknown filter -> return everything
+        break;
+    }
+  }
+  return Status;
+}
+
+VOID
+DirIterOpen (
+  IN EFI_FILE *BaseDir,
+  IN CHAR16 *RelativePath OPTIONAL,
+  OUT DIR_ITER *DirIter
+)
+{
+  if (RelativePath == NULL) {
+    DirIter->LastStatus = EFI_SUCCESS;
+    DirIter->DirHandle = BaseDir;
+    DirIter->CloseDirHandle = FALSE;
+  } else {
+    DirIter->LastStatus = BaseDir->Open(BaseDir, &(DirIter->DirHandle), RelativePath, EFI_FILE_MODE_READ, 0);
+    DirIter->CloseDirHandle = EFI_ERROR(DirIter->LastStatus) ? FALSE : TRUE;
+  }
+  DirIter->LastFileInfo = NULL;
+}
+
+BOOLEAN
+DirIterNext (
+  IN OUT DIR_ITER *DirIter,
+  IN UINTN FilterMode,
+  IN CHAR16 *FilePattern OPTIONAL,
+  OUT EFI_FILE_INFO **DirEntry
+)
+{
+  if (DirIter->LastFileInfo != NULL) {
+    FreePool(DirIter->LastFileInfo);
+    DirIter->LastFileInfo = NULL;
+  }
+
+  if (EFI_ERROR(DirIter->LastStatus)) {
+    return FALSE;   // stop iteration
+  }
+
+  for (;;) {
+    DirIter->LastStatus = DirNextEntry(DirIter->DirHandle, &(DirIter->LastFileInfo), FilterMode);
+    if (EFI_ERROR(DirIter->LastStatus)) {
+      return FALSE;
+    }
+    if (DirIter->LastFileInfo == NULL)  {// end of listing
+      return FALSE;
+    }
+    if (FilePattern != NULL) {
+      if ((DirIter->LastFileInfo->Attribute & EFI_FILE_DIRECTORY)) {
+        break;
+      }
+      if (MetaiMatch(DirIter->LastFileInfo->FileName, FilePattern)) {
+        break;
+      }
+      // else continue loop
+    } else
+      break;
+  }
+
+  *DirEntry = DirIter->LastFileInfo;
+  return TRUE;
+}
+
+EFI_STATUS
+DirIterClose (
+  IN OUT DIR_ITER *DirIter
+)
+{
+  if (DirIter->LastFileInfo != NULL) {
+    FreePool(DirIter->LastFileInfo);
+    DirIter->LastFileInfo = NULL;
+  }
+  if (DirIter->CloseDirHandle)
+    DirIter->DirHandle->Close(DirIter->DirHandle);
+  return DirIter->LastStatus;
+}
+
 //---------------------------------------------------------------------------------
 BOOLEAN
 IsHexDigit (

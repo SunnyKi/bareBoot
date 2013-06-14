@@ -708,6 +708,10 @@ KernelAndKextsPatcherStart (
   VOID
 )
 {
+  UINT32      deviceTreeP;
+  UINT32      deviceTreeLength;
+  EFI_STATUS  Status;
+
   // we will call KernelAndKextPatcherInit() only if needed
   if (gSettings.KPKernelCpu) {
     //
@@ -720,6 +724,9 @@ KernelAndKextsPatcherStart (
         (gCPUStructure.Model == CPU_MODEL_IVY_BRIDGE_E5 && AsciiStrStr (OSVersion, "10.7") != 0)) {
       KernelAndKextPatcherInit ();
       if (KernelData == NULL) {
+#ifdef KEXT_PATCH_DEBUG
+        Print (L"Kernel Patcher: kernel data is NULL.\n");
+#endif
         return;
       }
 
@@ -733,39 +740,43 @@ KernelAndKextsPatcherStart (
   //
   // Kext patches
   //
+  KernelAndKextPatcherInit ();
+
+  if (KernelData == NULL) {
+#ifdef KEXT_PATCH_DEBUG
+    Print (L"Kernel Patcher: kernel data is NULL.\n");
+#endif
+    return;
+  }
+
   if (gSettings.KPKextPatchesNeeded) {
-    KernelAndKextPatcherInit ();
-    if (KernelData == NULL) {
-      return;
-    }
     KextPatcherStart ();
   }
-#if 0
-  //
-  // Kext add
-  //
-  if (AsciiStrStr(gSettings.BootArgs, "WithKexts") == NULL)
-  {
-    UINT32      deviceTreeP;
-    UINT32      deviceTreeLength;
-    EFI_STATUS  Status;
-
-    KernelAndKextPatcherInit ();
-    if (KernelData == NULL) {
+  
+  if (WithKexts) {
+    if (bootArgs1 != NULL) {
+      deviceTreeP = bootArgs1->deviceTreeP;
+      deviceTreeLength = bootArgs1->deviceTreeLength;
+    } else if (bootArgs2 != NULL) {
+      deviceTreeP = bootArgs2->deviceTreeP;
+      deviceTreeLength = bootArgs2->deviceTreeLength;
+    } else {
+#ifdef KEXT_INJECT_DEBUG
+      Print (L"Kext Injection: bootArgs not found.\n");
+      gBS->Stall (5000000);
+#endif
       return;
     }
-
-    if (bootArgs1 != NULL) {
-        deviceTreeP = bootArgs1->deviceTreeP;
-        deviceTreeLength = bootArgs1->deviceTreeLength;
-    } else if (bootArgs2 != NULL) {
-        deviceTreeP = bootArgs2->deviceTreeP;
-        deviceTreeLength = bootArgs2->deviceTreeLength;
-    } else return;
 
     Status = InjectKexts (deviceTreeP, &deviceTreeLength);
 
-    if (!EFI_ERROR(Status)) KernelBooterExtensionsPatch (KernelData);
-  }
+    if (!EFI_ERROR(Status)) {
+      KernelBooterExtensionsPatch (KernelData);
+    } else {
+#ifdef KEXT_INJECT_DEBUG
+      Print (L"Kext Injection: InjectKexts error with status %r.\n", Status);
+      gBS->Stall (5000000);
 #endif
+    }
+  }
 }

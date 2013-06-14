@@ -23,6 +23,7 @@
 #include <Protocol/UgaDraw.h>
 #include <Protocol/EdidDiscovered.h>
 #include <Protocol/SimpleFileSystem.h>
+#include <Protocol/UnicodeCollation.h>
 
 #include <IndustryStandard/Pci.h>
 #include <IndustryStandard/HighPrecisionEventTimerTable.h>
@@ -48,6 +49,9 @@
 
 #if 0
 #define KEXT_PATCH_DEBUG
+#endif
+#if 1
+#define KEXT_INJECT_DEBUG
 #endif
 
 #if 1
@@ -280,6 +284,13 @@ typedef struct {
 #pragma pack()
 
 typedef struct {
+  EFI_STATUS          LastStatus;
+  EFI_FILE            *DirHandle;
+  BOOLEAN             CloseDirHandle;
+  EFI_FILE_INFO       *LastFileInfo;
+} DIR_ITER;
+
+typedef struct {
   UINT8   Type;
   UINT8   BankConnections;
   UINT8   BankConnectionCount;
@@ -486,12 +497,16 @@ CHAR16                          *gProductNameDir2;
 CHAR16                          *gPNConfigPlist;
 CHAR16                          *gPNAcpiDir;
 BOOLEAN                         gPNDirExists;
+BOOLEAN                         WithKexts;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
 extern EFI_GUID                 gEfiAppleNvramGuid;
 extern EFI_GUID                 gEfiAppleBootGuid;
+extern EFI_GUID                 gEfiMiscSubClassGuid;
 extern BOOLEAN                  SSSE3;
+extern EFI_UNICODE_COLLATION_PROTOCOL  *gUnicodeCollation;
+
 // ----------------------------------------
 UINT32
 hex2bin (
@@ -628,6 +643,70 @@ GetOptionalStringByIndex (
   IN      CHAR8                   *OptionalStrStart,
   IN      UINT8                   Index,
   OUT     CHAR16                  **String
+);
+
+VOID*
+LoadPListFile (
+  IN EFI_FILE *RootFileHandle,
+  IN CHAR16* XmlPlistPath
+);
+
+BOOLEAN
+GetUnicodeProperty (
+  VOID* dict,
+  CHAR8* key,
+  CHAR16* uptr
+);
+
+EFI_STATUS
+InitializeUnicodeCollationProtocol (
+  VOID
+);
+
+VOID
+DirIterOpen (
+  IN EFI_FILE *BaseDir,
+  IN CHAR16 *RelativePath OPTIONAL,
+  OUT DIR_ITER *DirIter
+);
+
+BOOLEAN
+DirIterNext (
+  IN OUT DIR_ITER *DirIter,
+  IN UINTN FilterMode,
+  IN CHAR16 *FilePattern OPTIONAL,
+  OUT EFI_FILE_INFO **DirEntry
+);
+
+EFI_STATUS
+DirIterClose (
+  IN OUT DIR_ITER *DirIter
+);
+
+EFI_STATUS
+EFIAPI
+LogDataHub (
+  EFI_GUID         *TypeGuid,
+  CHAR16           *Name,
+  VOID             *Data,
+  UINT32           DataSize
+);
+
+BOOLEAN
+LoadKexts (
+  VOID
+);
+
+VOID
+EFIAPI
+KernelBooterExtensionsPatch (
+  IN UINT8 *Kernel
+);
+
+EFI_STATUS
+InjectKexts (
+  IN UINT32 deviceTreeP,
+  IN UINT32* deviceTreeLength
 );
 
 #endif

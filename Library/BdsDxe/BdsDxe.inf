@@ -87,6 +87,7 @@
   GenericBds/macosx/device_inject.c
   GenericBds/macosx/kernel_patcher.c
   GenericBds/macosx/kext_patcher.c
+  GenericBds/macosx/kext_inject.c
   GenericBds/macosx/device_tree.c
 #  GenericBds/macosx/guid.c
 #  GenericBds/macosx/Devices.c
@@ -197,7 +198,6 @@
   gLdrMemoryDescriptorGuid
   gEfiFileSystemInfoGuid
 
-
 [Protocols]
   gEfiSimpleFileSystemProtocolGuid              ## PROTOCOL CONSUMES
   gEfiLoadFileProtocolGuid                      ## PROTOCOL CONSUMES
@@ -235,6 +235,8 @@
   gEfiEdidDiscoveredProtocolGuid
   gEfiEdidActiveProtocolGuid
   gEfiStatusCodeRuntimeProtocolGuid
+  gEfiUnicodeCollationProtocolGuid                       # ALWAYS_CONSUMED  
+  gEfiUnicodeCollation2ProtocolGuid                       # ALWAYS_CONSUMED  
 
 [FeaturePcd]
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangDeprecate

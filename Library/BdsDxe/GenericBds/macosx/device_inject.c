@@ -1447,7 +1447,7 @@ load_vbios_file (
 {
   EFI_STATUS            Status;
   UINTN bufferLen;
-  CHAR16 FileName[24];
+  CHAR16 FileName[40];
   UINT8*  buffer;
 
   if (!gSettings.LoadVBios) {
