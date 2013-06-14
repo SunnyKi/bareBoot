@@ -1510,22 +1510,24 @@ STATIC CHAR16* OSVersionFiles[] = {
 
 EFI_STATUS
 GetOSVersion (
-  IN EFI_FILE   *FileHandle
+  IN EFI_FILE   *FileHandle,
+  IN CHAR16     *LoadOptions
 )
 {
   UINTN i;
   VOID* plist;
 
   /* Mac OS X */
-
+  OSVersion = NULL;
+  if (StrStr (LoadOptions, L"OS X Install Data") == NULL) {
   for (i = 0; i < 3; i++) {
-    plist = LoadPListFile (FileHandle, OSVersionFiles[i]);
-    if (plist != NULL) {
-      GetAsciiProperty (plist, "ProductVersion", OSVersion);
-      plNodeDelete (plist);
-      return EFI_SUCCESS;
+      plist = LoadPListFile (FileHandle, OSVersionFiles[i]);
+      if (plist != NULL) {
+        GetAsciiProperty (plist, "ProductVersion", OSVersion);
+        plNodeDelete (plist);
+        return EFI_SUCCESS;
+      }
     }
   }
-
   return EFI_NOT_FOUND;
 }

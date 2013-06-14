@@ -229,20 +229,22 @@ GetExtraKextsDir (
 
   OSTypeStr = NULL;
   KextsDir = NULL;
-  
-  // get os version as string
-  if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
-    OSTypeStr = L"10.5";
-  } else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
-    OSTypeStr = L"10.6";
-  } else if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
-    OSTypeStr = L"10.7";
-  } else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0) {
-    OSTypeStr = L"10.8";
-  } else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
-    OSTypeStr = L"10.9";
-  } else {
+
+  if (OSVersion == NULL) {
     OSTypeStr = L"other";
+  } else {
+    // get os version as string
+    if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
+      OSTypeStr = L"10.5";
+    } else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
+      OSTypeStr = L"10.6";
+    } else if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
+      OSTypeStr = L"10.7";
+    } else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0) {
+      OSTypeStr = L"10.8";
+    } else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
+      OSTypeStr = L"10.9";
+    }
   }
   // find source injection folder with kexts
   // note: we are just checking for existance of particular folder, not checking if it is empty or not
@@ -257,6 +259,8 @@ GetExtraKextsDir (
     StrCpy (KextsDir, L"\\EFI\\bareboot\\kexts\\");
     StrCat (KextsDir,OSTypeStr);
   }
+
+  DBG ("Kext Inject: expected extra kexts dir is %s\n", KextsDir);
 
   if (!FileExists(gRootFHandle, KextsDir)) {
     return NULL;
@@ -288,11 +292,11 @@ LoadKexts (
 	UINTN					extra_size;
 	VOID					*extra;
 
-	if     (AsciiStrStr(gSettings.BootArgs,"arch=x86_64")!=NULL)	archCpuType = CPU_TYPE_X86_64;
-	else if(AsciiStrStr(gSettings.BootArgs,"arch=i386")!=NULL)		archCpuType = CPU_TYPE_I386;
-	else if(AsciiStrnCmp(OSVersion,"10.8",4)==0)                  archCpuType = CPU_TYPE_X86_64;
-  else if(AsciiStrnCmp(OSVersion,"10.9",4)==0)                  archCpuType = CPU_TYPE_X86_64;
-	else if(AsciiStrnCmp(OSVersion,"10.7",4)!=0)                  archCpuType = CPU_TYPE_I386;
+  archCpuType = CPU_TYPE_X86_64;
+
+	if      (AsciiStrStr(gSettings.BootArgs,"arch=i386")!=NULL)		archCpuType = CPU_TYPE_I386;
+	else if (AsciiStrStr(gSettings.BootArgs,"arch=x86_64")!=NULL) archCpuType = CPU_TYPE_X86_64;
+	else if (AsciiStrnCmp(OSVersion,"10.5",4)!=0)                 archCpuType = CPU_TYPE_I386;
 
   InitializeUnicodeCollationProtocol ();
 	SrcDir = GetExtraKextsDir ();
@@ -535,6 +539,7 @@ KernelBooterExtensionsPatch (
     // and we'll skipp it
 #ifdef KEXT_INJECT_DEBUG
 		Print (L"Kext Inject: more then one pattern found - we do not know what to do with it.\n");
+    gBS->Stall (5000000);
 #endif
     return;
   }
@@ -550,5 +555,6 @@ KernelBooterExtensionsPatch (
   }
 #ifdef KEXT_INJECT_DEBUG
   Print (L"Kext Inject: SearchAndReplace %d times.\n", Num);
+  gBS->Stall (5000000);
 #endif
 }
