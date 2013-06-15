@@ -190,9 +190,6 @@ UINT32 GetListCount(LIST_ENTRY const* List)
     Print (L"Kext Inject: Get List Count - list is empty.\n");
 #endif
   }
-#ifdef KEXT_INJECT_DEBUG
-  Print (L"Kext Inject:  Get List Count = %d.\n", Count);
-#endif
 	return Count;
 }
 
@@ -291,6 +288,7 @@ LoadKexts (
 	VOID					*mm_extra;
 	UINTN					extra_size;
 	VOID					*extra;
+  UINT16        KextCount;
 
   archCpuType = CPU_TYPE_X86_64;
 
@@ -333,8 +331,10 @@ LoadKexts (
 
   DirIterClose(&KextIter);
 
-  if (GetKextCount() > 0) {
-    mm_extra_size = GetKextCount() * (sizeof(DeviceTreeNodeProperty) + sizeof(_DeviceTreeBuffer));
+  KextCount = GetKextCount();
+  DBG ("Kext Inject:  KextCount = %d\n", KextCount);
+  if (KextCount > 0) {
+    mm_extra_size = KextCount * (sizeof(DeviceTreeNodeProperty) + sizeof(_DeviceTreeBuffer));
     mm_extra = AllocateZeroPool(mm_extra_size - sizeof(DeviceTreeNodeProperty));
     Status =  LogDataHub (
                 &gEfiMiscSubClassGuid,
@@ -369,30 +369,27 @@ InjectKexts (
 {
 	UINT8					*dtEntry = (UINT8*)(UINTN) deviceTreeP;
 	UINTN					dtLength = (UINTN) *deviceTreeLength;
-
-	DTEntry					platformEntry;
-	DTEntry					memmapEntry;
-	CHAR8 					*ptr;
-	struct OpaqueDTPropertyIterator OPropIter;
-	DTPropertyIterator		iter = &OPropIter;
-	DeviceTreeNodeProperty	*prop = NULL;
-
+	DTEntry				platformEntry;
+	DTEntry				memmapEntry;
+	CHAR8 				*ptr;
 	UINT8					*infoPtr = 0;
 	UINT8					*extraPtr = 0;
 	UINT8					*drvPtr = 0;
 	UINTN					offset = 0;
+	UINTN					Index;
 
 	LIST_ENTRY				*Link;
 	KEXT_ENTRY				*KextEntry;
 	UINTN					KextBase = 0;
+
+	struct OpaqueDTPropertyIterator OPropIter;
+	DTPropertyIterator		iter = &OPropIter;
+	DeviceTreeNodeProperty	*prop = NULL;
 	_DeviceTreeBuffer		*mm;
 	_BooterKextFileInfo		*drvinfo;
 	
-	UINT32					KextCount;
-	UINTN					Index;
-	
-	KextCount = GetKextCount();
-	if (KextCount == 0) {
+
+	if (GetKextCount() == 0) {
 #ifdef KEXT_INJECT_DEBUG
     Print (L"Kext Inject: extra kexts not found.\n");
 #endif
