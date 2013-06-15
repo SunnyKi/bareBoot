@@ -277,22 +277,26 @@ LoadKexts (
 	EFI_FILE_INFO           *PlugInFile;
 	CHAR16                  FileName[256];
 	CHAR16                  PlugIns[256];
-#if defined(MDE_CPU_X64)
-	cpu_type_t archCpuType=CPU_TYPE_X86_64;
-#else
-	cpu_type_t archCpuType=CPU_TYPE_I386;
-#endif
 	UINTN					mm_extra_size;
 	VOID					*mm_extra;
 	UINTN					extra_size;
 	VOID					*extra;
   UINT16        KextCount;
 
-	if     (AsciiStrStr(gSettings.BootArgs,"arch=x86_64")!=NULL)	archCpuType = CPU_TYPE_X86_64;
-	else if(AsciiStrStr(gSettings.BootArgs,"arch=i386")!=NULL)		archCpuType = CPU_TYPE_I386;
-	else if(AsciiStrnCmp(OSVersion,"10.8",4)==0)                  archCpuType = CPU_TYPE_X86_64;
-  else if(AsciiStrnCmp(OSVersion,"10.9",4)==0)                  archCpuType = CPU_TYPE_X86_64;
-	else if(AsciiStrnCmp(OSVersion,"10.7",4)!=0)                  archCpuType = CPU_TYPE_I386;
+#if defined(MDE_CPU_X64)
+	cpu_type_t archCpuType = CPU_TYPE_X86_64;
+#else
+	cpu_type_t archCpuType = CPU_TYPE_I386;
+#endif
+
+  if      (AsciiStrStr (gSettings.BootArgs,"arch=x86_64") != NULL)	archCpuType = CPU_TYPE_X86_64;
+  else if (AsciiStrStr (gSettings.BootArgs,"arch=i386") != NULL)		archCpuType = CPU_TYPE_I386;
+
+  if (OSVersion != NULL) {
+    if      (AsciiStrnCmp (OSVersion,"10.9",4) == 0)                 archCpuType = CPU_TYPE_X86_64;
+    else if (AsciiStrnCmp (OSVersion,"10.8",4) == 0)                 archCpuType = CPU_TYPE_X86_64;
+    else if (AsciiStrnCmp (OSVersion,"10.7",4) != 0)                 archCpuType = CPU_TYPE_I386;
+  }
 
   InitializeUnicodeCollationProtocol ();
 	SrcDir = GetExtraKextsDir ();
