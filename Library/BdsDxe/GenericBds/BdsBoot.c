@@ -185,7 +185,7 @@ MacOS:
                      );
   }
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetOSVersion\n"));
-  GetOSVersion (FHandle, LoadOptions);
+  GetOSVersion (FHandle);
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetCpuProps\n"));
   GetCpuProps ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));

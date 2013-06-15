@@ -635,8 +635,7 @@ EventsInitialize (
 
 EFI_STATUS
 GetOSVersion(
-  IN EFI_FILE   *FileHandle,
-  IN CHAR16     *LoadOptions
+  IN EFI_FILE *FileHandle
 );
 
 EFI_STATUS
