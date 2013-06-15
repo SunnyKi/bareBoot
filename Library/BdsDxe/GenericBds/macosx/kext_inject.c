@@ -255,6 +255,8 @@ GetExtraKextsDir (
     StrCat (KextsDir,OSTypeStr);
   }
 
+  DBG ("Kext Inject: expected extra kexts dir is %s\n", KextsDir);
+
   if (!FileExists(gRootFHandle, KextsDir)) {
     return NULL;
   }
