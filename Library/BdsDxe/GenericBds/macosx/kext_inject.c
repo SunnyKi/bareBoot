@@ -332,7 +332,7 @@ LoadKexts (
 
   DirIterClose(&KextIter);
 
-  KextCount = GetKextCount();
+  KextCount = (UINT16) GetKextCount();
   DBG ("Kext Inject:  KextCount = %d\n", KextCount);
   if (KextCount > 0) {
     mm_extra_size = KextCount * (sizeof(DeviceTreeNodeProperty) + sizeof(_DeviceTreeBuffer));
