@@ -13,7 +13,13 @@ LIST_ENTRY gKextList = INITIALIZE_LIST_HEAD_VARIABLE (gKextList);
 ////////////////////
 // before booting
 ////////////////////
-EFI_STATUS EFIAPI ThinFatFile(IN OUT UINT8 **binary, IN OUT UINTN *length, IN cpu_type_t archCpuType) 
+EFI_STATUS
+EFIAPI
+ThinFatFile (
+  IN OUT UINT8 **binary,
+  IN OUT UINTN *length,
+  IN cpu_type_t archCpuType
+)
 {
 	UINT32 nfat, swapped, size = 0;
 	FAT_HEADER *fhp = (FAT_HEADER *)*binary;
@@ -177,10 +183,13 @@ AddKext (
 	return Status;
 }
 
-UINT32 GetListCount(LIST_ENTRY const* List)
+UINT16
+GetListCount (
+  LIST_ENTRY const* List
+)
 {
 	LIST_ENTRY		*Link;
-	UINT32			Count=0;
+	UINT16			Count=0;
 
 	if(!IsListEmpty(List)) {
 		for (Link = List->ForwardLink; Link != List; Link = Link->ForwardLink) 
@@ -193,12 +202,18 @@ UINT32 GetListCount(LIST_ENTRY const* List)
 	return Count;
 }
 
-UINT32 GetKextCount()
+UINT16
+GetKextCount (
+  VOID
+)
 {
-	return (UINT32) GetListCount (&gKextList);
+	return GetListCount (&gKextList);
 }
 
-UINT32 GetKextsSize()
+UINT32
+GetKextsSize (
+VOID
+)
 {
 	LIST_ENTRY		*Link;
 	KEXT_ENTRY		*KextEntry;
@@ -332,7 +347,7 @@ LoadKexts (
 
   DirIterClose(&KextIter);
 
-  KextCount = (UINT16) GetKextCount();
+  KextCount = GetKextCount ();
   DBG ("Kext Inject:  KextCount = %d\n", KextCount);
   if (KextCount > 0) {
     mm_extra_size = KextCount * (sizeof(DeviceTreeNodeProperty) + sizeof(_DeviceTreeBuffer));
@@ -390,7 +405,7 @@ InjectKexts (
 	_BooterKextFileInfo		*drvinfo;
 	
 
-	if (GetKextCount() == 0) {
+	if (GetKextCount () == 0) {
 #ifdef KEXT_INJECT_DEBUG
     Print (L"Kext Inject: extra kexts not found.\n");
 #endif
