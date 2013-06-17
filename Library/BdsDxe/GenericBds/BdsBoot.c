@@ -499,13 +499,6 @@ BdsLibEnumerateAllBootOption (
   )
 {
   EFI_STATUS                    Status;
-#if 0
-  UINT16                        FloppyNumber;
-  UINT16                        NonBlockNumber;
-  BOOLEAN                       Removable[2];
-  CHAR8                         *PlatLang;
-  CHAR8                         *LastLang;
-#endif
   BOOLEAN                       ConfigNotFound;
   UINTN                         Index, Index2;
   UINTN                         FvHandleCount;
@@ -560,198 +553,125 @@ BdsLibEnumerateAllBootOption (
     StrCat (PNConfigPlist2, L"config.plist");
   }
 
-#if 0
-  PlatLang        = NULL;
-  LastLang        = NULL;
-  FloppyNumber    = 0;
-
-  //
-  // If the boot device enumerate happened, just get the boot
-  // device from the boot order variable
-  //
-  if (mEnumBootDevice) {
-    LastLang = GetVariable (LAST_ENUM_LANGUAGE_VARIABLE_NAME, &gLastEnumLangGuid);
-    PlatLang = GetEfiGlobalVariable (L"PlatformLang");
-    ASSERT (PlatLang != NULL);
-    if ((LastLang != NULL) && (AsciiStrCmp (LastLang, PlatLang) == 0)) {
-      Status = BdsLibBuildOptionFromVar (BdsBootOptionList, L"BootOrder");
-      FreePool (LastLang);
-      FreePool (PlatLang);
-      return Status;
-    } else {
-      Status = gRT->SetVariable (
-        LAST_ENUM_LANGUAGE_VARIABLE_NAME,
-        &gLastEnumLangGuid,
-        EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_NON_VOLATILE,
-        AsciiStrSize (PlatLang),
-        PlatLang
-        );
-      ASSERT_EFI_ERROR (Status);
-
-      if (LastLang != NULL) {
-        FreePool (LastLang);
-      }
-      FreePool (PlatLang);
-    }
-  }
-
-  //
-  // Notes: this dirty code is to get the legacy boot option from the
-  // BBS table and create to variable as the EFI boot option, it should
-  // be removed after the CSM can provide legacy boot option directly
-  //
-//  REFRESH_LEGACY_BOOT_OPTIONS;
-
-  //
-  // Delete invalid boot option
-  //
   BdsDeleteAllInvalidEfiBootOption ();
 
-  //
-  // Parse removable media followed by fixed media.
-  // The Removable[] array is used by the for-loop below to create removable media boot options 
-  // at first, and then to create fixed media boot options.
-  //
+  gBS->LocateHandleBuffer (
+                           ByProtocol,
+                           &gEfiBlockIoProtocolGuid,
+                           NULL,
+                           &NumberBlockIoHandles,
+                           &BlockIoHandles
+                           );
 
-  if (DevicePathType != BDS_EFI_ACPI_FLOPPY_BOOT) {
-    NonBlockNumber = 0;
-#endif
+  for (RemovableIndex = 0; RemovableIndex < 2; RemovableIndex++) {
+    for (Index = 0; Index < NumberBlockIoHandles; Index++) {
 
-    BdsDeleteAllInvalidEfiBootOption ();
-
-    gBS->LocateHandleBuffer (
-                             ByProtocol,
-                             &gEfiBlockIoProtocolGuid,
-                             NULL,
-                             &NumberBlockIoHandles,
-                             &BlockIoHandles
-                             );
-
-    for (RemovableIndex = 0; RemovableIndex < 2; RemovableIndex++) {
-      for (Index = 0; Index < NumberBlockIoHandles; Index++) {
-
-        Status = gBS->HandleProtocol (
-                        BlockIoHandles[Index],
-                        &gEfiBlockIoProtocolGuid,
-                        (VOID **) &BlkIo
-                      );
-
-        if (EFI_ERROR (Status) || (BlkIo->Media->RemovableMedia == Removable[RemovableIndex])) {
-          continue;
-        }
-        
-        DevicePath  = DevicePathFromHandle (BlockIoHandles[Index]);
-        DevicePathType = BdsGetBootTypeFromDevicePath (DevicePath);
-
-        switch (DevicePathType) {
-          case BDS_EFI_MESSAGE_ATAPI_BOOT:
-          case BDS_EFI_MESSAGE_SATA_BOOT:
-            if (BlkIo->Media->RemovableMedia) {
-              if (CdromNumber != 0) {
-                UnicodeSPrint (Buffer, sizeof (Buffer), L"%s %d", L"DVD/CDROM", CdromNumber);
-              } else {
-                UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"DVD/CDROM");
-              }
-              CdromNumber++;
-            } else {
-              break;
-            }
-            BdsLibBuildOptionFromHandle (BlockIoHandles[Index], L"All", BdsBootOptionList, Buffer, FALSE);
-            break;
-            
-          default:
-            break;
-        }
-      }
-    }
-
-    gBS->LocateHandleBuffer (
-           ByProtocol,
-           &gEfiSimpleFileSystemProtocolGuid,
-           NULL,
-           &NumberFileSystemHandles,
-           &FileSystemHandles
-         );
-    
-    for (Index = 0; Index < NumberFileSystemHandles; Index++) {
-      DevicePath  = DevicePathFromHandle (FileSystemHandles[Index]);
       Status = gBS->HandleProtocol (
-                      FileSystemHandles[Index],
-                      &gEfiSimpleFileSystemProtocolGuid,
-                      (VOID *) &Volume
+                      BlockIoHandles[Index],
+                      &gEfiBlockIoProtocolGuid,
+                      (VOID **) &BlkIo
                     );
-      if (!EFI_ERROR (Status)) {
-        Status = Volume->OpenVolume (
-                           Volume,
-                           &FHandle
-                         );
+
+      if (EFI_ERROR (Status) || (BlkIo->Media->RemovableMedia == Removable[RemovableIndex])) {
+        continue;
       }
       
-      if ((gPNConfigPlist != NULL) && (FileExists (FHandle, gPNConfigPlist)) && (ConfigNotFound)) {
-        gPNDirExists = TRUE;
-        gRootFHandle = FHandle;
-        ConfigNotFound  = FALSE;
-        DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
+      DevicePath  = DevicePathFromHandle (BlockIoHandles[Index]);
+      DevicePathType = BdsGetBootTypeFromDevicePath (DevicePath);
+
+      switch (DevicePathType) {
+        case BDS_EFI_MESSAGE_ATAPI_BOOT:
+        case BDS_EFI_MESSAGE_SATA_BOOT:
+          if (BlkIo->Media->RemovableMedia) {
+            if (CdromNumber != 0) {
+              UnicodeSPrint (Buffer, sizeof (Buffer), L"%s %d", L"DVD/CDROM", CdromNumber);
+            } else {
+              UnicodeSPrint (Buffer, sizeof (Buffer), L"%s", L"DVD/CDROM");
+            }
+            CdromNumber++;
+          } else {
+            break;
+          }
+          BdsLibBuildOptionFromHandle (BlockIoHandles[Index], L"All", BdsBootOptionList, Buffer, FALSE);
+          break;
+          
+        default:
+          break;
       }
-
-      if ((PNConfigPlist2 != NULL) && (FileExists (FHandle, PNConfigPlist2)) && (ConfigNotFound)) {
-        FreePool (gPNConfigPlist);
-        gPNConfigPlist = PNConfigPlist2;
-        FreePool (gProductNameDir);
-        gProductNameDir = gProductNameDir2;
-
-        gPNDirExists = TRUE;
-        gRootFHandle = FHandle;
-        ConfigNotFound  = FALSE;
-        DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
-      }
-
-      if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
-        gRootFHandle = FHandle;
-        ConfigNotFound  = FALSE;
-        DBG ("BdsBoot: config's dir: \\EFI\\bareboot\\ \n");
-      }
-
-      VolumeName = BdsLibGetVolumeName (FHandle, Index);
-      DBG ("BdsBoot: %d VolumeName: %s\n", Index, VolumeName);
-
-      for (Index2 =  0; Index2 < MAX_LOADER_PATHS; Index2++) {
-        if ((StrCmp (mLoaderPath[Index2], MACOSX_LOADER_PATH) == 0) ||
-            (StrCmp (mLoaderPath[Index2], MACOSX_RECOVERY_LOADER_PATH) == 0)) {
-          BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], NULL, VolumeName, BdsBootOptionList, TRUE);
-        } else {
-          BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], mLoaderPath[Index2], VolumeName, BdsBootOptionList, TRUE);
-        }
-      }
-#if 0
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_LOADER_PATH, NULL, VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_RECOVERY_LOADER_PATH, NULL, VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], MACOSX_INSTALL_PATH, L"OS X Install Data", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SUSE_LOADER_PATH, L"OpenSuSE EFI Loader", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], OPENSUSE_LOADER_PATH, L"OpenSuSE EFI Loader", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], UBUNTU_LOADER_PATH, L"Ubuntu EFI Loader", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], REDHAT_LOADER_PATH, L"RedHat EFI Loader", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], EFI_REMOVABLE_MEDIA_FILE_NAME, L"EFI boot Loader", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], WINDOWS_LOADER_PATH, L"Windows EFI Loader", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], ALT_WINDOWS_LOADER_PATH, L"Alt Windows EFI Loader", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], CLOVER_MEDIA_FILE_NAME, L"Clover EFI", VolumeName, BdsBootOptionList, TRUE);
-      BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], SHELL_PATH, L"[EFI SHell]", VolumeName, BdsBootOptionList, TRUE);
-#endif
-
-      FreePool (VolumeName);
     }
-
-    if (gPNDirExists) {
-      gPNAcpiDir = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"acpi\\"));
-      StrCpy (gPNAcpiDir, gProductNameDir);
-      StrCat (gPNAcpiDir, L"acpi\\");
-      DBG ("BdsBoot: acpi dir: %s\n", gPNAcpiDir);
-    }
-
-    GetBootDefault (gRootFHandle);
-#if 0
   }
-#endif
+
+  gBS->LocateHandleBuffer (
+         ByProtocol,
+         &gEfiSimpleFileSystemProtocolGuid,
+         NULL,
+         &NumberFileSystemHandles,
+         &FileSystemHandles
+       );
+  
+  for (Index = 0; Index < NumberFileSystemHandles; Index++) {
+    DevicePath  = DevicePathFromHandle (FileSystemHandles[Index]);
+    Status = gBS->HandleProtocol (
+                    FileSystemHandles[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID *) &Volume
+                  );
+    if (!EFI_ERROR (Status)) {
+      Status = Volume->OpenVolume (
+                         Volume,
+                         &FHandle
+                       );
+    }
+    
+    if ((gPNConfigPlist != NULL) && (FileExists (FHandle, gPNConfigPlist)) && (ConfigNotFound)) {
+      gPNDirExists = TRUE;
+      gRootFHandle = FHandle;
+      ConfigNotFound  = FALSE;
+      DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
+    }
+
+    if ((PNConfigPlist2 != NULL) && (FileExists (FHandle, PNConfigPlist2)) && (ConfigNotFound)) {
+      FreePool (gPNConfigPlist);
+      gPNConfigPlist = PNConfigPlist2;
+      FreePool (gProductNameDir);
+      gProductNameDir = gProductNameDir2;
+
+      gPNDirExists = TRUE;
+      gRootFHandle = FHandle;
+      ConfigNotFound  = FALSE;
+      DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
+    }
+
+    if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
+      gRootFHandle = FHandle;
+      ConfigNotFound  = FALSE;
+      DBG ("BdsBoot: config's dir: \\EFI\\bareboot\\ \n");
+    }
+
+    VolumeName = BdsLibGetVolumeName (FHandle, Index);
+    DBG ("BdsBoot: %d VolumeName: %s\n", Index, VolumeName);
+
+    for (Index2 =  0; Index2 < MAX_LOADER_PATHS; Index2++) {
+      if ((StrCmp (mLoaderPath[Index2], MACOSX_LOADER_PATH) == 0) ||
+          (StrCmp (mLoaderPath[Index2], MACOSX_RECOVERY_LOADER_PATH) == 0)) {
+        BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], NULL, VolumeName, BdsBootOptionList, TRUE);
+      } else {
+        BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], mLoaderPath[Index2], VolumeName, BdsBootOptionList, TRUE);
+      }
+    }
+
+    FreePool (VolumeName);
+  }
+
+  if (gPNDirExists) {
+    gPNAcpiDir = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"acpi\\"));
+    StrCpy (gPNAcpiDir, gProductNameDir);
+    StrCat (gPNAcpiDir, L"acpi\\");
+    DBG ("BdsBoot: acpi dir: %s\n", gPNAcpiDir);
+  }
+
+  GetBootDefault (gRootFHandle);
+  
   gBS->LocateHandleBuffer (
         ByProtocol,
         &gEfiFirmwareVolume2ProtocolGuid,
@@ -1061,24 +981,6 @@ BdsLibGetBootableHandle (
           break;
         }
       }
-#if 0
-      if ((FileExists(FHandle, MACOSX_LOADER_PATH)) ||
-          (FileExists(FHandle, MACOSX_RECOVERY_LOADER_PATH)) ||
-          (FileExists(FHandle, MACOSX_INSTALL_PATH)) ||
-          (FileExists(FHandle, WINDOWS_LOADER_PATH)) ||
-          (FileExists(FHandle, ALT_WINDOWS_LOADER_PATH)) ||
-          (FileExists(FHandle, SUSE_LOADER_PATH)) ||
-          (FileExists(FHandle, OPENSUSE_LOADER_PATH)) ||
-          (FileExists(FHandle, UBUNTU_LOADER_PATH)) ||
-          (FileExists(FHandle, REDHAT_LOADER_PATH)) ||
-          (FileExists(FHandle, CLOVER_MEDIA_FILE_NAME)) ||
-          (FileExists(FHandle, SHELL_PATH)) ||
-          (FileExists(FHandle, EFI_REMOVABLE_MEDIA_FILE_NAME)))
-      {
-        ReturnHandle = SimpleFileSystemHandles[Index];
-        break;
-      }
-#endif
     }
   }
   DBG ("    BdsBoot: Get the device path size of SimpleFileSystem handle finished\n");
