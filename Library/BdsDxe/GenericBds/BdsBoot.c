@@ -30,6 +30,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define MACOSX_LOADER_PATH              L"\\System\\Library\\CoreServices\\boot.efi"
 #define MACOSX_RECOVERY_LOADER_PATH     L"\\com.apple.recovery.boot\\boot.efi"
 #define MACOSX_INSTALL_PATH             L"\\OS X Install Data\\boot.efi"
+#define MACOSX_INSTALL_PATH2            L"\\.IABootFiles\\boot.efi"
 #if 0
 #define WINDOWS_LOADER_PATH             L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi"
 #define SUSE_LOADER_PATH                L"\\EFI\\SuSE\\elilo.efi"
@@ -40,7 +41,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define ALT_WINDOWS_LOADER_PATH         L"\\EFI\\MS\\Boot\\bootmgfw.efi"
 #endif
 
-#define MAX_LOADER_PATHS  12
+#define MAX_LOADER_PATHS  13
 
 CHAR16* mLoaderPath[] = {
   CLOVER_MEDIA_FILE_NAME,
@@ -48,6 +49,7 @@ CHAR16* mLoaderPath[] = {
   MACOSX_LOADER_PATH,
   MACOSX_RECOVERY_LOADER_PATH,
   MACOSX_INSTALL_PATH,
+  MACOSX_INSTALL_PATH2,
   L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi",
   L"\\EFI\\SuSE\\elilo.efi",
   L"\\EFI\\opensuse\\grubx64.efi",
@@ -160,7 +162,8 @@ BdsLibBootViaBootOption (
     if (TmpLoadPath != NULL) {
       if ((StrCmp (TmpLoadPath, MACOSX_LOADER_PATH) == 0) ||
           (StrCmp (TmpLoadPath, MACOSX_RECOVERY_LOADER_PATH) == 0) ||
-          (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH) == 0)) {
+          (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH) == 0) ||
+          (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH2) == 0)) {
         goto MacOS;
       } else {
         goto Next;
