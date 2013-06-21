@@ -13,6 +13,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include <Guid/FileSystemInfo.h>
+#include <Guid/LdrMemoryDescriptor.h>
 #include "InternalBdsLib.h"
 #include "BootMaintLib.h"
 
@@ -58,6 +59,74 @@ CHAR16* mLoaderPath[] = {
   L"\\EFI\\TOOLS\\shell64.efi",
   L"\\EFI\\MS\\Boot\\bootmgfw.efi"
 };
+
+GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *GcdMemoryTypeNames[] = {
+  "NonExist ",  // EfiGcdMemoryTypeNonExistent
+  "Reserved ",  // EfiGcdMemoryTypeReserved
+  "SystemMem",  // EfiGcdMemoryTypeSystemMemory
+  "MMIO     ",  // EfiGcdMemoryTypeMemoryMappedIo
+  "Unknown  "   // EfiGcdMemoryTypeMaximum
+};
+
+VOID
+PrintMemoryMap (
+  VOID
+)
+{
+  EFI_PEI_HOB_POINTERS            GuidHob;
+  VOID                            *Table;
+  MEMORY_DESC_HOB                 MemoryDescHob;
+  UINTN                           Index;
+
+  GuidHob.Raw = GetFirstGuidHob (&gLdrMemoryDescriptorGuid);
+  if (GuidHob.Raw == NULL) {
+    return;
+  }
+  Table = GET_GUID_HOB_DATA (GuidHob.Guid);
+  if (Table == NULL) {
+    return;
+  }
+  MemoryDescHob.MemDescCount = *(UINTN *)Table;
+  MemoryDescHob.MemDesc      = *(EFI_MEMORY_DESCRIPTOR **)((UINTN)Table + sizeof(UINTN));
+
+  DBG ("Index  Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+  for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
+    DBG ("%02d     %02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
+         Index,
+         MemoryDescHob.MemDesc[Index].Type,
+         MemoryDescHob.MemDesc[Index].PhysicalStart,
+         MemoryDescHob.MemDesc[Index].PhysicalStart + MemoryDescHob.MemDesc[Index].NumberOfPages * 4096 -1,
+         MemoryDescHob.MemDesc[Index].NumberOfPages,
+         MemoryDescHob.MemDesc[Index].VirtualStart,
+         MemoryDescHob.MemDesc[Index].Attribute);
+  }
+}
+
+VOID
+PrintGcdMemoryMap (
+                  VOID
+                  )
+{
+  UINTN                            NumberOfDescriptors;
+  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemorySpaceMap;
+  UINTN                            Index;
+
+  gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
+  DBG ("GCDMemType Range                             Capabilities     Attributes      \n");
+  DBG ("========== ================================= ================ ================\n");
+  for (Index = 0; Index < NumberOfDescriptors; Index++) {
+    DBG ("%a  %016lx-%016lx %016lx %016lx%c\n",
+         GcdMemoryTypeNames[MIN (MemorySpaceMap[Index].GcdMemoryType, EfiGcdMemoryTypeMaximum)],
+         MemorySpaceMap[Index].BaseAddress,
+         MemorySpaceMap[Index].BaseAddress + MemorySpaceMap[Index].Length - 1,
+         MemorySpaceMap[Index].Capabilities,
+         MemorySpaceMap[Index].Attributes,
+         MemorySpaceMap[Index].ImageHandle == NULL ? ' ' : '*'
+         );
+  }
+  DBG ("\n");
+  FreePool (MemorySpaceMap);
+}
 
 /**
   Process the boot option follow the UEFI specification and
@@ -257,6 +326,8 @@ MacOS:
 
   WithKexts = LoadKexts ();
 #ifdef BOOT_DEBUG
+  PrintGcdMemoryMap ();
+  PrintMemoryMap ();
   SaveBooterLog (gRootFHandle, BOOT_LOG);
 #endif
 

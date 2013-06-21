@@ -614,7 +614,29 @@ FindBootArgs (
       DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceBaseAddress 0x%x\n",bootArgs2->pciConfigSpaceBaseAddress));
       DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceStartBusNumber 0x%x\n",bootArgs2->pciConfigSpaceStartBusNumber));
       DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n",bootArgs2->pciConfigSpaceEndBusNumber));
+#if 0
+      EfiMemoryRange       *MemoryMap;
+      UINT32               MCount, i;
 
+
+      MemoryMap = (EfiMemoryRange *) (UINTN) bootArgs2->MemoryMap;
+      MCount = DivU64x32 (bootArgs2->MemoryMapSize, bootArgs2->MemoryMapDescriptorSize);
+
+      Print (L"bootArgs2->MemoryMapDescriptorSize = %d\n", bootArgs2->MemoryMapDescriptorSize);
+      Print (L"Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+      for (i = 0; i < MCount; i++, MemoryMap = (EfiMemoryRange *) (MemoryMap + bootArgs2->MemoryMapDescriptorSize)) {
+        Print (L"%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
+               MemoryMap->Type,
+               MemoryMap->PhysicalStart,
+               MemoryMap->PhysicalStart + MemoryMap->NumberOfPages * 4096 - 1,
+               MemoryMap->NumberOfPages,
+               MemoryMap->VirtualStart,
+               MemoryMap->Attribute);
+      }
+      Pause (NULL);
+      Pause (NULL);
+      Pause (NULL);
+#endif
       // disable other pointer
       bootArgs1 = NULL;
       break;
@@ -654,7 +676,7 @@ FindBootArgs (
       bootArgs2 = NULL;
       break;
     }
-    
+
     ptr += 0x1000;
   }
 }

@@ -22,6 +22,10 @@ Abstract:
 
 #include "BdsPlatform.h"
 
+#define EFI_MEMORY_PRESENT      0x0100000000000000ULL
+#define EFI_MEMORY_INITIALIZED  0x0200000000000000ULL
+#define EFI_MEMORY_TESTED       0x0400000000000000ULL
+
 #define IS_PCI_ISA_PDECODE(_p)        IS_CLASS3 (_p, PCI_CLASS_BRIDGE, PCI_CLASS_BRIDGE_ISA_PDECODE, 0)
 #define SCAN_ESC        0x0017
 #define SCAN_F1         0x000B
@@ -46,6 +50,14 @@ EFI_GUID    *gTableGuidArray[] = {&gEfiAcpi20TableGuid,
                                   &gEfiAcpiTableGuid,
                                   &gEfiSmbiosTableGuid,
                                   &gEfiMpsTableGuid};
+
+GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *mGcdMemoryTypeNames[] = {
+  "NonExist ",  // EfiGcdMemoryTypeNonExistent
+  "Reserved ",  // EfiGcdMemoryTypeReserved
+  "SystemMem",  // EfiGcdMemoryTypeSystemMemory
+  "MMIO     ",  // EfiGcdMemoryTypeMemoryMappedIo
+  "Unknown  "   // EfiGcdMemoryTypeMaximum
+};
 
 //
 // BDS Platform Functions
@@ -100,6 +112,32 @@ Returns:
 }
 
 VOID
+DumpGcdMemoryMap (
+  VOID
+)
+{
+  UINTN                            NumberOfDescriptors;
+  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemorySpaceMap;
+  UINTN                            Index;
+
+  gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
+  DBG ("GCDMemType Range                             Capabilities     Attributes      \n");
+  DBG ("========== ================================= ================ ================\n");
+  for (Index = 0; Index < NumberOfDescriptors; Index++) {
+    DBG ("%a  %016lx-%016lx %016lx %016lx%c\n",
+        mGcdMemoryTypeNames[MIN (MemorySpaceMap[Index].GcdMemoryType, EfiGcdMemoryTypeMaximum)],
+        MemorySpaceMap[Index].BaseAddress,
+        MemorySpaceMap[Index].BaseAddress + MemorySpaceMap[Index].Length - 1,
+        MemorySpaceMap[Index].Capabilities,
+        MemorySpaceMap[Index].Attributes,
+        MemorySpaceMap[Index].ImageHandle == NULL ? ' ' : '*'
+        );
+  }
+  DBG ("\n");
+  FreePool (MemorySpaceMap);
+}
+
+VOID
 UpdateMemoryMap (
   VOID
   )
@@ -112,6 +150,9 @@ UpdateMemoryMap (
   EFI_PHYSICAL_ADDRESS            Memory;
   EFI_GCD_MEMORY_SPACE_DESCRIPTOR Descriptor;
   EFI_PHYSICAL_ADDRESS            FirstNonConventionalAddr;
+  UINTN                           NumberOfDescriptors;
+  EFI_GCD_MEMORY_SPACE_DESCRIPTOR *MemorySpaceMap;
+  EFI_GCD_MEMORY_TYPE             GcdType;
 
   GuidHob.Raw = GetFirstGuidHob (&gLdrMemoryDescriptorGuid);
   if (GuidHob.Raw == NULL) {
@@ -123,22 +164,66 @@ UpdateMemoryMap (
   }
   MemoryDescHob.MemDescCount = *(UINTN *)Table;
   MemoryDescHob.MemDesc      = *(EFI_MEMORY_DESCRIPTOR **)((UINTN)Table + sizeof(UINTN));
+#if 0
+  DumpGcdMemoryMap ();
+#endif
+  gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
+  for (Index = 0; Index < NumberOfDescriptors; Index++) {
+    if ((MemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeReserved &&
+        (MemorySpaceMap[Index].Capabilities & (EFI_MEMORY_PRESENT | EFI_MEMORY_INITIALIZED | EFI_MEMORY_TESTED)) ==
+        (EFI_MEMORY_PRESENT | EFI_MEMORY_INITIALIZED)) ||
+        (MemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo)) {
+      //
+      // For those reserved memory that have not been tested, simply promote to system memory.
+      //
+      GcdType = EfiGcdMemoryTypeSystemMemory;
+      
+      if ((MemorySpaceMap[Index].ImageHandle != NULL) ||
+          (MemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo)){
+        gDS->FreeMemorySpace (
+               MemorySpaceMap[Index].BaseAddress,
+               MemorySpaceMap[Index].Length
+               );
+        GcdType = EfiGcdMemoryTypeReserved;
+      }
 
+      gDS->RemoveMemorySpace (
+             MemorySpaceMap[Index].BaseAddress,
+             MemorySpaceMap[Index].Length
+             );
+
+      gDS->AddMemorySpace (
+             GcdType,
+             MemorySpaceMap[Index].BaseAddress,
+             MemorySpaceMap[Index].Length,
+             MemorySpaceMap[Index].Capabilities &~
+             (EFI_MEMORY_PRESENT | EFI_MEMORY_INITIALIZED | EFI_MEMORY_TESTED | EFI_MEMORY_RUNTIME | EFI_MEMORY_UC | EFI_MEMORY_WC | EFI_MEMORY_WT)
+             );
+    }
+  }
+  
+  FreePool (MemorySpaceMap);
+#if 0
+  DumpGcdMemoryMap ();
+#endif
   //
   // Add ACPINVS, ACPIReclaim, and Reserved memory to MemoryMap
   //
   FirstNonConventionalAddr = 0xFFFFFFFF;
+#if 0
   DBG ("Index  Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+#endif
   for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
+#if 0
     DBG ("%02d     %02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
          Index,
          MemoryDescHob.MemDesc[Index].Type,
          MemoryDescHob.MemDesc[Index].PhysicalStart,
-         MemoryDescHob.MemDesc[Index].PhysicalStart + MemoryDescHob.MemDesc[Index].NumberOfPages * 4096,
+         MemoryDescHob.MemDesc[Index].PhysicalStart + MemoryDescHob.MemDesc[Index].NumberOfPages * 4096 -1,
          MemoryDescHob.MemDesc[Index].NumberOfPages,
          MemoryDescHob.MemDesc[Index].VirtualStart,
          MemoryDescHob.MemDesc[Index].Attribute);
-    
+#endif
     if (MemoryDescHob.MemDesc[Index].PhysicalStart < 0x100000) {
       continue;
     }
@@ -211,15 +296,11 @@ UpdateMemoryMap (
                       LShiftU64 (MemoryDescHob.MemDesc[Index].NumberOfPages, EFI_PAGE_SHIFT),
                       MemoryDescHob.MemDesc[Index].Attribute
                       );
-      if (EFI_ERROR (Status)) {
-        if ((MemoryDescHob.MemDesc[Index].Type == EfiACPIReclaimMemory) ||
-            (MemoryDescHob.MemDesc[Index].Type == EfiACPIMemoryNVS)) {
-          //
-          // For EfiACPIReclaimMemory and EfiACPIMemoryNVS, it must success.
-          // For EfiReservedMemoryType, there maybe overlap. So skip check here.
-          //
+      if (!(MemoryDescHob.MemDesc[Index].Type == EfiACPIReclaimMemory) &&
+          !(MemoryDescHob.MemDesc[Index].Type == EfiACPIMemoryNVS)) {
+        if (EFI_ERROR (Status)) {
+          continue;
         }
-        continue;
       }
 
       Memory = MemoryDescHob.MemDesc[Index].PhysicalStart;
@@ -237,6 +318,9 @@ UpdateMemoryMap (
       }
     }
   }
+#if 0
+  DBG ("\n");
+#endif
   /**
   *
   *  thanks for this fix dmazar! 
@@ -246,11 +330,9 @@ UpdateMemoryMap (
     if (MemoryDescHob.MemDesc[Index].PhysicalStart < 0x100000) {
       continue;
     }
-#if 0
     if (MemoryDescHob.MemDesc[Index].PhysicalStart >= 0x100000000ULL) {
       continue;
     }
-#endif
     if (MemoryDescHob.MemDesc[Index].Type != EfiConventionalMemory) {
       continue;
     }
@@ -258,14 +340,43 @@ UpdateMemoryMap (
       continue;
     }
     // this is our candidate - add it
-    Status = gDS->AddMemorySpace (
-                    EfiGcdMemoryTypeSystemMemory,
-                    MemoryDescHob.MemDesc[Index].PhysicalStart,
-                    LShiftU64 (MemoryDescHob.MemDesc[Index].NumberOfPages, EFI_PAGE_SHIFT),
-                    MemoryDescHob.MemDesc[Index].Attribute
-                    );
-  }
+#if 0
+    Status = gDS->GetMemorySpaceDescriptor (MemoryDescHob.MemDesc[Index].PhysicalStart, &Descriptor);
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+    
+    if (Descriptor.GcdMemoryType == EfiGcdMemoryTypeNonExistent) {
+      MemoryDescHob.MemDesc[Index].Type = EfiReservedMemoryType;
+      continue;
+    }
 
+    gDS->RemoveMemorySpace (
+          MemoryDescHob.MemDesc[Index].PhysicalStart,
+          LShiftU64 (MemoryDescHob.MemDesc[Index].NumberOfPages, EFI_PAGE_SHIFT)
+          );
+#endif
+
+    gDS->AddMemorySpace (
+          EfiGcdMemoryTypeSystemMemory,
+          MemoryDescHob.MemDesc[Index].PhysicalStart,
+          LShiftU64 (MemoryDescHob.MemDesc[Index].NumberOfPages, EFI_PAGE_SHIFT),
+          MemoryDescHob.MemDesc[Index].Attribute
+          );
+    
+#if 0
+    Memory = MemoryDescHob.MemDesc[Index].PhysicalStart;
+    gBS->AllocatePages (
+          AllocateAddress,
+          (EFI_MEMORY_TYPE)MemoryDescHob.MemDesc[Index].Type,
+          (UINTN)MemoryDescHob.MemDesc[Index].NumberOfPages,
+          &Memory
+          );
+#endif
+  }
+#if 0
+  DumpGcdMemoryMap ();
+#endif
 }
 
 EFI_STATUS
