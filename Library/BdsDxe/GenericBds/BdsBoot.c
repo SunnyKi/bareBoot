@@ -60,16 +60,8 @@ CHAR16* mLoaderPath[] = {
   L"\\EFI\\MS\\Boot\\bootmgfw.efi"
 };
 
-GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *GcdMemoryTypeNames[] = {
-  "NonExist ",  // EfiGcdMemoryTypeNonExistent
-  "Reserved ",  // EfiGcdMemoryTypeReserved
-  "SystemMem",  // EfiGcdMemoryTypeSystemMemory
-  "MMIO     ",  // EfiGcdMemoryTypeMemoryMappedIo
-  "Unknown  "   // EfiGcdMemoryTypeMaximum
-};
-
 VOID
-PrintMemoryMap (
+DumpEfiMemoryMap (
   VOID
 )
 {
@@ -100,32 +92,6 @@ PrintMemoryMap (
          MemoryDescHob.MemDesc[Index].VirtualStart,
          MemoryDescHob.MemDesc[Index].Attribute);
   }
-}
-
-VOID
-PrintGcdMemoryMap (
-                  VOID
-                  )
-{
-  UINTN                            NumberOfDescriptors;
-  EFI_GCD_MEMORY_SPACE_DESCRIPTOR  *MemorySpaceMap;
-  UINTN                            Index;
-
-  gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
-  DBG ("GCDMemType Range                             Capabilities     Attributes      \n");
-  DBG ("========== ================================= ================ ================\n");
-  for (Index = 0; Index < NumberOfDescriptors; Index++) {
-    DBG ("%a  %016lx-%016lx %016lx %016lx%c\n",
-         GcdMemoryTypeNames[MIN (MemorySpaceMap[Index].GcdMemoryType, EfiGcdMemoryTypeMaximum)],
-         MemorySpaceMap[Index].BaseAddress,
-         MemorySpaceMap[Index].BaseAddress + MemorySpaceMap[Index].Length - 1,
-         MemorySpaceMap[Index].Capabilities,
-         MemorySpaceMap[Index].Attributes,
-         MemorySpaceMap[Index].ImageHandle == NULL ? ' ' : '*'
-         );
-  }
-  DBG ("\n");
-  FreePool (MemorySpaceMap);
 }
 
 /**
@@ -273,6 +239,7 @@ MacOS:
   SetupDataForOSX ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting EventsInitialize\n"));
   EventsInitialize ();
+#if 0
   DBG ("gST->Hdr.Signature = 0x%x\n", gST->Hdr.Signature);
   DBG ("gST->Hdr.Revision = 0x%x\n", gST->Hdr.Revision);
   DBG ("gST->Hdr.HeaderSize = 0x%x\n", gST->Hdr.HeaderSize);
@@ -308,7 +275,7 @@ MacOS:
     DBG ("gST->ConfigurationTable[Index].VendorGuid = %s\n", &Buffer1);
     DBG ("gST->ConfigurationTable[Index].VendorTable = 0x%x size = 0x%x\n", gST->ConfigurationTable[Index].VendorTable, sizeof( gST->ConfigurationTable[Index].VendorTable));
   }
-
+#endif
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
   DEBUG ((DEBUG_INFO, "AddBootArgs = %a, gSettings.BootArgs = %a\n", AddBootArgs, gSettings.BootArgs));
@@ -326,8 +293,8 @@ MacOS:
 
   WithKexts = LoadKexts ();
 #ifdef BOOT_DEBUG
-  PrintGcdMemoryMap ();
-  PrintMemoryMap ();
+  DumpGcdMemoryMap ();
+  DumpEfiMemoryMap ();
   SaveBooterLog (gRootFHandle, BOOT_LOG);
 #endif
 

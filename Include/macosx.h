@@ -709,4 +709,9 @@ InjectKexts (
   IN UINT32* deviceTreeLength
 );
 
+VOID
+DumpGcdMemoryMap (
+  VOID
+);
+
 #endif
