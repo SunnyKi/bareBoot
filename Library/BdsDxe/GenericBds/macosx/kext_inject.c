@@ -243,7 +243,9 @@ GetExtraKextsDir (
   KextsDir = NULL;
   
   // get os version as string
-  if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
+  if (AsciiStrnCmp (OSVersion, "10.4", 4) == 0) {
+    OSTypeStr = L"10.4";
+  } else if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
     OSTypeStr = L"10.5";
   } else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
     OSTypeStr = L"10.6";
@@ -273,6 +275,7 @@ GetExtraKextsDir (
   DBG ("Kext Inject: expected extra kexts dir is %s\n", KextsDir);
 
   if (!FileExists(gRootFHandle, KextsDir)) {
+    FreePool (KextsDir);
     return NULL;
   }
 
@@ -285,7 +288,8 @@ LoadKexts (
 )
 {
 	EFI_STATUS              Status;
-	CHAR16                  *SrcDir = NULL;
+	BOOLEAN                 CommonKextsDir = TRUE;
+	CHAR16                  *KextsDir = NULL;
 	DIR_ITER                KextIter;
 	EFI_FILE_INFO           *KextFile;
 	DIR_ITER                PlugInIter;
@@ -313,39 +317,65 @@ LoadKexts (
   }
 
   InitializeUnicodeCollationProtocol ();
-	SrcDir = GetExtraKextsDir ();
-  
-	if (SrcDir == NULL) {
-    DBG ("Kext Inject: extra kexts dir is NULL.\n");
-    return FALSE;
+
+  if (gPNDirExists) {
+    KextsDir = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"kexts\\common"));
+    StrCpy (KextsDir, gProductNameDir);
+    StrCat (KextsDir, L"kexts\\common");
+  } else {
+    KextsDir = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\kexts\\common"));
+    StrCpy (KextsDir, L"\\EFI\\bareboot\\kexts\\common");
   }
-  // look through contents of the directory
-  DBG ("Kext Inject: extra kexts dir is %s\n", SrcDir);
 
-  DirIterOpen(gRootFHandle, SrcDir, &KextIter);
+  if (!FileExists(gRootFHandle, KextsDir)) {
+    FreePool (KextsDir);
+    CommonKextsDir = FALSE;
 
-  while (DirIterNext(&KextIter, 1, L"*.kext", &KextFile)) {
-    if (KextFile->FileName[0] == '.' || StrStr(KextFile->FileName, L".kext") == NULL)
-      continue;   // skip this
-    DBG ("Kext Inject: KextFile->FileName = %s\n", KextFile->FileName);
+    DBG ("Kext Inject: No common extra kexts.\n");
 
-    UnicodeSPrint(FileName, 512, L"%s\\%s", SrcDir, KextFile->FileName);
-    AddKext(FileName, archCpuType);
-
-    UnicodeSPrint(PlugIns, 512, L"%s\\%s", FileName, L"Contents\\PlugIns");
-    DirIterOpen(gRootFHandle, PlugIns, &PlugInIter);
-    while (DirIterNext(&PlugInIter, 1, L"*.kext", &PlugInFile)) {
-      if (PlugInFile->FileName[0] == '.' || StrStr(PlugInFile->FileName, L".kext") == NULL)
-        continue;   // skip this
-      DBG ("Kext Inject:  PlugInFile->FileName = %s\n", PlugInFile->FileName);
-
-      UnicodeSPrint(FileName, 512, L"%s\\%s", PlugIns, PlugInFile->FileName);
-      AddKext(FileName, archCpuType);
+    KextsDir = GetExtraKextsDir ();
+    if (KextsDir == NULL) {
+      DBG ("Kext Inject: No extra kexts.\n");
+      return FALSE;
     }
-    DirIterClose(&PlugInIter);
   }
 
-  DirIterClose(&KextIter);
+  while (KextsDir != NULL) {
+    // look through contents of the directory
+    DBG ("Kext Inject: extra kexts dir is %s\n", KextsDir);
+
+    DirIterOpen(gRootFHandle, KextsDir, &KextIter);
+    while (DirIterNext(&KextIter, 1, L"*.kext", &KextFile)) {
+      if (KextFile->FileName[0] == '.' || StrStr(KextFile->FileName, L".kext") == NULL)
+        continue;   // skip this
+      DBG ("Kext Inject: KextFile->FileName = %s\n", KextFile->FileName);
+
+      UnicodeSPrint(FileName, 512, L"%s\\%s", KextsDir, KextFile->FileName);
+      AddKext(FileName, archCpuType);
+
+      UnicodeSPrint(PlugIns, 512, L"%s\\%s", FileName, L"Contents\\PlugIns");
+      DirIterOpen(gRootFHandle, PlugIns, &PlugInIter);
+      while (DirIterNext(&PlugInIter, 1, L"*.kext", &PlugInFile)) {
+        if (PlugInFile->FileName[0] == '.' || StrStr(PlugInFile->FileName, L".kext") == NULL)
+          continue;   // skip this
+        DBG ("Kext Inject:  PlugInFile->FileName = %s\n", PlugInFile->FileName);
+
+        UnicodeSPrint(FileName, 512, L"%s\\%s", PlugIns, PlugInFile->FileName);
+        AddKext(FileName, archCpuType);
+      }
+      DirIterClose(&PlugInIter);
+    }
+    DirIterClose(&KextIter);
+
+    if (CommonKextsDir) {
+      FreePool (KextsDir);
+      CommonKextsDir = FALSE;
+      KextsDir = GetExtraKextsDir ();
+    } else {
+      FreePool (KextsDir);
+      KextsDir = NULL;
+    }
+  }
 
   KextCount = GetKextCount ();
   DBG ("Kext Inject:  KextCount = %d\n", KextCount);
