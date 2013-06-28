@@ -839,13 +839,14 @@ PrepareHobNvStorage (
   //   1 - File not exist
   //   0 - File exist with correct size
   //
+#if 0
   if (*(UINT8 *) (UINTN) (NV_STORAGE_STATE + 4) == 2) {
     ClearScreen ();
     PrintString ("Error: Size of Efivar.bin should be 16k!\n");
     CpuDeadLoop();
   }
-  
   if (*(UINT8 *) (UINTN) (NV_STORAGE_STATE + 4) != 0) {
+#endif
     //
     // Efivar.bin doesn't exist
     //  1. Init variable storage header to valid header
@@ -863,8 +864,9 @@ PrepareHobNvStorage (
       NV_STORAGE_SIZE - sizeof (VARIABLE_STORE_HEADER),
       0xff
     );
+#if 0
   }
-
+#endif
   //
   // Relocate variable storage
   // 
