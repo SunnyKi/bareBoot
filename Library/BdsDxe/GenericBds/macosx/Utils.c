@@ -1182,7 +1182,7 @@ LoadPListFile (
   plist = plXmlToNode (&pbuf);
   FreeAlignedPages (pbuf.dat, EFI_SIZE_TO_PAGES (pbuf.len));
   if (plist == NULL) {
-    Print (L"plist load error\n");
+    Print (L"Error loading plist from %s\n", XmlPlistPath);
     return NULL;
   }
 
