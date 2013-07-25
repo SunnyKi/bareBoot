@@ -1258,10 +1258,10 @@ GetUserSettings (
     return EFI_NOT_FOUND;
   }
 
-  ZeroMem (gSettings.Language, 10);
-  ZeroMem (gSettings.BootArgs, 120);
-  ZeroMem (gSettings.SerialNr, 64);
-  ZeroMem (cUUID, 40);
+  ZeroMem (gSettings.Language, sizeof (gSettings.Language));
+  ZeroMem (gSettings.BootArgs, sizeof (gSettings.BootArgs));
+  ZeroMem (gSettings.SerialNr, sizeof (gSettings.SerialNr));
+  ZeroMem (cUUID, sizeof (cUUID));
   SystemIDStatus = EFI_UNSUPPORTED;
   PlatformUuidStatus = EFI_UNSUPPORTED;
   gSettings.CustomEDID = NULL;
