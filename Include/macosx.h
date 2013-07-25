@@ -349,7 +349,7 @@ typedef struct {
   UINT32  ProcessorInterconnectSpeed; //Hz
   // OS parameters
   CHAR8   Language[10];
-  CHAR8   BootArgs[120];
+  CHAR8   BootArgs[256];
   CHAR16  DefaultBoot[40];
   UINT16  BootTimeout;
   //ACPI
