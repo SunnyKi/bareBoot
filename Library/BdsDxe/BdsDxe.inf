@@ -96,7 +96,7 @@
 #  GenericBds/macosx/ati.c
 #  GenericBds/macosx/gma.c
 #  GenericBds/macosx/AmlGenerator.c
-  GenericBds/DevicePath.c
+#  GenericBds/DevicePath.c
   GenericBds/Performance.c
   GenericBds/BdsConnect.c
   GenericBds/BdsMisc.c
