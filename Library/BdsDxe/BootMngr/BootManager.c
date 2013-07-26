@@ -565,8 +565,7 @@ CallBootManager (
     
     Token = HiiSetString (HiiHandle, 0, Option->Description, NULL);
 
-    /* XXX: shell we use more human representation? */
-    TempStr = ConvertDevicePathToText (Option->DevicePath, FALSE, FALSE);
+    TempStr = DevicePathToStr (Option->DevicePath);
     TempSize = StrSize (TempStr);
     HelpString = AllocateZeroPool (TempSize + StrSize (L"Device Path : "));
     ASSERT (HelpString != NULL);
