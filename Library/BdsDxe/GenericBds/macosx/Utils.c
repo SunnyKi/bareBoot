@@ -943,7 +943,7 @@ GetDataSetting (
 }
 
 EFI_STATUS
-StrToBuf (
+bbStrToBuf (
   OUT UINT8    *Buf,
   IN  UINTN    BufferLength,
   IN  CHAR16   *Str
@@ -1010,7 +1010,7 @@ StrToGuidLE (
 {
   UINT8 GuidLE[16];
 
-  StrToBuf (&GuidLE[0], 4, Str);
+  bbStrToBuf (&GuidLE[0], 4, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
     Str ++;
@@ -1022,7 +1022,7 @@ StrToGuidLE (
     return EFI_UNSUPPORTED;
   }
 
-  StrToBuf (&GuidLE[4], 2, Str);
+  bbStrToBuf (&GuidLE[4], 2, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
     Str ++;
@@ -1034,7 +1034,7 @@ StrToGuidLE (
     return EFI_UNSUPPORTED;
   }
 
-  StrToBuf (&GuidLE[6], 2, Str);
+  bbStrToBuf (&GuidLE[6], 2, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
     Str ++;
@@ -1046,7 +1046,7 @@ StrToGuidLE (
     return EFI_UNSUPPORTED;
   }
 
-  StrToBuf (&GuidLE[8], 2, Str);
+  bbStrToBuf (&GuidLE[8], 2, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
     Str ++;
@@ -1058,7 +1058,7 @@ StrToGuidLE (
     return EFI_UNSUPPORTED;
   }
 
-  StrToBuf (&GuidLE[10], 6, Str);
+  bbStrToBuf (&GuidLE[10], 6, Str);
   CopyMem ((UINT8*) Guid, &GuidLE[0], 16);
   return EFI_SUCCESS;
 }
