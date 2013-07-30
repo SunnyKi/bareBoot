@@ -67,7 +67,7 @@ INF  bareBoot/SmbiosGenDxe/SmbiosGen.inf
 
 INF  bareBoot/Library/BdsDxe/BdsDxe.inf
 
-INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+#INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
 !if ($(ARCH) == "X64")
  INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
