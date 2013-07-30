@@ -371,12 +371,13 @@ typedef struct {
   UINT8   NVCAP[20];
   UINT8   *CustomEDID;
   // PCI injections
+  UINTN   MacAddrLen;
   UINT16  PCIRootUID;
-  BOOLEAN ETHInjection;
-  BOOLEAN USBInjection;
   UINT16  HDALayoutId;
   UINT8   *EthMacAddr;
-  UINTN   MacAddrLen;
+  BOOLEAN ETHInjection;
+  BOOLEAN USBInjection;
+  BOOLEAN USBOwnerFix;
   // KernelAndKextPatches
   BOOLEAN KPKernelCpu;
 

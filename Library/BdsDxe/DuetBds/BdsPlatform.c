@@ -379,9 +379,8 @@ UpdateMemoryMap (
 #endif
 }
 
-#ifdef USBOWNERFIX
 EFI_STATUS
-FixUSBOwnership (
+FixUsbOwnership (
   VOID
   )
 {
@@ -483,7 +482,6 @@ FixUSBOwnership (
   gBS->FreePool (HandleArray);
   return EFI_SUCCESS;
 }
-#endif
 
 VOID
 EFIAPI
@@ -1080,15 +1078,15 @@ Returns:
     DetectAndPreparePlatformPciDevicePath (TRUE);
   }
 
-#ifdef USBOWNERFIX
   //
   // The ConIn devices connection will start the USB bus, should disable all
   // Usb legacy support firstly.
   // Caution: Must ensure the PCI bus driver has been started. Since the
   // ConnectRootBridge() will create all the PciIo protocol, it's safe here now
   //
-  Status = FixUSBOwnership ();
-#endif
+  if (gSettings.USBOwnerFix) {
+    Status = FixUsbOwnership ();
+  }
   //
   // Connect the all the default console with current cosole variable
   //
