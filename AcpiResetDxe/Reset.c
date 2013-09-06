@@ -90,6 +90,7 @@ EfiAcpiResetSystem (
     //
     // If Shutdown fails, then let fall through to reset 
     //
+  case EfiResetPlatformSpecific:
   case EfiResetWarm:
   case EfiResetCold:
     if ((mAcpiDescription.RESET_REG.Address != 0) &&
