@@ -239,6 +239,23 @@
   # DataHub
   IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
+################################################################################
+#
+# Pcd Section - list of all EDK II PCD Entries defined by this Platform
+#
+################################################################################
+[PcdsFixedAtBuild]
+
+!if $(TARGET) == "DEBUG"
+  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x0F
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FEFCF
+!else
+  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x00
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x00
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x00000000
+!endif
+
 ###################################################################################################
 #
 # BuildOptions Section - Define the module specific tool chain flags that should be used as
