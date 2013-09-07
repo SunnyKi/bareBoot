@@ -27,8 +27,8 @@
   PLATFORM_VERSION               = 0.4
   DSC_SPECIFICATION              = 0x00010005
   OUTPUT_DIRECTORY               = Build/bareBoot
-  SUPPORTED_ARCHITECTURES        = IA32 || X64
-  BUILD_TARGETS                  = DEBUG || RELEASE
+  SUPPORTED_ARCHITECTURES        = IA32 | X64
+  BUILD_TARGETS                  = DEBUG | RELEASE
   SKUID_IDENTIFIER               = DEFAULT
   FLASH_DEFINITION               = bareBoot/bareBoot.fdf
 
