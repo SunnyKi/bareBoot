@@ -121,8 +121,8 @@ INF  bareBoot/BiosVideoThunkDxe/BiosVideo.inf
 INF  IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
 INF  RuleOverride=BINARY FatBinPkg/EnhancedFatDxe/Fat.inf
-INF  bareBoot/VBoxFsDxe/VBoxHfs.inf
-#INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
+#INF  bareBoot/VBoxFsDxe/VBoxHfs.inf
+INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 #INF  RuleOverride=BINARY bareBoot/XhciDxe/XhciDxe.inf
 
 [Rule.Common.DXE_CORE]
