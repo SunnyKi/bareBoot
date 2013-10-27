@@ -274,10 +274,10 @@ OnExitBootServices (
 )
 {
   USBOwnerFix();
-	//
-	// Patch kernel and kexts if needed
-	//
-	KernelAndKextsPatcherStart ();
+  //
+  // Patch kernel and kexts if needed
+  //
+  KernelAndKextsPatcherStart ();
 }
 
 VOID
@@ -287,7 +287,7 @@ OnReadyToBoot (
                IN      VOID        *Context
                )
 {
-//
+  //
 }
 
 VOID
