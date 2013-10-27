@@ -1084,9 +1084,13 @@ Returns:
   // Caution: Must ensure the PCI bus driver has been started. Since the
   // ConnectRootBridge() will create all the PciIo protocol, it's safe here now
   //
+#if 0
   if (gSettings.USBOwnerFix) {
+#endif
     Status = FixUsbOwnership ();
+#if 0
   }
+#endif
   //
   // Connect the all the default console with current cosole variable
   //
