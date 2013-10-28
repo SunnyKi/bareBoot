@@ -1519,6 +1519,7 @@ GetOSVersion (
     if (plist != NULL) {
       GetAsciiProperty (plist, "ProductVersion", OSVersion);
       plNodeDelete (plist);
+      DBG ("GetOSVersion: OSVersion = %a\n", OSVersion);
       return EFI_SUCCESS;
     }
   }
