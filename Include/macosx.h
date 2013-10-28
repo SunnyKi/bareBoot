@@ -499,6 +499,7 @@ CHAR16                          *gPNConfigPlist;
 CHAR16                          *gPNAcpiDir;
 BOOLEAN                         gPNDirExists;
 BOOLEAN                         WithKexts;
+VOID                            *gConfigPlist;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
@@ -589,7 +590,7 @@ GetDefaultSettings (
 
 EFI_STATUS
 GetUserSettings (
-  IN EFI_FILE *RootDir
+  VOID
 );
 
 VOID

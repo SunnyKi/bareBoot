@@ -224,7 +224,7 @@ MacOS:
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetCpuProps\n"));
   GetCpuProps ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
-  GetUserSettings (gRootFHandle);
+  GetUserSettings ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
   SetDevices ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchSmbios\n"));

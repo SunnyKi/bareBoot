@@ -1194,44 +1194,39 @@ GetBootDefault (
   IN EFI_FILE *RootFileHandle
 )
 {
-  VOID*       plist;
   VOID*       spdict;
 
   ZeroMem (gSettings.DefaultBoot, sizeof (gSettings.DefaultBoot));
   
   if (gPNDirExists) {
-    plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
+    gConfigPlist = LoadPListFile (RootFileHandle, gPNConfigPlist);
   } else {
-    plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
+    gConfigPlist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
   }
 
-  if (plist == NULL) {
+  if (gConfigPlist == NULL) {
     Print (L"Error loading bootdefault plist!\r\n");
     return EFI_NOT_FOUND;
   }
 
-  spdict = plDictFind (plist, "SystemParameters", 16, plKindDict);
+  spdict = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
 
   gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
     gSettings.BootTimeout = 0xFFFF;
   }
 
-  plNodeDelete (plist);
-
   return EFI_SUCCESS;
 }
 
 EFI_STATUS
 GetUserSettings (
-  IN EFI_FILE *RootFileHandle
+  VOID
 )
 {
   EFI_STATUS      Status;
   UINTN           size;
-  CHAR8*          gConfigPtr;
   VOID*           dictPointer;
-  VOID*           plist;
   VOID*           array;
   VOID*           prop;
   CHAR16          cUUID[40];
@@ -1240,20 +1235,20 @@ GetUserSettings (
   UINT32          i;
 
   Status = EFI_NOT_FOUND;
-  gConfigPtr = NULL;
-  plist = NULL;
   array = NULL;
   len = 0;
   i = 0;
   size = 0;
 
+#if 0
   if (gPNDirExists) {
     plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
   } else {
     plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
   }
-
-  if (plist == NULL) {
+#endif
+    
+  if (gConfigPlist == NULL) {
     Print (L"Error loading usersettings plist!\r\n");
     return EFI_NOT_FOUND;
   }
@@ -1267,7 +1262,7 @@ GetUserSettings (
   gSettings.CustomEDID = NULL;
   gSettings.ProcessorInterconnectSpeed = 0;
   
-  dictPointer = plDictFind (plist, "SystemParameters", 16, plKindDict);
+  dictPointer = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
 
   GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
   GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
@@ -1288,7 +1283,7 @@ GetUserSettings (
     }
   }
 
-  dictPointer = plDictFind (plist, "Graphics", 8, plKindDict);
+  dictPointer = plDictFind (gConfigPlist, "Graphics", 8, plKindDict);
   
   gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
   gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
@@ -1317,7 +1312,7 @@ GetUserSettings (
     }
   }
 
-  dictPointer = plDictFind (plist, "PCI", 3, plKindDict);
+  dictPointer = plDictFind (gConfigPlist, "PCI", 3, plKindDict);
   
   gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
   gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
@@ -1337,7 +1332,7 @@ GetUserSettings (
     }
   }
 
-  dictPointer = plDictFind (plist, "ACPI", 4, plKindDict);
+  dictPointer = plDictFind (gConfigPlist, "ACPI", 4, plKindDict);
 
   gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
   gSettings.DropDMAR = GetBoolProperty (dictPointer, "DropDMAR", FALSE);
@@ -1349,7 +1344,7 @@ GetUserSettings (
   gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
   gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
 
-  dictPointer = plDictFind (plist, "SMBIOS", 6, plKindDict);
+  dictPointer = plDictFind (gConfigPlist, "SMBIOS", 6, plKindDict);
 
   gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", FALSE);
 
@@ -1409,7 +1404,7 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
   GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
 
-  dictPointer = plDictFind (plist, "CPU", 3, plKindDict);
+  dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 
   if (GetBoolProperty (dictPointer, "Turbo", FALSE)) {
     if (gCPUStructure.TurboMsr != 0) {
@@ -1450,10 +1445,10 @@ GetUserSettings (
   gSettings.KPKernelCpu = FALSE;
   gSettings.KPKextPatchesNeeded = FALSE;
 
-  dictPointer = plDictFind (plist, "KernelPatches", 13, plKindDict);
+  dictPointer = plDictFind (gConfigPlist, "KernelPatches", 13, plKindDict);
   gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
 
-  array = plDictFind (plist, "KextPatches", 11, plKindArray);
+  array = plDictFind (gConfigPlist, "KextPatches", 11, plKindArray);
 
   if (array != NULL) {
     gSettings.NrKexts = (UINT32) plNodeGetSize (array);
@@ -1498,7 +1493,7 @@ GetUserSettings (
   }
 #endif
 
-  plNodeDelete (plist);
+  plNodeDelete (gConfigPlist);
 
   return Status;
 }
