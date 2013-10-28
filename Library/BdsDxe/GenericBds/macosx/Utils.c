@@ -1317,7 +1317,7 @@ GetUserSettings (
   gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
   gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
   gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-  gSettings.USBOwnerFix = GetBoolProperty (dictPointer, "USBOwnerFix", FALSE);
+  gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", TRUE);
   gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
 
 

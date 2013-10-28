@@ -784,8 +784,12 @@ PatchMemoryTables (
   }
 
   gRAM->SpdDetected = FALSE;
-  DBG ("Smbios: Starting ScanSPD\n");
-  ScanSPD ();
+  if (gSettings.SPDScan) {
+    DBG ("Smbios: Starting ScanSPD\n");
+    ScanSPD ();
+  } else {
+    DBG ("Smbios: SPD scanning is disabled by the user (config.plist)\n");
+  }
 
   for (Index = 0; Index < gRAM->MaxMemorySlots; Index++) {
 
