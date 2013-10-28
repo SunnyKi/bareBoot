@@ -1517,7 +1517,7 @@ GetOSVersion (
   for (i = 0; i < 3; i++) {
     plist = LoadPListFile (FileHandle, OSVersionFiles[i]);
     if (plist != NULL) {
-      GetAsciiProperty (plist, "ProductVersion", OSVersion);
+      OSVersion = GetStringProperty (plist, "ProductVersion");
       plNodeDelete (plist);
       DBG ("GetOSVersion: OSVersion = %a\n", OSVersion);
       return EFI_SUCCESS;
