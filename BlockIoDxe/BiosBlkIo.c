@@ -140,11 +140,10 @@ BiosBlockIoDriverBindingSupported (
   )
 {
   EFI_STATUS                Status;
-//  EFI_LEGACY_BIOS_PROTOCOL  *LegacyBios;
-  EFI_LEGACY_8259_PROTOCOL                  *Legacy8259; //temporary
+  EFI_LEGACY_8259_PROTOCOL  *Legacy8259;
   EFI_PCI_IO_PROTOCOL       *PciIo;
   EFI_DEVICE_PATH_PROTOCOL  *DevicePath;
-  PCI_TYPE00                Pci;
+  PCI_TYPE00                PciData;
 
   //
   //Check if BIOS drives are already enumerated
@@ -155,15 +154,10 @@ BiosBlockIoDriverBindingSupported (
   //
   // See if the Legacy BIOS Protocol is available
   //
-/*  Status = gBS->LocateProtocol (&gEfiLegacyBiosProtocolGuid, NULL, (VOID **) &LegacyBios);
-  if (EFI_ERROR (Status)) {
-    return Status;
-  } */
  	Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &Legacy8259);
 	if (EFI_ERROR (Status)) {
 		return Status;
 	}
- 
 
   Status = gBS->OpenProtocol (
                   Controller,
@@ -193,39 +187,28 @@ BiosBlockIoDriverBindingSupported (
                   (VOID **) &PciIo,
                   This->DriverBindingHandle,
                   Controller,
-                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                  EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  //
-  // See if this is a PCI ATA Controller by looking at the Command register and
-  // Class Code Register
-  //
-  Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, 0, sizeof (Pci) / sizeof (UINT32), &Pci);
+  
+  Status = PciIo->Pci.Read (
+                        PciIo,
+                        EfiPciIoWidthUint8,
+                        PCI_CLASSCODE_OFFSET,
+                        sizeof (PciData.Hdr.ClassCode),
+                        PciData.Hdr.ClassCode
+                        );
   if (EFI_ERROR (Status)) {
-    Status = EFI_UNSUPPORTED;
-    goto Done;
+    return EFI_UNSUPPORTED;
   }
 
-  Status = EFI_UNSUPPORTED;
-  if (Pci.Hdr.ClassCode[2] == PCI_CLASS_MASS_STORAGE ||
-      (Pci.Hdr.ClassCode[2] == PCI_BASE_CLASS_INTELLIGENT && Pci.Hdr.ClassCode[1] == PCI_SUB_CLASS_INTELLIGENT)
-      ) {
-    DBG("Found supported controller for BiosBlockIO class=%02x%02x%02x\n",
-        Pci.Hdr.ClassCode[2], Pci.Hdr.ClassCode[1], Pci.Hdr.ClassCode[0]);
-    Status = EFI_SUCCESS;
+  if (IS_PCI_IDE (&PciData) || IS_PCI_SATADPA (&PciData)) {
+    return EFI_SUCCESS;
   }
 
-Done:
-  gBS->CloseProtocol (
-        Controller,
-        &gEfiPciIoProtocolGuid,
-        This->DriverBindingHandle,
-        Controller
-        );
-
-  return Status;
+  return EFI_UNSUPPORTED;
 }
 
 /**
