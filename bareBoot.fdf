@@ -86,12 +86,12 @@ INF  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 
   # IDE/AHCI Support
 #INF  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
-INF  bareBoot/BlockIoDxe/BlockIoDxe.inf
-#INF  bareBoot/SataControllerDxe/SataControllerDxe.inf
-#INF  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
-#INF  MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
-#INF  MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
-#INF  MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
+#INF  bareBoot/BlockIoDxe/BlockIoDxe.inf
+INF  bareBoot/SataControllerDxe/SataControllerDxe.inf
+INF  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
+INF  MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
+INF  MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
+INF  MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
   # Usb Support
 INF  bareBoot/Bus/Pci/UhciDxe/UhciDxe.inf

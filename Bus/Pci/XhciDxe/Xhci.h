@@ -20,7 +20,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Protocol/Usb2HostController.h>
 #include <Protocol/PciIo.h>
-#include <Protocol/BlockIo.h>
 
 #include <Guid/EventGroup.h>
 

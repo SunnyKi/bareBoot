@@ -1413,20 +1413,6 @@ EhcDriverBindingSupported (
       || ((UsbClassCReg.ProgInterface != PCI_IF_EHCI) && (UsbClassCReg.ProgInterface != PCI_IF_UHCI) && (UsbClassCReg.ProgInterface != PCI_IF_OHCI))) {
 
     Status = EFI_UNSUPPORTED;
-  } else {
-    Status = gBS->OpenProtocol(
-                    Controller,
-                    &gEfiBlockIoProtocolGuid,
-                    NULL,
-                    This->DriverBindingHandle,
-                    Controller,
-                    EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
-    DBG ("EhcDriverBindingSupported: EfiBlockIo test protocol = %r\n", Status);
-    if (EFI_ERROR (Status)) {
-      Status = EFI_SUCCESS;
-    } else {
-      Status = EFI_UNSUPPORTED;
-    }
   }
 
 ON_EXIT:

@@ -1416,20 +1416,6 @@ UhciDriverBindingSupported (
       ) {
 
     Status = EFI_UNSUPPORTED;
-  } else {
-    Status = gBS->OpenProtocol(
-                   Controller,
-                   &gEfiBlockIoProtocolGuid,
-                   NULL,
-                   This->DriverBindingHandle,
-                   Controller,
-                   EFI_OPEN_PROTOCOL_TEST_PROTOCOL);
-    DBG ("UhciDriverBindingSupported: EfiBlockIo test protocol = %r\n", Status);
-    if (EFI_ERROR (Status)) {
-      Status = EFI_SUCCESS;
-    } else {
-      Status = EFI_UNSUPPORTED;
-    }
   }
 
 ON_EXIT:

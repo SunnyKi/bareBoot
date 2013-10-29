@@ -244,7 +244,7 @@ GetExtraKextsDir (
   
   // get os version as string
   if (AsciiStrnCmp (OSVersion, "10.4", 4) == 0) {
-    OSTypeStr = L"10.4";
+    OSTypeStr = L"10.4";
   } else if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
     OSTypeStr = L"10.5";
   } else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
