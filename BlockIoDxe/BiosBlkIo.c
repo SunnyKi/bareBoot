@@ -18,7 +18,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
-#include <macosx.h>
+#include <debug.h>
 
 #include "BiosBlkIo.h"
 

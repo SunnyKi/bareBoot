@@ -137,6 +137,7 @@
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
   MemLogLib|bareBoot/Library/MemLogLibDefault/MemLogLibDefault.inf
   PListLib|bareBoot/Library/PListLib/PListLib.inf
+  ShiftKeysLib|bareBoot/Library/ShiftKeysLib/ShiftKeysLib.inf
 
 [LibraryClasses.common.DXE_CORE]
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
@@ -207,12 +208,12 @@
 
 
   # Usb Support
-  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
-  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
-  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
-  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
-  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
-  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+  bareBoot/Bus/Pci/UhciDxe/UhciDxe.inf
+  bareBoot/Bus/Pci/EhciDxe/EhciDxe.inf
+  bareBoot/Bus/Pci/XhciDxe/XhciDxe.inf
+  bareBoot/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+  bareBoot/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+  bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 
   # ISA Support
   PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf

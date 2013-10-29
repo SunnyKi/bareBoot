@@ -142,7 +142,8 @@
   UefiHiiServicesLib
   PListLib
   MemLogLib
-  
+  ShiftKeysLib
+
 [Guids]
                                                 ## SOMETIMES_PRODUCES ## Variable:L"BootXX" (Boot option variable)
                                                 ## SOMETIMES_PRODUCES ## Variable:L"PlatformLang" (Platform supported languange in Rfc4646 format)

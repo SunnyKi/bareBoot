@@ -45,24 +45,7 @@
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
 
-#include <Library/MemLogLib.h>
-
-#if 0
-#define KEXT_PATCH_DEBUG
-#endif
-#if 1
-#define KEXT_INJECT_DEBUG
-#endif
-
-#if 1
-#define BOOT_DEBUG
-#endif
-#ifndef BOOT_DEBUG
-#define DBG(...)
-#else
-#define BOOT_LOG L"EFI\\bareboot\\boot.log"
-#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
-#endif
+#include <debug.h>
 
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))
 #define MAX_NUM_DEVICES 64

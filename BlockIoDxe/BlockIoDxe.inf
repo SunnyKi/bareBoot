@@ -41,7 +41,6 @@
   MemoryAllocationLib
   MemLogLib
 
-
 [Protocols]
   gEfiBlockIoProtocolGuid
   gEfiDevicePathProtocolGuid

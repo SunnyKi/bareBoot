@@ -627,6 +627,10 @@ CallBootManager (
   //
   // parse the selected option
   //
+#ifdef BOOT_DEBUG
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
+
   Status = BdsLibBootViaBootOption (gOption, gOption->LoadOptions, gOption->DevicePath, &ExitDataSize, &ExitData);
 #if 0
   if (!EFI_ERROR (Status)) {

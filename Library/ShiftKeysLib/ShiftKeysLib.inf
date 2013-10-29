@@ -1,0 +1,27 @@
+## @file
+#  Default instance of ShiftKeysLib library.
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = ShiftKeysLib
+  FILE_GUID                      = C039395F-6B85-4688-A61E-8888E863EBCF
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = ShiftKeysLib 
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  ShiftKeysLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  bareBoot/bareBoot.dec
+
+[LibraryClasses]
+  BaseLib
+  BaseMemoryLib
+  UefiBootServicesTableLib

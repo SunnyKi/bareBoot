@@ -14,22 +14,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
+#include <debug.h>
+
 #include "BiosBlkIo.h"
-
-#ifndef DEBUG_ALL
-#define DEBUG_BI 1
-#else
-#define DEBUG_BI DEBUG_ALL
-#endif
-
-#if DEBUG_BI==0
-#define DBG(...)
-#elif DEBUG_BI == 1
-#define DBG(...) MemLog(TRUE, 1, __VA_ARGS__)
-#else
-#define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
-#endif
-
 
 //
 // Module global variables
