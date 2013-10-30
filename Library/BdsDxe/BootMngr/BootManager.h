@@ -16,7 +16,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define _EFI_BOOT_MANAGER_H_
 
 #include "Bds.h"
-#include "FrontPage.h"
+#include "String.h"
+
+#define ONE_SECOND  10000000
+
 
 #define BOOT_MANAGER_FORM_ID     0x1001
 
@@ -26,7 +29,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 //
 // These are the VFR compiler generated data representing our VFR data.
 //
-extern UINT8 BootManagerVfrBin[];
+
+UINTN     gCallbackKey;
 
 #define BOOT_MANAGER_CALLBACK_DATA_SIGNATURE  SIGNATURE_32 ('B', 'M', 'C', 'B')
 
@@ -44,6 +48,23 @@ typedef struct {
   //
   EFI_HII_CONFIG_ACCESS_PROTOCOL   ConfigAccess;
 } BOOT_MANAGER_CALLBACK_DATA;
+
+/**
+ This function is the main entry of the platform setup entry.
+ The function will present the main menu of the system setup,
+ this is the platform reference part and can be customize.
+ 
+ 
+ @param TimeoutDefault  - The fault time out value before the system
+ continue to boot.
+ @param ConnectAllHappened - The indicater to check if the connect all have
+ already happened.
+ 
+ **/
+VOID
+PlatformBdsEnterFrontPage (
+  IN UINT16                 TimeoutDefault
+  );
 
 /**
   This call back function is registered with Boot Manager formset.

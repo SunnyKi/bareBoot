@@ -1393,7 +1393,6 @@ Returns:
 #endif
   DBG ("BdsPlatorm: Starting BdsLibConnectAllDriversToAllControllers\n");  // 2.3 sec
   BdsLibConnectAllDriversToAllControllers ();
-  gConnectAllHappened = TRUE;
 
   Status = gBS->LocateProtocol (
                   &gEfiSmbiosProtocolGuid,

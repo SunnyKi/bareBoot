@@ -47,11 +47,9 @@
 #  HwErrRecSupport.c
 #  HwErrRecSupport.h
   Bds.h
-  FrontPage.h
   MemoryTest.c
   Strings.uni
   String.c
-  FrontPage.c
   BdsEntry.c
   String.h
   BmLib.c

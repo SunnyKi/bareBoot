@@ -85,30 +85,6 @@ typedef struct {
 
 #pragma pack()
 
-/**
-
-  Show progress bar with title above it. It only works in Graphics mode.
-
-  @param TitleForeground Foreground color for Title.
-  @param TitleBackground Background color for Title.
-  @param Title           Title above progress bar.
-  @param ProgressColor   Progress bar color.
-  @param Progress        Progress (0-100)
-  @param PreviousValue   The previous value of the progress.
-
-  @retval  EFI_STATUS       Success update the progress bar
-
-**/
-EFI_STATUS
-PlatformBdsShowProgress (
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL TitleForeground,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL TitleBackground,
-  IN CHAR16                        *Title,
-  IN EFI_GRAPHICS_OUTPUT_BLT_PIXEL ProgressColor,
-  IN UINTN                         Progress,
-  IN UINTN                         PreviousValue
-  );
-
 //
 // Prototypes
 //

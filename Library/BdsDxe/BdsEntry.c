@@ -17,7 +17,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "Bds.h"
-#include "FrontPage.h"
+#include "BootMngr/BootManager.h"
 #if 0
 #include "HwErrRecSupport.h"
 #endif
@@ -132,7 +132,7 @@ BdsBootDeviceSelect (
   for (;;) {
     if (Link == &BootLists) {
       Timeout = 0xffff;
-      PlatformBdsEnterFrontPage (Timeout, FALSE);
+      PlatformBdsEnterFrontPage (Timeout);
       InitializeListHead (&BootLists);
       BdsLibBuildOptionFromVar (&BootLists, L"BootOrder");
       Link = BootLists.ForwardLink;
@@ -158,7 +158,7 @@ BdsBootDeviceSelect (
       BootOption->StatusString = GetStringById (STRING_TOKEN (STR_BOOT_SUCCEEDED));
       PlatformBdsBootSuccess (BootOption);
       Timeout = 0xffff;
-      PlatformBdsEnterFrontPage (Timeout, FALSE);
+      PlatformBdsEnterFrontPage (Timeout);
       if (BootNextExist) {
         LinkBootNext = BootLists.ForwardLink;
       }
@@ -199,19 +199,23 @@ BdsEntry (
   ASSERT (gST->FirmwareVendor != NULL);
   gST->FirmwareRevision = PcdGet32 (PcdFirmwareRevision);
   gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);
+  
   PlatformBdsInit ();
   InitializeStringSupport ();
 #if 0
   InitializeFrontPage ();
 #endif
   InitializeBootManager ();
+  
   mBootNext = BdsLibGetVariableAndSize (
                 L"BootNext",
                 &gEfiGlobalVariableGuid,
                 &BootNextSize
                 );
+  
   PlatformBdsPolicyBehavior (BdsMemoryTest);
   BdsBootDeviceSelect ();
+
   ASSERT (FALSE);
   return ;
 }

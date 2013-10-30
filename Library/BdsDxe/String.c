@@ -13,8 +13,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "Bds.h"
-//#include "Language.h"
-#include "FrontPage.h"
 
 EFI_HII_HANDLE gStringPackHandle;
 
