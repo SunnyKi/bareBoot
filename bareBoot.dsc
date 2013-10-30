@@ -199,21 +199,33 @@
 
   # IDE/AHCI Support
 #  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
+!ifdef BLOCKIO
   bareBoot/BlockIoDxe/BlockIoDxe.inf
+!else
   bareBoot/SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
+!endif
 
 
   # Usb Support
+!ifdef SPEEDUP
   bareBoot/Bus/Pci/UhciDxe/UhciDxe.inf
   bareBoot/Bus/Pci/EhciDxe/EhciDxe.inf
   bareBoot/Bus/Pci/XhciDxe/XhciDxe.inf
   bareBoot/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
   bareBoot/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+!else
+  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+!endif
 
   # ISA Support
   PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
@@ -230,7 +242,9 @@
   bareBoot/BiosVideoThunkDxe/BiosVideo.inf
 
   # HFS+
+!ifdef VBOXHFS
   bareBoot/VBoxFsDxe/VBoxHfs.inf
+!endif
 
   # ACPI Support
 #  MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
@@ -287,4 +301,7 @@
 [BuildOptions]
 !ifdef $(SOURCE_DEBUG_ENABLE)
   *_*_*_GENFW_FLAGS = --keepexceptiontable
+!endif
+!ifdef SPEEDUP
+  *_*_*_CC_FLAGS   = -DSPEEDUP
 !endif

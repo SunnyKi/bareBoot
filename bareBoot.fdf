@@ -86,20 +86,32 @@ INF  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 
   # IDE/AHCI Support
 #INF  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
-#INF  bareBoot/BlockIoDxe/BlockIoDxe.inf
+!ifdef BLOCKIO
+INF  bareBoot/BlockIoDxe/BlockIoDxe.inf
+!else
 INF  bareBoot/SataControllerDxe/SataControllerDxe.inf
 INF  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
 INF  MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
 INF  MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF  MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
+!endif
 
   # Usb Support
+!ifdef SPEEDUP
 INF  bareBoot/Bus/Pci/UhciDxe/UhciDxe.inf
 INF  bareBoot/Bus/Pci/EhciDxe/EhciDxe.inf
 INF  bareBoot/Bus/Pci/XhciDxe/XhciDxe.inf
 INF  bareBoot/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF  bareBoot/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF  bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+!else
+INF  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+INF  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+INF  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+INF  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+INF  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+INF  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+!endif
 
   # ISA Support
 INF  PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
@@ -121,8 +133,11 @@ INF  bareBoot/BiosVideoThunkDxe/BiosVideo.inf
 INF  IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
 INF  RuleOverride=BINARY FatBinPkg/EnhancedFatDxe/Fat.inf
-#INF  bareBoot/VBoxFsDxe/VBoxHfs.inf
+!ifdef VBOXHFS
+INF  bareBoot/VBoxFsDxe/VBoxHfs.inf
+!else
 INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
+!endif
 #INF  RuleOverride=BINARY bareBoot/XhciDxe/XhciDxe.inf
 
 [Rule.Common.DXE_CORE]

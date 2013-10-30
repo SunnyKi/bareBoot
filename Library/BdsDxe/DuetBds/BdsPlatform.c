@@ -1370,6 +1370,7 @@ Returns:
   EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL   *SimpleTextInEx;
   EFI_KEY_DATA                        mKeyData;
 #endif
+#ifndef SPEEDUP
   EFI_SMBIOS_HANDLE                 SmbiosHandle;
   EFI_SMBIOS_PROTOCOL               *Smbios;
   EFI_SMBIOS_TABLE_HEADER           *Record;
@@ -1379,7 +1380,8 @@ Returns:
   CHAR16                            *TmpString1;
   CHAR16                            *TmpString2;
   UINT8                             StrIndex;
-
+#endif
+  
   DBG ("BdsPlatorm: Starting BdsLibGetBootMode\n");
   Status = BdsLibGetBootMode (&BootMode);
   ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
@@ -1394,6 +1396,8 @@ Returns:
   DBG ("BdsPlatorm: Starting BdsLibConnectAllDriversToAllControllers\n");  // 2.3 sec
   BdsLibConnectAllDriversToAllControllers ();
 
+  gPNDirExists = FALSE;
+#ifndef SPEEDUP
   Status = gBS->LocateProtocol (
                   &gEfiSmbiosProtocolGuid,
                   NULL,
@@ -1425,7 +1429,6 @@ Returns:
   DBG ("BdsPlatorm: DMI TableType1->ProductName = '%s'\n", TmpString1);
   DBG ("BdsPlatorm: DMI TableType2->ProductName = '%s'\n", TmpString2);
 
-  gPNDirExists = FALSE;
   gPNConfigPlist = NULL;
   gPNAcpiDir = NULL;
 
@@ -1436,10 +1439,11 @@ Returns:
   gProductNameDir2 = MakeProductNameDir (TmpString2);
 
   DBG ("BdsPlatorm: ProductNameDir2 = '%s'\n", gProductNameDir2);
+#endif
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");
   BdsLibEnumerateAllBootOption (&gBootOptionList);
-
+  
   AddBootArgs = "\0 23456789012345678901234567890123456789";
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
     AsciiStrCat (AddBootArgs, " -v");

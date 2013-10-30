@@ -10,13 +10,14 @@
 #if 0
 #define KEXT_PATCH_DEBUG
 #endif
-#if 1
+#if 0
 #define KEXT_INJECT_DEBUG
 #endif
 
 #if 1
 #define BOOT_DEBUG
 #endif
+
 #ifndef BOOT_DEBUG
 #define DBG(...)
 #else

@@ -434,8 +434,10 @@ BdsLibEnumerateAllBootOption (
   EFI_BLOCK_IO_PROTOCOL         *BlkIo;
   UINTN                         DevicePathType;
   UINT16                        CdromNumber;
+#ifndef SPEEDUP
   UINT16                        *PNConfigPlist2;
-
+#endif
+  
   gRootFHandle    = NULL;
   FileSystemInfo  = NULL;
   FileSystemHandles = NULL;
@@ -449,6 +451,7 @@ BdsLibEnumerateAllBootOption (
   DevicePathType  = 0;
   BlkIo           = NULL;
 
+#ifndef SPEEDUP
   if (gProductNameDir != NULL) {
     gPNConfigPlist = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"config.plist"));
     StrCpy (gPNConfigPlist, gProductNameDir);
@@ -461,7 +464,8 @@ BdsLibEnumerateAllBootOption (
     StrCpy (PNConfigPlist2, gProductNameDir2);
     StrCat (PNConfigPlist2, L"config.plist");
   }
-
+#endif
+  
   gBS->LocateHandleBuffer (
                            ByProtocol,
                            &gEfiBlockIoProtocolGuid,
@@ -528,6 +532,7 @@ BdsLibEnumerateAllBootOption (
                        );
     }
     
+#ifndef SPEEDUP
     if ((gPNConfigPlist != NULL) && (FileExists (FHandle, gPNConfigPlist)) && (ConfigNotFound)) {
       gPNDirExists = TRUE;
       gRootFHandle = FHandle;
@@ -546,7 +551,8 @@ BdsLibEnumerateAllBootOption (
       ConfigNotFound  = FALSE;
       DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
     }
-
+#endif
+    
     if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
       gRootFHandle = FHandle;
       ConfigNotFound  = FALSE;

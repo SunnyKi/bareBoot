@@ -476,8 +476,10 @@ CPU_STRUCTURE                   gCPUStructure;
 CHAR8                           *AddBootArgs;
 CHAR8                           *OSVersion;
 LIST_ENTRY                      gBootOptionList;
-CHAR16                          *gProductNameDir;
+#ifndef SPEEDUP
 CHAR16                          *gProductNameDir2;
+#endif
+CHAR16                          *gProductNameDir;
 CHAR16                          *gPNConfigPlist;
 CHAR16                          *gPNAcpiDir;
 BOOLEAN                         gPNDirExists;
