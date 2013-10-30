@@ -54,6 +54,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  bareBoot/bareBoot.dec
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -67,6 +68,8 @@
   PcdLib
   UefiUsbLib
   HiiLib
+  MemLogLib
+  ShiftKeysLib
 
 [Guids]
   ##
