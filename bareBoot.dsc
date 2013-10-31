@@ -302,6 +302,6 @@
 !ifdef $(SOURCE_DEBUG_ENABLE)
   *_*_*_GENFW_FLAGS = --keepexceptiontable
 !endif
-!ifdef SPEEDUP
-  *_*_*_CC_FLAGS   = -DSPEEDUP
-!endif
+#!ifdef SPEEDUP
+#  *_*_*_CC_FLAGS   = -DSPEEDUP
+#!endif

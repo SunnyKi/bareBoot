@@ -6,6 +6,7 @@
 #include <macosx.h>
 #include <Library/plist.h>
 
+#include "cpu.h"
 #include "../InternalBdsLib.h"
 #include "../../BootMaintLib.h"
 

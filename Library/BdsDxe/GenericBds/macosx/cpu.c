@@ -34,6 +34,8 @@
  */
 
 #include <macosx.h>
+
+#include "cpu.h"
 #include "Library/IoLib.h"
 
 #define EAX 0
@@ -309,6 +311,7 @@ GetCpuProps (
       case CPU_MODEL_JAKETOWN:
       case CPU_MODEL_IVY_BRIDGE:
       case CPU_MODEL_IVY_BRIDGE_E5:
+      case CPU_MODEL_HASWELL:
         msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
         gCPUStructure.MaxRatio = (UINT8) (RShiftU64 (msr, 8) & 0xff);
         if (gCPUStructure.MaxRatio != 0) {
@@ -341,16 +344,16 @@ GetCpuProps (
         }
         break;
 
-      case CPU_MODEL_ATOM:// Core i7 & Atom
-      case CPU_MODEL_DOTHAN:// Pentium M, Dothan, 90nm
-      case CPU_MODEL_YONAH:// Core Duo/Solo, Pentium M DC
-      case CPU_MODEL_MEROM:// Core Xeon, Core 2 DC, 65nm
-      case CPU_MODEL_PENRYN:// Core 2 Duo/Extreme, Xeon, 45nm
+      case CPU_MODEL_ATOM:        // Core i7 & Atom
+      case CPU_MODEL_DOTHAN:      // Pentium M, Dothan, 90nm
+      case CPU_MODEL_YONAH:       // Core Duo/Solo, Pentium M DC
+      case CPU_MODEL_MEROM:       // Core Xeon, Core 2 DC, 65nm
+      case CPU_MODEL_PENRYN:      // Core 2 Duo/Extreme, Xeon, 45nm
         msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
         gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
+        gCPUStructure.TurboMsr = ((UINT32) RShiftU64(msr, 40)) & 0x1F;
         gCPUStructure.SubDivider = ((UINT32) RShiftU64 (msr, 14)) & 0x1;
         gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
-        gCPUStructure.TurboMsr = msr + 0x100;
         if (gCPUStructure.MaxRatio != 0) {
           gCPUStructure.FSBFrequency = DivU64x32 (
                                          MultU64x32 (gCPUStructure.CPUFrequency, 10),

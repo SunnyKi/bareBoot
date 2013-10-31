@@ -5,6 +5,7 @@
 
 #include <macosx.h>
 
+#include "cpu.h"
 #include "LoaderUefi.h"
 #include "kernel_patcher.h"
 #include "sse3_patcher.h"

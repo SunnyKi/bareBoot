@@ -21,6 +21,7 @@
 
 #include <macosx.h>
 
+#include "cpu.h"
 #include "SmBios.h"
 
 #define MAX_HANDLE        0xFEFF
