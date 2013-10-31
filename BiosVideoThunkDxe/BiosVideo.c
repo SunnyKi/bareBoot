@@ -1316,7 +1316,7 @@ BiosVideoCheckForVbe (
   UINTN                                  ModeNumber;
   VESA_BIOS_EXTENSIONS_EDID_TIMING       Timing;
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
-#if 0
+#if 1
   UINT16 *VMPtr16;
 #endif
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
@@ -1490,9 +1490,9 @@ BiosVideoCheckForVbe (
 
   LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
 
-  DBG ("BiosVideo: block 0 read with status 0x%x\n", Regs.X.AX);
-  DBG ("BiosVideo: block 0 ExtensionFlag 0x%x\n", BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
-
+  DBG ("BiosVideo: block 0 read with status 0x%x, ExtensionFlag 0x%x\n",
+       Regs.X.AX,
+       BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
   //
   // See if the VESA call succeeded
   //
@@ -1504,7 +1504,7 @@ BiosVideoCheckForVbe (
                        (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
                        &ValidEdidTiming) == TRUE) {
       EdidFound = TRUE;
-      DBG ("BiosVideo: Edid0 found\n");
+      DBG ("BiosVideo: Edid0 found, ValidEdidTiming.ValidNumber = %d\n", ValidEdidTiming.ValidNumber);
     }
   }
   
@@ -1550,7 +1550,7 @@ BiosVideoCheckForVbe (
   //
   // Walk through the mode list to see if there is at least one mode the is compatible with the EDID mode
   //
-#if 1
+#if 0
   ModeNumberPtr = (UINT16 *)
     (
       (((UINTN) BiosVideoPrivate->VbeInformationBlock->VideoModePtr & 0xffff0000) >> 12) |
@@ -1608,18 +1608,21 @@ BiosVideoCheckForVbe (
     // See if the mode supports color.  If it doesn't then try the next mode.
     //
     if ((BiosVideoPrivate->VbeModeInformationBlock->ModeAttributes & VESA_BIOS_EXTENSIONS_MODE_ATTRIBUTE_COLOR) == 0) {
+      DBG ("BiosVideo: mode not supports color\n");
       continue;
     }
     //
     // See if the mode supports graphics.  If it doesn't then try the next mode.
     //
     if ((BiosVideoPrivate->VbeModeInformationBlock->ModeAttributes & VESA_BIOS_EXTENSIONS_MODE_ATTRIBUTE_GRAPHICS) == 0) {
+      DBG ("BiosVideo: mode not supports graphics\n");
       continue;
     }
     //
     // See if the mode supports a linear frame buffer.  If it doesn't then try the next mode.
     //
     if ((BiosVideoPrivate->VbeModeInformationBlock->ModeAttributes & VESA_BIOS_EXTENSIONS_MODE_ATTRIBUTE_LINEAR_FRAME_BUFFER) == 0) {
+      DBG ("BiosVideo: mode not supports a linear frame buffer\n");
       continue;
     }
     //
@@ -1628,34 +1631,40 @@ BiosVideoCheckForVbe (
     // number of bits per pixel is a multiple of 8 or more than 32 bits per pixel
     //
     if (BiosVideoPrivate->VbeModeInformationBlock->BitsPerPixel < 24) {
+      DBG ("BiosVideo: mode not supports 32 bit color\n");
       continue;
     }
 
     if (BiosVideoPrivate->VbeModeInformationBlock->BitsPerPixel > 32) {
+      DBG ("BiosVideo: number of bits per pixel is more than 32 bits per pixel\n");
       continue;
     }
 
     if ((BiosVideoPrivate->VbeModeInformationBlock->BitsPerPixel % 8) != 0) {
+      DBG ("BiosVideo: number of bits per pixel is not a multiple of 8\n");
       continue;
     }
     //
     // See if the physical base pointer for the linear mode is valid.  If it isn't then try the next mode.
     //
     if (BiosVideoPrivate->VbeModeInformationBlock->PhysBasePtr == 0) {
+      DBG ("BiosVideo: physical base pointer for the linear mode is not valid\n");
       continue;
     }
 
     ModeFound = FALSE;
 
+#if 0
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1024) {
       continue;
-    } else if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1300) {
+    } else if (BiosVideoPrivate->VbeModeInformationBlock->XResolution <= 1024) {
       DBG ("BiosVideo: VBE mode as insurance %d (%dx%d)\n",
            ModeNumber,
            BiosVideoPrivate->VbeModeInformationBlock->XResolution,
            BiosVideoPrivate->VbeModeInformationBlock->YResolution);
       ModeFound = TRUE;
     }
+#endif
 
     DBG ("BiosVideo: XResolution = %d, YResolution = %d, ModeNumber = %d\n",
          BiosVideoPrivate->VbeModeInformationBlock->XResolution,
@@ -1679,7 +1688,13 @@ BiosVideoCheckForVbe (
     //
     // Select a reasonable mode to be set for current display mode
     //
-    if (!EdidFound) {
+    if (!EdidFound || (ValidEdidTiming.ValidNumber = 0) || !ModeFound) {
+        DBG ("BiosVideo: %d. VBE mode for set (%dx%d)\n",
+          ModeNumber,
+          BiosVideoPrivate->VbeModeInformationBlock->XResolution,
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution);
+        ModeFound = TRUE;
+#if 0
       if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
           BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
           ) {
@@ -1734,6 +1749,13 @@ BiosVideoCheckForVbe (
         DBG ("BiosVideo: VBE mode for set = %d (1024x768)\n", ModeNumber);
         ModeFound = TRUE;
       }
+      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 800 &&
+          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 600
+          ) {
+        DBG ("BiosVideo: VBE mode for set = %d (1024x768)\n", ModeNumber);
+        ModeFound = TRUE;
+      }
+#endif
     }
 
     if (!ModeFound) {
