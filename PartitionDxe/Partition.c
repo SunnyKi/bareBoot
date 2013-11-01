@@ -91,9 +91,18 @@ PartitionDriverBindingSupported (
       // check its validation
       //
       Node = (EFI_DEV_PATH *) RemainingDevicePath;
+#if 0
       if (Node->DevPath.Type != MEDIA_DEVICE_PATH ||
         Node->DevPath.SubType != MEDIA_HARDDRIVE_DP ||
         DevicePathNodeLength (&Node->DevPath) != sizeof (HARDDRIVE_DEVICE_PATH)) {
+        return EFI_UNSUPPORTED;
+      }
+#endif
+      if (   Node->DevPath.Type != MEDIA_DEVICE_PATH
+          || Node->DevPath.SubType != MEDIA_HARDDRIVE_DP
+          || DevicePathNodeLength (&Node->DevPath) != sizeof (HARDDRIVE_DEVICE_PATH)
+          || Node->DevPath.Type != MESSAGING_DEVICE_PATH
+          || Node->DevPath.SubType != MSG_SATA_DP) {
         return EFI_UNSUPPORTED;
       }
     }
