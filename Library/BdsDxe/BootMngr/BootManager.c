@@ -18,8 +18,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 UINT16             mKeyInput;
 BDS_COMMON_OPTION  *gOption;
 EFI_FORM_BROWSER2_PROTOCOL      *gFormBrowser2;
-UINT8 BootManagerVfrBin[0];
-
 
 CHAR16             *mDeviceTypeStr[] = {
   L"Legacy BEV",

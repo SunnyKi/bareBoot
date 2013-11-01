@@ -30,6 +30,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 // These are the VFR compiler generated data representing our VFR data.
 //
 
+extern UINT8 BootManagerVfrBin[];
+
 UINTN     gCallbackKey;
 
 #define BOOT_MANAGER_CALLBACK_DATA_SIGNATURE  SIGNATURE_32 ('B', 'M', 'C', 'B')
