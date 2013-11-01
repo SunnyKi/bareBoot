@@ -12,14 +12,14 @@
 #pragma pack(1)
 
 typedef struct APPLE_PT_HEADER {
-    UINT16   sbSig; /* must be BE 0x4552 */
-    UINT16   sbBlkSize; /* block size of device */
-    UINT32   sbBlkCount; /* number of blocks on device */
-    UINT16   sbDevType; /* device type */
-    UINT16   sbDevId; /* device id */
-    UINT32   sbData; /* not used */
+    UINT16   sbSig;       /* must be BE 0x4552 */
+    UINT16   sbBlkSize;   /* block size of device */
+    UINT32   sbBlkCount;  /* number of blocks on device */
+    UINT16   sbDevType;   /* device type */
+    UINT16   sbDevId;     /* device id */
+    UINT32   sbData;      /* not used */
     UINT16   sbDrvrCount; /* driver descriptor count */
-    UINT16   sbMap[247]; /* descriptor map */
+    UINT16   sbMap[247];  /* descriptor map */
 } APPLE_PT_HEADER;
 
 typedef struct APPLE_PT_ENTRY  {
@@ -61,17 +61,8 @@ PartitionInstallAppleChildHandles (
   )
 {
   EFI_STATUS                Status;
-  UINT32                    Lba;
   EFI_BLOCK_IO_MEDIA       *Media;
-#if 0
-  VOID                     *Block;
-  UINTN                   MaxIndex;
-#endif
-  /** @todo: wrong, as this PT can be on both HDD or CD */
   CDROM_DEVICE_PATH         CdDev;
-#if 0
-  EFI_DEVICE_PATH_PROTOCOL  Dev;
-#endif
   UINT32                    Partition;
   UINT32                    PartitionEntries;
   UINT32                    VolSpaceSize;
@@ -100,7 +91,6 @@ PartitionInstallAppleChildHandles (
   }
 
   do {
-      Lba = 0;
       Status = DiskIo->ReadDisk (
                        DiskIo,
                        MediaId,
@@ -111,9 +101,6 @@ PartitionInstallAppleChildHandles (
       if (EFI_ERROR (Status)) {
         goto done;
       }
-#if 0
-      Header = (APPLE_PT_HEADER *)Block;
-#endif
 
       if (SwapBytes16(AppleHeader->sbSig) != 0x4552) {
         Status = EFI_NOT_FOUND;
@@ -141,15 +128,16 @@ PartitionInstallAppleChildHandles (
               Status = EFI_NOT_FOUND;
               goto done; /* would break, but ... */
           }
-
-#if 0
-          Entry = (APPLE_PT_ENTRY *)Block;
-#endif
-
-          if (SwapBytes16(AppleEntry->signature) != 0x504D) continue;
-          if (Partition == 1) PartitionEntries  = SwapBytes32(AppleEntry->map_entries);
+          if (SwapBytes16(AppleEntry->signature) != 0x504D) {
+            continue;
+          }
+          if (Partition == 1) {
+            PartitionEntries  = SwapBytes32(AppleEntry->map_entries);
+          }
+      
           StartLba = SwapBytes32(AppleEntry->pblock_start);
           SizeLbs  = SwapBytes32(AppleEntry->pblocks);
+      
           ZeroMem (&CdDev, sizeof (CdDev));
           CdDev.Header.Type     = MEDIA_DEVICE_PATH;
           CdDev.Header.SubType  = MEDIA_CDROM_DP;
