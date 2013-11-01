@@ -1608,7 +1608,9 @@ BiosVideoCheckForVbe (
     // See if the mode supports color.  If it doesn't then try the next mode.
     //
     if ((BiosVideoPrivate->VbeModeInformationBlock->ModeAttributes & VESA_BIOS_EXTENSIONS_MODE_ATTRIBUTE_COLOR) == 0) {
+#if 0
       DBG ("BiosVideo: mode not supports color\n");
+#endif
       continue;
     }
     //
@@ -1631,7 +1633,9 @@ BiosVideoCheckForVbe (
     // number of bits per pixel is a multiple of 8 or more than 32 bits per pixel
     //
     if (BiosVideoPrivate->VbeModeInformationBlock->BitsPerPixel < 24) {
-      DBG ("BiosVideo: mode not supports 32 bit color\n");
+      DBG ("BiosVideo: mode (%dx%d) not supports 32 bit color\n",
+           BiosVideoPrivate->VbeModeInformationBlock->XResolution,
+           BiosVideoPrivate->VbeModeInformationBlock->YResolution);
       continue;
     }
 
@@ -1654,8 +1658,12 @@ BiosVideoCheckForVbe (
 
     ModeFound = FALSE;
 
-#if 0
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 1024) {
+    DBG ("BiosVideo: XResolution = %d, YResolution = %d, ModeNumber = %d\n",
+         BiosVideoPrivate->VbeModeInformationBlock->XResolution,
+         BiosVideoPrivate->VbeModeInformationBlock->YResolution,
+         ModeNumber);
+
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 800) {
       continue;
     } else if (BiosVideoPrivate->VbeModeInformationBlock->XResolution <= 1024) {
       DBG ("BiosVideo: VBE mode as insurance %d (%dx%d)\n",
@@ -1664,12 +1672,6 @@ BiosVideoCheckForVbe (
            BiosVideoPrivate->VbeModeInformationBlock->YResolution);
       ModeFound = TRUE;
     }
-#endif
-
-    DBG ("BiosVideo: XResolution = %d, YResolution = %d, ModeNumber = %d\n",
-         BiosVideoPrivate->VbeModeInformationBlock->XResolution,
-         BiosVideoPrivate->VbeModeInformationBlock->YResolution,
-         ModeNumber);
 
     if (EdidFound && (ValidEdidTiming.ValidNumber > 0) && !ModeFound) {
       //
@@ -1694,68 +1696,6 @@ BiosVideoCheckForVbe (
           BiosVideoPrivate->VbeModeInformationBlock->XResolution,
           BiosVideoPrivate->VbeModeInformationBlock->YResolution);
         ModeFound = TRUE;
-#if 0
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1440
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1920x1440)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1920x1200)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1920 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1080
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1920x1080)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1680 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1680x1050)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1600 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1200
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1600x1200)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1400 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1050
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1440x1050)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1440 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 900
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1440x900)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1280 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 1024
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1280x1024)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 1024 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 768
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1024x768)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-      if (BiosVideoPrivate->VbeModeInformationBlock->XResolution == 800 &&
-          BiosVideoPrivate->VbeModeInformationBlock->YResolution == 600
-          ) {
-        DBG ("BiosVideo: VBE mode for set = %d (1024x768)\n", ModeNumber);
-        ModeFound = TRUE;
-      }
-#endif
     }
 
     if (!ModeFound) {
