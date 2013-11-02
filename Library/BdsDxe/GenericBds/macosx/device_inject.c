@@ -332,6 +332,29 @@ devprop_free_string (
   FreePool (pstring);
   pstring = NULL;
 }
+
+CHAR8*
+get_pci_dev_path(
+  pci_dt_t *PciDt
+)
+{
+	CHAR8*                      tmp;
+	CHAR16*                     devpathstr;
+	EFI_DEVICE_PATH_PROTOCOL*   DevicePath;
+	
+  devpathstr = NULL;
+  DevicePath = NULL;
+  
+  DevicePath = DevicePathFromHandle (PciDt->DeviceHandle);
+  if (!DevicePath) {
+    return NULL;
+  }
+  devpathstr = ConvertDevicePathToText (DevicePath, FALSE, FALSE);
+  tmp = AllocateZeroPool ((StrLen(devpathstr)+1) * sizeof (CHAR8));
+  UnicodeStrToAsciiStr (devpathstr, tmp);
+  return tmp;
+}
+
 #if 0
 EFI_STATUS
 GetEdid(
@@ -1846,8 +1869,7 @@ setup_ati_devprop (
 }
 
 // ---------------============== GMA injection
-
-CHAR8 *
+CHAR8*
 get_gma_model (
   UINT32 id
 )
@@ -1868,13 +1890,14 @@ setup_gma_devprop (
   pci_dt_t *gma_dev
 )
 {
-  DevPropDevice *device;
-  UINT32        DualLink;
-  CHAR8         *model;
-  UINT8 BuiltIn;
+  DevPropDevice   *device;
+  CHAR8           *model;
+  UINT8           BuiltIn;
+  UINT32          DualLink;
+	UINT8           ClassFix[4] =	{ 0x00, 0x00, 0x03, 0x00 };
 
   BuiltIn = 0;
-
+  
   model = get_gma_model ((gma_dev->vendor_id << 16) | gma_dev->device_id);
 
   if (string == NULL) {
@@ -1890,26 +1913,58 @@ setup_gma_devprop (
   DualLink = ((gGraphics.Width * gGraphics.Height) > (1 << 20)) ? 1 : 0;
   devprop_add_value (device, "model", (UINT8*) model, (UINT32) AsciiStrLen (model));
   devprop_add_value (device, "device_type", (UINT8*) "display", 7);
+  devprop_add_value (device, "subsystem-vendor-id", GMAX3100_vals[21], 4);
+  devprop_add_value (device, "hda-gfx", (UINT8*)"onboard-1", 9);
 
   switch (gma_dev->device_id) {
+    case 0x0102: 
+      devprop_add_value (device, "class-code",	ClassFix, 4);
+    case 0x0112:  
+    case 0x0116:
+    case 0x0122:
+    case 0x0126:
+    case 0x0152:
+    case 0x0156:
+    case 0x0162:
+    case 0x0166:
+    case 0x016a:
+    case 0x0412:
+    case 0x0416:
+      if ((gma_dev->device_id == 0x162) ||
+          (gma_dev->device_id == 0x16a)) {
+        devprop_add_value (device, "AAPL,ig-platform-id", GMAX3100_vals[23], 4);
+        devprop_add_value (device, "class-code",	ClassFix, 4);
+      }
+      else if (gma_dev->device_id == 0x166)
+        devprop_add_value (device, "AAPL,ig-platform-id", GMAX3100_vals[25], 4);
+      else if (gma_dev->device_id == 0x152)
+        devprop_add_value (device, "AAPL,ig-platform-id", GMAX3100_vals[24], 4);
+      else if (gma_dev->device_id == 0x156)
+        devprop_add_value (device, "AAPL,ig-platform-id", GMAX3100_vals[25], 4);
+      else if (gma_dev->device_id == 0x412)
+        devprop_add_value (device, "AAPL,ig-platform-id", GMAX3100_vals[26], 4);
+      else if (gma_dev->device_id == 0x416)
+        devprop_add_value (device, "AAPL,ig-platform-id", GMAX3100_vals[26], 4);
+    
+    case 0xA011:
+    case 0xA012:  
+      if (DualLink != 0) {
+        devprop_add_value (device, "AAPL00,DualLink", (UINT8*)&DualLink, 1);
+      }
     case 0x2582:
     case 0x2592:
     case 0x27A2:
     case 0x27AE:
-    case 0x0116:
-    case 0x0126:
       devprop_add_value (device, "AAPL,HasPanel", reg_TRUE, 4);
       devprop_add_value (device, "built-in", &BuiltIn, 1);
-      break;
 
     case 0x2772:
-#if 0
-    case 0x0045:
-#endif
+    case 0x29C2:  
+    case 0x0044:
     case 0x0046:
-    case 0x0112:
     case 0xA002:
       devprop_add_value (device, "built-in", &BuiltIn, 1);
+      devprop_add_value (device, "AAPL00,DualLink", (UINT8*)&DualLink, 1);
       break;
 
     case 0x2A02:
@@ -1948,13 +2003,14 @@ setup_gma_devprop (
       devprop_add_value (device, "AAPL01,InverterFrequency", GMAX3100_vals[20], 4);
 #if 0
       devprop_add_value (device, "class-code",           ClassFix, 4);
-#endif
       devprop_add_value (device, "subsystem-vendor-id", GMAX3100_vals[21], 4);
+#endif
       devprop_add_value (device, "subsystem-id", GMAX3100_vals[22], 4);
       devprop_add_value (device, "built-in", &BuiltIn, 1);
       break;
 
     default:
+      DBG ("Intel card id=%x unsupported\n", gma_dev->device_id);
       return FALSE;
   }
 

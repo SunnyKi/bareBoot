@@ -11,7 +11,7 @@ struct gma_gpu_t {
   CHAR8 *name;
 };
 
-UINT8 GMAX3100_vals[23][4] = {
+UINT8 GMAX3100_vals[28][4] = {
   { 0x01, 0x00, 0x00, 0x00 }, //0 "AAPL,HasPanel"
   { 0x01, 0x00, 0x00, 0x00 }, //1 "AAPL,SelfRefreshSupported"
   { 0x01, 0x00, 0x00, 0x00 }, //2 "AAPL,aux-power-connected"
@@ -34,11 +34,16 @@ UINT8 GMAX3100_vals[23][4] = {
   { 0x3B, 0x00, 0x00, 0x00 }, //19 "AAPL01,Stretch"
   { 0xc8, 0x95, 0x00, 0x00 }, //20 "AAPL01,InverterFrequency"
   { 0x6B, 0x10, 0x00, 0x00 }, //21 "subsystem-vendor-id"
-  { 0xA2, 0x00, 0x00, 0x00 } //22 "subsystem-id"
+  { 0xA2, 0x00, 0x00, 0x00 }, //22 "subsystem-id"
+  { 0x05, 0x00, 0x62, 0x01 }, //23 "AAPL,ig-platform-id" HD4000 //STLVNUB
+  { 0x06, 0x00, 0x62, 0x01 }, //24 "AAPL,ig-platform-id" HD4000 iMac
+  { 0x09, 0x00, 0x66, 0x01 }, //25 "AAPL,ig-platform-id" HD4000
+  { 0x03, 0x00, 0x22, 0x0d }, //26 "AAPL,ig-platform-id" HD4600 //bcc9
+  { 0x00, 0x00, 0x62, 0x01 }  //27 - automatic solution
 };
 
 static struct gma_gpu_t KnownGPUS[] = {
-  { 0x00000000, "Unknown"     },
+  { 0x00000000, "Unknown" },
   { 0x80862582, "GMA 915" },
   { 0x80862592, "GMA 915" },
   { 0x808627A2, "GMA 950" },
@@ -46,32 +51,40 @@ static struct gma_gpu_t KnownGPUS[] = {
 #if 0
   { 0x808627A6, "Mobile GMA950" }, //not a GPU
 #endif
-  { 0x8086A011, "Mobile GMA3150"  },
-  { 0x8086A012, "Mobile GMA3150"  },
-  { 0x80862772, "Desktop GMA950"  },
+  { 0x8086A011, "Mobile GMA3150" },
+  { 0x8086A012, "Mobile GMA3150" },
+  { 0x80862772, "Desktop GMA950" },
 #if 0
-  { 0x80862776, "Desktop GMA950"  }, //not a GPU
+  { 0x80862776, "Desktop GMA950" }, //not a GPU
   { 0x8086A001, "Desktop GMA3150" },
 #endif
-  { 0x8086A001, "Mobile GMA3150"  },
+  { 0x8086A001, "Mobile GMA3150" },
   { 0x8086A002, "Desktop GMA3150" },
-  { 0x80862A02, "GMAX3100"    },
+  { 0x80862A02, "GMAX3100" },
 #if 0
-  { 0x80862A03, "GMAX3100"    },//not a GPU
+  { 0x80862A03, "GMAX3100" },//not a GPU
 #endif
-  { 0x80862A12, "GMAX3100"    },
+  { 0x80862A12, "GMAX3100" },
 #if 0
-  { 0x80862A13, "GMAX3100"    },
+  { 0x80862A13, "GMAX3100" },
 #endif
-  { 0x80862A42, "GMAX3100"    },
+  { 0x80862A42, "GMAX3100" },
 #if 0
-  { 0x80862A43, "GMAX3100"    },
-  { 0x80860044, "HD2000"  }, //host bridge
+  { 0x80862A43, "GMAX3100" },
+  { 0x80860044, "HD2000" }, //host bridge
 #endif
-  { 0x80860046, "HD2000"  },
-  { 0x80860112, "HD3000"  },
-  { 0x80860116, "HD3000"  },
-  { 0x80860126, "HD3000"  },
+  { 0x80860046, "HD2000" },
+  { 0x80860112, "HD3000" },
+  { 0x80860116, "HD3000" },
+  { 0x80860126, "HD3000" },
+  { 0x0162, "Intel HD Graphics 4000" },  //Desktop
+  { 0x0166, "Intel HD Graphics 4000" }, // MacBookPro10,1 have this string as model name whatever chameleon team may say
+  { 0x0152, "Intel HD Graphics 4000" },  //iMac
+  { 0x0156, "Intel HD Graphics 4000" },  //MacBook
+  { 0x016a, "Intel HD Graphics P4000" },  //Xeon E3-1245
+  { 0x0412, "Intel HD Graphics 4600" },  //Haswell
+  { 0x0416, "Intel HD Graphics 4600" },  //Haswell
+  { 0x0A26, "Intel HD Graphics 5000" },  //Haswell
 };
 
 #endif /* !_GMA_H */
