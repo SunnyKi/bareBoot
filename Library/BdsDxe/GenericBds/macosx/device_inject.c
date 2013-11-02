@@ -974,18 +974,21 @@ setup_nvidia_devprop (
 )
 {
   const INT32 MAX_BIOS_VERSION_LENGTH = 32;
-  CHAR8* model;
-  CHAR8* version_str;
-  DevPropDevice *device;
-  INT32 nvPatch;
-  INT32 crlf_count;
-  INT32 i, version_start;
-  option_rom_pci_header_t* rom_pci_header;
-  UINT32          bar[7];
-  UINT32          boot_display;
-  UINT32          videoRam;
-  UINT8         nvCardType;
-  UINT8* rom;
+
+  CHAR8*                    model;
+  CHAR8*                    version_str;
+  CHAR8*                    s;
+  CHAR8*                    s1;
+  INT32                     nvPatch;
+  INT32                     crlf_count;
+  INT32                     i, version_start;
+  UINT32                    bar[7];
+  UINT32                    boot_display;
+  UINT32                    videoRam;
+  UINT8                     nvCardType;
+  UINT8*                    rom;
+  DevPropDevice             *device;
+  option_rom_pci_header_t*  rom_pci_header;
 
   device = NULL;
   nvCardType = 0;
@@ -1040,9 +1043,6 @@ setup_nvidia_devprop (
         for (version_start = i; version_start > (i - MAX_BIOS_VERSION_LENGTH); version_start--) {
           // find start
           if (rom[version_start] == 0x00) {
-            CHAR8* s;
-            CHAR8* s1;
-
             version_start++;
 
             // strip "Version "
@@ -1098,8 +1098,8 @@ setup_nvidia_devprop (
     devprop_add_value (device, "VRAM,totalsize", (UINT8*) &videoRam, 4);
   }
 
-  devprop_add_value (device, "model", (UINT8*) model, (UINT32) AsciiStrLen (model));
-  devprop_add_value (device, "rom-revision", (UINT8*) version_str, (UINT32) AsciiStrLen (version_str));
+  devprop_add_value (device, "model", (UINT8*) model, ((UINT32) AsciiStrLen (model) + 1));
+  devprop_add_value (device, "rom-revision", (UINT8*) version_str, ((UINT32) AsciiStrLen (version_str) +1));
 
   if ((gSettings.Dcfg[0] != 0) && (gSettings.Dcfg[1] != 0)) {
     devprop_add_value (device, "@0,display-cfg", &gSettings.Dcfg[0], DCFG0_LEN);
@@ -1108,7 +1108,7 @@ setup_nvidia_devprop (
     devprop_add_value (device, "@0,display-cfg", default_dcfg_0, DCFG0_LEN);
     devprop_add_value (device, "@1,display-cfg", default_dcfg_1, DCFG1_LEN);
   }
-  devprop_add_value(device, "hda-gfx", (UINT8*)"onboard-1", 9);
+  devprop_add_value(device, "hda-gfx", (UINT8*)"onboard-1\0", 10);
 
   FreePool (rom);
   FreePool (version_str);
