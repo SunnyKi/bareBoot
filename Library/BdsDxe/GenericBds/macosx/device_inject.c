@@ -904,9 +904,15 @@ devprop_add_nvidia_template (
     return 0;
   }
 
-  if (!DP_ADD_TEMP_VAL (device, nvidia_device_type)) {
-    return 0;
-  }
+	if (devices_number == 1) {
+		if (!DP_ADD_TEMP_VAL(device, nvidia_device_type_parent)) {
+			return 0;
+		}
+	}	else {
+		if (!DP_ADD_TEMP_VAL(device, nvidia_device_type_child)) {
+			return 0;
+		}
+	}
 
   AsciiSPrint (tmp, 16, "Slot-%x", devices_number);
   devprop_add_value (device, "AAPL,slot-name", (UINT8 *) tmp, (UINT32) AsciiStrLen (tmp));
@@ -936,19 +942,24 @@ mem_detect (
     vram_size = MultU64x32 (vram_size, REG32 (nvda_dev->regs, NVC0_MEM_CTRLR_COUNT));
   }
 
-  // Workaround for GT 420/430 & 9600M GT
+  // Workaround
   switch (nvda_dev->device_id) {
-    case 0x0DE1:
-      vram_size = 1024 * 1024 * 1024;
-      break; // GT 430
-
-    case 0x0DE2:
-      vram_size = 1024 * 1024 * 1024;
-      break; // GT 420
-
-    case 0x0649:
+		case 0x0647: // 9600M GT 0647
+    case 0x0649: // 9600M GT 0649
       vram_size = 512 * 1024 * 1024;
-      break;  // 9600M GT
+      break;
+		case 0x0A65: // GT 210
+		case 0x0DE0: // GT 440
+		case 0x0DE1: // GT 430
+		case 0x0DE2: // GT 420
+		case 0x0DEC: // GT 525M 0DEC
+		case 0x0DF4: // GT 540M
+		case 0x0DF5: // GT 525M 0DF5
+			vram_size = 1024*1024*1024;
+			break;
+		case 0x1251: // GTX 560M
+			vram_size = 1536*1024*1024;
+			break;
 
     default:
       break;
@@ -1097,7 +1108,10 @@ setup_nvidia_devprop (
     devprop_add_value (device, "@0,display-cfg", default_dcfg_0, DCFG0_LEN);
     devprop_add_value (device, "@1,display-cfg", default_dcfg_1, DCFG1_LEN);
   }
+  devprop_add_value(device, "hda-gfx", (UINT8*)"onboard-1", 9);
 
+  FreePool (rom);
+  FreePool (version_str);
   return TRUE;
 }
 
