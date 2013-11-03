@@ -1015,7 +1015,7 @@ setup_nvidia_devprop (
   CHAR8*                    s;
   CHAR8*                    s1;
   INT32                     nvPatch;
-  INT32                     i, version_start;
+  INT32                     i, j, version_start;
   UINT32                    bar[7];
   UINT32                    boot_display;
   UINT32                    videoRam;
@@ -1066,29 +1066,24 @@ setup_nvidia_devprop (
   // only search the first 384 bytes
   for (i = 0; i < 0x180; i++) {
     if (rom[i] == 0x0D && rom[i + 1] == 0x0A) {
-      DBG (" CRLF pos = %d,", i);
+      DBG (" CRLF pos = 0x%x", i);
       if (rom[i - 1] == 0x20) {
         i--;  // strip last " "
       }
-
       for (version_start = i; version_start > (i - MAX_BIOS_VERSION_LENGTH); version_start--) {
-        // find start
-        if (rom[version_start] == 0x00) {
-          // if found "Version "
-          if (AsciiStrnCmp ((const CHAR8*) rom + version_start, "Version ", 8) == 0) {
-            DBG (" ver pos = %d", version_start);
-            version_start += 8;
-            
-            s = (CHAR8*) (rom + version_start);
-            version_str = (CHAR8*) AllocateZeroPool (MAX_BIOS_VERSION_LENGTH);
-            s1 = version_str;
-            while ((*s > ' ') && (*s < 'z') && ((INTN) (s1 - version_str) < MAX_BIOS_VERSION_LENGTH)) {
-              *s1++ = *s++;
-            }
-            *s1 = 0;
-            DBG (", version - %a", version_str);
-            break;
+        if (AsciiStrnCmp ((const CHAR8*) rom + version_start, "Version ", 8) == 0) {
+          DBG (", ver pos = 0x%x", version_start);
+          version_start += 8;
+          
+          s = (CHAR8*) (rom + version_start);
+          version_str = (CHAR8*) AllocateZeroPool (i - version_start + 1);
+          s1 = version_str;
+          for (j = version_start; j < i; j++) {
+            *s1++ = *s++;
           }
+          *s1 = 0;
+          DBG (", version - %a", version_str);
+          break;
         }
       }
       if (version_str != NULL) {
@@ -1130,7 +1125,7 @@ setup_nvidia_devprop (
   }
   devprop_add_value (device, "model", (UINT8*) model, ((UINT32) AsciiStrLen (model) + 1));
   if (version_str != NULL) {
-    devprop_add_value (device, "rom-revision", (UINT8*) version_str, ((UINT32) AsciiStrLen (version_str) +1));
+    devprop_add_value (device, "rom-revision", (UINT8*) version_str, ((UINT32) AsciiStrLen (version_str) + 1));
   } else {
     devprop_add_value (device, "rom-revision", (UINT8*) "BB.FAKE.01\0", 11);
   }
