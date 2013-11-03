@@ -1015,7 +1015,6 @@ setup_nvidia_devprop (
   CHAR8*                    s;
   CHAR8*                    s1;
   INT32                     nvPatch;
-  INT32                     crlf_count;
   INT32                     i, version_start;
   UINT32                    bar[7];
   UINT32                    boot_display;
@@ -1031,7 +1030,6 @@ setup_nvidia_devprop (
   boot_display = 0;
   nvPatch = 0;
   model = NULL;
-  crlf_count = 0;
   rom_pci_header = NULL;
 
   bar[0] = pci_config_read32 (nvda_dev, PCI_BASE_ADDRESS_0);
@@ -1068,38 +1066,32 @@ setup_nvidia_devprop (
   // only search the first 384 bytes
   for (i = 0; i < 0x180; i++) {
     if (rom[i] == 0x0D && rom[i + 1] == 0x0A) {
-      crlf_count++;
+      DBG (" CRLF pos = %d,", i);
+      if (rom[i - 1] == 0x20) {
+        i--;  // strip last " "
+      }
 
-      // second 0x0D0A was found, extract bios version
-      if (crlf_count == 2) {
-        if (rom[i - 1] == 0x20) {
-          i--;  // strip last " "
-        }
-
-        for (version_start = i; version_start > (i - MAX_BIOS_VERSION_LENGTH); version_start--) {
-          // find start
-          if (rom[version_start] == 0x00) {
-            version_start++;
-
-            // strip "Version "
-            if (AsciiStrnCmp ((const CHAR8*) rom + version_start, "Version ", 8) == 0) {
-              version_start += 8;
-            }
-
+      for (version_start = i; version_start > (i - MAX_BIOS_VERSION_LENGTH); version_start--) {
+        // find start
+        if (rom[version_start] == 0x00) {
+          // if found "Version "
+          if (AsciiStrnCmp ((const CHAR8*) rom + version_start, "Version ", 8) == 0) {
+            DBG (" ver pos = %d", version_start);
+            version_start += 8;
+            
             s = (CHAR8*) (rom + version_start);
             s1 = version_str;
-
             while ((*s > ' ') && (*s < 'z') && ((INTN) (s1 - version_str) < MAX_BIOS_VERSION_LENGTH)) {
               *s1++ = *s++;
             }
-
             *s1 = 0;
-            DBG (", version - %a\n", version_str);
+            DBG (", version - %a", version_str);
             break;
           }
         }
-
-        break;
+      }
+      if (rom[i] == 0x20) {
+        i++;
       }
     }
   }
