@@ -1031,6 +1031,7 @@ setup_nvidia_devprop (
   nvPatch = 0;
   model = NULL;
   rom_pci_header = NULL;
+  version_str = NULL;
 
   bar[0] = pci_config_read32 (nvda_dev, PCI_BASE_ADDRESS_0);
   nvda_dev->regs = (UINT8 *) (UINTN) (bar[0] & ~0x0f);
@@ -1039,7 +1040,6 @@ setup_nvidia_devprop (
   // Amount of VRAM in kilobytes
   videoRam = mem_detect (nvCardType, nvda_dev);
   model = get_nvidia_model ((nvda_dev->vendor_id << 16) | nvda_dev->device_id);
-  version_str = (CHAR8*) AllocateZeroPool (MAX_BIOS_VERSION_LENGTH);
   rom = AllocateZeroPool (NVIDIA_ROM_SIZE + 1);
   // PRAMIN first
   read_nVidia_PRAMIN (nvda_dev, rom, nvCardType);
@@ -1080,6 +1080,7 @@ setup_nvidia_devprop (
             version_start += 8;
             
             s = (CHAR8*) (rom + version_start);
+            version_str = (CHAR8*) AllocateZeroPool (MAX_BIOS_VERSION_LENGTH);
             s1 = version_str;
             while ((*s > ' ') && (*s < 'z') && ((INTN) (s1 - version_str) < MAX_BIOS_VERSION_LENGTH)) {
               *s1++ = *s++;
@@ -1089,6 +1090,9 @@ setup_nvidia_devprop (
             break;
           }
         }
+      }
+      if (version_str != NULL) {
+        break;
       }
       if (rom[i] == 0x20) {
         i++;
@@ -1105,32 +1109,31 @@ setup_nvidia_devprop (
   devprop_add_nvidia_template (device);
   /* FIXME: for primary graphics card only */
   boot_display = 1;
-  devprop_add_value (device, "@0,AAPL,boot-display", (UINT8*) &boot_display, 4);
 
+  devprop_add_value (device, "@0,AAPL,boot-display", (UINT8*) &boot_display, 4);
   if (nvPatch == PATCH_ROM_SUCCESS_HAS_LVDS) {
     UINT8 built_in;
 
     built_in = 0x01;
     devprop_add_value (device, "@0,built-in", &built_in, 1);
   }
-
   if ((gSettings.NVCAP[0] != 0)) {
     devprop_add_value (device, "NVCAP", &gSettings.NVCAP[0], NVCAP_LEN);
   } else {
     devprop_add_value (device, "NVCAP", default_NVCAP, NVCAP_LEN);
   }
-
   devprop_add_value (device, "NVPM", default_NVPM, NVPM_LEN);
-
   if ((gSettings.VRAM != 0)) {
     devprop_add_value (device, "VRAM,totalsize", (UINT8*) &gSettings.VRAM, 4);
   } else {
     devprop_add_value (device, "VRAM,totalsize", (UINT8*) &videoRam, 4);
   }
-
   devprop_add_value (device, "model", (UINT8*) model, ((UINT32) AsciiStrLen (model) + 1));
-  devprop_add_value (device, "rom-revision", (UINT8*) version_str, ((UINT32) AsciiStrLen (version_str) +1));
-
+  if (version_str != NULL) {
+    devprop_add_value (device, "rom-revision", (UINT8*) version_str, ((UINT32) AsciiStrLen (version_str) +1));
+  } else {
+    devprop_add_value (device, "rom-revision", (UINT8*) "BB.FAKE.01\0", 11);
+  }
   if ((gSettings.Dcfg[0] != 0) && (gSettings.Dcfg[1] != 0)) {
     devprop_add_value (device, "@0,display-cfg", &gSettings.Dcfg[0], DCFG0_LEN);
     devprop_add_value (device, "@1,display-cfg", &gSettings.Dcfg[4], DCFG1_LEN);
@@ -1138,10 +1141,12 @@ setup_nvidia_devprop (
     devprop_add_value (device, "@0,display-cfg", default_dcfg_0, DCFG0_LEN);
     devprop_add_value (device, "@1,display-cfg", default_dcfg_1, DCFG1_LEN);
   }
-  devprop_add_value(device, "hda-gfx", (UINT8*)"onboard-1\0", 10);
+  devprop_add_value(device, "hda-gfx", (UINT8*) "onboard-1\0", 10);
 
   FreePool (rom);
-  FreePool (version_str);
+  if (version_str != NULL) {
+    FreePool (version_str);
+  }
   return TRUE;
 }
 
