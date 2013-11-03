@@ -28,6 +28,15 @@ pci_dt_t* nvdevice;
 
 static value_t aty_name;
 static value_t aty_nameparent;
+static CONST CHAR8* dtyp[] = {"LCD", "CRT", "DVI", "NONE"};
+static UINT32 dti = 0;
+#if 0
+static CHAR8 pciName[15];
+#endif
+static CONST UINT32 ctm[] = {0x02, 0x10, 0x800, 0x400}; //mobile
+static CONST UINT32 ctd[] = {0x04, 0x10, 0x800, 0x400}; //desktop
+static UINT32 cti = 0;
+
 card_t *card;
 
 #if 0
@@ -678,11 +687,21 @@ patch_nvidia_rom (
   UINT8 num_outputs, i;
   UINT8 numentries;
   UINT8 recordlength;
+
   struct dcbentry {
     UINT8 type;
     UINT8 index;
     UINT8 *heads;
   } entries[MAX_NUM_DCB_ENTRIES];
+
+  num_outputs = 0;
+  i = 0;
+  has_lvds = FALSE;
+  channel1 = 0;
+  channel2 = 0;
+  headerlength   = 0;
+  numentries     = 0;
+  recordlength   = 0;
 
   if (rom == NULL || (rom[0] != 0x55 && rom[1] != 0xaa)) {
     return PATCH_ROM_FAILED;
@@ -694,16 +713,8 @@ patch_nvidia_rom (
     return PATCH_ROM_FAILED;
   }
 
-  num_outputs = 0;
-  i = 0;
-  has_lvds = FALSE;
-  channel1 = 0;
-  channel2 = 0;
   dcbtable     = &rom[dcbptr];
   dcbtable_version = dcbtable[0];
-  headerlength   = 0;
-  numentries     = 0;
-  recordlength   = 0;
 
   if (dcbtable_version >= 0x20) {
     UINT32 sig;
@@ -808,7 +819,6 @@ patch_nvidia_rom (
                 channel1 |= (0x1 << entries[i + 1].index);
                 entries[i + 1].type = TYPE_GROUPED;
               }
-
               break;
 
             case 1:
@@ -825,8 +835,10 @@ patch_nvidia_rom (
                 channel2 |= (0x1 << entries[i + 1].index);
                 entries[i + 1].type = TYPE_GROUPED;
               }
-
               break;
+
+						default:
+							break;
           }
 
           break;
@@ -1039,6 +1051,7 @@ setup_nvidia_devprop (
   }
 
   if (rom[0] == 0x55 && rom[1] == 0xaa) {
+    DBG ("NVidia devprop: ROM read successful");
     nvPatch = patch_nvidia_rom (rom);
   }
 
@@ -1081,6 +1094,7 @@ setup_nvidia_devprop (
             }
 
             *s1 = 0;
+            DBG (", version - %a\n", version_str);
             break;
           }
         }
@@ -1089,6 +1103,7 @@ setup_nvidia_devprop (
       }
     }
   }
+  DBG ("\n");
 
   if (string == NULL) {
     string = devprop_create_string();
@@ -1163,6 +1178,29 @@ get_bootdisplay_val (
 }
 
 BOOLEAN
+get_dual_link_val (
+  value_t *val
+)
+{
+#if 0
+  static UINT32 v = 0;
+	
+	if (v) {
+		return FALSE;
+  }
+
+  v = gSettings.DualLink;
+	val->type = kCst;
+	val->size = 4;
+	val->data = (UINT8 *)&v;
+  
+  return TRUE;
+#endif
+
+  return FALSE;
+}
+
+BOOLEAN
 get_edid_val(
   value_t *val
 )
@@ -1192,6 +1230,22 @@ get_vrammemory_val (
 }
 
 BOOLEAN
+get_display_type (
+  value_t *val
+)
+{
+  dti++;
+  if (dti > 3) {
+    dti = 0;
+  }
+	val->type = kStr;
+	val->size = 4;
+	val->data = (UINT8 *)dtyp[dti];
+	
+	return TRUE;
+}
+
+BOOLEAN
 get_name_val (
   value_t *val
 )
@@ -1214,6 +1268,27 @@ get_nameparent_val (
 }
 
 BOOLEAN
+get_name_pci_val (
+  value_t *val
+)
+{  
+#if 0
+	if (!card->info->model_name || !gSettings.FakeATI) {
+		return FALSE;
+  }
+  AsciiSPrint(pciName, 15, "pci1002,%x", gSettings.FakeATI >> 16);
+  LowCase(pciName);
+	val->type = kStr;
+	val->size = 13;
+	val->data = (UINT8 *)&pciName[0];
+
+	return TRUE;
+#endif
+
+	return FALSE;
+}
+
+BOOLEAN
 get_model_val (
   value_t *val
 )
@@ -1233,11 +1308,29 @@ get_conntype_val (
   value_t *val
 )
 {
-  //Connector types:
-  //0x4 : DisplayPort
-  //0x400: DL DVI-I
-  //0x800: HDMI
-  return FALSE;
+  UINT32* ct;
+  
+//Connector types:
+//0x10:  VGA
+//0x04:  DL DVI-I
+//0x800: HDMI
+//0x400: DisplayPort
+//0x02:  LVDS  
+  
+  if (gSettings.Mobile) {
+    ct = (UINT32*)&ctm[0];
+  } else {
+    ct = (UINT32*)&ctd[0];
+  }
+  
+  val->type = kCst;
+	val->size = 4;
+	val->data = (UINT8*)&ct[cti];
+  
+  cti++;
+  if(cti > 3) cti = 0;
+  
+	return TRUE;
 }
 
 BOOLEAN
@@ -1274,6 +1367,24 @@ get_binimage_val (
   val->size = card->rom_size;
   val->data = card->rom;
   return TRUE;
+}
+
+BOOLEAN
+get_binimage_owr (
+  value_t *val
+)
+{
+	static UINT32 v = 0;
+  
+	if (!gSettings.LoadVBios)
+		return FALSE;
+		
+	v = 1;
+	val->type = kCst;
+	val->size = 4;
+	val->data = (UINT8 *)&v;
+	
+	return TRUE;
 }
 
 BOOLEAN
@@ -1487,10 +1598,6 @@ load_vbios_file (
   CHAR16 FileName[40];
   UINT8*  buffer;
 
-  if (!gSettings.LoadVBios) {
-    return FALSE;
-  }
-
   if (gPNDirExists) {
     UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom", gProductNameDir, vendor_id, device_id);
   } else {
@@ -1504,7 +1611,9 @@ load_vbios_file (
 
   Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
 
-  if (EFI_ERROR (Status)) {
+  if (EFI_ERROR (Status) || (bufferLen == 0)) {
+    card->rom_size = 0;
+		card->rom = 0;
     return FALSE;
   }
 
@@ -1526,6 +1635,7 @@ load_vbios_file (
     return FALSE;
   }
 
+	bufferLen = ((option_rom_header_t *) card->rom)->rom_size;
   card->rom_size = ((option_rom_header_t *) card->rom)->rom_size * 512;
 #if 0
   close (fd);
@@ -1539,7 +1649,7 @@ get_vram_size (
   VOID
 )
 {
-  chip_family_t chip_family;
+  ati_chip_family_t chip_family;
   chip_family = card->info->chip_family;
   card->vram_size = 128 << 20; //default 128Mb, this is minimum for OS
 
@@ -1563,6 +1673,7 @@ get_vram_size (
       }
     }
   }
+  gSettings.VRAM = card->vram_size; 
 }
 
 BOOLEAN
@@ -1604,7 +1715,7 @@ read_disabled_vbios (
 )
 {
   BOOLEAN ret;
-  chip_family_t chip_family;
+  ati_chip_family_t chip_family;
   ret = FALSE;
   chip_family = card->info->chip_family;
 
@@ -1736,17 +1847,17 @@ init_card (
   pci_dt_t *pci_dev
 )
 {
-  CHAR8 *name;
-  CHAR8 *name_parent;
-  CHAR8 *CfgName;
-  INTN NameLen;
-  INTN    i;
-#if 0
-  BOOLEAN add_vbios = TRUE;
-  int   n_ports = 0;
-#endif
+  CHAR8     *name;
+  CHAR8     *name_parent;
+  CHAR8     *CfgName;
+  INTN      NameLen, n_ports;
+  UINTN     i, ExpansionRom;
+  BOOLEAN   add_vbios = TRUE;
 
   NameLen = 0;
+  n_ports = 0;
+  ExpansionRom = 0;
+  add_vbios = gSettings.LoadVBios;
 
   card = AllocateZeroPool (sizeof (card_t));
 
@@ -1780,9 +1891,11 @@ init_card (
   card->mmio    = (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_2) & ~0x0f);
   card->io    = (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_4) & ~0x03);
   pci_dev->regs = card->mmio;
+	ExpansionRom = pci_config_read32(pci_dev, PCI_EXPANSION_ROM_BASE);
+	card->posted = radeon_card_posted();
   get_vram_size();
 
-  if (gSettings.LoadVBios) {
+  if (add_vbios) {
     load_vbios_file (pci_dev->vendor_id, pci_dev->device_id);
 
     if (!card->rom) {
@@ -1797,32 +1910,40 @@ init_card (
   if (card->info->chip_family >= CHIP_FAMILY_CEDAR) {
     card->flags |= EVERGREEN;
   }
+  if (card->info->chip_family <= CHIP_FAMILY_RV670)	{
+		card->flags |= FLAGOLD;
+	}
+  if (gSettings.Mobile) {
+    card->flags |= FLAGMOBILE;
+  }
 
   NameLen = StrLen (gSettings.FBName);
 
-  if (NameLen > 3) {  //fool proof: cfg_name is 4 character or more.
+  if (NameLen > 2) {
     CfgName = AllocateZeroPool (NameLen);
     UnicodeStrToAsciiStr ((CHAR16*) &gSettings.FBName[0], CfgName);
     card->cfg_name = CfgName;
   } else {
     // use cfg_name on radeon_cards, to retrive the default name from card_configs,
     card->cfg_name = card_configs[card->info->cfg_name].name;
+		n_ports = card_configs[card->info->cfg_name].ports;
     // which means one of the fb's or kNull
   }
 
   if (gSettings.VideoPorts > 0) {
-    card->ports = (UINT8) gSettings.VideoPorts; // use it.
-  } else
-#if 0
-    if (card->cfg_name > 0) // do we want 0 ports if fb is kNull or mistyped ?
-#endif
-    {
-      // else, match cfg_name with card_configs list and retrive default nr of ports.
-      for (i = 0; i < kCfgEnd; i++)
-        if (AsciiStrCmp (card->cfg_name, card_configs[i].name) == 0) {
-          card->ports = card_configs[i].ports;  // default
-        }
+    n_ports = gSettings.VideoPorts;
+  }
+
+  if (n_ports > 0) {
+    card->ports = (UINT8) n_ports;
+  } else {
+    // else, match cfg_name with card_configs list and retrive default nr of ports.
+    for (i = 0; i < kCfgEnd; i++) {
+      if (AsciiStrCmp (card->cfg_name, card_configs[i].name) == 0) {
+        card->ports = card_configs[i].ports;  // default
+      }
     }
+  }
 
   if (card->ports == 0) {
     card->ports = 2; //real minimum
@@ -1863,6 +1984,7 @@ setup_ati_devprop (
   }
 
   devprop_add_list (ati_devprop_list);
+  devprop_add_value(card->device, "hda-gfx", (UINT8*) "onboard-1\0", 10);
 
   FreePool (card);
   return TRUE;
