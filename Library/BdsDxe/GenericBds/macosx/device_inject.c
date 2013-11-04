@@ -1015,12 +1015,13 @@ setup_nvidia_devprop (
   CHAR8*                    s;
   CHAR8*                    s1;
   INT32                     nvPatch;
-  INT32                     i, j, version_start;
+  UINT16                    i, j, version_start, crlf_count;
   UINT32                    bar[7];
   UINT32                    boot_display;
   UINT32                    videoRam;
   UINT8                     nvCardType;
   UINT8*                    rom;
+  BOOLEAN                   isVersion;
   DevPropDevice             *device;
   option_rom_pci_header_t*  rom_pci_header;
 
@@ -1029,6 +1030,7 @@ setup_nvidia_devprop (
   videoRam = 0;
   boot_display = 0;
   nvPatch = 0;
+  crlf_count = 0;
   model = NULL;
   rom_pci_header = NULL;
   version_str = NULL;
@@ -1067,23 +1069,31 @@ setup_nvidia_devprop (
   for (i = 0; i < 0x180; i++) {
     if (rom[i] == 0x0D && rom[i + 1] == 0x0A) {
       DBG (" CRLF pos = 0x%x", i);
+      crlf_count++;
       if (rom[i - 1] == 0x20) {
         i--;  // strip last " "
       }
       for (version_start = i; version_start > (i - MAX_BIOS_VERSION_LENGTH); version_start--) {
-        if (AsciiStrnCmp ((const CHAR8*) rom + version_start, "Version ", 8) == 0) {
-          DBG (", ver pos = 0x%x", version_start);
-          version_start += 8;
-          
-          s = (CHAR8*) (rom + version_start);
-          version_str = (CHAR8*) AllocateZeroPool (i - version_start + 1);
-          s1 = version_str;
-          for (j = version_start; j < i; j++) {
-            *s1++ = *s++;
+        if (rom[version_start] == 0x00) {
+          version_start++;
+          isVersion = FALSE;
+          if (AsciiStrnCmp ((const CHAR8*) rom + version_start, "Version ", 8) == 0) {
+            version_start += 8;
+            isVersion = TRUE;
           }
-          *s1 = 0;
-          DBG (", version - %a", version_str);
-          break;
+          DBG (", ver pos = 0x%x", version_start);
+          
+          if (isVersion || (crlf_count ==2)) {
+            s = (CHAR8*) (rom + version_start);
+            version_str = (CHAR8*) AllocateZeroPool (i - version_start + 1);
+            s1 = version_str;
+            for (j = version_start; j < i; j++) {
+              *s1++ = *s++;
+            }
+            *s1 = 0;
+            DBG (", version - %a", version_str);
+            break;
+          }
         }
       }
       if (version_str != NULL) {
@@ -1174,7 +1184,6 @@ get_dual_link_val (
   value_t *val
 )
 {
-#if 0
   static UINT32 v = 0;
 	
 	if (v) {
@@ -1187,9 +1196,6 @@ get_dual_link_val (
 	val->data = (UINT8 *)&v;
   
   return TRUE;
-#endif
-
-  return FALSE;
 }
 
 BOOLEAN
@@ -2007,7 +2013,7 @@ setup_gma_devprop (
   DevPropDevice   *device;
   CHAR8           *model;
   UINT8           BuiltIn;
-  UINT32          DualLink;
+  UINT16          DualLink;
 	UINT8           ClassFix[4] =	{ 0x00, 0x00, 0x03, 0x00 };
 
   BuiltIn = 0;
@@ -2024,7 +2030,7 @@ setup_gma_devprop (
     return FALSE;
   }
 
-  DualLink = ((gGraphics.Width * gGraphics.Height) > (1 << 20)) ? 1 : 0;
+  DualLink = gSettings.DualLink;
   devprop_add_value (device, "model", (UINT8*) model, (UINT32) AsciiStrLen (model));
   devprop_add_value (device, "device_type", (UINT8*) "display", 7);
   devprop_add_value (device, "subsystem-vendor-id", GMAX3100_vals[21], 4);
@@ -2202,18 +2208,21 @@ SetDevices (
 
               switch (Pci.Hdr.VendorId) {
                 case 0x1002:
+                  DBG ("Device Inject: ATI\n");
                   gGraphics.Vendor = Ati;
-                  //can't do in one step because of C-conventions
                   TmpDirty = setup_ati_devprop (&PCIdevice);
                   StringDirty |=  TmpDirty;
                   break;
 
                 case 0x8086:
+                  DBG ("Device Inject: Intel GMA\n");
+                  gGraphics.Vendor = Intel;
                   TmpDirty = setup_gma_devprop (&PCIdevice);
                   StringDirty |=  TmpDirty;
                   break;
 
                 case 0x10de:
+                  DBG ("Device Inject: nVidia\n");
                   gGraphics.Vendor = Nvidia;
                   TmpDirty = setup_nvidia_devprop (&PCIdevice);
                   StringDirty |=  TmpDirty;
@@ -2227,6 +2236,7 @@ SetDevices (
             else if (gSettings.ETHInjection &&
                      (Pci.Hdr.ClassCode[2] == PCI_CLASS_NETWORK) &&
                      (Pci.Hdr.ClassCode[1] == PCI_CLASS_NETWORK_ETHERNET)) {
+              DBG ("Device Inject: LAN\n");
               TmpDirty = set_eth_props (&PCIdevice);
               StringDirty |=  TmpDirty;
             }
@@ -2234,6 +2244,7 @@ SetDevices (
             else if (gSettings.USBInjection &&
                      (Pci.Hdr.ClassCode[2] == PCI_CLASS_SERIAL) &&
                      (Pci.Hdr.ClassCode[1] == PCI_CLASS_SERIAL_USB)) {
+              DBG ("Device Inject: USB\n");
               TmpDirty = set_usb_props (&PCIdevice);
               StringDirty |=  TmpDirty;
             }
@@ -2241,6 +2252,7 @@ SetDevices (
             else if ((gSettings.HDALayoutId != 0) &&
                      (Pci.Hdr.ClassCode[2] == PCI_CLASS_MEDIA) &&
                      (Pci.Hdr.ClassCode[1] == PCI_CLASS_MEDIA_HDA)) {
+              DBG ("Device Inject: HDA LayoutId = %d\n", gSettings.HDALayoutId);
               TmpDirty = set_hda_props (PciIo, &PCIdevice);
               StringDirty |=  TmpDirty;
             }
@@ -2256,5 +2268,6 @@ SetDevices (
     CopyMem (gDevProp, (VOID*) devprop_generate_string (string), stringlength);
     gDevProp[stringlength] = 0;
     StringDirty = FALSE;
+    DBG ("Device Inject: gDevProp = <%a>\n", gDevProp);
   }
 }

@@ -195,6 +195,7 @@ typedef struct {
   BOOLEAN LoadVBios;
   CHAR16  FBName[16];
   UINT16  VideoPorts;
+  UINT16  DualLink;
   UINT64  VRAM;
   UINT8   Dcfg[8];
   UINT8   NVCAP[20];

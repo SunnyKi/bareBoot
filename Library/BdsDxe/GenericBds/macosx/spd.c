@@ -470,9 +470,12 @@ read_smb_intel (
     // laptops sometimes show slot 0 and 2 with slot 1 empty when only 2 slots are presents so:
     // for laptops case, mapping setup would need to be more generic than this
     gRAM->Map[i] = (UINT16) ((i > 0 &&
-                               gRAM->DIMM[1].InUse == FALSE &&
-                               fullBanks &&
-                               gRAM->MaxMemorySlots == 2) ? mapping[i] : i);
+                              gRAM->DIMM[1].InUse == FALSE &&
+                              gRAM->DIMM[2].InUse == TRUE &&
+#if 0
+                              fullBanks &&
+#endif
+                              gRAM->MaxMemorySlots == 2) ? mapping[i] : i);
   }
 }
 

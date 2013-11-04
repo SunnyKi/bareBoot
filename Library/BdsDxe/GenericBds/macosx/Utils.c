@@ -1291,6 +1291,7 @@ GetUserSettings (
   gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
   gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
   gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
+  gSettings.DualLink = (UINT16) GetNumProperty (dictPointer, "DualLink", 0);
   GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
 
   if (dictPointer != NULL) {
@@ -1331,6 +1332,7 @@ GetUserSettings (
       cDevProp = AllocatePool (len + 1);
       CopyMem (cDevProp, plNodeGetBytes (prop), len);
       cDevProp[len] = '\0';
+      DBG ("GetUserSettings: сDevProp = <%a>\n", cDevProp);
     }
   }
 

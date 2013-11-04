@@ -225,8 +225,10 @@ MacOS:
   GetCpuProps ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
   GetUserSettings ();
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
-  SetDevices ();
+  if (cDevProp == NULL) {
+    DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
+    SetDevices ();
+  }
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchSmbios\n"));
   PatchSmbios ();
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchACPI\n"));
