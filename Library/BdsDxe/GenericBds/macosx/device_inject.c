@@ -1296,7 +1296,7 @@ get_model_val (
   }
 
   val->type = kStr;
-  val->size = (UINT32) AsciiStrLen (card->info->model_name);
+  val->size = (UINT32) (AsciiStrLen (card->info->model_name) + 1);
   val->data = (UINT8 *) card->info->model_name;
   return TRUE;
 }
@@ -1393,11 +1393,11 @@ get_romrevision_val (
   UINT8 *rev;
   CHAR8* cRev;
 
-  cRev = "109-B77101-00";
+  cRev = "109-B77101-00\0";
 
   if (!card->rom) {
     val->type = kPtr;
-    val->size = 13;
+    val->size = 14;
     val->data = AllocateZeroPool (val->size);
 
     if (!val->data) {
@@ -1410,11 +1410,11 @@ get_romrevision_val (
 
   rev = card->rom + * (UINT8 *) (card->rom + OFFSET_TO_GET_ATOMBIOS_STRINGS_START);
   val->type = kPtr;
-  val->size = (UINT32) AsciiStrLen ((CHAR8 *) rev);
+  val->size = (UINT32) (AsciiStrLen ((CHAR8 *) rev + 1));
 
   if ((val->size < 3) || (val->size > 30)) { //fool proof. Real value 13
     rev = (UINT8 *) cRev;
-    val->size = 13;
+    val->size = 14;
   }
 
   val->data = AllocateZeroPool (val->size);
@@ -2031,10 +2031,10 @@ setup_gma_devprop (
   }
 
   DualLink = gSettings.DualLink;
-  devprop_add_value (device, "model", (UINT8*) model, (UINT32) AsciiStrLen (model));
-  devprop_add_value (device, "device_type", (UINT8*) "display", 7);
+  devprop_add_value (device, "model", (UINT8*) model, (UINT32) (AsciiStrLen (model) + 1));
+  devprop_add_value (device, "device_type", (UINT8*) "display\0", 8);
   devprop_add_value (device, "subsystem-vendor-id", GMAX3100_vals[21], 4);
-  devprop_add_value (device, "hda-gfx", (UINT8*)"onboard-1", 9);
+  devprop_add_value (device, "hda-gfx", (UINT8*)"onboard-1\0", 10);
 
   switch (gma_dev->device_id) {
     case 0x0102: 

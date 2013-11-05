@@ -43,48 +43,48 @@ UINT8 GMAX3100_vals[28][4] = {
 };
 
 static struct gma_gpu_t KnownGPUS[] = {
-  { 0x00000000, "Unknown" },
-  { 0x80862582, "GMA 915" },
-  { 0x80862592, "GMA 915" },
-  { 0x808627A2, "GMA 950" },
-  { 0x808627AE, "GMA 950" },
+  { 0x00000000, "Unknown\0" },
+  { 0x80862582, "GMA 915\0" },
+  { 0x80862592, "GMA 915\0" },
+  { 0x808627A2, "GMA 950\0" },
+  { 0x808627AE, "GMA 950\0" },
 #if 0
-  { 0x808627A6, "Mobile GMA950" }, //not a GPU
+  { 0x808627A6, "Mobile GMA950\0" }, //not a GPU
 #endif
-  { 0x8086A011, "Mobile GMA3150" },
-  { 0x8086A012, "Mobile GMA3150" },
-  { 0x80862772, "Desktop GMA950" },
+  { 0x8086A011, "Mobile GMA3150\0" },
+  { 0x8086A012, "Mobile GMA3150\0" },
+  { 0x80862772, "Desktop GMA950\0" },
 #if 0
-  { 0x80862776, "Desktop GMA950" }, //not a GPU
-  { 0x8086A001, "Desktop GMA3150" },
+  { 0x80862776, "Desktop GMA950\0" }, //not a GPU
+  { 0x8086A001, "Desktop GMA3150\0" },
 #endif
-  { 0x8086A001, "Mobile GMA3150" },
-  { 0x8086A002, "Desktop GMA3150" },
-  { 0x80862A02, "GMAX3100" },
+  { 0x8086A001, "Mobile GMA3150\0" },
+  { 0x8086A002, "Desktop GMA3150\0" },
+  { 0x80862A02, "GMAX3100\0" },
 #if 0
-  { 0x80862A03, "GMAX3100" },//not a GPU
+  { 0x80862A03, "GMAX3100\0" },//not a GPU
 #endif
-  { 0x80862A12, "GMAX3100" },
+  { 0x80862A12, "GMAX3100\0" },
 #if 0
-  { 0x80862A13, "GMAX3100" },
+  { 0x80862A13, "GMAX3100\0" },
 #endif
-  { 0x80862A42, "GMAX3100" },
+  { 0x80862A42, "GMAX3100\0" },
 #if 0
-  { 0x80862A43, "GMAX3100" },
-  { 0x80860044, "HD2000" }, //host bridge
+  { 0x80862A43, "GMAX3100\0" },
+  { 0x80860044, "HD2000\0" }, //host bridge
 #endif
-  { 0x80860046, "HD2000" },
-  { 0x80860112, "HD3000" },
-  { 0x80860116, "HD3000" },
-  { 0x80860126, "HD3000" },
-  { 0x0162, "Intel HD Graphics 4000" },  //Desktop
-  { 0x0166, "Intel HD Graphics 4000" }, // MacBookPro10,1 have this string as model name whatever chameleon team may say
-  { 0x0152, "Intel HD Graphics 4000" },  //iMac
-  { 0x0156, "Intel HD Graphics 4000" },  //MacBook
-  { 0x016a, "Intel HD Graphics P4000" },  //Xeon E3-1245
-  { 0x0412, "Intel HD Graphics 4600" },  //Haswell
-  { 0x0416, "Intel HD Graphics 4600" },  //Haswell
-  { 0x0A26, "Intel HD Graphics 5000" },  //Haswell
+  { 0x80860046, "HD2000\0" },
+  { 0x80860112, "HD3000\0" },
+  { 0x80860116, "HD3000\0" },
+  { 0x80860126, "HD3000\0" },
+  { 0x0162, "Intel HD Graphics 4000\0" },  //Desktop
+  { 0x0166, "Intel HD Graphics 4000\0" }, // MacBookPro10,1 have this string as model name whatever chameleon team may say
+  { 0x0152, "Intel HD Graphics 4000\0" },  //iMac
+  { 0x0156, "Intel HD Graphics 4000\0" },  //MacBook
+  { 0x016a, "Intel HD Graphics P4000\0" },  //Xeon E3-1245
+  { 0x0412, "Intel HD Graphics 4600\0" },  //Haswell
+  { 0x0416, "Intel HD Graphics 4600\0" },  //Haswell
+  { 0x0A26, "Intel HD Graphics 5000\0" },  //Haswell
 };
 
 #endif /* !_GMA_H */
