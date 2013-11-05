@@ -731,7 +731,7 @@ PatchMemoryTables (
   VOID
 )
 {
-  UINT16  map;
+  //UINT16  map;
   UINT16  Handle16;
   UINT16  Handle17[MAX_SLOT_COUNT];
   UINT16  Memory17[MAX_SLOT_COUNT];
@@ -804,38 +804,38 @@ PatchMemoryTables (
     CopyMem ((VOID*) newSmbiosTable.Type17, (VOID*) SmbiosTable.Type17, TableSize);
     newSmbiosTable.Type17->MemoryArrayHandle = Handle16;
 
-    map = gRAM->Map[Index];
+    //map = gRAM->Map[Index];
 
     if (gRAM->SpdDetected) {
 
-      if (gRAM->DIMM[map].InUse) {
+      if (gRAM->DIMM[Index].InUse) {
 
-        DBG ("Smbios: SPD detected and slot %d (mapped to %d) used\n", Index, map);
+        DBG ("Smbios: SPD detected and slot %d used\n", Index);
 
-        if ((gRAM->DIMM[map].Type != MemoryTypeUnknown) &&
-            (gRAM->DIMM[map].Type != MemoryTypeOther)  &&
-            (gRAM->DIMM[map].Type != 0)) {
-          newSmbiosTable.Type17->MemoryType = gRAM->DIMM[map].Type;
+        if ((gRAM->DIMM[Index].Type != MemoryTypeUnknown) &&
+            (gRAM->DIMM[Index].Type != MemoryTypeOther)  &&
+            (gRAM->DIMM[Index].Type != 0)) {
+          newSmbiosTable.Type17->MemoryType = gRAM->DIMM[Index].Type;
         }
 
-        if (iStrLen (gRAM->DIMM[map].Vendor, 64) > 0) {
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gRAM->DIMM[map].Vendor);
+        if (iStrLen (gRAM->DIMM[Index].Vendor, 64) > 0) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gRAM->DIMM[Index].Vendor);
         }
 
-        if (iStrLen (gRAM->DIMM[map].SerialNo, 64) > 0) {
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, gRAM->DIMM[map].SerialNo);
+        if (iStrLen (gRAM->DIMM[Index].SerialNo, 64) > 0) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, gRAM->DIMM[Index].SerialNo);
         }
 
-        if (iStrLen (gRAM->DIMM[map].PartNo, 64) > 0) {
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, gRAM->DIMM[map].PartNo);
+        if (iStrLen (gRAM->DIMM[Index].PartNo, 64) > 0) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, gRAM->DIMM[Index].PartNo);
         }
 
-        if (gRAM->DIMM[map].Frequency > 0) {
-          newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[map].Frequency;
+        if (gRAM->DIMM[Index].Frequency > 0) {
+          newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[Index].Frequency;
         }
 
-        if (gRAM->DIMM[map].ModuleSize > 0) {
-          newSmbiosTable.Type17->Size = (UINT16) gRAM->DIMM[map].ModuleSize;
+        if (gRAM->DIMM[Index].ModuleSize > 0) {
+          newSmbiosTable.Type17->Size = (UINT16) gRAM->DIMM[Index].ModuleSize;
         }
       } else {
         newSmbiosTable.Type17->Speed = 0;
@@ -852,16 +852,16 @@ PatchMemoryTables (
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
 
-      if ((gRAM->DIMM[map].InUse) &&
-          (gRAM->DIMM[map].spd[0] != 0) &&
-          (gRAM->DIMM[map].spd[0] != 0xFF)) {
+      if ((gRAM->DIMM[Index].InUse) &&
+          (gRAM->DIMM[Index].spd[0] != 0) &&
+          (gRAM->DIMM[Index].spd[0] != 0xFF)) {
         ZeroMem ((VOID*) newSmbiosTable.Type130, MAX_TABLE_SIZE);
         newSmbiosTable.Type130->Hdr.Type = 130;
-        newSmbiosTable.Type130->Hdr.Length = (UINT8) (10 + (gRAM->DIMM[map].SpdSize));
+        newSmbiosTable.Type130->Hdr.Length = (UINT8) (10 + (gRAM->DIMM[Index].SpdSize));
         newSmbiosTable.Type130->Type17Handle = Handle17[Index];
         newSmbiosTable.Type130->Offset = 0;
-        newSmbiosTable.Type130->Size = (gRAM->DIMM[map].SpdSize);
-        CopyMem ((UINT8 *) newSmbiosTable.Type130->Data, gRAM->DIMM[map].spd, gRAM->DIMM[map].SpdSize);
+        newSmbiosTable.Type130->Size = (gRAM->DIMM[Index].SpdSize);
+        CopyMem ((UINT8 *) newSmbiosTable.Type130->Data, gRAM->DIMM[Index].spd, gRAM->DIMM[Index].SpdSize);
 
         newSmbiosTable.Type130->Hdr.Handle = NumberOfRecords;
         Handle = LogSmbiosTable (newSmbiosTable);

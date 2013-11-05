@@ -1075,15 +1075,15 @@ setup_nvidia_devprop (
       }
       for (version_start = i; version_start > (i - MAX_BIOS_VERSION_LENGTH); version_start--) {
         if (rom[version_start] == 0x00) {
-          version_start++;
           isVersion = FALSE;
-          if (AsciiStrnCmp ((const CHAR8*) rom + version_start, "Version ", 8) == 0) {
+          if (AsciiStrnCmp ((const CHAR8*) rom + version_start + 1, "Version ", 8) == 0) {
             version_start += 8;
             isVersion = TRUE;
           }
           DBG (", ver pos = 0x%x", version_start);
           
           if (isVersion || (crlf_count ==2)) {
+            version_start++;
             s = (CHAR8*) (rom + version_start);
             version_str = (CHAR8*) AllocateZeroPool (i - version_start + 1);
             s1 = version_str;

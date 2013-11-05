@@ -10,12 +10,12 @@
 #define MAX_PCI_DEV_PATHS 4
 
 typedef struct {
-  UINT32    : 2;
+  UINT32      : 2;
   UINT32  reg : 6;
   UINT32  func: 3;
   UINT32  dev : 5;
   UINT32  bus : 8;
-  UINT32    : 7;
+  UINT32      : 7;
   UINT32  eb  : 1;
 } pci_addr_t;
 
@@ -48,14 +48,16 @@ typedef struct pci_dt_t {
   struct pci_dt_t     *next;
 } pci_dt_t;
 
+#pragma pack(1)
 /* Option ROM header */
 typedef struct {
-  UINT16    signature;    // 0xAA55
-  UINT8     rom_size;
-  UINT32    entry_point;
-  UINT8     reserved[15];
-  UINT16    pci_header_offset;
-  UINT16    expansion_header_offset;
+	UINT16		signature;		// 0xAA55
+	UINT8			rom_size;  //in 512 bytes blocks
+  UINT8     jump;  //0xE9 for ATI and Intel, 0xEB for NVidia
+	UINT8 		entry_point[4];  //offset to
+	UINT8			reserved[16];
+	UINT16		pci_header_offset;  //@0x18
+	UINT16		expansion_header_offset;
 } option_rom_header_t;
 
 /* Option ROM PCI Data Structure */
@@ -136,6 +138,7 @@ struct DevPropString {
   UINT16 WHAT3;     // 0x0000     ?
   DevPropDevice **entries;
 };
+#pragma pack()
 
 typedef struct DevPropString  DevPropString;
 

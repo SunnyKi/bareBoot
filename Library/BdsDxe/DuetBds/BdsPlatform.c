@@ -153,22 +153,20 @@ UpdateMemoryMap (
   }
   MemoryDescHob.MemDescCount = *(UINTN *)Table;
   MemoryDescHob.MemDesc      = *(EFI_MEMORY_DESCRIPTOR **)((UINTN)Table + sizeof(UINTN));
-#if 0
+#if 1
   DumpGcdMemoryMap ();
 #endif
   gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
   for (Index = 0; Index < NumberOfDescriptors; Index++) {
     if ((MemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeReserved &&
         (MemorySpaceMap[Index].Capabilities & (EFI_MEMORY_PRESENT | EFI_MEMORY_INITIALIZED | EFI_MEMORY_TESTED)) ==
-        (EFI_MEMORY_PRESENT | EFI_MEMORY_INITIALIZED)) ||
-        (MemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo)) {
+        (EFI_MEMORY_PRESENT | EFI_MEMORY_INITIALIZED))) {
       //
       // For those reserved memory that have not been tested, simply promote to system memory.
       //
       GcdType = EfiGcdMemoryTypeSystemMemory;
       
-      if ((MemorySpaceMap[Index].ImageHandle != NULL) ||
-          (MemorySpaceMap[Index].GcdMemoryType == EfiGcdMemoryTypeMemoryMappedIo)){
+      if ((MemorySpaceMap[Index].ImageHandle != NULL)){
         gDS->FreeMemorySpace (
                MemorySpaceMap[Index].BaseAddress,
                MemorySpaceMap[Index].Length
@@ -192,7 +190,7 @@ UpdateMemoryMap (
   }
   
   FreePool (MemorySpaceMap);
-#if 0
+#if 1
   DumpGcdMemoryMap ();
 #endif
   //

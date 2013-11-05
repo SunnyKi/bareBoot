@@ -56,7 +56,7 @@ UINT8 spd_mem_to_smbios[] = {
   SMB_MEM_TYPE_DDR3   /* 0Bh  SDRAM DDR 3 */
 };
 
-INTN mapping [] = {0, 2, 1, 3, 4, 6, 5, 7, 8, 10, 9, 11};
+//INTN mapping [] = {0, 2, 1, 3, 4, 6, 5, 7, 8, 10, 9, 11};
 PCI_TYPE00                      mPci;
 
 /** Read one byte from the intel i2c, used for reading SPD on intel chipsets only. */
@@ -384,7 +384,7 @@ read_smb_intel (
   UINT32          base, mmio, hostc;
   UINT16          Command;
   RAM_SLOT_INFO*  slot;
-  BOOLEAN         fullBanks;
+//  BOOLEAN         fullBanks;
   UINT16          vid, did;
 
   vid = mPci.Hdr.VendorId;
@@ -426,7 +426,7 @@ read_smb_intel (
              1,
              &hostc
            );
-  fullBanks = (gRAM->MemoryModules == gRAM->MaxMemorySlots);
+//  fullBanks = (gRAM->MemoryModules == gRAM->MaxMemorySlots);
   maxslots = gRAM->MaxMemorySlots <= 2? 3: gRAM->MaxMemorySlots;
   for (i = 0; i <  maxslots; i++) {
     slot = &gRAM->DIMM[i];
@@ -469,13 +469,22 @@ read_smb_intel (
     }
     // laptops sometimes show slot 0 and 2 with slot 1 empty when only 2 slots are presents so:
     // for laptops case, mapping setup would need to be more generic than this
+#if 0
     gRAM->Map[i] = (UINT16) ((i > 0 &&
                               gRAM->DIMM[1].InUse == FALSE &&
-                              gRAM->DIMM[2].InUse == TRUE &&
-#if 0
                               fullBanks &&
-#endif
                               gRAM->MaxMemorySlots == 2) ? mapping[i] : i);
+#endif
+  }
+  if (gRAM->MaxMemorySlots == 2 &&
+      gRAM->DIMM[1].InUse == FALSE &&
+      gRAM->DIMM[2].InUse == TRUE) {
+    gRAM->DIMM[1] = gRAM->DIMM[2];
+    if (gRAM->DIMM[1].InUse) {
+      DBG ("Spd: gRAM->DIMM[1].InUse = TRUE\n");
+    } else {
+      DBG ("Spd: gRAM->DIMM[1].InUse = FALSE\n");
+    }
   }
 }
 
