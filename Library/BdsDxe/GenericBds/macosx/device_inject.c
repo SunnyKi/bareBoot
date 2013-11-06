@@ -949,8 +949,8 @@ devprop_add_nvidia_template (
 		}
 	}
 
-  AsciiSPrint (tmp, 16, "Slot-%x", devices_number);
-  devprop_add_value (device, "AAPL,slot-name", (UINT8 *) tmp, (UINT32) AsciiStrLen (tmp));
+  AsciiSPrint (tmp, 16, "Slot-%x\0", devices_number);
+  devprop_add_value (device, "AAPL,slot-name", (UINT8 *) tmp, (UINT32) (AsciiStrLen (tmp) + 1));
   devices_number++;
   return 1;
 }
