@@ -912,9 +912,26 @@ PatchMemoryTables (
       if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
         TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
         Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
-        DBG ("Smbios: Memory17[%d] = %d\n", Index, Memory17[Index]);
+        DBG ("Smbios: Memory17[%d] = %d", Index, Memory17[Index]);
       }
-
+      if ((newSmbiosTable.Type17->Size > 0) &&
+          ((newSmbiosTable.Type17->MemoryType == 0) ||
+           (newSmbiosTable.Type17->MemoryType == MemoryTypeOther) ||
+           (newSmbiosTable.Type17->MemoryType == MemoryTypeUnknown))) {
+        newSmbiosTable.Type17->MemoryType = MemoryTypeDdr;
+        DBG (", memory type unknown - to set by default DDR type");
+        if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->Manufacturer), 64) == 0){
+          UpdateSmbiosString(newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, "unknown");
+        }
+        if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->SerialNumber), 64) == 0){
+          UpdateSmbiosString(newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, "unknown");
+        }
+        if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->PartNumber), 64) == 0){
+          UpdateSmbiosString(newSmbiosTable, &newSmbiosTable.Type17->PartNumber, "unknown");
+        }
+      }
+      DBG ("\n");
+      
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
     }
