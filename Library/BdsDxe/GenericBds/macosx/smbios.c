@@ -930,7 +930,7 @@ PatchMemoryTables (
           if (gSettings.cMemDevice[Index].Speed != 0x00) {
             newSmbiosTable.Type17->Speed = gSettings.cMemDevice[Index].Speed;
           }
-          if (gSettings.cMemDevice[Index].Speed != 0xffff) {
+          if (gSettings.cMemDevice[Index].Size != 0xffff) {
             newSmbiosTable.Type17->Size = gSettings.cMemDevice[Index].Size;
           }
 
