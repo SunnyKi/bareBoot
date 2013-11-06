@@ -72,8 +72,7 @@
 #define CPUID_MAX 9
 #define EFI_CPU_DATA_MAXIMUM_LENGTH 0x100
 //
-#define MAX_SLOT_COUNT  8
-#define MAX_RAM_SLOTS 16
+#define MAX_RAM_SLOTS 8
 #define MAX_FILE_SIZE (1024*1024*1024)
 /* CPU Cache */
 #define MAX_CACHE_COUNT  4
@@ -138,6 +137,18 @@ typedef struct {
   UINT16    Map[MAX_RAM_SLOTS];     // Information and SPD mapping for each slot
   RAM_SLOT_INFO DIMM[MAX_RAM_SLOTS];
 } MEM_STRUCTURE;
+
+typedef struct {
+  UINT8        Slot;
+  UINT8        MemoryType;
+  UINT16       Speed;
+  UINT16       Size;
+  CHAR8*       DeviceLocator;
+  CHAR8*       BankLocator;
+  CHAR8*       Manufacturer;
+  CHAR8*       SerialNumber;
+  CHAR8*       PartNumber;
+} CUSTOM_SMBIOS_TYPE17;
 
 typedef struct {
   // SMBIOS TYPE0
@@ -212,6 +223,8 @@ typedef struct {
   CHAR8   *AnyKextData[100];
   CHAR8   *AnyKextPatch[100];
   UINT32   NrKexts;
+  //Custom Memory Device (Type 17).
+  CUSTOM_SMBIOS_TYPE17 cMemDevice[MAX_RAM_SLOTS];
 } SETTINGS_DATA;
 
 typedef enum {

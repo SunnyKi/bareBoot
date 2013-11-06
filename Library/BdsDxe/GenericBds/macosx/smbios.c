@@ -769,8 +769,8 @@ PatchMemoryTables (
 {
   //UINT16  map;
   UINT16  Handle16;
-  UINT16  Handle17[MAX_SLOT_COUNT];
-  UINT16  Memory17[MAX_SLOT_COUNT];
+  UINT16  Handle17[MAX_RAM_SLOTS];
+  UINT16  Memory17[MAX_RAM_SLOTS];
   UINT16  Handle19;
   UINT32  TotalSystemMemory;
   UINT32  TotalEnd;
@@ -794,7 +794,7 @@ PatchMemoryTables (
   gRAM->MaxMemorySlots = (UINT8) SmbiosTable.Type16->NumberOfMemoryDevices;
 
   if (gRAM->MaxMemorySlots == 0) {
-    gRAM->MaxMemorySlots = MAX_SLOT_COUNT;
+    gRAM->MaxMemorySlots = MAX_RAM_SLOTS;
   }
 
   TableSize = SmbiosTableLength (SmbiosTable);
