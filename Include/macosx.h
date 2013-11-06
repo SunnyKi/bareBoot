@@ -121,8 +121,6 @@ typedef struct {
 
 typedef struct {
   UINT8   Type;
-  UINT8   BankConnections;
-  UINT8   BankConnectionCount;
   UINT32  ModuleSize;
   UINT32  Frequency;
   CHAR8*  Vendor;
@@ -130,7 +128,7 @@ typedef struct {
   CHAR8*  SerialNo;
   UINT8   *spd;
   BOOLEAN InUse;
-  UINT16   SpdSize;
+  UINT16  SpdSize;
 } RAM_SLOT_INFO;
 
 typedef struct {
