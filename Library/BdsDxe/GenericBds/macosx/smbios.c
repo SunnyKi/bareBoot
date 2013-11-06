@@ -912,56 +912,56 @@ PatchMemoryTables (
            (newSmbiosTable.Type17->MemoryType == MemoryTypeOther) ||
            (newSmbiosTable.Type17->MemoryType == MemoryTypeUnknown))) {
         newSmbiosTable.Type17->MemoryType = MemoryTypeDdr;
-        DBG (", memory type unknown - to set by default DDR type");
-        if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->Manufacturer), 64) == 0){
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, "unknown");
+      }
+      
+      if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->Manufacturer), 64) == 0){
+        UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, "unknown");
+      }
+      if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->SerialNumber), 64) == 0){
+        UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, "unknown");
+      }
+      if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->PartNumber), 64) == 0){
+        UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, "unknown");
+      }
+
+      if (gSettings.cMemDevice[Index].InUse) {
+        if (gSettings.cMemDevice[Index].MemoryType != 0x02) {
+          newSmbiosTable.Type17->MemoryType =  gSettings.cMemDevice[Index].MemoryType;
         }
-        if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->SerialNumber), 64) == 0){
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, "unknown");
+        if (gSettings.cMemDevice[Index].Speed != 0x00) {
+          newSmbiosTable.Type17->Speed = gSettings.cMemDevice[Index].Speed;
         }
-        if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->PartNumber), 64) == 0){
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, "unknown");
+        if (gSettings.cMemDevice[Index].Size != 0xffff) {
+          newSmbiosTable.Type17->Size = gSettings.cMemDevice[Index].Size;
+        }
+
+        if (gSettings.cMemDevice[Index].DeviceLocator != NULL) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->DeviceLocator,
+                              gSettings.cMemDevice[Index].DeviceLocator);
+        }
+        if (gSettings.cMemDevice[Index].BankLocator != NULL) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->BankLocator,
+                              gSettings.cMemDevice[Index].BankLocator);
+        }
+        if (gSettings.cMemDevice[Index].Manufacturer != NULL) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer,
+                              gSettings.cMemDevice[Index].Manufacturer);
+        }
+        if (gSettings.cMemDevice[Index].SerialNumber != NULL) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber,
+                              gSettings.cMemDevice[Index].SerialNumber);
+        }
+        if (gSettings.cMemDevice[Index].PartNumber != NULL) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber,
+                              gSettings.cMemDevice[Index].PartNumber);
         }
       }
-        if (gSettings.cMemDevice[Index].InUse) {
-          if (gSettings.cMemDevice[Index].MemoryType != 0x02) {
-            newSmbiosTable.Type17->MemoryType =  gSettings.cMemDevice[Index].MemoryType;
-          }
-          if (gSettings.cMemDevice[Index].Speed != 0x00) {
-            newSmbiosTable.Type17->Speed = gSettings.cMemDevice[Index].Speed;
-          }
-          if (gSettings.cMemDevice[Index].Size != 0xffff) {
-            newSmbiosTable.Type17->Size = gSettings.cMemDevice[Index].Size;
-          }
-
-          if (gSettings.cMemDevice[Index].DeviceLocator != NULL) {
-            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->DeviceLocator,
-                                gSettings.cMemDevice[Index].DeviceLocator);
-          }
-          if (gSettings.cMemDevice[Index].BankLocator != NULL) {
-            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->BankLocator,
-                                gSettings.cMemDevice[Index].BankLocator);
-          }
-          if (gSettings.cMemDevice[Index].Manufacturer != NULL) {
-            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer,
-                                gSettings.cMemDevice[Index].Manufacturer);
-          }
-          if (gSettings.cMemDevice[Index].SerialNumber != NULL) {
-            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber,
-                                gSettings.cMemDevice[Index].SerialNumber);
-          }
-          if (gSettings.cMemDevice[Index].PartNumber != NULL) {
-            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber,
-                                gSettings.cMemDevice[Index].PartNumber);
-          }
-        }
 
       if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
         TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
         Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
-        DBG ("Smbios: Memory17[%d] = %d", Index, Memory17[Index]);
+        DBG ("Smbios: Memory17[%d] = %d\n", Index, Memory17[Index]);
       }
-      DBG ("\n");
 
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
