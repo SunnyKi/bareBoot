@@ -919,13 +919,13 @@ PatchMemoryTables (
         newSmbiosTable.Type17->MemoryType = MemoryTypeDdr;
         DBG (", memory type unknown - to set by default DDR type");
         if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->Manufacturer), 64) == 0){
-          UpdateSmbiosString(newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, "unknown");
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, "unknown");
         }
         if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->SerialNumber), 64) == 0){
-          UpdateSmbiosString(newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, "unknown");
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, "unknown");
         }
         if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->PartNumber), 64) == 0){
-          UpdateSmbiosString(newSmbiosTable, &newSmbiosTable.Type17->PartNumber, "unknown");
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, "unknown");
         }
       }
       DBG ("\n");
