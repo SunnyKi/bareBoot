@@ -186,9 +186,6 @@ typedef struct {
   UINT8   ResetVal;
   BOOLEAN DropSSDT;
   BOOLEAN DropDMAR;
-#if 0
-  BOOLEAN PatchAPIC;
-#endif
   UINT8   PMProfile;
   // Graphics
   BOOLEAN GraphicsInjector;
@@ -210,19 +207,7 @@ typedef struct {
   BOOLEAN SPDScan;
   // KernelAndKextPatches
   BOOLEAN KPKernelCpu;
-
   BOOLEAN KPKextPatchesNeeded;
-
-#if 0
-  BOOLEAN KPAsusAICPUPM;
-  BOOLEAN KPAppleRTC;
-
-  CHAR16  *KPATIConnectorsController;
-  UINT8   *KPATIConnectorsData;
-  UINTN   KPATIConnectorsDataLen;
-  UINT8   *KPATIConnectorsPatch;
-#endif
-
   CHAR8   *AnyKext[100];
   BOOLEAN AnyKextInfoPlistPatch[100];
   UINTN   AnyKextDataLen[100];
