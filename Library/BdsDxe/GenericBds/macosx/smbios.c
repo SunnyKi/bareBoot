@@ -669,7 +669,7 @@ PatchTableTypeSome (
 {
   //some unused but interesting tables. Just log as is
   //
-  UINT8 tableTypes[15] = {6, 8, 9, 10, 11, 18, 21, 22, 27, 28, 32, 33};
+  UINT8 tableTypes[12] = {6, 8, 9, 10, 11, 18, 21, 22, 27, 28, 32, 33};
   UINTN IndexType;
 
   // Different types
@@ -683,43 +683,79 @@ PatchTableTypeSome (
       
       switch (tableTypes[IndexType]) {
         case 6:
-          SmbiosTable.Type6->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type6, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type6, (VOID*) SmbiosTable.Type6, TableSize);
+          newSmbiosTable.Type6->Hdr.Handle = NumberOfRecords;
           break;
         case 8:
-          SmbiosTable.Type8->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type8, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type8, (VOID*) SmbiosTable.Type8, TableSize);
+          newSmbiosTable.Type8->Hdr.Handle = NumberOfRecords;
           break;
         case 9:
-          SmbiosTable.Type9->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type9, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type9, (VOID*) SmbiosTable.Type9, TableSize);
+          newSmbiosTable.Type9->Hdr.Handle = NumberOfRecords;
           break;
         case 10:
-          SmbiosTable.Type10->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type10, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type10, (VOID*) SmbiosTable.Type10, TableSize);
+          newSmbiosTable.Type10->Hdr.Handle = NumberOfRecords;
           break;
         case 11:
-          SmbiosTable.Type11->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type11, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type11, (VOID*) SmbiosTable.Type11, TableSize);
+          newSmbiosTable.Type11->Hdr.Handle = NumberOfRecords;
           break;
         case 18:
-          SmbiosTable.Type18->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type18, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type18, (VOID*) SmbiosTable.Type18, TableSize);
+          newSmbiosTable.Type18->Hdr.Handle = NumberOfRecords;
           break;
         case 21:
-          SmbiosTable.Type21->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type21, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type21, (VOID*) SmbiosTable.Type21, TableSize);
+          newSmbiosTable.Type21->Hdr.Handle = NumberOfRecords;
           break;
         case 22:
-          SmbiosTable.Type22->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type22, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type22, (VOID*) SmbiosTable.Type22, TableSize);
+          newSmbiosTable.Type22->Hdr.Handle = NumberOfRecords;
           break;
         case 27:
-          SmbiosTable.Type27->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type27, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type27, (VOID*) SmbiosTable.Type27, TableSize);
+          newSmbiosTable.Type27->Hdr.Handle = NumberOfRecords;
           break;
         case 28:
-          SmbiosTable.Type28->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type28, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type28, (VOID*) SmbiosTable.Type28, TableSize);
+          newSmbiosTable.Type28->Hdr.Handle = NumberOfRecords;
           break;
         case 32:
-          SmbiosTable.Type32->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type32, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type32, (VOID*) SmbiosTable.Type32, TableSize);
+          newSmbiosTable.Type32->Hdr.Handle = NumberOfRecords;
           break;
         case 33:
-          SmbiosTable.Type33->Hdr.Handle = NumberOfRecords;
+          TableSize = SmbiosTableLength (SmbiosTable);
+          ZeroMem ((VOID*) newSmbiosTable.Type33, MAX_TABLE_SIZE);
+          CopyMem ((VOID*) newSmbiosTable.Type33, (VOID*) SmbiosTable.Type33, TableSize);
+          newSmbiosTable.Type33->Hdr.Handle = NumberOfRecords;
           break;
       }
-      LogSmbiosTable (SmbiosTable);
+      LogSmbiosTable (newSmbiosTable);
     }
   }
 
