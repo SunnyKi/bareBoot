@@ -821,11 +821,11 @@ PatchMemoryTables (
   }
 
   gRAM->SpdDetected = FALSE;
-  if (gSettings.SPDScan) {
+  if (gSettings.NoSPDScan) {
+    DBG ("Smbios: SPD scanning is disabled by the user (config.plist)\n");
+  } else {
     DBG ("Smbios: Starting ScanSPD\n");
     ScanSPD ();
-  } else {
-    DBG ("Smbios: SPD scanning is disabled by the user (config.plist)\n");
   }
 
   for (Index = 0; Index < gRAM->MaxMemorySlots; Index++) {
@@ -907,11 +907,6 @@ PatchMemoryTables (
              );
       }
     } else {
-      if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
-        TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
-        Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
-        DBG ("Smbios: Memory17[%d] = %d", Index, Memory17[Index]);
-      }
       if ((newSmbiosTable.Type17->Size > 0) &&
           ((newSmbiosTable.Type17->MemoryType == 0) ||
            (newSmbiosTable.Type17->MemoryType == MemoryTypeOther) ||
@@ -928,25 +923,46 @@ PatchMemoryTables (
           UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, "unknown");
         }
       }
-      DBG ("\n");
         if (gSettings.cMemDevice[Index].InUse) {
-          
-          newSmbiosTable.Type17->MemoryType =  gSettings.cMemDevice[j].MemoryType;
-          newSmbiosTable.Type17->Speed = gSettings.cMemDevice[j].Speed;
-          newSmbiosTable.Type17->Size = gSettings.cMemDevice[j].Size;
+          if (gSettings.cMemDevice[Index].MemoryType != 0x02) {
+            newSmbiosTable.Type17->MemoryType =  gSettings.cMemDevice[Index].MemoryType;
+          }
+          if (gSettings.cMemDevice[Index].Speed != 0x00) {
+            newSmbiosTable.Type17->Speed = gSettings.cMemDevice[Index].Speed;
+          }
+          if (gSettings.cMemDevice[Index].Speed != 0xffff) {
+            newSmbiosTable.Type17->Size = gSettings.cMemDevice[Index].Size;
+          }
 
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->DeviceLocator,
-                              gSettings.cMemDevice[j].DeviceLocator);
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->BankLocator,
-                              gSettings.cMemDevice[j].BankLocator);
-          
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer,
-                              gSettings.cMemDevice[j].Manufacturer);
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber,
-                              gSettings.cMemDevice[j].SerialNumber);
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber,
-                              gSettings.cMemDevice[j].PartNumber);
+          if (gSettings.cMemDevice[Index].DeviceLocator != NULL) {
+            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->DeviceLocator,
+                                gSettings.cMemDevice[Index].DeviceLocator);
+          }
+          if (gSettings.cMemDevice[Index].BankLocator != NULL) {
+            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->BankLocator,
+                                gSettings.cMemDevice[Index].BankLocator);
+          }
+          if (gSettings.cMemDevice[Index].Manufacturer != NULL) {
+            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer,
+                                gSettings.cMemDevice[Index].Manufacturer);
+          }
+          if (gSettings.cMemDevice[Index].SerialNumber != NULL) {
+            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber,
+                                gSettings.cMemDevice[Index].SerialNumber);
+          }
+          if (gSettings.cMemDevice[Index].PartNumber != NULL) {
+            UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber,
+                                gSettings.cMemDevice[Index].PartNumber);
+          }
         }
+
+      if ((newSmbiosTable.Type17->Size & 0x8000) == 0) {
+        TotalSystemMemory += newSmbiosTable.Type17->Size; //Mb
+        Memory17[Index] = (UINT16)(newSmbiosTable.Type17->Size > 0 ? TotalSystemMemory : 0);
+        DBG ("Smbios: Memory17[%d] = %d", Index, Memory17[Index]);
+      }
+      DBG ("\n");
+
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
     }

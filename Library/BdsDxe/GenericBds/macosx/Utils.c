@@ -1409,6 +1409,37 @@ GetUserSettings (
 
   gSettings.NoSPDScan = GetBoolProperty (dictPointer, "NoSPDScan", FALSE);
 
+  array = plDictFind (dictPointer, "MemoryDevices", 13, plKindArray);
+  if (array != NULL) {
+    UINT8 Slot;
+    UINT8 NrSlot;
+    NrSlot = (UINT32) plNodeGetSize (array);
+    DBG ("Custom Memory Devices slots = %d\n", NrSlot);
+    if (NrSlot <= MAX_RAM_SLOTS) {
+      for (i = 0; i < NrSlot; i++) {
+        dictPointer = plNodeGetItem (array, i);
+        Slot = (UINT8) GetNumProperty (dictPointer, "Slot", 0xff);
+        gSettings.cMemDevice[Slot].InUse = TRUE;
+        gSettings.cMemDevice[Slot].MemoryType = (UINT8) GetNumProperty (dictPointer, "MemoryType", 0x02);
+        gSettings.cMemDevice[Slot].Speed      = (UINT16) GetNumProperty (dictPointer, "Speed", 0x00); //MHz
+        gSettings.cMemDevice[Slot].Size       = (UINT16) GetNumProperty (dictPointer, "Size", 0xffff); //MB
+
+        gSettings.cMemDevice[Slot].DeviceLocator  = GetStringProperty (dictPointer, "DeviceLocator");
+        gSettings.cMemDevice[Slot].BankLocator    = GetStringProperty (dictPointer, "BankLocator");
+        gSettings.cMemDevice[Slot].Manufacturer   = GetStringProperty (dictPointer, "Manufacturer");
+        gSettings.cMemDevice[Slot].SerialNumber   = GetStringProperty (dictPointer, "SerialNumber");
+        gSettings.cMemDevice[Slot].PartNumber     = GetStringProperty (dictPointer, "PartNumber");
+        DBG ("gSettings.cMemDevice[%d].MemoryType = 0x%x\n", Slot, gSettings.cMemDevice[Slot].MemoryType);
+        DBG ("gSettings.cMemDevice[%d].Speed = %d MHz\n", Slot, gSettings.cMemDevice[Slot].Speed);
+        DBG ("gSettings.cMemDevice[%d].Size = %d MB\n", Slot, gSettings.cMemDevice[Slot].Size);
+        DBG ("gSettings.cMemDevice[%d].DeviceLocator = %a\n", Slot, gSettings.cMemDevice[Slot].DeviceLocator);
+        DBG ("gSettings.cMemDevice[%d].BankLocator = %a\n", Slot, gSettings.cMemDevice[Slot].BankLocator);
+        DBG ("gSettings.cMemDevice[%d].Manufacturer = %a\n", Slot, gSettings.cMemDevice[Slot].Manufacturer);
+        DBG ("gSettings.cMemDevice[%d].SerialNumber = %a\n", Slot, gSettings.cMemDevice[Slot].SerialNumber);
+        DBG ("gSettings.cMemDevice[%d].PartNumber = %a\n", Slot, gSettings.cMemDevice[Slot].PartNumber);
+      }
+    }
+  }
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 
   if (GetBoolProperty (dictPointer, "Turbo", FALSE)) {
