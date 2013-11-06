@@ -138,8 +138,8 @@ typedef struct {
   RAM_SLOT_INFO DIMM[MAX_RAM_SLOTS];
 } MEM_STRUCTURE;
 
-typedef struct {
-  UINT8        Slot;
+typedef struct {          //gSettings.cMemDevice
+  BOOLEAN      InUse;
   UINT8        MemoryType;
   UINT16       Speed;
   UINT16       Size;
@@ -177,11 +177,6 @@ typedef struct {
   // SMBIOS TYPE4
   UINT64  CPUFrequency;
   UINT64  FSBFrequency; 
-  // SMBIOS TYPE17
-  CHAR8 MemoryManufacturer[64];
-  CHAR8 MemorySerialNumber[64];
-  CHAR8 MemoryPartNumber[64];
-  CHAR8 MemorySpeed[64];
   // SMBIOS TYPE131
   UINT16  CpuType;
   UINT32  ProcessorInterconnectSpeed; //Hz

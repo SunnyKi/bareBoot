@@ -929,7 +929,24 @@ PatchMemoryTables (
         }
       }
       DBG ("\n");
-      
+        if (gSettings.cMemDevice[Index].InUse) {
+          
+          newSmbiosTable.Type17->MemoryType =  gSettings.cMemDevice[j].MemoryType;
+          newSmbiosTable.Type17->Speed = gSettings.cMemDevice[j].Speed;
+          newSmbiosTable.Type17->Size = gSettings.cMemDevice[j].Size;
+
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->DeviceLocator,
+                              gSettings.cMemDevice[j].DeviceLocator);
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->BankLocator,
+                              gSettings.cMemDevice[j].BankLocator);
+          
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer,
+                              gSettings.cMemDevice[j].Manufacturer);
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber,
+                              gSettings.cMemDevice[j].SerialNumber);
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber,
+                              gSettings.cMemDevice[j].PartNumber);
+        }
       newSmbiosTable.Type17->Hdr.Handle = NumberOfRecords;
       Handle17[Index] = LogSmbiosTable (newSmbiosTable);
     }
