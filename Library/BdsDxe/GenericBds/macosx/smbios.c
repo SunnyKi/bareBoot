@@ -840,8 +840,6 @@ PatchMemoryTables (
     CopyMem ((VOID*) newSmbiosTable.Type17, (VOID*) SmbiosTable.Type17, TableSize);
     newSmbiosTable.Type17->MemoryArrayHandle = Handle16;
 
-    //map = gRAM->Map[Index];
-
     if (gRAM->SpdDetected) {
 
       if (gRAM->DIMM[Index].InUse) {
