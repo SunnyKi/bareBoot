@@ -1320,7 +1320,6 @@ GetUserSettings (
   gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
   gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
   gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-  gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", TRUE);
   gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
 
 
@@ -1407,6 +1406,8 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
   GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
   GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
+
+  gSettings.NoSPDScan = GetBoolProperty (dictPointer, "NoSPDScan", FALSE);
 
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 
