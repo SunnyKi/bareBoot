@@ -1413,7 +1413,8 @@ GetUserSettings (
   if (array != NULL) {
     UINT8 Slot;
     UINT8 NrSlot;
-    NrSlot = (UINT32) plNodeGetSize (array);
+
+    NrSlot = (UINT8) plNodeGetSize (array);
     DBG ("Custom Memory Devices slots = %d\n", NrSlot);
     if (NrSlot <= MAX_RAM_SLOTS) {
       for (i = 0; i < NrSlot; i++) {
