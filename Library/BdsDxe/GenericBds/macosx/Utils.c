@@ -1511,9 +1511,9 @@ GetUserSettings (
   gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
 
   array = plDictFind (gConfigPlist, "KextPatches", 11, plKindArray);
-
   if (array != NULL) {
     gSettings.NrKexts = (UINT32) plNodeGetSize (array);
+    DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
     if ((gSettings.NrKexts <= 100)) {
       for (i = 0; i < gSettings.NrKexts; i++) {
         gSettings.AnyKextDataLen[i] = 0;
@@ -1544,16 +1544,15 @@ GetUserSettings (
           continue;
         }
         gSettings.KPKextPatchesNeeded = TRUE;
+        DBG ("  %d. name = %a, length = %d, %a\n",
+             (i + 1),
+             gSettings.AnyKext[i],
+             gSettings.AnyKextDataLen[i],
+             gSettings.AnyKextInfoPlistPatch[i]?"KextInfoPlistPatch ":""
+            );
       }
     }
   }
-
-  DBG ("gSettings.NrKexts = %d\n", gSettings.NrKexts);
-#ifdef BOOT_DEBUG
-  for (i = 0; i < gSettings.NrKexts; i++) {
-    DBG ("  %d. name = %a, length = %d, %a\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i], gSettings.AnyKextInfoPlistPatch[i]?"KextInfoPlistPatch ":"");
-  }
-#endif
 
   plNodeDelete (gConfigPlist);
 
