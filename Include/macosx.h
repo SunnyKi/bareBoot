@@ -150,6 +150,15 @@ typedef struct {          //gSettings.cMemDevice
   CHAR8*       PartNumber;
 } CUSTOM_SMBIOS_TYPE17;
 
+typedef struct ACPI_DROP_TABLE ACPI_DROP_TABLE;
+struct ACPI_DROP_TABLE
+{
+  ACPI_DROP_TABLE *Next;
+  UINT32          Signature;
+  UINT32          align;
+  UINT64          TableId;
+};
+
 typedef struct {
   // SMBIOS TYPE0
   CHAR8 VendorName[64];
@@ -226,6 +235,8 @@ typedef struct {
   UINT32 *LenToReplace;
   //Custom Memory Device (Type 17).
   CUSTOM_SMBIOS_TYPE17 cMemDevice[MAX_RAM_SLOTS];
+  // Table dropping
+  ACPI_DROP_TABLE *ACPIDropTables;
 } SETTINGS_DATA;
 
 typedef enum {

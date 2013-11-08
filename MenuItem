@@ -1,0 +1,33 @@
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->Signature = TableEntry->Signature;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->TableId = TableEntry->OemTableId;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->MenuItem.BValue = FALSE;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->Next = gSettings.ACPIDropTables;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->Signature = TableEntry->Signature;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->TableId = TableEntry->OemTableId;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->MenuItem.BValue = FALSE;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable->Next = gSettings.ACPIDropTables;
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      if (DropTable->MenuItem.BValue) {
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:        DBG("Attempting to drop \"%4.4a\" (%8.8X) \"%8.8a\" (%16.16lX)\n", &(DropTable->Signature), DropTable->Signature, &(DropTable->TableId), DropTable->TableId);
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:        DropTableFromXSDT(DropTable->Signature, DropTable->TableId);
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:        DropTableFromRSDT(DropTable->Signature, DropTable->TableId);
+../Clover/rEFIt_UEFI//Platform/AcpiPatcher.c:      DropTable = DropTable->Next;
+../Clover/rEFIt_UEFI//Platform/Settings.c:                if (((Signature == DropTable->Signature) &&
+../Clover/rEFIt_UEFI//Platform/Settings.c:                    (!TableId || (DropTable->TableId == TableId))) ||
+../Clover/rEFIt_UEFI//Platform/Settings.c:                    (!Signature && (DropTable->TableId == TableId))) {
+../Clover/rEFIt_UEFI//Platform/Settings.c:                  DropTable->MenuItem.BValue = TRUE;
+../Clover/rEFIt_UEFI//Platform/Settings.c:                DropTable = DropTable->Next;
+../Clover/rEFIt_UEFI//refit/menu.c:      DropTable->MenuItem.ItemType = BoolValue;
+../Clover/rEFIt_UEFI//refit/menu.c:      DropTable->MenuItem.SValue = DropTable->MenuItem.BValue?L"[+]":L"[ ]";
+../Clover/rEFIt_UEFI//refit/menu.c:      DropTable = DropTable->Next;
+../Clover/rEFIt_UEFI//refit/menu.c:      DropTable->MenuItem.ItemType = BoolValue;
+../Clover/rEFIt_UEFI//refit/menu.c:      DropTable->MenuItem.SValue = DropTable->MenuItem.BValue?L"[+]":L"[ ]";
+../Clover/rEFIt_UEFI//refit/menu.c:      DropTable = DropTable->Next;
+../Clover/rEFIt_UEFI//refit/menu.c:      //      DBG("Attempting to drop \"%4.4a\" (%8.8X) \"%8.8a\" (%16.16lX)\n", &(DropTable->Signature), DropTable->Signature, &(DropTable->TableId), DropTable->TableId);
+../Clover/rEFIt_UEFI//refit/menu.c:                                           &(DropTable->Signature),
+../Clover/rEFIt_UEFI//refit/menu.c:                                           &(DropTable->TableId)));
+../Clover/rEFIt_UEFI//refit/menu.c:      CopyMem((CHAR8*)&sign, (CHAR8*)&(DropTable->Signature), 4);
+../Clover/rEFIt_UEFI//refit/menu.c:      CopyMem((CHAR8*)&OTID, (CHAR8*)&(DropTable->TableId), 8);
+../Clover/rEFIt_UEFI//refit/menu.c:             sign, DropTable->Signature,
+../Clover/rEFIt_UEFI//refit/menu.c:             OTID, DropTable->TableId);
+../Clover/rEFIt_UEFI//refit/menu.c:      InputBootArgs->Item = &(DropTable->MenuItem);
+../Clover/rEFIt_UEFI//refit/menu.c:      DropTable = DropTable->Next;

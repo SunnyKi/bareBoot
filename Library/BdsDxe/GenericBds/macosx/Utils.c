@@ -1371,6 +1371,76 @@ GetUserSettings (
           );
     }
   }
+  
+  gSettings.ACPIDropTables = NULL;
+  array = plDictFind (dictPointer, "DropTables", 10, plKindArray);
+  if (array != NULL) {
+    UINT16            NrTableIds;
+    ACPI_DROP_TABLE   *DropTable;
+    
+    NrTableIds = (UINT32) plNodeGetSize (array);
+    DBG("Dropping %d tables\n", NrTableIds);
+    if (NrTableIds > 0) {
+      for (i = 0; i < NrTableIds; ++i) {
+        UINT32  Signature = 0;
+        UINT64  TableId = 0;
+        CHAR8*  SigStr;
+        CHAR8  s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+        UINTN  idi = 0;
+        CHAR8  id[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+        DBG(" Drop table %d", i);
+        prop = plNodeGetItem (array, i);
+        // Get the table signatures to drop
+        SigStr  = GetStringProperty (prop, "Signature");
+        if (AsciiStrLen (SigStr) != 4) {
+          DBG (", bad signature\n");
+          continue;
+        }
+        DBG(" signature=\"");
+        if (*SigStr) {
+          s1 = *SigStr++;
+          DBG("%c", s1);
+        }
+        if (*SigStr) {
+          s2 = *SigStr++;
+          DBG("%c", s2);
+        }
+        if (*SigStr) {
+          s3 = *SigStr++;
+          DBG("%c", s3);
+        }
+        if (*SigStr) {
+          s4 = *SigStr++;
+          DBG("%c", s4);
+        }
+        Signature = SIGNATURE_32(s1, s2, s3, s4);
+        DBG("\" (%8.8X)", Signature);
+        // Get the table ids to drop
+        SigStr  = GetStringProperty (prop, "TableId");
+
+        DBG(" table-id=\"");
+        if (SigStr) {
+          while (*SigStr && (idi < 8)) {
+            DBG("%c", *SigStr);
+            id[idi++] = *SigStr++;
+          }
+        }
+        CopyMem(&TableId, (CHAR8*)&id[0], 8);
+        DBG("\" (%16.16lX)\n", TableId);
+
+
+        DropTable = AllocateZeroPool(sizeof(ACPI_DROP_TABLE));
+        
+        DropTable->Signature = Signature;
+        DropTable->TableId = TableId;
+
+        DropTable->Next = gSettings.ACPIDropTables;
+        gSettings.ACPIDropTables = DropTable;
+        }
+      }
+    }
+  }
 
   dictPointer = plDictFind (gConfigPlist, "SMBIOS", 6, plKindDict);
 
