@@ -720,6 +720,7 @@ PatchACPI (
             CopyMem ((VOID*) (UINTN) dsdt, buffer, bufferLen);
             newFadt->Dsdt  = (UINT32) dsdt;
             newFadt->XDsdt = dsdt;
+            DBG ("PatchACPI: custom dsdt table loaded\n");
           }
         }
       }

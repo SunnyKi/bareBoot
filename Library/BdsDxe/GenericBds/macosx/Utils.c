@@ -1347,6 +1347,7 @@ GetUserSettings (
   gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
   gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
 
+  gSettings.PatchDsdtNum = 0;
   array = plDictFind (dictPointer, "Patches", 7, plKindArray);
   if (array != NULL) {
     gSettings.PatchDsdtNum = (UINT32) plNodeGetSize (array);
