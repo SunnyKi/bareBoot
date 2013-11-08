@@ -698,7 +698,8 @@ PatchACPI (
       newFadt->Dsdt = (UINT32) XDsdt;
     }
 
-    if (gSettings.PatchDsdtNum > 0) {
+    DBG ("PatchACPI: gSettings.PatchDsdtNum = %d\n", gSettings.PatchDsdtNum);
+    if (gSettings.PatchDsdtNum = 0) {
       if (gPNDirExists) {
         UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
       } else {
