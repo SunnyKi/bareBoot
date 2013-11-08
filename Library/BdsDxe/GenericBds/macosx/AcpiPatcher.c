@@ -131,7 +131,11 @@ DropTableFromRSDT (
 
   EntryCount = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
   EntryPtr = &Rsdt->Entry;
-
+  DBG ("DropTableFromRSDT: Signature = 0x%x, TableId = 0x%llx '%8.8a'\n",
+       Signature,
+       TableId,
+       &TableId
+      );
   for (Index = 0; Index < EntryCount; Index++, EntryPtr++) {
     if (*EntryPtr == 0) {
       Rsdt->Header.Length -= sizeof (UINT32);
@@ -139,15 +143,21 @@ DropTableFromRSDT (
     }
 
     Table = (EFI_ACPI_DESCRIPTION_HEADER*) ((UINTN) (*EntryPtr));
+    DBG ("DropTableFromRSDT: Table->Signature = 0x%x, Table->TableId = 0x%llx '%8.8a'\n",
+         Table->Signature,
+         Table->OemTableId,
+         &Table->OemTableId
+        );
 
     if (Table->Signature != Signature) {
       continue;
     }
 
-    if (TableId && (TableId != Table->OemTableId)) {
+    if ((TableId != 0) && (TableId != Table->OemTableId)) {
       continue;
     }
-    
+    DBG ("DropTableFromRSDT: got it!\n");
+
     Ptr = EntryPtr;
     Ptr2 = Ptr + 1;
 
@@ -169,37 +179,48 @@ DropTableFromXSDT (
   EFI_ACPI_DESCRIPTION_HEADER     *Table;
   UINTN                           Index, Index2;
   UINT32                          EntryCount;
-  UINT64                          *BasePtr, *Ptr, *Ptr2;
-  UINT64                          Entry64;
+  UINT64                          *EntryPtr, *Ptr, *Ptr2;
+//  UINT64                          Entry64;
 
   EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-  BasePtr = (UINT64*) (& (Xsdt->Entry));
+  EntryPtr = &Xsdt->Entry;
 
-  for (Index = 0; Index < EntryCount; Index++, BasePtr++) {
-    if (*BasePtr == 0) {
+  DBG ("DropTableFromXSDT: Signature = 0x%x, TableId = 0x%llx '%8.8a'\n",
+       Signature,
+       TableId,
+       &TableId
+       );
+  for (Index = 0; Index < EntryCount; Index++, EntryPtr++) {
+    if (*EntryPtr == 0) {
       Xsdt->Header.Length -= sizeof (UINT64);
       continue;
     }
 
-    CopyMem (&Entry64, (VOID*) BasePtr, sizeof (UINT64));
-    Table = (EFI_ACPI_DESCRIPTION_HEADER*) ((UINTN) (Entry64));
+//    CopyMem (&Entry64, (VOID*) BasePtr, sizeof (UINT64));
+    Table = (EFI_ACPI_DESCRIPTION_HEADER*) ((UINTN) (*EntryPtr));
+    DBG ("DropTableFromXSDT: Table->Signature = 0x%x, Table->TableId = 0x%llx '%8.8a'\n",
+         Table->Signature,
+         Table->OemTableId,
+         &Table->OemTableId
+         );
 
     if (Table->Signature != Signature) {
       continue;
     }
 
-    if (TableId && (TableId != Table->OemTableId)) {
+    if ((TableId != 0) && (TableId != Table->OemTableId)) {
       continue;
     }
-    
-    Ptr = BasePtr;
+    DBG ("DropTableFromXSDT: got it!\n");
+
+    Ptr = EntryPtr;
     Ptr2 = Ptr + 1;
 
     for (Index2 = Index; Index2 < EntryCount; Index2++) {
       *Ptr++ = *Ptr2++;
     }
 
-    BasePtr--;
+    EntryPtr--;
     Xsdt->Header.Length -= sizeof (UINT64);
   }
 }
@@ -758,10 +779,15 @@ PatchACPI (
   if (gSettings.ACPIDropTables != NULL) {
     ACPI_DROP_TABLE *DropTable = gSettings.ACPIDropTables;
     
-    while (DropTable) {
-      DBG("Attempting to drop \"%4.4a\" (%8.8X) \"%8.8a\" (%16.16lX)\n", &(DropTable->Signature), DropTable->Signature, &(DropTable->TableId), DropTable->TableId);
-      DropTableFromRSDT(DropTable->Signature, DropTable->TableId);
-      DropTableFromXSDT(DropTable->Signature, DropTable->TableId);
+    while (DropTable != NULL) {
+      DBG ("Attempting to drop '%4.4a' (%8.8X) '%8.8a' (%16.16lX)\n",
+           &DropTable->Signature,
+           DropTable->Signature,
+           &DropTable->TableId,
+           DropTable->TableId
+          );
+      DropTableFromRSDT (DropTable->Signature, DropTable->TableId);
+      DropTableFromXSDT (DropTable->Signature, DropTable->TableId);
 
       DropTable = DropTable->Next;
     }
