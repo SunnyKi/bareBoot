@@ -1378,7 +1378,7 @@ GetUserSettings (
     UINT16            NrTableIds;
     ACPI_DROP_TABLE   *DropTable;
     
-    NrTableIds = (UINT32) plNodeGetSize (array);
+    NrTableIds = (UINT16) plNodeGetSize (array);
     DBG("Dropping %d tables\n", NrTableIds);
     if (NrTableIds > 0) {
       for (i = 0; i < NrTableIds; ++i) {
