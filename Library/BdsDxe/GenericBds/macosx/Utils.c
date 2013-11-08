@@ -1455,14 +1455,14 @@ GetUserSettings (
         gSettings.cMemDevice[Slot].Manufacturer   = GetStringProperty (prop, "Manufacturer");
         gSettings.cMemDevice[Slot].SerialNumber   = GetStringProperty (prop, "SerialNumber");
         gSettings.cMemDevice[Slot].PartNumber     = GetStringProperty (prop, "PartNumber");
-        DBG ("gSettings.cMemDevice[%d].MemoryType = 0x%x\n", Slot, gSettings.cMemDevice[Slot].MemoryType);
-        DBG ("gSettings.cMemDevice[%d].Speed = %d MHz\n", Slot, gSettings.cMemDevice[Slot].Speed);
-        DBG ("gSettings.cMemDevice[%d].Size = %d MB\n", Slot, gSettings.cMemDevice[Slot].Size);
-        DBG ("gSettings.cMemDevice[%d].DeviceLocator = %a\n", Slot, gSettings.cMemDevice[Slot].DeviceLocator);
-        DBG ("gSettings.cMemDevice[%d].BankLocator = %a\n", Slot, gSettings.cMemDevice[Slot].BankLocator);
-        DBG ("gSettings.cMemDevice[%d].Manufacturer = %a\n", Slot, gSettings.cMemDevice[Slot].Manufacturer);
-        DBG ("gSettings.cMemDevice[%d].SerialNumber = %a\n", Slot, gSettings.cMemDevice[Slot].SerialNumber);
-        DBG ("gSettings.cMemDevice[%d].PartNumber = %a\n", Slot, gSettings.cMemDevice[Slot].PartNumber);
+        DBG (" gSettings.cMemDevice[%d].MemoryType = 0x%x\n", Slot, gSettings.cMemDevice[Slot].MemoryType);
+        DBG (" gSettings.cMemDevice[%d].Speed = %d MHz\n", Slot, gSettings.cMemDevice[Slot].Speed);
+        DBG (" gSettings.cMemDevice[%d].Size = %d MB\n", Slot, gSettings.cMemDevice[Slot].Size);
+        DBG (" gSettings.cMemDevice[%d].DeviceLocator = %a\n", Slot, gSettings.cMemDevice[Slot].DeviceLocator);
+        DBG (" gSettings.cMemDevice[%d].BankLocator = %a\n", Slot, gSettings.cMemDevice[Slot].BankLocator);
+        DBG (" gSettings.cMemDevice[%d].Manufacturer = %a\n", Slot, gSettings.cMemDevice[Slot].Manufacturer);
+        DBG (" gSettings.cMemDevice[%d].SerialNumber = %a\n", Slot, gSettings.cMemDevice[Slot].SerialNumber);
+        DBG (" gSettings.cMemDevice[%d].PartNumber = %a\n", Slot, gSettings.cMemDevice[Slot].PartNumber);
       }
     }
   }
