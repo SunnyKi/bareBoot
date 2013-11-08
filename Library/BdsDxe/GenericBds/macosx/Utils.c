@@ -1347,6 +1347,31 @@ GetUserSettings (
   gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
   gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
 
+  array = plDictFind (dictPointer, "Patches", 7, plKindArray);
+  if (array != NULL) {
+    gSettings.PatchDsdtNum = (UINT32) plNodeGetSize (array);
+    gSettings.PatchDsdtFind = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT8*));
+    gSettings.PatchDsdtReplace = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT8*));
+    gSettings.LenToFind = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT32));
+    gSettings.LenToReplace = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT32));
+    DBG ("gSettings.PatchDsdtNum = %d\n", gSettings.PatchDsdtNum);
+    for (i = 0; i < gSettings.PatchDsdtNum; i++) {
+      prop = plNodeGetItem (array, i);
+      gSettings.PatchDsdtFind[i] = GetDataSetting (prop, "Find", &len);
+      gSettings.LenToFind[i] = (UINT32) len;
+      gSettings.PatchDsdtReplace[i] = GetDataSetting (prop, "Replace", &len);
+      gSettings.LenToReplace[i] = (UINT32) len;
+
+      DBG ("  %d. find = %a, len = %d; replace = %a, len = %d\n",
+           (i + 1),
+           gSettings.PatchDsdtFind[i],
+           gSettings.LenToFind[i],
+           gSettings.PatchDsdtReplace[i],
+           gSettings.LenToReplace[i]
+          );
+    }
+  }
+
   dictPointer = plDictFind (gConfigPlist, "SMBIOS", 6, plKindDict);
 
   gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", FALSE);

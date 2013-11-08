@@ -693,7 +693,6 @@ PatchACPI (
         }
       }
     }
-
     // facs + xfacs
     XFirmwareCtrl = newFadt->XFirmwareCtrl;
 
@@ -712,6 +711,22 @@ PatchACPI (
     FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) newFadt;
     FadtPointer->Header.Checksum = 0;
     FadtPointer->Header.Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) FadtPointer, FadtPointer->Header.Length));
+
+    // Pathes for DSDT
+    if (gSettings.PatchDsdtNum > 0) {
+      EFI_ACPI_DESCRIPTION_HEADER *TableHeader;
+
+      TableHeader = (EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) FadtPointer->XDsdt;
+      for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
+        FixAny ((UINT8*) (UINTN) FadtPointer->XDsdt,
+                 TableHeader->Length,
+                 gSettings.PatchDsdtFind[Index],
+                 gSettings.LenToFind[Index],
+                 gSettings.PatchDsdtReplace[Index],
+                 gSettings.LenToReplace[Index]
+               );
+      }
+    }
 
     // We are sure that Fadt is the first entry in RSDT/XSDT table
     if (Rsdt != NULL) {

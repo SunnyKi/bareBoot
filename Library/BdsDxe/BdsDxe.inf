@@ -87,6 +87,7 @@
   GenericBds/macosx/kext_patcher.c
   GenericBds/macosx/kext_inject.c
   GenericBds/macosx/device_tree.c
+  GenericBds/macosx/fixSDT.c
 #  GenericBds/macosx/guid.c
 #  GenericBds/macosx/Devices.c
 #  GenericBds/macosx/nvidia.c

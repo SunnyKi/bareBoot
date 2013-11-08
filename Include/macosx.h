@@ -218,6 +218,12 @@ typedef struct {
   CHAR8   *AnyKextData[100];
   CHAR8   *AnyKextPatch[100];
   UINT32   NrKexts;
+  //Patch DSDT arbitrary
+  UINT32 PatchDsdtNum;
+  UINT8  **PatchDsdtFind;
+  UINT32 *LenToFind;
+  UINT8  **PatchDsdtReplace;
+  UINT32 *LenToReplace;
   //Custom Memory Device (Type 17).
   CUSTOM_SMBIOS_TYPE17 cMemDevice[MAX_RAM_SLOTS];
 } SETTINGS_DATA;
@@ -535,6 +541,16 @@ InjectKexts (
 VOID
 DumpGcdMemoryMap (
   VOID
+);
+
+VOID
+FixAny (
+  UINT8* dsdt,
+  UINT32 len,
+  UINT8* ToFind,
+  UINT32 LenTF,
+  UINT8* ToReplace,
+  UINT32 LenTR
 );
 
 #endif
