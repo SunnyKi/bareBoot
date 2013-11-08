@@ -1429,7 +1429,6 @@ GetUserSettings (
         CopyMem(&TableId, (CHAR8*)&id[0], 8);
         DBG("\" (%16.16lX)\n", TableId);
 
-
         DropTable = AllocateZeroPool(sizeof(ACPI_DROP_TABLE));
         
         DropTable->Signature = Signature;
@@ -1437,8 +1436,8 @@ GetUserSettings (
 
         DropTable->Next = gSettings.ACPIDropTables;
         gSettings.ACPIDropTables = DropTable;
-        }
       }
+      gSettings.DropSSDT = FALSE;
     }
   }
 

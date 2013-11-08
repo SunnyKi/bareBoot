@@ -28,12 +28,12 @@ initial concept of DSDT patching by mackerintel
 #define ASF_SIGN            SIGNATURE_32('A','S','F','!')
 #define APIC_SIGN           SIGNATURE_32('A','P','I','C')
 #define DMAR_SIGN           SIGNATURE_32('D','M','A','R')
-#define NUM_TABLES          19
 #define PATHTOACPITABLESSIZE 250
 
 RSDT_TABLE                    *Rsdt = NULL;
 XSDT_TABLE                    *Xsdt = NULL;
 
+#define NUM_TABLES          31
 CHAR16* ACPInames[NUM_TABLES] = {
   L"SSDT.aml",
   L"SSDT-0.aml",
@@ -46,8 +46,20 @@ CHAR16* ACPInames[NUM_TABLES] = {
   L"SSDT-7.aml",
   L"SSDT-8.aml",
   L"SSDT-9.aml",
+  L"SSDT-10.aml",
+  L"SSDT-11.aml",
+  L"SSDT-12.aml",
+  L"SSDT-13.aml",
+  L"SSDT-14.aml",
+  L"SSDT-15.aml",
+  L"SSDT-16.aml",
+  L"SSDT-17.aml",
+  L"SSDT-18.aml",
+  L"SSDT-19.aml",
   L"APIC.aml",
   L"BOOT.aml",
+  L"DMAR.aml",
+  L"ECDT.aml",
   L"HPET.aml",
   L"MCFG.aml",
   L"SLIC.aml",
@@ -108,7 +120,8 @@ ScanXSDT (
 
 VOID
 DropTableFromRSDT (
-  UINT32 Signature
+  UINT32 Signature,
+  UINT64 TableId
 )
 {
   EFI_ACPI_DESCRIPTION_HEADER     *Table;
@@ -120,24 +133,21 @@ DropTableFromRSDT (
   EntryPtr = &Rsdt->Entry;
 
   for (Index = 0; Index < EntryCount; Index++, EntryPtr++) {
-#if 0
-    Print (L"num = %d, addr = 0x%x, ", Index, *EntryPtr);
-#endif
-
     if (*EntryPtr == 0) {
       Rsdt->Header.Length -= sizeof (UINT32);
       continue;
     }
 
     Table = (EFI_ACPI_DESCRIPTION_HEADER*) ((UINTN) (*EntryPtr));
-#if 0
-    Print (L"sig = 0x%x\r\n", Table->Signature);
-#endif
 
     if (Table->Signature != Signature) {
       continue;
     }
 
+    if (TableId && (TableId != Table->OemTableId)) {
+      continue;
+    }
+    
     Ptr = EntryPtr;
     Ptr2 = Ptr + 1;
 
@@ -152,7 +162,8 @@ DropTableFromRSDT (
 
 VOID
 DropTableFromXSDT (
-  UINT32 Signature
+  UINT32 Signature,
+  UINT64 TableId
 )
 {
   EFI_ACPI_DESCRIPTION_HEADER     *Table;
@@ -165,10 +176,6 @@ DropTableFromXSDT (
   BasePtr = (UINT64*) (& (Xsdt->Entry));
 
   for (Index = 0; Index < EntryCount; Index++, BasePtr++) {
-#if 0
-    Print (L"num = %d, addr = 0x%x, ", Index, *BasePtr);
-#endif
-
     if (*BasePtr == 0) {
       Xsdt->Header.Length -= sizeof (UINT64);
       continue;
@@ -176,14 +183,15 @@ DropTableFromXSDT (
 
     CopyMem (&Entry64, (VOID*) BasePtr, sizeof (UINT64));
     Table = (EFI_ACPI_DESCRIPTION_HEADER*) ((UINTN) (Entry64));
-#if 0
-    Print (L"sig = 0x%x\r\n", Table->Signature);
-#endif
 
     if (Table->Signature != Signature) {
       continue;
     }
 
+    if (TableId && (TableId != Table->OemTableId)) {
+      continue;
+    }
+    
     Ptr = BasePtr;
     Ptr2 = Ptr + 1;
 
@@ -740,14 +748,26 @@ PatchACPI (
 
   // DropDMAR = Yes
   if (gSettings.DropDMAR) {
-    DropTableFromRSDT (DMAR_SIGN);
-    DropTableFromXSDT (DMAR_SIGN);
+    DropTableFromRSDT (DMAR_SIGN, 0);
+    DropTableFromXSDT (DMAR_SIGN, 0);
   }
 
+  // Drop tables
+  if (gSettings.ACPIDropTables) {
+    ACPI_DROP_TABLE *DropTable = gSettings.ACPIDropTables;
+    
+    while (DropTable) {
+      DBG("Attempting to drop \"%4.4a\" (%8.8X) \"%8.8a\" (%16.16lX)\n", &(DropTable->Signature), DropTable->Signature, &(DropTable->TableId), DropTable->TableId);
+      DropTableFromRSDT(DropTable->Signature, DropTable->TableId);
+      DropTableFromXSDT(DropTable->Signature, DropTable->TableId);
+
+      DropTable = DropTable->Next;
+    }
+  }
   // DropSSDT = Yes
   if (gSettings.DropSSDT) {
-    DropTableFromRSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE);
-    DropTableFromXSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE);
+    DropTableFromRSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE, 0);
+    DropTableFromXSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE, 0);
   }
   
   // Load SSDTs
