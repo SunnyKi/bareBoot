@@ -698,7 +698,7 @@ PatchACPI (
       newFadt->Dsdt = (UINT32) XDsdt;
     }
 
-    if (gSettings.ACPIDropTables == NULL) {
+    if (gSettings.PatchDsdtNum > 0) {
       if (gPNDirExists) {
         UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
       } else {
