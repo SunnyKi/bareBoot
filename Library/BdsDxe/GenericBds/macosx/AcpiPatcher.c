@@ -677,27 +677,29 @@ PatchACPI (
       newFadt->Dsdt = (UINT32) XDsdt;
     }
 
-    if (gPNDirExists) {
-      UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
-    } else {
-      UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, PathDsdt);
-    }
+    if (gSettings.ACPIDropTables == NULL) {
+      if (gPNDirExists) {
+        UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
+      } else {
+        UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, PathDsdt);
+      }
 
-    if (FileExists (FHandle, PathToACPITables)) {
-      Status = egLoadFile (FHandle, PathToACPITables , &buffer, &bufferLen);
-
-      if (!EFI_ERROR (Status)) {
-        Status = gBS->AllocatePages (
-                   AllocateMaxAddress,
-                   EfiACPIReclaimMemory,
-                   EFI_SIZE_TO_PAGES (bufferLen),
-                   &dsdt
-                 );
+      if (FileExists (FHandle, PathToACPITables)) {
+        Status = egLoadFile (FHandle, PathToACPITables , &buffer, &bufferLen);
 
         if (!EFI_ERROR (Status)) {
-          CopyMem ((VOID*) (UINTN) dsdt, buffer, bufferLen);
-          newFadt->Dsdt  = (UINT32) dsdt;
-          newFadt->XDsdt = dsdt;
+          Status = gBS->AllocatePages (
+                     AllocateMaxAddress,
+                     EfiACPIReclaimMemory,
+                     EFI_SIZE_TO_PAGES (bufferLen),
+                     &dsdt
+                   );
+
+          if (!EFI_ERROR (Status)) {
+            CopyMem ((VOID*) (UINTN) dsdt, buffer, bufferLen);
+            newFadt->Dsdt  = (UINT32) dsdt;
+            newFadt->XDsdt = dsdt;
+          }
         }
       }
     }
@@ -753,7 +755,7 @@ PatchACPI (
   }
 
   // Drop tables
-  if (gSettings.ACPIDropTables) {
+  if (gSettings.ACPIDropTables != NULL) {
     ACPI_DROP_TABLE *DropTable = gSettings.ACPIDropTables;
     
     while (DropTable) {
@@ -764,6 +766,7 @@ PatchACPI (
       DropTable = DropTable->Next;
     }
   }
+  
   // DropSSDT = Yes
   if (gSettings.DropSSDT) {
     DropTableFromRSDT (EFI_ACPI_4_0_SECONDARY_SYSTEM_DESCRIPTION_TABLE_SIGNATURE, 0);
