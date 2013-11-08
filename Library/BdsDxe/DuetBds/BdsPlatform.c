@@ -428,13 +428,15 @@ FixUsbOwnership (
                                    1,
                                    &HcCapParams
                                    );
-
+              
               ExtendCap = (HcCapParams >> 8) & 0xFF;
+              DBG ("EHCI: EECP = 0x%llx, USBLEGCTLSTS = 0x%llx", ExtendCap, (ExtendCap + 4));
               //
               // Disable the SMI in USBLEGCTLSTS firstly
               //
               PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
               Value = SaveValue & 0xFFFF0000;
+              DBG (", Save val = 0x%llx, Write val = 0x%llx", SaveValue, Value);
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
 
               //
@@ -457,6 +459,8 @@ FixUsbOwnership (
 #if 0
               SaveValue &= ~0x003F;
 #endif
+              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
+              DBG (", New val = 0x%llx\n", Value);
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
             }
           }
