@@ -554,7 +554,7 @@ DumpGcdMemoryMap (
   VOID
 );
 
-VOID
+UINT32
 FixAny (
   UINT8* dsdt,
   UINT32 len,

@@ -333,7 +333,7 @@ CorrectOuters (
   return len;
 }
 
-VOID
+UINT32
 FixAny (
   UINT8* dsdt,
   UINT32 len,
@@ -348,11 +348,11 @@ FixAny (
   BOOLEAN found = FALSE;
   
   if (!ToFind) {
-    return;
+    return len;
   }
   if ((LenTF + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) > len) {
     DBG("FixAny:  the patch is too large!\n");
-    return;
+    return len;
   }
   
   sizeoffset = LenTR - LenTF;
@@ -362,7 +362,7 @@ FixAny (
       if (!found) {
         DBG("FixAny:  bin not found\n");
       }
-      return;
+      return len;
     }
     DBG("FixAny:  patched at %x\n", adr);
     found = TRUE;
@@ -374,5 +374,5 @@ FixAny (
     len = CorrectOuters(dsdt, len, adr + i - 3, sizeoffset);
   }
 
-  return;
+  return len;
 }

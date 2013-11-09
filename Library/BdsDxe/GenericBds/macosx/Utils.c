@@ -1363,11 +1363,9 @@ GetUserSettings (
       gSettings.PatchDsdtReplace[i] = GetDataSetting (prop, "Replace", &len);
       gSettings.LenToReplace[i] = (UINT32) len;
 
-      DBG ("  %d. find = %a, len = %d; replace = %a, len = %d\n",
+      DBG ("  %d. FindLen = %d; ReplaceLen = %d\n",
            (i + 1),
-           gSettings.PatchDsdtFind[i],
            gSettings.LenToFind[i],
-           gSettings.PatchDsdtReplace[i],
            gSettings.LenToReplace[i]
           );
     }

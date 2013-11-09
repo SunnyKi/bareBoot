@@ -286,7 +286,6 @@ PatchACPI (
   UINTN                                             bufferLen;
   UINT32                                            *rf;
   UINT64                                            *xf;
-  UINT64                                            XDsdt;
   UINT64                                            BiosDsdt;
   UINT64                                            XFirmwareCtrl;
   UINT32                                            *pEntryR;
@@ -295,6 +294,9 @@ PatchACPI (
   CHAR16                                            *PathACPI;
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
+  EFI_ACPI_DESCRIPTION_HEADER                       *TableHeader;
+  BOOLEAN                                           PatchedBios;
+  UINT32                                            TableLength;
 
 #if 0
   EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
@@ -589,13 +591,6 @@ PatchACPI (
   }
 #endif
   // --------------------
-  
-  BiosDsdt = FadtPointer->XDsdt;
-
-  if (BiosDsdt == 0) {
-    BiosDsdt = FadtPointer->Dsdt;
-  }
-
   Facs = (EFI_ACPI_4_0_FIRMWARE_ACPI_CONTROL_STRUCTURE*) (UINTN) (FadtPointer->FirmwareCtrl);
   BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
   Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
@@ -686,20 +681,14 @@ PatchACPI (
       newFadt->ResetValue = gSettings.ResetVal;
     }
 
-    // dsdt + xdsdt
-    XDsdt = newFadt->XDsdt;
-
-    if (BiosDsdt) {
-      newFadt->XDsdt = BiosDsdt;
-      newFadt->Dsdt = (UINT32) BiosDsdt;
-    } else if (newFadt->Dsdt) {
-      newFadt->XDsdt = (UINT64) (newFadt->Dsdt);
-    } else if (XDsdt) {
-      newFadt->Dsdt = (UINT32) XDsdt;
+    PatchedBios = FALSE;
+    BiosDsdt = 0;
+    BiosDsdt = FadtPointer->XDsdt;
+    if (BiosDsdt == 0) {
+      BiosDsdt = FadtPointer->Dsdt;
     }
-
     DBG ("PatchACPI: gSettings.PatchDsdtNum = %d\n", gSettings.PatchDsdtNum);
-    if (gSettings.PatchDsdtNum == 0) {
+    if ((gSettings.PatchDsdtNum == 0) || (BiosDsdt == 0)) {
       if (gPNDirExists) {
         UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
       } else {
@@ -718,14 +707,60 @@ PatchACPI (
                    );
 
           if (!EFI_ERROR (Status)) {
-            CopyMem ((VOID*) (UINTN) dsdt, buffer, bufferLen);
-            newFadt->Dsdt  = (UINT32) dsdt;
+            CopyMem ((UINT8*) (UINTN) dsdt, buffer, bufferLen);
             newFadt->XDsdt = dsdt;
+            newFadt->Dsdt  = (UINT32) dsdt;
+            PatchedBios = TRUE;
             DBG ("PatchACPI: custom dsdt table loaded\n");
           }
         }
       }
     }
+
+    if (!PatchedBios) {
+      if (BiosDsdt != 0) {
+        TableHeader = (EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) BiosDsdt;
+        TableLength = TableHeader->Length;
+        DBG ("PatchACPI: length of orig DSDT table = %d\n", TableLength);
+
+        Status = gBS->AllocatePages (
+                        AllocateMaxAddress,
+                        EfiBootServicesData,
+                        EFI_SIZE_TO_PAGES (TableLength + TableLength / 8),
+                        &dsdt
+                      );
+        if(!EFI_ERROR(Status)) {
+          CopyMem ((UINT8*) (UINTN) dsdt, (UINT8*) (UINTN) BiosDsdt, TableLength);
+          if (gSettings.PatchDsdtNum > 0) {
+            for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
+              DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table\n", Index);
+              
+              TableLength = FixAny ((UINT8*) (UINTN) dsdt,
+                                     TableLength,
+                                     gSettings.PatchDsdtFind[Index],
+                                     gSettings.LenToFind[Index],
+                                     gSettings.PatchDsdtReplace[Index],
+                                     gSettings.LenToReplace[Index]
+                                   );
+            }
+          }
+          DBG ("PatchACPI: length of new DSDT table = %d\n", TableLength);
+
+          ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum = 0;
+          ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) dsdt,
+                                                                                                  TableLength));
+
+          newFadt->XDsdt = dsdt;
+          newFadt->Dsdt = (UINT32) dsdt;
+        }
+      } else {
+        Print (L"DSDT not found!\n");
+        return EFI_UNSUPPORTED;
+      }
+    }
+
+    // Pathes for DSDT
+
     // facs + xfacs
     XFirmwareCtrl = newFadt->XFirmwareCtrl;
 
@@ -744,22 +779,6 @@ PatchACPI (
     FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) newFadt;
     FadtPointer->Header.Checksum = 0;
     FadtPointer->Header.Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) FadtPointer, FadtPointer->Header.Length));
-
-    // Pathes for DSDT
-    if (gSettings.PatchDsdtNum > 0) {
-      EFI_ACPI_DESCRIPTION_HEADER *TableHeader;
-
-      TableHeader = (EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) FadtPointer->XDsdt;
-      for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
-        FixAny ((UINT8*) (UINTN) FadtPointer->XDsdt,
-                 TableHeader->Length,
-                 gSettings.PatchDsdtFind[Index],
-                 gSettings.LenToFind[Index],
-                 gSettings.PatchDsdtReplace[Index],
-                 gSettings.LenToReplace[Index]
-               );
-      }
-    }
 
     // We are sure that Fadt is the first entry in RSDT/XSDT table
     if (Rsdt != NULL) {
