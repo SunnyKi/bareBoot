@@ -744,14 +744,15 @@ PatchACPI (
                                    );
             }
             DBG ("PatchACPI: length of new DSDT table = %d\n", TableLength);
-            buffer = (UINT8*) dsdt;
+            buffer = (UINT8*) (UINTN) dsdt;
             CopyMem (&buffer[4], &TableLength, 4);
             ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) buffer)->Checksum = 0;
             ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) buffer)->Checksum =
                           (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) buffer, TableLength));
+            if (gSettings.SavePatchedDsdt) {
+              egSaveFile (gRootFHandle, L"EFI\\bareboot\\p_DSDT.aml", (UINT8*) (UINTN) dsdt, TableLength);
+            }
           }
-          egSaveFile (gRootFHandle, L"EFI\\bareboot\\p_DSDT.aml", (UINT8*) (UINTN) dsdt, TableLength);
-
           newFadt->XDsdt = dsdt;
           newFadt->Dsdt = (UINT32) dsdt;
         }

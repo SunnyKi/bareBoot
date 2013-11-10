@@ -1346,6 +1346,7 @@ GetUserSettings (
   gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
   gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
   gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
+  gSettings.SavePatchedDsdt = GetBoolProperty (dictPointer, "SavePatchedDsdt", FALSE);
 
   gSettings.PatchDsdtNum = 0;
   array = plDictFind (dictPointer, "Patches", 7, plKindArray);

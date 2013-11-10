@@ -233,6 +233,7 @@ typedef struct {
   UINT32 *LenToFind;
   UINT8  **PatchDsdtReplace;
   UINT32 *LenToReplace;
+  BOOLEAN SavePatchedDsdt;
   //Custom Memory Device (Type 17).
   CUSTOM_SMBIOS_TYPE17 cMemDevice[MAX_RAM_SLOTS];
   // Table dropping
