@@ -223,14 +223,26 @@ MacOS:
   GetOSVersion (FHandle);
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetCpuProps\n"));
   GetCpuProps ();
+#ifdef BOOT_DEBUG
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
   GetUserSettings ();
+#ifdef BOOT_DEBUG
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
   if (cDevProp == NULL) {
     DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
     SetDevices ();
   }
+#ifdef BOOT_DEBUG
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchSmbios\n"));
   PatchSmbios ();
+#ifdef BOOT_DEBUG
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchACPI\n"));
   PatchACPI (gRootFHandle);
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetVariablesForOSX\n"));

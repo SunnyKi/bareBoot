@@ -734,7 +734,10 @@ PatchACPI (
           if (gSettings.PatchDsdtNum > 0) {
             for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
               DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table, length = %d\n", Index, TableLength);
-              
+#ifdef BOOT_DEBUG
+              SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
+
               TableLength = FixAny ((UINT8*) (UINTN) dsdt,
                                      TableLength,
                                      gSettings.PatchDsdtFind[Index],
