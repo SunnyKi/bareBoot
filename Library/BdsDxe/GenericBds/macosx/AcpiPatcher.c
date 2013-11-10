@@ -726,14 +726,14 @@ PatchACPI (
         Status = gBS->AllocatePages (
                         AllocateMaxAddress,
                         EfiBootServicesData,
-                        EFI_SIZE_TO_PAGES (TableLength + TableLength / 8),
+                        EFI_SIZE_TO_PAGES (40960),
                         &dsdt
                       );
         if(!EFI_ERROR(Status)) {
           CopyMem ((UINT8*) (UINTN) dsdt, (UINT8*) (UINTN) BiosDsdt, TableLength);
           if (gSettings.PatchDsdtNum > 0) {
             for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
-              DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table\n", Index);
+              DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table, length = %d\n", Index, TableLength);
               
               TableLength = FixAny ((UINT8*) (UINTN) dsdt,
                                      TableLength,
@@ -743,12 +743,14 @@ PatchACPI (
                                      gSettings.LenToReplace[Index]
                                    );
             }
+            DBG ("PatchACPI: length of new DSDT table = %d\n", TableLength);
+            buffer = (UINT8*) dsdt;
+            CopyMem (&buffer[4], &TableLength, 4);
+            ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) buffer)->Checksum = 0;
+            ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) buffer)->Checksum =
+                          (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) buffer, TableLength));
           }
-          DBG ("PatchACPI: length of new DSDT table = %d\n", TableLength);
-
-          ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum = 0;
-          ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) dsdt,
-                                                                                                  TableLength));
+          egSaveFile (gRootFHandle, L"EFI\\bareboot\\p_DSDT.aml", (UINT8*) (UINTN) dsdt, TableLength);
 
           newFadt->XDsdt = dsdt;
           newFadt->Dsdt = (UINT32) dsdt;

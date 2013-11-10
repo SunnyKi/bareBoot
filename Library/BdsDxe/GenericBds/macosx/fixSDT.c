@@ -366,12 +366,13 @@ FixAny (
     }
     DBG("FixAny:  patched at %x\n", adr);
     found = TRUE;
-    len = move_data(adr + i, dsdt, len, sizeoffset);
+    len = move_data (adr + i, dsdt, len, sizeoffset);
     if ((LenTR > 0) && (ToReplace != NULL)) {
       CopyMem(dsdt + adr + i, ToReplace, LenTR);
     }
-    len = CorrectOuterMethod(dsdt, len, adr + i - 2, sizeoffset);
-    len = CorrectOuters(dsdt, len, adr + i - 3, sizeoffset);
+//    len = CorrectOuterMethod(dsdt, len, adr + i - 2, sizeoffset);
+//    len = CorrectOuters(dsdt, len, adr + i - 3, sizeoffset);
+    i += LenTR;
   }
 
   return len;
