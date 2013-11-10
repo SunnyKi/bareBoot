@@ -294,9 +294,7 @@ PatchACPI (
   CHAR16                                            *PathACPI;
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
-  EFI_ACPI_DESCRIPTION_HEADER                       *TableHeader;
   BOOLEAN                                           PatchedBios;
-  UINT32                                            TableLength;
 
 #if 0
   EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
@@ -591,6 +589,12 @@ PatchACPI (
   }
 #endif
   // --------------------
+  PatchedBios = FALSE;
+  BiosDsdt = FadtPointer->Dsdt;
+  if (BiosDsdt == 0) {
+    BiosDsdt = FadtPointer->XDsdt;
+  }
+
   Facs = (EFI_ACPI_4_0_FIRMWARE_ACPI_CONTROL_STRUCTURE*) (UINTN) (FadtPointer->FirmwareCtrl);
   BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
   Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
@@ -681,12 +685,6 @@ PatchACPI (
       newFadt->ResetValue = gSettings.ResetVal;
     }
 
-    PatchedBios = FALSE;
-    BiosDsdt = 0;
-    BiosDsdt = FadtPointer->XDsdt;
-    if (BiosDsdt == 0) {
-      BiosDsdt = FadtPointer->Dsdt;
-    }
     DBG ("PatchACPI: gSettings.PatchDsdtNum = %d\n", gSettings.PatchDsdtNum);
     if ((gSettings.PatchDsdtNum == 0) || (BiosDsdt == 0)) {
       if (gPNDirExists) {
@@ -715,52 +713,47 @@ PatchACPI (
           }
         }
       }
-    }
-
-    if (!PatchedBios) {
+    } else {
       if (BiosDsdt != 0) {
-        TableHeader = (EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) BiosDsdt;
-        TableLength = TableHeader->Length;
-        DBG ("PatchACPI: length of orig DSDT table = %d\n", TableLength);
+        buffer = (UINT8*) (UINTN) BiosDsdt;
+        bufferLen = ((EFI_ACPI_DESCRIPTION_HEADER*) buffer)->Length;
+        DBG ("PatchACPI: length of orig DSDT table = %d\n", bufferLen);
 
         Status = gBS->AllocatePages (
                         AllocateMaxAddress,
                         EfiBootServicesData,
-                        EFI_SIZE_TO_PAGES (40960),
+                        EFI_SIZE_TO_PAGES (bufferLen + bufferLen /8),
                         &dsdt
                       );
         if(!EFI_ERROR(Status)) {
-          CopyMem ((UINT8*) (UINTN) dsdt, (UINT8*) (UINTN) BiosDsdt, TableLength);
+          CopyMem ((UINT8*) (UINTN) dsdt, buffer, bufferLen);
+          buffer = (UINT8*) (UINTN) dsdt;
           if (gSettings.PatchDsdtNum > 0) {
             for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
-              DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table, length = %d\n", Index, TableLength);
-#ifdef BOOT_DEBUG
-              SaveBooterLog (gRootFHandle, BOOT_LOG);
-#endif
-
-              TableLength = FixAny ((UINT8*) (UINTN) dsdt,
-                                     TableLength,
-                                     gSettings.PatchDsdtFind[Index],
-                                     gSettings.LenToFind[Index],
-                                     gSettings.PatchDsdtReplace[Index],
-                                     gSettings.LenToReplace[Index]
-                                   );
+              DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table, length = %d\n", Index, bufferLen);
+              bufferLen = FixAny ( buffer,
+                                   bufferLen,
+                                   gSettings.PatchDsdtFind[Index],
+                                   gSettings.LenToFind[Index],
+                                   gSettings.PatchDsdtReplace[Index],
+                                   gSettings.LenToReplace[Index]
+                                 );
             }
-            DBG ("PatchACPI: length of new DSDT table = %d\n", TableLength);
-            buffer = (UINT8*) (UINTN) dsdt;
-            CopyMem (&buffer[4], &TableLength, 4);
+            DBG ("PatchACPI: length of new DSDT table = %d\n", bufferLen);
+
+            CopyMem (&buffer[4], &bufferLen, 4);
             ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) buffer)->Checksum = 0;
             ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) buffer)->Checksum =
-                          (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) buffer, TableLength));
+                          (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) buffer, bufferLen));
             if (gSettings.SavePatchedDsdt) {
-              egSaveFile (gRootFHandle, L"EFI\\bareboot\\p_DSDT.aml", (UINT8*) (UINTN) dsdt, TableLength);
+              egSaveFile (gRootFHandle, L"EFI\\bareboot\\p_DSDT.aml", (UINT8*) (UINTN) dsdt, bufferLen);
             }
           }
           newFadt->XDsdt = dsdt;
           newFadt->Dsdt = (UINT32) dsdt;
         }
       } else {
-        Print (L"DSDT not found!\n");
+        Print (L"Bios DSDT not found!\n");
         return EFI_UNSUPPORTED;
       }
     }
