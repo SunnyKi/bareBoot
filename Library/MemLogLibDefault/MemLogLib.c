@@ -11,6 +11,8 @@
 
 #include <Library/MemLogLib.h>
 
+#include "Version.h"
+
 //
 // Mem log sizes
 //
@@ -149,7 +151,9 @@ MemLogInit (
                                                    mMemLog,
                                                    NULL
                                                    );
-  MemLog(TRUE, 1, "MemLog inited, TSC freq: %ld\n", mMemLog->TscFreqSec);
+  MemLog(FALSE, 1, FIRMWARE_REVISION_ASCII);
+  MemLog(FALSE, 1, FIRMWARE_BUILDDATE_ASCII);
+  MemLog(TRUE, 1, "\nMemLog inited, TSC freq: %ld\n", mMemLog->TscFreqSec);
   return Status;
 }
 

@@ -79,6 +79,8 @@ VERFILE=$WORKSPACE/bareBoot/Version.h
 echo "#define FIRMWARE_VERSION L\"2.31\"" > $VERFILE
 echo "#define FIRMWARE_BUILDDATE L\"`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $VERFILE
 echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
+echo "#define FIRMWARE_BUILDDATE_ASCII \" (`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`)\"" >> $VERFILE
+echo "#define FIRMWARE_REVISION_ASCII \"bareBoot `cd $WORKSPACE/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
 
 build -p $WORKSPACE/bareBoot/bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 $DEF
 
