@@ -5,7 +5,7 @@
 export TARGET_TOOLS=GCC47
 export PROCESSOR=X64
 export TARGET=RELEASE
-export DEF=
+export DEF="-D USB_FIXUP"
 
 while [[ $# -gt 0 ]]; do
   case $1 in

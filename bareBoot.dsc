@@ -286,8 +286,10 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
 
+!ifdef USB_FIXUP
 [PcdsFeatureFlag]
   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|FALSE
+!endif
 
 ###################################################################################################
 #
@@ -302,6 +304,6 @@
 !ifdef $(SOURCE_DEBUG_ENABLE)
   *_*_*_GENFW_FLAGS = --keepexceptiontable
 !endif
-#!ifdef SPEEDUP
-#  *_*_*_CC_FLAGS   = -DSPEEDUP
-#!endif
+!ifdef USB_FIXUP
+  *_*_*_CC_FLAGS   = -DUSB_FIXUP
+!endif

@@ -430,13 +430,18 @@ FixUsbOwnership (
                                    );
               
               ExtendCap = (HcCapParams >> 8) & 0xFF;
-              DEBUG ((DEBUG_INFO, "EHCI: EECP = 0x%X, USBLEGCTLSTS = 0x%X", ExtendCap, (ExtendCap + 4)));
               //
               // Disable the SMI in USBLEGCTLSTS firstly
               //
+#ifdef USB_FIXUP
+              DEBUG ((DEBUG_INFO, "EHCI: EECP = 0x%X, USBLEGCTLSTS = 0x%X", ExtendCap, (ExtendCap + 4)));
               PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
               Value = SaveValue & 0xFFFF0000;
               DEBUG ((DEBUG_INFO, ", Save val = 0x%X, Write val = 0x%X", SaveValue, Value));
+#else
+              PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
+              Value &= 0xFFFF0000;
+#endif
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
 
               //
@@ -456,12 +461,14 @@ FixUsbOwnership (
                   break;
                 }
               }
+#ifdef USB_FIXUP
 #if 0
               SaveValue &= ~0x003F;
 #endif
               PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
               DEBUG ((DEBUG_INFO, ", New val = 0x%X\n", Value));
               PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
+#endif
             }
           }
         }

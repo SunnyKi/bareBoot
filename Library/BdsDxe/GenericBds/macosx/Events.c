@@ -19,6 +19,7 @@ EFI_EVENT   mVirtualAddressChangeEvent = NULL;
 EFI_EVENT   OnReadyToBootEvent = NULL;
 EFI_EVENT   ExitBootServiceEvent = NULL;
 
+#ifdef USB_FIXUP
 EFI_STATUS
 USBOwnerFix(
   VOID
@@ -265,6 +266,7 @@ USBOwnerFix(
   gBS->FreePool (HandleArray);
   return Status;
 }
+#endif
 
 VOID
 EFIAPI
@@ -273,7 +275,9 @@ OnExitBootServices (
   IN VOID       *Context
 )
 {
+#ifdef USB_FIXUP
   USBOwnerFix();
+#endif
   //
   // Patch kernel and kexts if needed
   //
