@@ -690,7 +690,10 @@ PatchACPI (
     }
 
     DBG ("PatchACPI: gSettings.PatchDsdtNum = %d\n", gSettings.PatchDsdtNum);
+    newFadt->XDsdt = BiosDsdt;
+    newFadt->Dsdt = (UINT32) BiosDsdt;
     if ((gSettings.PatchDsdtNum == 0) || (BiosDsdt == 0)) {
+      DBG ("PatchACPI: NO Patches or NO Bios DSDT\n");
       if (gPNDirExists) {
         UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", gPNAcpiDir, PathDsdt);
       } else {
@@ -725,15 +728,15 @@ PatchACPI (
 
         Status = gBS->AllocatePages (
                         AllocateMaxAddress,
-                        EfiBootServicesData,
+                        EfiACPIReclaimMemory,
                         EFI_SIZE_TO_PAGES (bufferLen + bufferLen / 8),
                         &dsdt
                       );
         if(!EFI_ERROR(Status)) {
           CopyMem ((UINT8*) (UINTN) dsdt, buffer, bufferLen);
-          buffer = (UINT8*) (UINTN) dsdt;
           if (gSettings.PatchDsdtNum > 0) {
             // Pathes for DSDT
+            buffer = (UINT8*) (UINTN) dsdt;
             for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
               DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table, length = %d\n", Index, bufferLen);
               bufferLen = FixAny ( buffer,
