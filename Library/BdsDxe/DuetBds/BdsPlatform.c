@@ -461,10 +461,7 @@ FixUsbOwnership (
 #endif
               PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
               DEBUG ((DEBUG_INFO, ", New val = 0x%X\n", Value));
-              if ((SaveValue & 0x003F) != 0) {
-                Value |= SaveValue & 0x003F;
-                PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
-              }
+              PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
             }
           }
         }
