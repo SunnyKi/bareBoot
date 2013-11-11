@@ -364,7 +364,7 @@ FixAny (
       }
       return len;
     }
-    DBG ("FixAny:  patched at %x\n", adr);
+    DBG ("FixAny:  patched at %x\n", (i + adr));
     found = TRUE;
     i += adr;
     len = move_data (i, dsdt, len, sizeoffset);
