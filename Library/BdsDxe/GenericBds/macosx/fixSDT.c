@@ -350,29 +350,30 @@ FixAny (
   if (!ToFind) {
     return len;
   }
-  if ((LenTF + sizeof(EFI_ACPI_DESCRIPTION_HEADER)) > len) {
-    DBG("FixAny:  the patch is too large!\n");
+  if ((LenTF + 20) > len) {
+    DBG ("FixAny:  the patch is too large!\n");
     return len;
   }
-  
   sizeoffset = LenTR - LenTF;
+      
   for (i = 20; i < len; i++) {
-    adr = FindBin(dsdt + i, len, ToFind, LenTF);
+    adr = FindBin (dsdt + i, len, ToFind, LenTF);
     if (adr < 0) {
       if (!found) {
-        DBG("FixAny:  bin not found\n");
+        DBG ("FixAny:  bin not found\n");
       }
       return len;
     }
-    DBG("FixAny:  patched at %x\n", adr);
+    DBG ("FixAny:  patched at %x\n", adr);
     found = TRUE;
-    len = move_data (adr + i, dsdt, len, sizeoffset);
+    i += adr;
+    len = move_data (i, dsdt, len, sizeoffset);
     if ((LenTR > 0) && (ToReplace != NULL)) {
-      CopyMem(dsdt + adr + i, ToReplace, LenTR);
+      CopyMem (dsdt + i, ToReplace, LenTR);
     }
 #if 0
-    len = CorrectOuterMethod(dsdt, len, adr + i - 2, sizeoffset);
-    len = CorrectOuters(dsdt, len, adr + i - 3, sizeoffset);
+    len = CorrectOuterMethod (dsdt, len, i - 2, sizeoffset);
+    len = CorrectOuters (dsdt, len, i - 3, sizeoffset);
 #endif
     i += LenTR;
   }
