@@ -5,9 +5,9 @@ export BUILD_PATH=~/src/edk2/Build
 
 if [[ $# -gt 0 ]];
 then
-ARCHIVE_NAME=bb_$1
+ARCHIVE_NAME=bb_$1.zip
 else
-ARCHIVE_NAME=bb_`git tag | tail -n 1`
+ARCHIVE_NAME=bb_`git tag | tail -n 1`.zip
 fi
 echo $ARCHIVE_NAME
 
