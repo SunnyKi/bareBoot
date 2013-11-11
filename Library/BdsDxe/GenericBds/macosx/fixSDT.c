@@ -370,8 +370,10 @@ FixAny (
     if ((LenTR > 0) && (ToReplace != NULL)) {
       CopyMem(dsdt + adr + i, ToReplace, LenTR);
     }
-//    len = CorrectOuterMethod(dsdt, len, adr + i - 2, sizeoffset);
-//    len = CorrectOuters(dsdt, len, adr + i - 3, sizeoffset);
+#if 0
+    len = CorrectOuterMethod(dsdt, len, adr + i - 2, sizeoffset);
+    len = CorrectOuters(dsdt, len, adr + i - 3, sizeoffset);
+#endif
     i += LenTR;
   }
 
