@@ -589,21 +589,22 @@ PatchACPI (
   }
 #endif
   // --------------------
+  DBG ("PatchACPI: FadtPointer->Header.Revision = %d,FadtPointer->Header.Length = %d\n",
+       FadtPointer->Header.Revision,
+       FadtPointer->Header.Length);
+
   PatchedBios = FALSE;
   BiosDsdt = FadtPointer->Dsdt;
   if (BiosDsdt == 0) {
     BiosDsdt = FadtPointer->XDsdt;
   }
-
   Facs = (EFI_ACPI_4_0_FIRMWARE_ACPI_CONTROL_STRUCTURE*) (UINTN) (FadtPointer->FirmwareCtrl);
+
   BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
   Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
 
   if (!EFI_ERROR (Status)) {
     newFadt = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) BufferPtr;
-    DBG ("PatchACPI: newFadt->Header.Revision = %d,FadtPointer->Header.Length = %d\n",
-         FadtPointer->Header.Revision,
-         FadtPointer->Header.Length);
     CopyMem ((UINT8*) newFadt, (UINT8*) FadtPointer, ((EFI_ACPI_DESCRIPTION_HEADER*) FadtPointer)->Length);
 
     if ((newFadt->Header.Revision == EFI_ACPI_1_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION) ||
@@ -725,13 +726,14 @@ PatchACPI (
         Status = gBS->AllocatePages (
                         AllocateMaxAddress,
                         EfiBootServicesData,
-                        EFI_SIZE_TO_PAGES (bufferLen + bufferLen /8),
+                        EFI_SIZE_TO_PAGES (bufferLen + bufferLen / 8),
                         &dsdt
                       );
         if(!EFI_ERROR(Status)) {
           CopyMem ((UINT8*) (UINTN) dsdt, buffer, bufferLen);
           buffer = (UINT8*) (UINTN) dsdt;
           if (gSettings.PatchDsdtNum > 0) {
+            // Pathes for DSDT
             for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
               DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table, length = %d\n", Index, bufferLen);
               bufferLen = FixAny ( buffer,
@@ -751,7 +753,7 @@ PatchACPI (
             if (gSettings.SavePatchedDsdt) {
               egSaveFile (gRootFHandle, L"EFI\\bareboot\\p_DSDT.aml", (UINT8*) (UINTN) dsdt, bufferLen);
             }
-          }
+          } //
           newFadt->XDsdt = dsdt;
           newFadt->Dsdt = (UINT32) dsdt;
         }
@@ -760,8 +762,6 @@ PatchACPI (
         return EFI_UNSUPPORTED;
       }
     }
-
-    // Pathes for DSDT
 
     // facs + xfacs
     XFirmwareCtrl = newFadt->XFirmwareCtrl;
@@ -784,11 +784,11 @@ PatchACPI (
 
     // We are sure that Fadt is the first entry in RSDT/XSDT table
     if (Rsdt != NULL) {
-      Rsdt->Entry = (UINT32) (UINTN) newFadt;
+      Rsdt->Entry = (UINT32) (UINTN) FadtPointer;
     }
 
     if (Xsdt != NULL) {
-      Xsdt->Entry = (UINT64) ((UINT32) (UINTN) newFadt);
+      Xsdt->Entry = (UINT64) ((UINT32) (UINTN) FadtPointer);
     }
   }
 
