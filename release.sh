@@ -3,6 +3,14 @@ export BB_SOURCE_PATH=~/src/edk2/bareBoot
 export BB_ARCHIVE_PATH=~/src/bb
 export BUILD_PATH=~/src/edk2/Build
 
+if [[ $# -gt 0 ]];
+then
+ARCHIVE_NAME=bb_$1
+else
+ARCHIVE_NAME=bb_`git tag | tail -n 1`
+fi
+echo $ARCHIVE_NAME
+
 #SPEEDUP
 cd $BB_SOURCE_PATH
 source cbuild.sh -s -ia32
@@ -55,4 +63,4 @@ rm -rf $BUILD_PATH/bareboot/
 
 # archive
 cd $BB_ARCHIVE_PATH/..
-zip -rv bb bb -x "*.DS_Store"
+zip -rv $ARCHIVE_NAME bb -x "*.DS_Store"
