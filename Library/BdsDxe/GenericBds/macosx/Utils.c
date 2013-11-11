@@ -1501,7 +1501,7 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
   GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
 
-  gSettings.NoSPDScan = GetBoolProperty (dictPointer, "NoSPDScan", FALSE);
+  gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", FALSE);
 
   array = plDictFind (dictPointer, "MemoryDevices", 13, plKindArray);
   if (array != NULL) {

@@ -217,7 +217,7 @@ typedef struct {
   UINT8   *EthMacAddr;
   BOOLEAN ETHInjection;
   BOOLEAN USBInjection;
-  BOOLEAN NoSPDScan;
+  BOOLEAN SPDScan;
   // KernelAndKextPatches
   BOOLEAN KPKernelCpu;
   BOOLEAN KPKextPatchesNeeded;
