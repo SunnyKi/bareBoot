@@ -601,6 +601,9 @@ PatchACPI (
 
   if (!EFI_ERROR (Status)) {
     newFadt = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) BufferPtr;
+    DBG ("PatchACPI: newFadt->Header.Revision = %d,FadtPointer->Header.Length = %d\n",
+         newFadt->Header.Revision,
+         FadtPointer->Header.Length);
     CopyMem ((UINT8*) newFadt, (UINT8*) FadtPointer, ((EFI_ACPI_DESCRIPTION_HEADER*) FadtPointer)->Length);
 
     if ((newFadt->Header.Revision == EFI_ACPI_1_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION) ||
