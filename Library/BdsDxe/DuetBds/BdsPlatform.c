@@ -1082,7 +1082,13 @@ Returns:
   // Caution: Must ensure the PCI bus driver has been started. Since the
   // ConnectRootBridge() will create all the PciIo protocol, it's safe here now
   //
+#ifndef BLOCKIO
   Status = FixUsbOwnership ();
+#else
+  if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) {
+    Status = FixUsbOwnership ();
+  }
+#endif
 
   //
   // Connect the all the default console with current cosole variable

@@ -304,6 +304,10 @@
 !ifdef $(SOURCE_DEBUG_ENABLE)
   *_*_*_GENFW_FLAGS = --keepexceptiontable
 !endif
-!ifdef USB_FIXUP
-  *_*_*_CC_FLAGS   = -DUSB_FIXUP
+!ifdef BLOCKIO
+  DEFINE DEF_BLOCKIO = -DBLOCKIO
 !endif
+!ifdef USB_FIXUP
+  DEFINE DEF_USB_FIXUP = -DUSB_FIXUP
+!endif
+  *_*_*_CC_FLAGS   = $(DEF_BLOCKIO) $(DEF_USB_FIXUP)
