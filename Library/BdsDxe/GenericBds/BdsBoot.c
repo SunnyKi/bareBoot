@@ -561,10 +561,9 @@ BdsLibEnumerateAllBootOption (
     for (Index2 =  0; Index2 < MAX_LOADER_PATHS; Index2++) {
       if ((StrCmp (mLoaderPath[Index2], MACOSX_LOADER_PATH) == 0)||
          ((StrCmp (mLoaderPath[Index2], MACOSX_RECOVERY_LOADER_PATH) == 0) &&
-          (StrCmp (VolumeName, L"Boot OS X") != 0))) {
+          (StrCmp (VolumeName, L"Recovery HD") == 0))) {
         BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], NULL, VolumeName, BdsBootOptionList, TRUE);
-      } else if ((StrCmp (mLoaderPath[Index2], MACOSX_RECOVERY_LOADER_PATH) == 0) &&
-                 (StrCmp (VolumeName, L"Boot OS X") == 0)) {
+      } else if (StrCmp (mLoaderPath[Index2], MACOSX_RECOVERY_LOADER_PATH) == 0) {
         BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], L"Recovery HD", VolumeName, BdsBootOptionList, TRUE);
       } else {
         BdsLibBuildOneOptionFromHandle (FHandle, FileSystemHandles[Index], mLoaderPath[Index2], mLoaderPath[Index2], VolumeName, BdsBootOptionList, TRUE);
