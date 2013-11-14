@@ -740,7 +740,7 @@ PatchACPI (
             for (Index = 0; Index < gSettings.PatchDsdtNum; Index++) {
               DBG ("PatchACPI: attempt to apply patch %d to orig DSDT table, length = %d\n", Index, bufferLen);
               bufferLen = FixAny ( buffer,
-                                   bufferLen,
+                                   (UINT32) bufferLen,
                                    gSettings.PatchDsdtFind[Index],
                                    gSettings.LenToFind[Index],
                                    gSettings.PatchDsdtReplace[Index],
