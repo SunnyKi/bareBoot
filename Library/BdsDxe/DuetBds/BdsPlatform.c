@@ -1096,7 +1096,7 @@ Returns:
   }
 #endif
 #else
-  Status = FixUsbOwnership ();
+  Status = DisableUsbLegacySupport ();
 #endif
 
   //
