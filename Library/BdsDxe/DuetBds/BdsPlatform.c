@@ -384,6 +384,11 @@ DisableUsbLegacySupport (
   UINT32                                TimeOut;
   UINT32                                SaveValue;
   
+  /* Avoid double action, if already done in usb drivers */
+
+  if (FeaturePcdGet (PcdTurnOffUsbLegacySupport)) {
+    return EFI_SUCCESS;
+  }
 
   //
   // Find the usb host controller

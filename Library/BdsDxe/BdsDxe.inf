@@ -241,6 +241,7 @@
 [FeaturePcd]
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangDeprecate
   gEfiMdePkgTokenSpaceGuid.PcdUgaConsumeSupport
+  gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport  ## SOMETIME_CONSUMES (enable/disable usb legacy support.)
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLangCodes
