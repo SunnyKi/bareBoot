@@ -367,7 +367,7 @@ UpdateMemoryMap (
 }
 
 EFI_STATUS
-FixUsbOwnership (
+DisableUsbLegacySupport (
   VOID
   )
 {
@@ -1083,10 +1083,10 @@ Returns:
   // ConnectRootBridge() will create all the PciIo protocol, it's safe here now
   //
 #ifndef BLOCKIO
-  Status = FixUsbOwnership ();
+  Status = DisableUsbLegacySupport ();
 #else
   if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) {
-    Status = FixUsbOwnership ();
+    Status = DisableUsbLegacySupport ();
   }
 #endif
 
