@@ -46,8 +46,8 @@
 #  Hotkey.c
 #  HwErrRecSupport.c
 #  HwErrRecSupport.h
+#  MemoryTest.c
   Bds.h
-  MemoryTest.c
   Strings.uni
   String.c
   BdsEntry.c
