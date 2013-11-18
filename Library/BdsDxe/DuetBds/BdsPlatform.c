@@ -382,7 +382,9 @@ DisableUsbLegacySupport (
   UINT32                                ExtendCap;
   UINT32                                Value;
   UINT32                                TimeOut;
+#ifdef USB_FIXUP
   UINT32                                SaveValue;
+#endif
   
   /* Avoid double action, if already done in usb drivers */
 
