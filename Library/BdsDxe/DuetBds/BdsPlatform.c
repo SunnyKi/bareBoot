@@ -20,6 +20,7 @@ Abstract:
 
 --*/
 
+#include <Protocol/GraphicsOutput.h>
 #include <Library/ShiftKeysLib.h>
 
 #include "BdsPlatform.h"
@@ -1345,7 +1346,9 @@ Returns:
   CHAR16                            *TmpString1;
   CHAR16                            *TmpString2;
   UINT8                             StrIndex;
-  
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Pixel;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
+
   gPNDirExists = FALSE;
   gPNConfigPlist = NULL;
   gPNAcpiDir = NULL;
@@ -1353,13 +1356,35 @@ Returns:
   TmpString2 = NULL;
   GotIt[0] = FALSE;
   GotIt[1] = FALSE;
-  
+  Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  GraphicsOutput = NULL;
+
   DBG ("BdsPlatorm: Starting BdsLibGetBootMode\n");
   Status = BdsLibGetBootMode (&BootMode);
   ASSERT (BootMode == BOOT_WITH_FULL_CONFIGURATION);
   // very long function:
   DBG ("BdsPlatorm: Starting PlatformBdsConnectConsole\n"); // 5.2 sec
   PlatformBdsConnectConsole (gPlatformConsole);
+
+  Status = gBS->LocateProtocol (
+                                &gEfiGraphicsOutputProtocolGuid,
+                                NULL,
+                                (VOID **) &GraphicsOutput
+                                );
+  Pixel->Blue = 191;
+  Pixel->Green = 191;
+  Pixel->Red = 191;
+  Pixel->Reserved = 0;
+
+  GraphicsOutput->Blt (
+                   GraphicsOutput,
+                   Pixel,
+                   EfiBltVideoFill,
+                   0, 0, 0, 0,
+                   GraphicsOutput->Mode->Info->HorizontalResolution,
+                   GraphicsOutput->Mode->Info->VerticalResolution,
+                   0
+                  );
 #if 0
   EnableSmbus ();
 #endif
