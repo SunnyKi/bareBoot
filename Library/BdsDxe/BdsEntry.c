@@ -213,7 +213,7 @@ BdsEntry (
                 &BootNextSize
                 );
   
-  PlatformBdsPolicyBehavior (BdsMemoryTest);
+  PlatformBdsPolicyBehavior ();
   BdsBootDeviceSelect ();
 
   ASSERT (FALSE);

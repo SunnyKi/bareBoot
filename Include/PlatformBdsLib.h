@@ -85,7 +85,7 @@ PlatformBdsInit (
 VOID
 EFIAPI
 PlatformBdsPolicyBehavior (
-  IN BASEM_MEMORY_TEST               BaseMemoryTest
+  VOID
   );
 
 /**

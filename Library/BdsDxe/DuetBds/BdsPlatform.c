@@ -1191,66 +1191,6 @@ Returns:
 
 }
 
-VOID
-PlatformBdsDiagnostics (
-  IN EXTENDMEM_COVERAGE_LEVEL    MemoryTestLevel,
-  IN BOOLEAN                     QuietBoot,
-  IN BASEM_MEMORY_TEST           BaseMemoryTest
-  )
-/*++
-
-Routine Description:
-
-  Perform the platform diagnostic, such like test memory. OEM/IBV also
-  can customize this fuction to support specific platform diagnostic.
-
-Arguments:
-
-  MemoryTestLevel  - The memory test intensive level
-
-  QuietBoot        - Indicate if need to enable the quiet boot
-
-  BaseMemoryTest   - A pointer to BdsMemoryTest()
-
-Returns:
-
-  None.
-
---*/
-{
-  EFI_STATUS  Status;
-
-  //
-  // Here we can decide if we need to show
-  // the diagnostics screen
-  // Notes: this quiet boot code should be remove
-  // from the graphic lib
-  //
-#if 0
-  if (QuietBoot) {
-    Status = EnableQuietBoot (PcdGetPtr(PcdLogoFile));
-    if (EFI_ERROR (Status)) {
-      DisableQuietBoot ();
-      return;
-    }
-
-    //
-    // Perform system diagnostic
-    //
-    Status = BaseMemoryTest (MemoryTestLevel);
-    if (EFI_ERROR (Status)) {
-      DisableQuietBoot ();
-    }
-
-    return ;
-  }
-#endif
-  //
-  // Perform system diagnostic
-  //
-  Status = BaseMemoryTest (MemoryTestLevel);
-}
-
 #if 0
 VOID
 EnableSmbus (
@@ -1365,7 +1305,7 @@ MakeProductNameDir (
 VOID
 EFIAPI
 PlatformBdsPolicyBehavior (
-  IN BASEM_MEMORY_TEST           BaseMemoryTest
+  VOID
   )
 /*++
 
@@ -1420,8 +1360,6 @@ Returns:
   // very long function:
   DBG ("BdsPlatorm: Starting PlatformBdsConnectConsole\n"); // 5.2 sec
   PlatformBdsConnectConsole (gPlatformConsole);
-  DBG ("BdsPlatorm: Starting PlatformBdsDiagnostics\n");
-  PlatformBdsDiagnostics (IGNORE, TRUE, BaseMemoryTest);
 #if 0
   EnableSmbus ();
 #endif
