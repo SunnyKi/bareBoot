@@ -226,11 +226,6 @@ PlatformBdsGetDriverOption (
   IN LIST_ENTRY               *BdsDriverLists
   );
 
-EFI_STATUS
-BdsMemoryTest (
-  EXTENDMEM_COVERAGE_LEVEL Level
-  );
-
 VOID
 PlatformBdsConnectSequence (
   VOID
