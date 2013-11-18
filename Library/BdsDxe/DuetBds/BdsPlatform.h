@@ -275,8 +275,7 @@ ConvertSystemTable (
 
 VOID
 PlatformBdsEnterFrontPage (
-  IN UINT16                 TimeoutDefault,
-  IN BOOLEAN                ConnectAllHappened
+  IN UINT16                 TimeoutDefault
   );
 
 #endif // _PLATFORM_SPECIFIC_BDS_PLATFORM_H_

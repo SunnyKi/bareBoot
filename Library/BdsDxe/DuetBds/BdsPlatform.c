@@ -1480,7 +1480,7 @@ Returns:
 #if 0
     Status = gST->ConIn->Reset (gST->ConIn, TRUE);
 #endif
-    PlatformBdsEnterFrontPage (0xffff, TRUE);
+    PlatformBdsEnterFrontPage (0xffff);
   }
 
 #if 0
@@ -1488,7 +1488,7 @@ Returns:
   if (!EFI_ERROR (Status)) {
     if (mKey.ScanCode == SCAN_F1) {
       Status = gST->ConIn->Reset (gST->ConIn, TRUE);
-      PlatformBdsEnterFrontPage (0xffff, TRUE);
+      PlatformBdsEnterFrontPage (0xffff);
     }
   }
 #else
@@ -1512,12 +1512,12 @@ Returns:
                                  SimpleTextInEx,
                                  TRUE
                                  );
-      PlatformBdsEnterFrontPage (0xffff, TRUE);
+      PlatformBdsEnterFrontPage (0xffff);
     }
   }
 #endif
   DBG ("BdsPlatorm: Starting PlatformBdsEnterFrontPage\n");
-  PlatformBdsEnterFrontPage (gSettings.BootTimeout, TRUE);
+  PlatformBdsEnterFrontPage (gSettings.BootTimeout);
   return ;
 }
 
