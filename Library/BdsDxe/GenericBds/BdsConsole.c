@@ -368,6 +368,7 @@ BdsLibConnectConsoleVariable (
     }
 
     SetDevicePathEndNode (Next);
+#if 0
     //
     // Connect the USB console
     // USB console device path is a short-form device path that 
@@ -383,6 +384,7 @@ BdsLibConnectConsoleVariable (
         DeviceExist = TRUE;
       }
     } else {
+#endif
       //
       // Connect the instance device path
       //
@@ -395,7 +397,9 @@ BdsLibConnectConsoleVariable (
       } else {
         DeviceExist = TRUE;
       }
+#if 0
     }
+#endif
     FreePool(Instance);
   } while (CopyOfDevicePath != NULL);
 

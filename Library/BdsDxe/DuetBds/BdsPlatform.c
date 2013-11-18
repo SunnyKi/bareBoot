@@ -1102,7 +1102,6 @@ Returns:
   Status = DisableUsbLegacySupport ();
 #endif
 
-#if 0
   //
   // Connect the all the default console with current cosole variable
   //
@@ -1111,7 +1110,7 @@ Returns:
   if (EFI_ERROR (Status)) {
     return Status;
   }
-#endif
+
   return EFI_SUCCESS;
 }
 
