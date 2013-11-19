@@ -892,7 +892,7 @@ ShowProgress (
                  Width,
                  Height,
                  Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL),
-                 TRUE
+                 FALSE
               );
     }
     
