@@ -348,3 +348,51 @@ Down:
   }
   return;
 }
+
+EFI_STATUS
+BltWithAlpha (
+  IN EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput,
+  IN OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer,
+  IN EFI_GRAPHICS_OUTPUT_BLT_OPERATION BltOperation,
+  IN UINTN SourceX,
+  IN UINTN SourceY,
+  IN UINTN DestinationX,
+  IN UINTN DestinationY,
+  IN UINTN Width,
+  IN UINTN Height,
+  IN UINTN Delta,
+  IN BOOLEAN Alpha
+  )
+{
+	EFI_STATUS       Status;
+
+  if (GraphicsOutput == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Alpha) {
+      UseAlpha (
+        GraphicsOutput,
+        BltBuffer,
+        DestinationX,
+        DestinationY,
+        Width,
+        Height
+      );
+  }
+
+  Status = GraphicsOutput->Blt (
+                GraphicsOutput,
+                BltBuffer,
+                BltOperation,
+                SourceX,
+                SourceY,
+                DestinationX,
+                DestinationY,
+                Width,
+                Height,
+                Delta
+               );
+
+	return Status;
+}

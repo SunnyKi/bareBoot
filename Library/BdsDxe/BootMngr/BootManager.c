@@ -881,18 +881,19 @@ ShowProgress (
     DestY = (GraphicsOutput->Mode->Info->VerticalResolution - Height) / 2;
     
     if ((DestX >= 0) && (DestY >= 0)) {
-      Status = GraphicsOutput->Blt (
-                                GraphicsOutput,
-                                Blt,
-                                EfiBltBufferToVideo,
-                                0,
-                                0,
-                                (UINTN) DestX,
-                                (UINTN) DestY,
-                                Width,
-                                Height,
-                                Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
-                               );
+      Status = BltWithAlpha (
+                 GraphicsOutput,
+                 Blt,
+                 EfiBltBufferToVideo,
+                 0,
+                 0,
+                 (UINTN) DestX,
+                 (UINTN) DestY,
+                 Width,
+                 Height,
+                 Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL),
+                 TRUE
+              );
     }
     
     FreePool (ImageData);

@@ -152,4 +152,19 @@ UseAlpha (
   UINT32 Height
   );
 
+EFI_STATUS
+BltWithAlpha (
+  IN EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput,
+  IN OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer,
+  IN EFI_GRAPHICS_OUTPUT_BLT_OPERATION BltOperation,
+  IN UINTN SourceX,
+  IN UINTN SourceY,
+  IN UINTN DestinationX,
+  IN UINTN DestinationY,
+  IN UINTN Width,
+  IN UINTN Height,
+  IN UINTN Delta,
+  IN BOOLEAN Alpha
+  );
+
 #endif // _BDS_LIB_H_
