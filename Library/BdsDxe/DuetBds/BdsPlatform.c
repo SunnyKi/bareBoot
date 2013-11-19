@@ -1367,10 +1367,10 @@ Returns:
   PlatformBdsConnectConsole (gPlatformConsole);
 
   Status = gBS->LocateProtocol (
-                                &gEfiGraphicsOutputProtocolGuid,
-                                NULL,
-                                (VOID **) &GraphicsOutput
-                                );
+                  &gEfiGraphicsOutputProtocolGuid,
+                  NULL,
+                  (VOID **) &GraphicsOutput
+                );
   Pixel->Blue = 191;
   Pixel->Green = 191;
   Pixel->Red = 191;
