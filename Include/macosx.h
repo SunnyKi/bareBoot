@@ -339,6 +339,7 @@ CHAR16                          *gPNAcpiDir;
 BOOLEAN                         gPNDirExists;
 BOOLEAN                         WithKexts;
 VOID                            *gConfigPlist;
+BOOLEAN                         gFronPage;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;

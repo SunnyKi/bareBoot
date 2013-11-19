@@ -14,6 +14,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Guid/FileSystemInfo.h>
 #include <Guid/LdrMemoryDescriptor.h>
+
 #include "InternalBdsLib.h"
 #include "BootMaintLib.h"
 
@@ -129,10 +130,14 @@ BdsLibBootViaBootOption (
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   UINT8                     Index;
   CHAR16                    *TmpLoadPath;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Pixel;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
   FHandle       = NULL;
+  Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  GraphicsOutput = NULL;
 
   BdsSetMemoryTypeInformationVariable ();
   ASSERT (Option->DevicePath != NULL);
@@ -205,6 +210,28 @@ BdsLibBootViaBootOption (
   goto Done;
 
 MacOS:
+  if (gFronPage) {
+    Status = gBS->LocateProtocol (
+                    &gEfiGraphicsOutputProtocolGuid,
+                    NULL,
+                    (VOID **) &GraphicsOutput
+                  );
+
+    Pixel->Blue = 191;
+    Pixel->Green = 191;
+    Pixel->Red = 191;
+    Pixel->Reserved = 0;
+    
+    GraphicsOutput->Blt (
+                     GraphicsOutput,
+                     Pixel,
+                     EfiBltVideoFill,
+                     0, 0, 0, 0,
+                     GraphicsOutput->Mode->Info->HorizontalResolution,
+                     GraphicsOutput->Mode->Info->VerticalResolution,
+                     0
+                    );
+  }
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting InitializeConsoleSim\n"));
   InitializeConsoleSim (gImageHandle);
   
@@ -291,6 +318,27 @@ MacOS:
 
   if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
     gST->ConOut = NULL; 
+  } else {
+    Status = gBS->LocateProtocol (
+                    &gEfiGraphicsOutputProtocolGuid,
+                    NULL,
+                    (VOID **) &GraphicsOutput
+                  );
+    
+    Pixel->Blue = 0;
+    Pixel->Green = 0;
+    Pixel->Red = 0;
+    Pixel->Reserved = 0;
+    
+    GraphicsOutput->Blt (
+                     GraphicsOutput,
+                     Pixel,
+                     EfiBltVideoFill,
+                     0, 0, 0, 0,
+                     GraphicsOutput->Mode->Info->HorizontalResolution,
+                     GraphicsOutput->Mode->Info->VerticalResolution,
+                     0
+                    );
   }
 
   WithKexts = LoadKexts ();
