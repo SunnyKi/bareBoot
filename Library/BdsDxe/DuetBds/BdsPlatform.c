@@ -1385,6 +1385,7 @@ Returns:
                    GraphicsOutput->Mode->Info->VerticalResolution,
                    0
                   );
+  FreePool (Pixel);
 #if 0
   EnableSmbus ();
 #endif

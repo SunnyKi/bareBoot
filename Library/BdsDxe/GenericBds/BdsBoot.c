@@ -136,7 +136,7 @@ BdsLibBootViaBootOption (
   *ExitDataSize = 0;
   *ExitData     = NULL;
   FHandle       = NULL;
-  Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  Pixel         = NULL;
   GraphicsOutput = NULL;
 
   BdsSetMemoryTypeInformationVariable ();
@@ -217,6 +217,7 @@ MacOS:
                     (VOID **) &GraphicsOutput
                   );
 
+    Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     Pixel->Blue = 191;
     Pixel->Green = 191;
     Pixel->Red = 191;
@@ -231,6 +232,7 @@ MacOS:
                      GraphicsOutput->Mode->Info->VerticalResolution,
                      0
                     );
+    FreePool (Pixel);
   }
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting InitializeConsoleSim\n"));
   InitializeConsoleSim (gImageHandle);
@@ -325,6 +327,7 @@ MacOS:
                     (VOID **) &GraphicsOutput
                   );
     
+    Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     Pixel->Blue = 0;
     Pixel->Green = 0;
     Pixel->Red = 0;
@@ -339,6 +342,7 @@ MacOS:
                      GraphicsOutput->Mode->Info->VerticalResolution,
                      0
                     );
+    FreePool (Pixel);
   }
 
   WithKexts = LoadKexts ();

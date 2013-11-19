@@ -857,8 +857,8 @@ PlatformBdsEnterFrontPage (
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Pixel;
   EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
   
-  Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   GraphicsOutput = NULL;
+  Pixel = NULL;
   gFronPage = FALSE;
   
   if (TimeoutDefault != 0xffff) {
@@ -875,6 +875,7 @@ PlatformBdsEnterFrontPage (
                   NULL,
                   (VOID **) &GraphicsOutput
                   );
+  Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   Pixel->Blue = 0;
   Pixel->Green = 0;
   Pixel->Red = 0;
@@ -889,6 +890,8 @@ PlatformBdsEnterFrontPage (
                    GraphicsOutput->Mode->Info->VerticalResolution,
                    0
                   );
+  FreePool (Pixel);
+  
   do {
     
     gCallbackKey = 0;
