@@ -803,36 +803,92 @@ ShowProgress (
   UINT16                        TimeoutRemain;
   EFI_STATUS                    Status;
   EFI_INPUT_KEY                 Key;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Pixel;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
+  UINTN                          BlockHeight;
+  UINTN                          BlockWidth;
+  UINTN                          PosX;
+  UINTN                          PosY;
+  
+  GraphicsOutput = NULL;
+  Pixel = NULL;
+  PosY = 0;
+  BlockWidth  = 0;
+  BlockHeight = 0;
   
   if (TimeoutDefault == 0) {
     return EFI_TIMEOUT;
   }
   
-  Print(L".");
+  Status = gBS->LocateProtocol (
+                  &gEfiGraphicsOutputProtocolGuid,
+                  NULL,
+                  (VOID **) &GraphicsOutput
+                );
   
+  if (!EFI_ERROR (Status)) {
+    Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    Pixel->Blue = 0;
+    Pixel->Green = 0;
+    Pixel->Red = 191;
+    Pixel->Reserved = 0;
+
+    BlockWidth  = (GraphicsOutput->Mode->Info->HorizontalResolution) / TimeoutDefault;
+    BlockHeight = 5;
+    PosX        = 0;
+    PosY        = GraphicsOutput->Mode->Info->VerticalResolution -  10;
+  } else {
+    Print(L".");
+  }
+    
   TimeoutRemain = TimeoutDefault;
   while (TimeoutRemain != 0) {
     Status = WaitForSingleEvent (gST->ConIn->WaitForKey, ONE_SECOND);
     if (Status != EFI_TIMEOUT) {
       break;
     }
-    Print(L".");
+    if (GraphicsOutput != NULL) {
+      GraphicsOutput->Blt (
+                       GraphicsOutput,
+                       Pixel,
+                       EfiBltVideoFill,
+                       0, 0, PosX, PosY,
+                       BlockWidth,
+                       BlockHeight,
+                       0
+                      );
+      PosX += BlockWidth;
+    } else {
+      Print(L".");
+    }
     TimeoutRemain--;
   }
   if (TimeoutRemain == 0) {
+    if (Pixel != NULL) {
+      FreePool (Pixel);
+    }
     return EFI_TIMEOUT;
   }
   Status = gST->ConIn->ReadKeyStroke (gST->ConIn, &Key);
   if (EFI_ERROR (Status)) {
+    if (Pixel != NULL) {
+      FreePool (Pixel);
+    }
     return Status;
   }
   if (Key.UnicodeChar == CHAR_CARRIAGE_RETURN) {
     //
     // User pressed enter, equivalent to select "continue"
     //
+    if (Pixel != NULL) {
+      FreePool (Pixel);
+    }
     return EFI_TIMEOUT;
   }
   
+  if (Pixel != NULL) {
+    FreePool (Pixel);
+  }
   return EFI_SUCCESS;
 }
 
