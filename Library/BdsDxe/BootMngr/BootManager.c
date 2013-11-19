@@ -821,6 +821,7 @@ ShowProgress (
   
   GraphicsOutput = NULL;
   Pixel = NULL;
+  PosX = 0;
   PosY = 0;
   BlockWidth  = 0;
   BlockHeight = 0;
@@ -844,7 +845,6 @@ ShowProgress (
 
     BlockWidth  = (GraphicsOutput->Mode->Info->HorizontalResolution) / TimeoutDefault;
     BlockHeight = 5;
-    PosX        = 0;
     PosY        = GraphicsOutput->Mode->Info->VerticalResolution -  10;
 
     Blt = NULL;
