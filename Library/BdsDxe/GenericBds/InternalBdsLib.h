@@ -142,4 +142,14 @@ ClearScreen (
   UINT32     HexColor
   );
 
+VOID
+UseAlpha (
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput,
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt,
+  UINT32 DestX,
+  UINT32 DestY,
+  UINT32 Width,
+  UINT32 Height
+  );
+
 #endif // _BDS_LIB_H_

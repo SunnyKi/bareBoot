@@ -289,3 +289,62 @@ ClearScreen (
                   );
   FreePool (Pixel);
 }
+
+VOID
+UseAlpha (
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput,
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Foreground,
+  UINT32 DestX,
+  UINT32 DestY,
+  UINT32 Width,
+  UINT32 Height
+  )
+{
+  EFI_STATUS          Status = EFI_SUCCESS;
+	UINT32							InX;
+	UINT32							InY;
+  UINTN               Temp;
+	UINT8               *Buffer;
+	EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Background;
+	EFI_GRAPHICS_OUTPUT_BLT_PIXEL *FrgnPixel;
+
+  if (GraphicsOutput == NULL) {
+    return;
+  }
+
+  Buffer = AllocatePool (Width * Height * sizeof(EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+
+	Status = GraphicsOutput->Blt (
+                            GraphicsOutput,
+                            (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) Buffer,
+                            EfiBltVideoToBltBuffer,
+                            DestX, DestY, 0, 0, Width, Height,
+                            Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                           );
+  if (EFI_ERROR (Status)) {
+    goto Down;
+  }
+
+	FrgnPixel = Foreground;
+
+	for (InY = 0; InY < Height; InY++) {
+		for (InX = 0; InX < Width; InX++) {
+			Background = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) (Buffer + (InY * Width * 4) + (InX * 4));
+
+      Temp = Background->Blue * (255 - FrgnPixel->Reserved) + FrgnPixel->Blue * FrgnPixel->Reserved + 0x80;
+      FrgnPixel->Blue =(UINT8) ((Temp + (Temp >> 8)) >> 8);
+      Temp = Background->Green * (255 - FrgnPixel->Reserved) + FrgnPixel->Green * FrgnPixel->Reserved + 0x80;
+      FrgnPixel->Green =(UINT8) ((Temp + (Temp >> 8)) >> 8);
+      Temp = Background->Red * (255 - FrgnPixel->Reserved) + FrgnPixel->Red * FrgnPixel->Reserved + 0x80;
+      FrgnPixel->Red =(UINT8) ((Temp + (Temp >> 8)) >> 8);
+
+			FrgnPixel++;
+    }
+  }
+
+Down:
+	if (Buffer != NULL) {
+		FreePool (Buffer);
+  }
+  return;
+}
