@@ -24,6 +24,7 @@ Abstract:
 #include <Library/ShiftKeysLib.h>
 
 #include "BdsPlatform.h"
+#include "InternalBdsLib.h"
 
 #define EFI_MEMORY_PRESENT      0x0100000000000000ULL
 #define EFI_MEMORY_INITIALIZED  0x0200000000000000ULL
@@ -1346,8 +1347,6 @@ Returns:
   CHAR16                            *TmpString1;
   CHAR16                            *TmpString2;
   UINT8                             StrIndex;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Pixel;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
 
   gPNDirExists = FALSE;
   gPNConfigPlist = NULL;
@@ -1356,8 +1355,6 @@ Returns:
   TmpString2 = NULL;
   GotIt[0] = FALSE;
   GotIt[1] = FALSE;
-  Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-  GraphicsOutput = NULL;
 
   DBG ("BdsPlatorm: Starting BdsLibGetBootMode\n");
   Status = BdsLibGetBootMode (&BootMode);
@@ -1365,27 +1362,7 @@ Returns:
   // very long function:
   DBG ("BdsPlatorm: Starting PlatformBdsConnectConsole\n"); // 5.2 sec
   PlatformBdsConnectConsole (gPlatformConsole);
-
-  Status = gBS->LocateProtocol (
-                  &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
-                  (VOID **) &GraphicsOutput
-                );
-  Pixel->Blue = 191;
-  Pixel->Green = 191;
-  Pixel->Red = 191;
-  Pixel->Reserved = 0;
-
-  GraphicsOutput->Blt (
-                   GraphicsOutput,
-                   Pixel,
-                   EfiBltVideoFill,
-                   0, 0, 0, 0,
-                   GraphicsOutput->Mode->Info->HorizontalResolution,
-                   GraphicsOutput->Mode->Info->VerticalResolution,
-                   0
-                  );
-  FreePool (Pixel);
+  ClearScreen (0xBFBFBF);
 #if 0
   EnableSmbus ();
 #endif

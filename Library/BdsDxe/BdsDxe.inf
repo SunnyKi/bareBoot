@@ -102,6 +102,7 @@
   GenericBds/BdsConsole.c
   GenericBds/BdsBoot.c
   GenericBds/InternalBdsLib.h
+  GenericBds/Graphics.c
   DuetBds/BdsPlatform.c
   DuetBds/PlatformData.c
   DuetBds/BdsPlatform.h

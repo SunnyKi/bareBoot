@@ -137,4 +137,9 @@ ConvertBmpToGopBlt (
   OUT UINTN     *PixelWidth
   );
 
+VOID
+ClearScreen (
+  UINT32     HexColor
+  );
+
 #endif // _BDS_LIB_H_

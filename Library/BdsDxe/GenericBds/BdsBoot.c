@@ -130,14 +130,10 @@ BdsLibBootViaBootOption (
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   UINT8                     Index;
   CHAR16                    *TmpLoadPath;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Pixel;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
 
   *ExitDataSize = 0;
   *ExitData     = NULL;
   FHandle       = NULL;
-  Pixel         = NULL;
-  GraphicsOutput = NULL;
 
   BdsSetMemoryTypeInformationVariable ();
   ASSERT (Option->DevicePath != NULL);
@@ -211,28 +207,7 @@ BdsLibBootViaBootOption (
 
 MacOS:
   if (gFronPage) {
-    Status = gBS->LocateProtocol (
-                    &gEfiGraphicsOutputProtocolGuid,
-                    NULL,
-                    (VOID **) &GraphicsOutput
-                  );
-
-    Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-    Pixel->Blue = 191;
-    Pixel->Green = 191;
-    Pixel->Red = 191;
-    Pixel->Reserved = 0;
-    
-    GraphicsOutput->Blt (
-                     GraphicsOutput,
-                     Pixel,
-                     EfiBltVideoFill,
-                     0, 0, 0, 0,
-                     GraphicsOutput->Mode->Info->HorizontalResolution,
-                     GraphicsOutput->Mode->Info->VerticalResolution,
-                     0
-                    );
-    FreePool (Pixel);
+    ClearScreen (0xBFBFBF);
   }
   DEBUG ((DEBUG_INFO, "BdsBoot: Starting InitializeConsoleSim\n"));
   InitializeConsoleSim (gImageHandle);
@@ -321,28 +296,7 @@ MacOS:
   if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
     gST->ConOut = NULL; 
   } else {
-    Status = gBS->LocateProtocol (
-                    &gEfiGraphicsOutputProtocolGuid,
-                    NULL,
-                    (VOID **) &GraphicsOutput
-                  );
-    
-    Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-    Pixel->Blue = 0;
-    Pixel->Green = 0;
-    Pixel->Red = 0;
-    Pixel->Reserved = 0;
-    
-    GraphicsOutput->Blt (
-                     GraphicsOutput,
-                     Pixel,
-                     EfiBltVideoFill,
-                     0, 0, 0, 0,
-                     GraphicsOutput->Mode->Info->HorizontalResolution,
-                     GraphicsOutput->Mode->Info->VerticalResolution,
-                     0
-                    );
-    FreePool (Pixel);
+    ClearScreen (0x00);
   }
 
   WithKexts = LoadKexts ();

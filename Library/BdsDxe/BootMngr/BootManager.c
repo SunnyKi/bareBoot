@@ -974,11 +974,7 @@ PlatformBdsEnterFrontPage (
   )
 {
   EFI_STATUS                    Status = EFI_SUCCESS;
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL     *Pixel;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL      *GraphicsOutput;
-  
-  GraphicsOutput = NULL;
-  Pixel = NULL;
+
   gFronPage = FALSE;
   
   if (TimeoutDefault != 0xffff) {
@@ -989,29 +985,7 @@ PlatformBdsEnterFrontPage (
   Status = EFI_SUCCESS;
   UpdateBootStrings ();
   gFronPage = TRUE;
-
-  Status = gBS->LocateProtocol (
-                  &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
-                  (VOID **) &GraphicsOutput
-                  );
-  Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
-  Pixel->Blue = 0;
-  Pixel->Green = 0;
-  Pixel->Red = 0;
-  Pixel->Reserved = 0;
-  
-  GraphicsOutput->Blt (
-                   GraphicsOutput,
-                   Pixel,
-                   EfiBltVideoFill,
-                   0, 0, 0, 0,
-                   GraphicsOutput->Mode->Info->HorizontalResolution,
-                   GraphicsOutput->Mode->Info->VerticalResolution,
-                   0
-                  );
-  FreePool (Pixel);
-  
+  ClearScreen (0x00);
   do {
     
     gCallbackKey = 0;

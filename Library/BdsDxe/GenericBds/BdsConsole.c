@@ -13,9 +13,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "InternalBdsLib.h"
-#include <IndustryStandard/Bmp.h>
-
-#include <Protocol/BootLogo.h>
 
 /**
   Check if we need to save the EFI variable with "ConVarName" as name
@@ -566,6 +563,7 @@ BdsLibConnectAllDefaultConsoles (
 
 }
 
+#if 0
 /**
  Convert a *.BMP graphics image to a GOP blt buffer. If a NULL Blt buffer
  is passed in a GopBlt buffer will be allocated by this routine. If a GopBlt
@@ -810,7 +808,6 @@ ConvertBmpToGopBlt (
   return EFI_SUCCESS;
 }
 
-#if 0
 /**
   Use SystemTable Conout to stop video based Simple Text Out consoles from going
   to the video device. Put up LogoFile on every video device that is a console.
