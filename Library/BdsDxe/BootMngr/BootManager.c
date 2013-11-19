@@ -13,7 +13,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 **/
 
 #include "BootManager.h"
-#include "../../../Version.h"
+#include "InternalBdsLib.h"
+#include "Version.h"
 
 UINT16             mKeyInput;
 BDS_COMMON_OPTION  *gOption;
@@ -809,6 +810,14 @@ ShowProgress (
   UINTN                          BlockWidth;
   UINTN                          PosX;
   UINTN                          PosY;
+  INTN                          DestX;
+  INTN                          DestY;
+  UINT8                         *ImageData;
+  UINTN                         ImageSize;
+  UINTN                         BltSize;
+  UINTN                         Height;
+  UINTN                         Width;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
   
   GraphicsOutput = NULL;
   Pixel = NULL;
@@ -819,7 +828,7 @@ ShowProgress (
   if (TimeoutDefault == 0) {
     return EFI_TIMEOUT;
   }
-  
+
   Status = gBS->LocateProtocol (
                   &gEfiGraphicsOutputProtocolGuid,
                   NULL,
@@ -837,6 +846,61 @@ ShowProgress (
     BlockHeight = 5;
     PosX        = 0;
     PosY        = GraphicsOutput->Mode->Info->VerticalResolution -  10;
+
+    Blt = NULL;
+    ImageData = NULL;
+    ImageSize = 0;
+    //
+    // Get the specified image from FV.
+    //
+    Status = GetSectionFromAnyFv (
+               PcdGetPtr(PcdLogoFile),
+               EFI_SECTION_RAW,
+               0,
+               (VOID **) &ImageData,
+               &ImageSize
+             );
+    if (EFI_ERROR (Status)) {
+      goto Down;
+    }
+    
+    Status = ConvertBmpToGopBlt (
+               ImageData,
+               ImageSize,
+               (VOID **) &Blt,
+               &BltSize,
+               &Height,
+               &Width
+             );
+    if (EFI_ERROR (Status)) {
+      FreePool (ImageData);
+      goto Down;
+    }
+    
+    DestX = (GraphicsOutput->Mode->Info->HorizontalResolution - Width) / 2;
+    DestY = (GraphicsOutput->Mode->Info->VerticalResolution - Height) / 2;
+    
+    if ((DestX >= 0) && (DestY >= 0)) {
+      Status = GraphicsOutput->Blt (
+                                GraphicsOutput,
+                                Blt,
+                                EfiBltBufferToVideo,
+                                0,
+                                0,
+                                (UINTN) DestX,
+                                (UINTN) DestY,
+                                Width,
+                                Height,
+                                Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL)
+                               );
+    }
+    
+    FreePool (ImageData);
+
+Down:
+    if (Blt != NULL) {
+      FreePool (Blt);
+    }
   } else {
     Print(L".");
   }

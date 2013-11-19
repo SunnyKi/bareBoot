@@ -142,6 +142,10 @@ INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 !endif
 #INF  RuleOverride=BINARY bareBoot/XhciDxe/XhciDxe.inf
 
+FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
+    SECTION RAW = bareBoot/Logo/Logo.bmp
+  }
+
 [Rule.Common.DXE_CORE]
   FILE DXE_CORE = $(NAMED_GUID) {
       PE32     PE32           $(INF_OUTPUT)/$(MODULE_NAME).efi
