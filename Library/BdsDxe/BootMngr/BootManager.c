@@ -12,8 +12,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
+#include <Library/DxeServicesLib.h>
+
 #include "BootManager.h"
-#include "InternalBdsLib.h"
+#include "Graphics.h"
 #include "Version.h"
 
 UINT16             mKeyInput;
@@ -872,8 +874,8 @@ ShowProgress (
                &Height,
                &Width
              );
+
     if (EFI_ERROR (Status)) {
-      FreePool (ImageData);
       goto Down;
     }
     
@@ -895,10 +897,56 @@ ShowProgress (
                  FALSE
               );
     }
+
+    ShowPngFile (GraphicsOutput, L"\\EFI\\bareboot\\banner.png", DestX, DestY, TRUE);
+
+#if 0
+    Status = GetSectionFromAnyFv (
+               PcdGetPtr(PcdFontsFile),
+               EFI_SECTION_RAW,
+               0,
+               (VOID **) &ImageData,
+               &ImageSize
+             );
+
+   if (EFI_ERROR (Status)) {
+      goto Down;
+    }
     
-    FreePool (ImageData);
+    Status = ConvertPngToGopBlt (
+               ImageData,
+               ImageSize,
+               (VOID **) &Blt,
+               &BltSize,
+               &Height,
+               &Width
+             );
+
+    if (EFI_ERROR (Status)) {
+      goto Down;
+    }
+    
+    if ((DestX >= 0) && (DestY >= 0)) {
+      Status = BltWithAlpha (
+                 GraphicsOutput,
+                 Blt,
+                 EfiBltBufferToVideo,
+                 0,
+                 0,
+                 (UINTN) DestX,
+                 (UINTN) DestY,
+                 Width,
+                 Height,
+                 Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL),
+                 TRUE
+              );
+    }
+#endif
 
 Down:
+    if (ImageData != NULL) {
+      FreePool (ImageData);
+    }
     if (Blt != NULL) {
       FreePool (Blt);
     }

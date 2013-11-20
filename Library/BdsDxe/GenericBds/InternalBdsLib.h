@@ -127,44 +127,4 @@ BdsSetMemoryTypeInformationVariable (
   VOID
   );
 
-EFI_STATUS
-ConvertBmpToGopBlt (
-  IN     VOID      *BmpImage,
-  IN     UINTN     BmpImageSize,
-  IN OUT VOID      **GopBlt,
-  IN OUT UINTN     *GopBltSize,
-  OUT UINTN     *PixelHeight,
-  OUT UINTN     *PixelWidth
-  );
-
-VOID
-ClearScreen (
-  UINT32     HexColor
-  );
-
-VOID
-UseAlpha (
-  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput,
-  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt,
-  UINT32 DestX,
-  UINT32 DestY,
-  UINT32 Width,
-  UINT32 Height
-  );
-
-EFI_STATUS
-BltWithAlpha (
-  IN EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput,
-  IN OUT EFI_GRAPHICS_OUTPUT_BLT_PIXEL *BltBuffer,
-  IN EFI_GRAPHICS_OUTPUT_BLT_OPERATION BltOperation,
-  IN UINTN SourceX,
-  IN UINTN SourceY,
-  IN UINTN DestinationX,
-  IN UINTN DestinationY,
-  IN UINTN Width,
-  IN UINTN Height,
-  IN UINTN Delta,
-  IN BOOLEAN Alpha
-  );
-
 #endif // _BDS_LIB_H_

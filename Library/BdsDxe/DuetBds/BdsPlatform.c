@@ -24,7 +24,7 @@ Abstract:
 #include <Library/ShiftKeysLib.h>
 
 #include "BdsPlatform.h"
-#include "InternalBdsLib.h"
+#include "Graphics.h"
 
 #define EFI_MEMORY_PRESENT      0x0100000000000000ULL
 #define EFI_MEMORY_INITIALIZED  0x0200000000000000ULL
@@ -1092,14 +1092,14 @@ Returns:
   // ConnectRootBridge() will create all the PciIo protocol, it's safe here now
   //
 #ifdef SPEEDUP
-#ifndef BLOCKIO
+#ifndef BLOCKIO // ata w/o usb drivers
   Status = DisableUsbLegacySupport ();
-#else
-  if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) {
+#else           // blockio w/o usb drivers
+  if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) { // blockio w usb drivers
     Status = DisableUsbLegacySupport ();
   }
 #endif
-#else
+#else // any w usb drivers
   Status = DisableUsbLegacySupport ();
 #endif
 

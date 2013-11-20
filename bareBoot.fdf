@@ -146,6 +146,10 @@ FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
     SECTION RAW = bareBoot/Logo/Logo.bmp
   }
 
+FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdFontsFile) {
+    SECTION RAW = bareBoot/Fonts/liberation-mono-regular-24.png
+  }
+
 [Rule.Common.DXE_CORE]
   FILE DXE_CORE = $(NAMED_GUID) {
       PE32     PE32           $(INF_OUTPUT)/$(MODULE_NAME).efi

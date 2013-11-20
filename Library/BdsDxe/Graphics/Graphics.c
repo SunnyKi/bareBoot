@@ -1,9 +1,62 @@
 /** @file
 **/
 
-#include <IndustryStandard/Bmp.h>
+#include <macosx.h>
 
-#include "InternalBdsLib.h"
+#include "Graphics.h"
+#include "picopng.h"
+
+EFI_STATUS
+ConvertPngToGopBlt (
+  IN     VOID      *PngImage,
+  IN     UINTN     PngImageSize,
+  IN OUT VOID      **GopBlt,
+  IN OUT UINTN     *GopBltSize,
+     OUT UINTN     *PixelHeight,
+     OUT UINTN     *PixelWidth
+  )
+{
+	UINT32							InX;
+	UINT32							InY;
+  UINT64              BltBufferSize;
+	PNG_info_t          *PngInfo;
+	EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Buffer;
+	EFI_GRAPHICS_OUTPUT_BLT_PIXEL *RawImage;
+
+  RawImage = NULL;
+
+	PngInfo = PNG_decode ((UINT8*) PngImage, (UINT32) PngImageSize);
+
+	if (PNG_error == 0)	{
+    BltBufferSize = MultU64x32 (PngInfo->width, PngInfo->height);
+    BltBufferSize = MultU64x32 (BltBufferSize, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+    *GopBltSize = (UINTN) BltBufferSize;
+
+    *GopBlt     = AllocateZeroPool (BltBufferSize);
+    Buffer = *GopBlt;
+
+    *PixelHeight = PngInfo->height;
+    *PixelWidth = PngInfo->width;
+
+    RawImage = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL*) PngInfo->image->data;
+
+   	for(InY = 0; InY < PngInfo->height; InY++) {
+      for(InX = 0; InX < PngInfo->width; InX++) {
+        Buffer->Red = RawImage->Blue;
+        Buffer->Blue = RawImage->Red;
+        Buffer->Green = RawImage->Green;
+        Buffer->Reserved = RawImage->Reserved;
+
+        Buffer++;
+        RawImage++;
+      }
+    }
+
+		png_alloc_free_all();
+
+	}
+	return (EFI_STATUS) PNG_error;
+}
 
 /**
  Convert a *.BMP graphics image to a GOP blt buffer. If a NULL Blt buffer
@@ -395,4 +448,69 @@ BltWithAlpha (
                );
 
 	return Status;
+}
+
+EFI_STATUS
+ShowPngFile (
+  IN EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput,
+  IN CHAR16 *FileName,
+  IN INTN   DestX,
+  IN INTN   DestY,
+  IN BOOLEAN Alpha
+  )
+{
+  EFI_STATUS                    Status;
+  UINT8                         *ImageData;
+  UINTN                         ImageSize;
+  UINTN                         BltSize;
+  UINTN                         Height;
+  UINTN                         Width;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
+
+  Blt = NULL;
+  ImageData = NULL;
+  ImageSize = 0;
+
+  Status = egLoadFile (gRootFHandle, FileName, &ImageData, &ImageSize);
+  if (EFI_ERROR (Status)) {
+    goto Down;
+  }
+  
+  Status = ConvertPngToGopBlt (
+             ImageData,
+             ImageSize,
+             (VOID **) &Blt,
+             &BltSize,
+             &Height,
+             &Width
+           );
+
+  if (EFI_ERROR (Status)) {
+    goto Down;
+  }
+  
+  if ((DestX >= 0) && (DestY >= 0)) {
+    Status = BltWithAlpha (
+               GraphicsOutput,
+               Blt,
+               EfiBltBufferToVideo,
+               0,
+               0,
+               (UINTN) DestX,
+               (UINTN) DestY,
+               Width,
+               Height,
+               Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL),
+               Alpha
+            );
+  }
+
+Down:
+  if (ImageData != NULL) {
+    FreePool (ImageData);
+  }
+  if (Blt != NULL) {
+    FreePool (Blt);
+  }
+  return Status;
 }
