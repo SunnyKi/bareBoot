@@ -920,10 +920,13 @@ UINT8 PNG_convert(const PNG_info_t *info, vector8_t *out, const UINT8 *in)
 
 PNG_info_t *PNG_info_new()
 {
-	PNG_info_t *info = png_alloc_malloc(sizeof (PNG_info_t));
-	UINT32 i;
+	PNG_info_t *info;
+
+	info = png_alloc_malloc(sizeof (PNG_info_t));
+#if 0
 	for (i = 0; i < sizeof (PNG_info_t); i++)
 		((UINT8 *) info)[i] = 0;
+#endif
 	info->palette = vector8_new(0, 0);
 	info->image = vector8_new(0, 0);
 	return info;
