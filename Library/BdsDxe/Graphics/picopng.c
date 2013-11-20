@@ -257,8 +257,10 @@ HuffmanTree *HuffmanTree_new()
 int HuffmanTree_makeFromLengths(HuffmanTree *tree, const vector32_t *bitlen, UINT32 maxbitlen)
 {	// make tree given the lengths
 	UINT32 bits, n, i;
-	UINT32 numcodes = (UINT32) bitlen->size, treepos = 0, nodefilled = 0;
+	vector32_t *tree2d;
 	vector32_t *tree1d, *blcount, *nextcode;
+	UINT32 numcodes = (UINT32) bitlen->size, treepos = 0, nodefilled = 0;
+
 	tree1d = vector32_new(numcodes, 0);
 	blcount = vector32_new(maxbitlen + 1, 0);
 	nextcode = vector32_new(maxbitlen + 1, 0);
@@ -270,7 +272,7 @@ int HuffmanTree_makeFromLengths(HuffmanTree *tree, const vector32_t *bitlen, UIN
 		if (bitlen->data[n] != 0)
 			tree1d->data[n] = nextcode->data[bitlen->data[n]]++; // generate all the codes
 	// 0x7fff here means the tree2d isn't filled there yet
-	vector32_t *tree2d = vector32_new(numcodes * 2, 0x7fff);
+	tree2d = vector32_new(numcodes * 2, 0x7fff);
 	tree->tree2d = tree2d;
 	for (n = 0; n < numcodes; n++) // the codes
 		for (i = 0; i < bitlen->data[n]; i++) { // the bits for this code
@@ -364,23 +366,27 @@ VOID Inflator_getTreeInflateDynamic(HuffmanTree *tree, HuffmanTree *treeD, const
 	UINT32 i, n;
 	HuffmanTree *codelengthcodetree = HuffmanTree_new(); // the code tree for code length codes
 	vector32_t *bitlen, *bitlenD;
+	UINT32 HLIT;	// number of literal/length codes + 257
+	UINT32 HDIST;	// number of dist codes + 1
+	UINT32 HCLEN;	// number of code length codes + 4
+	vector32_t *codelengthcode; // lengths of tree to decode the lengths of the dynamic tree
+	UINT32 replength;
+
 	bitlen = vector32_new(288, 0);
 	bitlenD = vector32_new(32, 0);
 	if (*bp >> 3 >= inlength - 2) {
 		Inflator_error = 49; // the bit pointer is or will go past the memory
 		return;
 	}
-	UINT32 HLIT = Zlib_readBitsFromStream(bp, in, 5) + 257;	// number of literal/length codes + 257
-	UINT32 HDIST = Zlib_readBitsFromStream(bp, in, 5) + 1;	// number of dist codes + 1
-	UINT32 HCLEN = Zlib_readBitsFromStream(bp, in, 4) + 4;	// number of code length codes + 4
-	vector32_t *codelengthcode; // lengths of tree to decode the lengths of the dynamic tree
+	HLIT = Zlib_readBitsFromStream(bp, in, 5) + 257;	// number of literal/length codes + 257
+	HDIST = Zlib_readBitsFromStream(bp, in, 5) + 1;	// number of dist codes + 1
+	HCLEN = Zlib_readBitsFromStream(bp, in, 4) + 4;	// number of code length codes + 4
 	codelengthcode = vector32_new(19, 0);
 	for (i = 0; i < 19; i++)
 		codelengthcode->data[CLCL[i]] = (i < HCLEN) ? Zlib_readBitsFromStream(bp, in, 3) : 0;
 	Inflator_error = HuffmanTree_makeFromLengths(codelengthcodetree, codelengthcode, 7);
 	if (Inflator_error)
 		return;
-	UINT32 replength;
 	for (i = 0; i < HLIT + HDIST; ) {
 		UINT32 code = Inflator_huffmanDecodeSymbol(in, bp, codelengthcodetree, inlength);
 		if (Inflator_error)
@@ -391,12 +397,12 @@ VOID Inflator_getTreeInflateDynamic(HuffmanTree *tree, HuffmanTree *treeD, const
 			else
 				bitlenD->data[i++ - HLIT] = code;
 		} else if (code == 16) { // repeat previous
+			UINT32 value; // set value to the previous code
 			if (*bp >> 3 >= inlength) {
 				Inflator_error = 50; // error, bit pointer jumps past memory
 				return;
 			}
 			replength = 3 + Zlib_readBitsFromStream(bp, in, 2);
-			UINT32 value; // set value to the previous code
 			if ((i - 1) < HLIT)
 				value = bitlen->data[i - 1];
 			else
@@ -485,29 +491,37 @@ VOID Inflator_inflateHuffmanBlock(vector8_t *out, const UINT8 *in, UINT32 *bp, U
 				vector8_resize(out, (*pos + 1) * 2); // reserve more room
 			out->data[(*pos)++] = (UINT8) code;
 		} else if (code >= 257 && code <= 285) { // length code
+			UINT32 codeD;
+			UINT32 dist;
+			UINT32 numextrabitsD;
+			UINT32 start;
+			UINT32 back;
+			UINT32 i;
 			UINT32 length = LENBASE[code - 257], numextrabits = LENEXTRA[code - 257];
+
 			if ((*bp >> 3) >= inlength) {
 				Inflator_error = 51; // error, bit pointer will jump past memory
 				return;
 			}
 			length += Zlib_readBitsFromStream(bp, in, numextrabits);
-			UINT32 codeD = Inflator_huffmanDecodeSymbol(in, bp, codetreeD, inlength);
+			codeD = Inflator_huffmanDecodeSymbol(in, bp, codetreeD, inlength);
 			if (Inflator_error)
 				return;
 			if (codeD > 29) {
 				Inflator_error = 18; // error: invalid dist code (30-31 are never used)
 				return;
 			}
-			UINT32 dist = DISTBASE[codeD], numextrabitsD = DISTEXTRA[codeD];
+			dist = DISTBASE[codeD];
+			numextrabitsD = DISTEXTRA[codeD];
 			if ((*bp >> 3) >= inlength) {
 				Inflator_error = 51; // error, bit pointer will jump past memory
 				return;
 			}
 			dist += Zlib_readBitsFromStream(bp, in, numextrabitsD);
-			UINT32 start = *pos, back = start - dist; // backwards
+			start = *pos;
+			back = start - dist; // backwards
 			if (*pos + length >= out->size)
 				vector8_resize(out, (*pos + length) * 2); // reserve more room
-			UINT32 i;
 			for (i = 0; i < length; i++) {
 				out->data[(*pos)++] = out->data[back++];
 				if (back >= start)
@@ -520,14 +534,20 @@ VOID Inflator_inflateHuffmanBlock(vector8_t *out, const UINT8 *in, UINT32 *bp, U
 VOID Inflator_inflateNoCompression(vector8_t *out, const UINT8 *in, UINT32 *bp, UINT32 *pos,
 		UINT32 inlength)
 {
+	UINT32 p;
+	UINT32 n;
+	UINT32 LEN;
+	UINT32 NLEN;
+
 	while ((*bp & 0x7) != 0)
 		(*bp)++; // go to first boundary of byte
-	UINT32 p = *bp / 8;
+	p = *bp / 8;
 	if (p >= inlength - 4) {
 		Inflator_error = 52; // error, bit pointer will jump past memory
 		return;
 	}
-	UINT32 LEN = in[p] + 256 * in[p + 1], NLEN = in[p + 2] + 256 * in[p + 3];
+	LEN = in[p] + 256 * in[p + 1];
+	NLEN = in[p + 2] + 256 * in[p + 3];
 	p += 4;
 	if (LEN + NLEN != 65535) {
 		Inflator_error = 21; // error: NLEN is not one's complement of LEN
@@ -539,7 +559,6 @@ VOID Inflator_inflateNoCompression(vector8_t *out, const UINT8 *in, UINT32 *bp, 
 		Inflator_error = 23; // error: reading outside of in buffer
 		return;
 	}
-	UINT32 n;
 	for (n = 0; n < LEN; n++)
 		out->data[(*pos)++] = in[p++]; // read LEN bytes of literal data
 	*bp = p * 8;
@@ -548,15 +567,19 @@ VOID Inflator_inflateNoCompression(vector8_t *out, const UINT8 *in, UINT32 *bp, 
 VOID Inflator_inflate(vector8_t *out, const vector8_t *in, UINT32 inpos)
 {
 	UINT32 bp = 0, pos = 0; // bit pointer and byte pointer
-	Inflator_error = 0;
 	UINT32 BFINAL = 0;
+
+	Inflator_error = 0;
+
 	while (!BFINAL && !Inflator_error) {
+		UINT32 BTYPE;
+
 		if (bp >> 3 >= in->size) {
 			Inflator_error = 52; // error, bit pointer will jump past memory
 			return;
 		}
 		BFINAL = Zlib_readBitFromStream(&bp, &in->data[inpos]);
-		UINT32 BTYPE = Zlib_readBitFromStream(&bp, &in->data[inpos]);
+		BTYPE = Zlib_readBitFromStream(&bp, &in->data[inpos]);
 		BTYPE += 2 * Zlib_readBitFromStream(&bp, &in->data[inpos]);
 		if (BTYPE == 3) {
 			Inflator_error = 20; // error: invalid BTYPE
@@ -575,13 +598,17 @@ VOID Inflator_inflate(vector8_t *out, const vector8_t *in, UINT32 inpos)
 
 UINT8 Zlib_decompress(vector8_t *out, const vector8_t *in) // returns error value
 {
+	UINT32 CM, CINFO, FDICT;
+
 	if (in->size < 2)
 		return 53; // error, size of zlib data too small
 	if ((in->data[0] * 256 + in->data[1]) % 31 != 0)
 		// error: 256 * in->data[0] + in->data[1] must be a multiple of 31, the FCHECK value is
 		// supposed to be made that way
 		return 24;
-	UINT32 CM = in->data[0] & 15, CINFO = (in->data[0] >> 4) & 15, FDICT = (in->data[1] >> 5) & 1;
+	CM = in->data[0] & 15;
+	CINFO = (in->data[0] >> 4) & 15;
+	FDICT = (in->data[1] >> 5) & 1;
 	if (CM != 8 || CINFO > 7)
 		// error: only compression method 8: inflate with sliding window of 32k is supported by
 		// the PNG spec
@@ -591,7 +618,7 @@ UINT8 Zlib_decompress(vector8_t *out, const vector8_t *in) // returns error valu
 		// not specify a preset dictionary."
 		return 26;
 	Inflator_inflate(out, in, 2);
-	return Inflator_error; // note: adler32 checksum was skipped and ignored
+	return (UINT8) Inflator_error; // note: adler32 checksum was skipped and ignored
 }
 
 /*************************************************************************************************/
@@ -774,10 +801,14 @@ VOID PNG_adam7Pass(UINT8 *out, UINT8 *linen, UINT8 *lineo, const UINT8 *in, UINT
 {	// filter and reposition the pixels into the output when the image is Adam7 interlaced. This
 	// function can only do it after the full image is already decoded. The out buffer must have
 	// the correct allocated memory size already.
+	UINT32 bytewidth, linelength;
+	UINT32 y;
+	UINT8 *temp;
+
 	if (passw == 0)
 		return;
-	UINT32 bytewidth = (bpp + 7) / 8, linelength = 1 + ((bpp * passw + 7) / 8);
-	UINT32 y;
+	bytewidth = (bpp + 7) / 8;
+	linelength = 1 + ((bpp * passw + 7) / 8);
 	for (y = 0; y < passh; y++) {
 		UINT32 i, b;
 		UINT8 filterType = in[y * linelength], *prevline = (y == 0) ? 0 : lineo;
@@ -798,7 +829,7 @@ VOID PNG_adam7Pass(UINT8 *out, UINT8 *linen, UINT8 *lineo, const UINT8 *in, UINT
 				for (b = 0; b < bpp; b++)
 					PNG_setBitOfReversedStream(&obp, out, PNG_readBitFromReversedStream(&bp, linen));
 			}
-		UINT8 *temp = linen;
+		temp = linen;
 		linen = lineo;
 		lineo = temp; // swap the two buffer pointers "line old" and "line new"
 	}
@@ -808,11 +839,14 @@ UINT8 PNG_convert(const PNG_info_t *info, vector8_t *out, const UINT8 *in)
 {	// converts from any color type to 32-bit. return value = LodePNG error code
 	UINT32 i, c;
 	UINT32 bitDepth, colorType;
+	UINT32 numpixels, bp;
+	UINT8 *out_data = out->size ? out->data : 0;
+
 	bitDepth = info->bitDepth;
 	colorType = info->colorType;
-	UINT32 numpixels = info->width * info->height, bp = 0;
+	numpixels = info->width * info->height;
+	bp = 0;
 	vector8_resize(out, numpixels * 4);
-	UINT8 *out_data = out->size ? out->data : 0;
 	if (bitDepth == 8 && colorType == 0) // greyscale
 		for (i = 0; i < numpixels; i++) {
 			out_data[4 * i + 0] = out_data[4 * i + 1] = out_data[4 * i + 2] = in[i];
@@ -898,6 +932,14 @@ PNG_info_t *PNG_info_new()
 PNG_info_t *PNG_decode(const UINT8 *in, UINT32 size)
 {
 	PNG_info_t *info;
+	UINT32 pos; // first byte of the first chunk after the header
+	vector8_t *idat; // the data from idat chunks
+	BOOLEAN IEND, known_type;
+	UINT32 bpp;
+	vector8_t *scanlines; // now the out buffer will be filled
+	UINT32 bytewidth, outlength;
+	UINT8 *out_data;
+
 	PNG_error = 0;
 	if (size == 0 || in == 0) {
 		PNG_error = 48; // the given data is empty
@@ -907,19 +949,23 @@ PNG_info_t *PNG_decode(const UINT8 *in, UINT32 size)
 	PNG_readPngHeader(info, in, size);
 	if (PNG_error)
 		return NULL;
-	UINT32 pos = 33; // first byte of the first chunk after the header
-	vector8_t *idat = NULL; // the data from idat chunks
-	BOOLEAN IEND = FALSE, known_type = TRUE;
+	pos = 33; // first byte of the first chunk after the header
+	idat = NULL; // the data from idat chunks
+	IEND = FALSE;
+	known_type = TRUE;
 	info->key_defined = FALSE;
 	// loop through the chunks, ignoring unknown chunks and stopping at IEND chunk. IDAT data is
 	// put at the start of the in buffer
 	while (!IEND) {
 		UINT32 i, j;
+		UINT32 chunkLength;
+		UINT32 chunkType;
+
 		if (pos + 8 >= size) {
 			PNG_error = 30; // error: size of the in buffer too small to contain next chunk
 			return NULL;
 		}
-		UINT32 chunkLength = PNG_read32bitInt(&in[pos]);
+		chunkLength = PNG_read32bitInt(&in[pos]);
 		pos += 4;
 		if (chunkLength > 0x7fffffff) {
 			PNG_error = 63;
@@ -929,7 +975,7 @@ PNG_info_t *PNG_decode(const UINT8 *in, UINT32 size)
 			PNG_error = 35; // error: size of the in buffer too small to contain next chunk
 			return NULL;
 		}
-		UINT32 chunkType = *(UINT32 *) &in[pos];
+		chunkType = *(UINT32 *) &in[pos];
 		if (chunkType == CHUNK_IDAT) { // IDAT: compressed image data chunk
 			UINT32 offset = 0;
 			if (idat) {
@@ -999,15 +1045,15 @@ PNG_info_t *PNG_decode(const UINT8 *in, UINT32 size)
 		}
 		pos += 4; // step over CRC (which is ignored)
 	}
-	UINT32 bpp = PNG_getBpp(info);
-	vector8_t *scanlines; // now the out buffer will be filled
+	bpp = PNG_getBpp(info);
 	scanlines = vector8_new(((info->width * (info->height * bpp + 7)) / 8) + info->height, 0);
 	PNG_error = Zlib_decompress(scanlines, idat);
 	if (PNG_error)
 		return NULL; // stop if the zlib decompressor returned an error
-	UINT32 bytewidth = (bpp + 7) / 8, outlength = (info->height * info->width * bpp + 7) / 8;
+	bytewidth = (bpp + 7) / 8;
+	outlength = (info->height * info->width * bpp + 7) / 8;
 	vector8_resize(info->image, outlength); // time to fill the out buffer
-	UINT8 *out_data = outlength ? info->image->data : 0;
+	out_data = outlength ? info->image->data : 0;
 	if (info->interlaceMethod == 0) { // no interlace, just filter
 		UINT32 y, obp, bp;
 		UINT32 linestart, linelength;
@@ -1043,6 +1089,7 @@ PNG_info_t *PNG_decode(const UINT8 *in, UINT32 size)
 		}
 	} else { // interlaceMethod is 1 (Adam7)
 		int i;
+		vector8_t *scanlineo, *scanlinen; // "old" and "new" scanline
 		UINT32 passw[7] = {
 			(info->width + 7) / 8, (info->width + 3) / 8, (info->width + 3) / 4,
 			(info->width + 1) / 4, (info->width + 1) / 2, (info->width + 0) / 2,
@@ -1056,9 +1103,9 @@ PNG_info_t *PNG_decode(const UINT8 *in, UINT32 size)
 		UINT32 passstart[7] = { 0 };
 		UINT32 pattern[28] = { 0, 4, 0, 2, 0, 1, 0, 0, 0, 4, 0, 2, 0, 1, 8, 8, 4, 4, 2, 2, 1, 8, 8,
 				8, 4, 4, 2, 2 }; // values for the adam7 passes
+
 		for (i = 0; i < 6; i++)
 			passstart[i + 1] = passstart[i] + passh[i] * ((passw[i] ? 1 : 0) + (passw[i] * bpp + 7) / 8);
-		vector8_t *scanlineo, *scanlinen; // "old" and "new" scanline
 		scanlineo = vector8_new((info->width * bpp + 7) / 8, 0);
 		scanlinen = vector8_new((info->width * bpp + 7) / 8, 0);
 		for (i = 0; i < 7; i++)
