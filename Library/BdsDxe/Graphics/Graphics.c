@@ -32,7 +32,7 @@ ConvertPngToGopBlt (
     BltBufferSize = MultU64x32 (BltBufferSize, sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     *GopBltSize = (UINTN) BltBufferSize;
 
-    *GopBlt     = AllocateZeroPool (BltBufferSize);
+    *GopBlt     = AllocateZeroPool ((UINTN) BltBufferSize);
     Buffer = *GopBlt;
 
     *PixelHeight = PngInfo->height;
