@@ -1174,9 +1174,7 @@ BiosVideoCheckForVbe (
   UINTN                                  ModeNumber;
   VESA_BIOS_EXTENSIONS_EDID_TIMING       Timing;
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
-#if 1
   UINT16 *VMPtr16;
-#endif
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
   UINT32                                 BestMode;
 
@@ -1408,16 +1406,8 @@ BiosVideoCheckForVbe (
   //
   // Walk through the mode list to see if there is at least one mode the is compatible with the EDID mode
   //
-#if 0
-  ModeNumberPtr = (UINT16 *)
-    (
-      (((UINTN) BiosVideoPrivate->VbeInformationBlock->VideoModePtr & 0xffff0000) >> 12) |
-        ((UINTN) BiosVideoPrivate->VbeInformationBlock->VideoModePtr & 0x0000ffff)
-    );
-#else
   VMPtr16 = (UINT16 *)&BiosVideoPrivate->VbeInformationBlock->VideoModePtr;
   ModeNumberPtr = (UINT16 *)(UINTN)(VMPtr16[0] | ((UINTN)VMPtr16[1] << 4));
-#endif
 
   PreferMode = 0;
   ModeNumber = 0;
