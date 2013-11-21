@@ -91,6 +91,11 @@ ClearScreen (
   );
 
 VOID
+SetModeScreen (
+ UINT32     PrefMode
+ );
+
+VOID
 UseAlpha (
   EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput,
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt,

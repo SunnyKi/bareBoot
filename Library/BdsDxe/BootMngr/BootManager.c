@@ -853,12 +853,12 @@ ShowProgress (
     return EFI_TIMEOUT;
   }
 
-  Status = gBS->LocateProtocol (
+  Status = gBS->HandleProtocol (
+                  gST->ConsoleOutHandle,
                   &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
                   (VOID **) &GraphicsOutput
                 );
-  
+
   if (!EFI_ERROR (Status)) {
     Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
     Pixel->Blue = 0;

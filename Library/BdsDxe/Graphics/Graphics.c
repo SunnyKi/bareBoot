@@ -315,9 +315,9 @@ ClearScreen (
   GraphicsOutput = NULL;
   Pixel = NULL;
 
-  Status = gBS->LocateProtocol (
+  Status = gBS->HandleProtocol (
+                  gST->ConsoleOutHandle,
                   &gEfiGraphicsOutputProtocolGuid,
-                  NULL,
                   (VOID **) &GraphicsOutput
                 );
   if (EFI_ERROR (Status)) {
@@ -342,6 +342,28 @@ ClearScreen (
                    0
                   );
   FreePool (Pixel);
+}
+
+VOID
+SetModeScreen (
+ UINT32     PrefMode
+ )
+{
+  EFI_STATUS                      Status = EFI_SUCCESS;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL    *GraphicsOutput;
+
+  GraphicsOutput = NULL;
+
+  Status = gBS->HandleProtocol (
+                  gST->ConsoleOutHandle,
+                  &gEfiGraphicsOutputProtocolGuid,
+                  (VOID **) &GraphicsOutput
+                );
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
+  Status = GraphicsOutput->SetMode (GraphicsOutput, PrefMode);
 }
 
 VOID

@@ -1212,6 +1212,7 @@ GetBootDefault (
 
   spdict = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
 
+  gSettings.ScreenMode = (UINT32) GetNumProperty (spdict, "ScreenMode", 0);
   gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
     gSettings.BootTimeout = 0xFFFF;
