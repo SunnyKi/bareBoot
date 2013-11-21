@@ -1491,18 +1491,19 @@ BiosVideoCheckForVbe (
       continue;
     }
 
-    ModeFound = FALSE;
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 800) {
+      continue;
+    }
 
     DBG ("BiosVideo: ModeNumber = %d, (%dx%d)",
          ModeNumber,
          BiosVideoPrivate->VbeModeInformationBlock->XResolution,
          BiosVideoPrivate->VbeModeInformationBlock->YResolution);
 
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 800) {
-      DBG ("\n");
-      continue;
-    } else if (BiosVideoPrivate->VbeModeInformationBlock->XResolution <= 1024) {
-      DBG (", set as insurance\n");
+    ModeFound = FALSE;
+
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution <= 1024) {
+      DBG (", set as insurance");
       ModeFound = TRUE;
     }
 
@@ -1513,11 +1514,11 @@ BiosVideoCheckForVbe (
       Timing.HorizontalResolution = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
       Timing.VerticalResolution = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
       if (SearchEdidTiming (&ValidEdidTiming, &Timing) == FALSE) {
-        DBG (", not found in edid - rejected\n");
+        DBG (", not found in edid - rejected");
         continue;
       } else {
         ModeFound = TRUE;
-        DBG (", found in edid - accepted\n", ModeNumber);
+        DBG (", found in edid - accepted", ModeNumber);
       }
     }
 
@@ -1525,10 +1526,10 @@ BiosVideoCheckForVbe (
     // Select a reasonable mode to be set for current display mode
     //
     if (!EdidFound) {
-        DBG (", set as best (noEdid)\n");
+        DBG (", no edid, try this mode");
         ModeFound = TRUE;
     }
-
+#if 0
     if (!ModeFound) {
       //
       // When no EDID exist, only select three possible resolutions, i.e. 1024x768, 800x600, 640x480
@@ -1536,13 +1537,15 @@ BiosVideoCheckForVbe (
       DBG ("BiosVideo: Valid mode not found, skip mode %d\n", ModeNumber);
       continue;
     }
-
-    if (BestMode < (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
-                             BiosVideoPrivate->VbeModeInformationBlock->YResolution)) {
+#endif
+    if (ModeFound && (BestMode < (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
+                             BiosVideoPrivate->VbeModeInformationBlock->YResolution))) {
       PreferMode = ModeNumber;
       BestMode = BiosVideoPrivate->VbeModeInformationBlock->XResolution +
                  BiosVideoPrivate->VbeModeInformationBlock->YResolution;
     }
+
+    DBG ("\n");
 
     //
     // Add mode to the list of available modes
