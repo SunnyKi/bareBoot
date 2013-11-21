@@ -595,7 +595,7 @@ ShowAString (
     goto Down;
   }
 
-  FontWidth = Width / 95;
+  FontWidth = (UINT8) (Width / 95);
   ImageStringWidth = FontWidth * AsciiStrLen (AString);
   ImageString = AllocateZeroPool (Height * ImageStringWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   FontSize = FontWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
