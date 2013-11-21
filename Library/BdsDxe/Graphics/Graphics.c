@@ -563,7 +563,9 @@ ShowAString (
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *InBuffer;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *OutBuffer;
 
+  ImageData = NULL;
   ImageString = NULL;
+  Blt = NULL;
 
   if (AString == NULL) {
     Status = EFI_INVALID_PARAMETER;
