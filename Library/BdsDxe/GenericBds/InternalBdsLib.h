@@ -127,4 +127,9 @@ BdsSetMemoryTypeInformationVariable (
   VOID
   );
 
+EFI_STATUS
+DisableUsbLegacySupport (
+  VOID
+  );
+
 #endif // _BDS_LIB_H_

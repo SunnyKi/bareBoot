@@ -96,12 +96,13 @@
 #  GenericBds/macosx/gma.c
 #  GenericBds/macosx/AmlGenerator.c
 #  GenericBds/DevicePath.c
-  GenericBds/Performance.c
-  GenericBds/BdsConnect.c
-  GenericBds/BdsMisc.c
-  GenericBds/BdsConsole.c
   GenericBds/BdsBoot.c
+  GenericBds/BdsConnect.c
+  GenericBds/BdsConsole.c
+  GenericBds/BdsMisc.c
+  GenericBds/BdsUsbLegacy.c
   GenericBds/InternalBdsLib.h
+  GenericBds/Performance.c
   Graphics/Graphics.c
   Graphics/picopng.c
   DuetBds/BdsPlatform.c
