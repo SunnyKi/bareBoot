@@ -22,6 +22,13 @@ UINT16             mKeyInput;
 BDS_COMMON_OPTION  *gOption;
 EFI_FORM_BROWSER2_PROTOCOL      *gFormBrowser2;
 
+CHAR8   *mAVersion;
+CHAR8   *mABiosVersion;
+CHAR8   *mAProductName;
+CHAR8   *mAProcessorVersion;
+CHAR8   *mAProcessorSpeed;
+CHAR8   *mAMemorySize;
+
 CHAR16             *mDeviceTypeStr[] = {
   L"Legacy BEV",
   L"Legacy Floppy",
@@ -435,6 +442,8 @@ UpdateBootStrings (
   StrCat (NewString, L" (");
   StrCat (NewString, FIRMWARE_BUILDDATE);
   StrCat (NewString, L")");
+  mAVersion = AllocateZeroPool (StrLen (NewString) + 1);
+  UnicodeStrToAsciiStr (NewString, mAVersion);
   TokenToUpdate = STRING_TOKEN (STR_MINI_CLOVER_VERSION);
   HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
   FreePool (NewString);
@@ -453,6 +462,8 @@ UpdateBootStrings (
       NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
       StrCat (NewString, L"  ");
       StrCat (NewString, TmpString);
+      mABiosVersion = AllocateZeroPool (StrLen (NewString) + 1);
+      UnicodeStrToAsciiStr (NewString, mABiosVersion);
       TokenToUpdate = STRING_TOKEN (STR_BOOT_BIOS_VERSION);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -466,6 +477,8 @@ UpdateBootStrings (
       NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
       StrCat (NewString, L"  ");
       StrCat (NewString, TmpString);
+      mAProductName = AllocateZeroPool (StrLen (NewString) + 1);
+      UnicodeStrToAsciiStr (NewString, mAProductName);
       TokenToUpdate = STRING_TOKEN (STR_BOOT_COMPUTER_MODEL);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -479,6 +492,8 @@ UpdateBootStrings (
       NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
       StrCat (NewString, L"  ");
       StrCat (NewString, TmpString);
+      mAProcessorVersion = AllocateZeroPool (StrLen (NewString) + 1);
+      UnicodeStrToAsciiStr (NewString, mAProcessorVersion);
       TokenToUpdate = STRING_TOKEN (STR_BOOT_CPU_MODEL);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -491,6 +506,8 @@ UpdateBootStrings (
       NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"    "));
       StrCat (NewString, L"    ");
       StrCat (NewString, TmpString);
+      mAProcessorSpeed = AllocateZeroPool (StrLen (NewString) + 1);
+      UnicodeStrToAsciiStr (NewString, mAProcessorSpeed);
       TokenToUpdate = STRING_TOKEN (STR_BOOT_CPU_SPEED);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -503,9 +520,11 @@ UpdateBootStrings (
         (UINT32)(RShiftU64((Type19Record->EndingAddress - Type19Record->StartingAddress + 1), 10)),
         &TmpString
         );
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"    "));
-      StrCat (NewString, L"    ");
+      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"    Memory "));
+      StrCat (NewString, L"    Memory ");
       StrCat (NewString, TmpString);
+      mAMemorySize = AllocateZeroPool (StrLen (NewString) + 1);
+      UnicodeStrToAsciiStr (NewString, mAMemorySize);
       TokenToUpdate = STRING_TOKEN (STR_BOOT_MEMORY_SIZE);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -819,6 +838,8 @@ ShowProgress (
   UINTN                         BltSize;
   UINTN                         Height;
   UINTN                         Width;
+  UINTN                         FontHeight;
+  UINTN                         FontWidth;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
   
   GraphicsOutput = NULL;
@@ -878,7 +899,32 @@ ShowProgress (
     if (EFI_ERROR (Status)) {
       goto Down;
     }
-    
+
+    FontHeight = 16;
+    FontWidth = 10;
+
+    DestX = GraphicsOutput->Mode->Info->HorizontalResolution -  AsciiStrLen (mAVersion) * FontWidth - 40;
+    DestY = FontHeight * 2;
+    ShowAString (GraphicsOutput, mAVersion, DestX, DestY, TRUE);
+
+    DestX = 40;
+    DestY += FontHeight * 2;
+    ShowAString (GraphicsOutput, mAProductName, DestX, DestY, TRUE);
+
+    DestX += AsciiStrLen (mAProductName) * FontWidth;
+    ShowAString (GraphicsOutput, mABiosVersion, DestX, DestY, TRUE);
+
+    DestX = 40;
+    DestY += FontHeight * 2;
+    ShowAString (GraphicsOutput, mAProcessorVersion, DestX, DestY, TRUE);
+
+    DestX += AsciiStrLen (mAProcessorVersion) * FontWidth;
+    ShowAString (GraphicsOutput, mAProcessorSpeed, DestX, DestY, TRUE);
+
+    DestX = 40 - 2 * FontWidth;
+    DestY += FontHeight * 2;
+    ShowAString (GraphicsOutput, mAMemorySize, DestX, DestY, TRUE);
+
     DestX = (GraphicsOutput->Mode->Info->HorizontalResolution - Width) / 2;
     DestY = (GraphicsOutput->Mode->Info->VerticalResolution - Height) / 2;
     
@@ -898,49 +944,8 @@ ShowProgress (
               );
     }
 
-    ShowPngFile (GraphicsOutput, L"\\EFI\\bareboot\\banner.png", DestX, DestY, TRUE);
-
 #if 0
-    Status = GetSectionFromAnyFv (
-               PcdGetPtr(PcdFontsFile),
-               EFI_SECTION_RAW,
-               0,
-               (VOID **) &ImageData,
-               &ImageSize
-             );
-
-   if (EFI_ERROR (Status)) {
-      goto Down;
-    }
-    
-    Status = ConvertPngToGopBlt (
-               ImageData,
-               ImageSize,
-               (VOID **) &Blt,
-               &BltSize,
-               &Height,
-               &Width
-             );
-
-    if (EFI_ERROR (Status)) {
-      goto Down;
-    }
-    
-    if ((DestX >= 0) && (DestY >= 0)) {
-      Status = BltWithAlpha (
-                 GraphicsOutput,
-                 Blt,
-                 EfiBltBufferToVideo,
-                 0,
-                 0,
-                 (UINTN) DestX,
-                 (UINTN) DestY,
-                 Width,
-                 Height,
-                 Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL),
-                 TRUE
-              );
-    }
+    ShowPngFile (GraphicsOutput, L"\\EFI\\bareboot\\banner.png", DestX, DestY, TRUE);
 #endif
 
 Down:
@@ -1025,14 +1030,15 @@ PlatformBdsEnterFrontPage (
   EFI_STATUS                    Status = EFI_SUCCESS;
 
   gFronPage = FALSE;
-  
+
+  UpdateBootStrings ();
+
   if (TimeoutDefault != 0xffff) {
     Status = ShowProgress (TimeoutDefault);
     if (EFI_ERROR (Status)) goto Exit;
   }
   
   Status = EFI_SUCCESS;
-  UpdateBootStrings ();
   gFronPage = TRUE;
   ClearScreen (0x00);
   do {

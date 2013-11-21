@@ -124,4 +124,13 @@ ShowPngFile (
   IN BOOLEAN Alpha
   );
 
+EFI_STATUS
+ShowAString (
+  IN EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput,
+  IN CHAR8  *AString,
+  IN INTN   DestX,
+  IN INTN   DestY,
+  IN BOOLEAN Alpha
+  );
+
 #endif // _GRAPHICS_H_

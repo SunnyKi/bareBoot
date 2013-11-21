@@ -147,7 +147,7 @@ FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
   }
 
 FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdFontsFile) {
-    SECTION RAW = bareBoot/Fonts/liberation-mono-regular-24.png
+    SECTION RAW = bareBoot/Fonts/Monaco16.png
   }
 
 [Rule.Common.DXE_CORE]

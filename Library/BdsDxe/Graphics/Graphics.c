@@ -2,6 +2,7 @@
 **/
 
 #include <macosx.h>
+#include <Library/DxeServicesLib.h>
 
 #include "Graphics.h"
 #include "picopng.h"
@@ -508,6 +509,107 @@ ShowPngFile (
 Down:
   if (ImageData != NULL) {
     FreePool (ImageData);
+  }
+  if (Blt != NULL) {
+    FreePool (Blt);
+  }
+  return Status;
+}
+
+EFI_STATUS
+ShowAString (
+  IN EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput,
+  IN CHAR8  *AString,
+  IN INTN   DestX,
+  IN INTN   DestY,
+  IN BOOLEAN Alpha
+  )
+{
+  EFI_STATUS                    Status;
+  UINT8                         *ImageData;
+  UINTN                         ImageSize;
+  UINTN                         BltSize;
+  UINTN                         Height;
+  UINTN                         Width;
+  UINTN                         ImageStringWidth;
+  UINT8                         FontWidth;
+  UINT32                        FontSize;
+  UINT32                        InX;
+  UINT32                        InStr;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *ImageString;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *InBuffer;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *OutBuffer;
+
+  ImageString = NULL;
+
+  if (AString == NULL) {
+    Status = EFI_INVALID_PARAMETER;
+    goto Down;
+  }
+
+  Status = GetSectionFromAnyFv (
+             PcdGetPtr(PcdFontsFile),
+             EFI_SECTION_RAW,
+             0,
+             (VOID **) &ImageData,
+             &ImageSize
+           );
+
+  if (EFI_ERROR (Status)) {
+    goto Down;
+  }
+
+  Status = ConvertPngToGopBlt (
+             ImageData,
+             ImageSize,
+             (VOID **) &Blt,
+             &BltSize,
+             &Height,
+             &Width
+           );
+
+  if (EFI_ERROR (Status)) {
+    goto Down;
+  }
+
+  FontWidth = Width / 95;
+  ImageStringWidth = FontWidth * AsciiStrLen (AString);
+  ImageString = AllocateZeroPool (Height * ImageStringWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
+  FontSize = FontWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL);
+
+  for (InStr = 0; InStr < AsciiStrLen (AString); InStr++) {
+    InBuffer  = ImageString + FontWidth * InStr;
+    OutBuffer = Blt + FontWidth * (AString[InStr] - 0x20);
+    for (InX = 0; InX < Height; InX++) {
+      CopyMem ((UINT8*) (InBuffer), (UINT8*) (OutBuffer), FontSize);
+      InBuffer += ImageStringWidth;
+      OutBuffer += Width;
+    }
+  }
+
+  if ((DestX >= 0) && (DestY >= 0)) {
+    Status = BltWithAlpha (
+               GraphicsOutput,
+               ImageString,
+               EfiBltBufferToVideo,
+               0,
+               0,
+               (UINTN) DestX,
+               (UINTN) DestY,
+               ImageStringWidth,
+               Height,
+               ImageStringWidth * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL),
+               Alpha
+            );
+  }
+
+Down:
+  if (ImageData != NULL) {
+    FreePool (ImageData);
+  }
+  if (ImageString != NULL) {
+    FreePool (ImageString);
   }
   if (Blt != NULL) {
     FreePool (Blt);
