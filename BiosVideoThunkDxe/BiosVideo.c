@@ -1515,7 +1515,9 @@ BiosVideoCheckForVbe (
       Timing.VerticalResolution = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
       if (SearchEdidTiming (&ValidEdidTiming, &Timing) == FALSE) {
         DBG (", not found in edid - rejected");
+#if 0
         continue;
+#endif
       } else {
         ModeFound = TRUE;
         DBG (", found in edid - accepted", ModeNumber);
