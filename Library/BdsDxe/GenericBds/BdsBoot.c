@@ -282,6 +282,8 @@ MacOS:
     DBG ("gST->ConfigurationTable[Index].VendorGuid = %s\n", &Buffer1);
     DBG ("gST->ConfigurationTable[Index].VendorTable = 0x%x size = 0x%x\n", gST->ConfigurationTable[Index].VendorTable, sizeof( gST->ConfigurationTable[Index].VendorTable));
   }
+  DumpGcdMemoryMap ();
+  DumpEfiMemoryMap ();
 #endif
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
@@ -302,8 +304,6 @@ MacOS:
 
   WithKexts = LoadKexts ();
 #ifdef BOOT_DEBUG
-  DumpGcdMemoryMap ();
-  DumpEfiMemoryMap ();
   SaveBooterLog (gRootFHandle, BOOT_LOG);
 #endif
 

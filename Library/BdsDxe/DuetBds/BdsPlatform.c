@@ -156,7 +156,7 @@ UpdateMemoryMap (
   }
   MemoryDescHob.MemDescCount = *(UINTN *)Table;
   MemoryDescHob.MemDesc      = *(EFI_MEMORY_DESCRIPTOR **)((UINTN)Table + sizeof(UINTN));
-#if 1
+#if 0
   DumpGcdMemoryMap ();
 #endif
   gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
@@ -193,7 +193,7 @@ UpdateMemoryMap (
   }
   
   FreePool (MemorySpaceMap);
-#if 1
+#if 0
   DumpGcdMemoryMap ();
 #endif
   //
