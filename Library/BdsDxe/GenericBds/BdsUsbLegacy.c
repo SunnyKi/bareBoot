@@ -169,64 +169,6 @@ DisableEhciLegacy (
 #undef BIOS_OWNED
 #undef OS_OWNED
   }
-#if 0
-  UINT32                    HcCapParams;
-  UINT32                    ExtendCap;
-  UINT32                    Value;
-  UINT32                    TimeOut;
-#ifdef USB_FIXUP
-  UINT32                    SaveValue;
-#endif
-  Status = PciIo->Mem.Read (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       0,                   //EHC_BAR_INDEX
-                       (UINT64) 0x08,       //EHC_HCCPARAMS_OFFSET
-                       1,
-                       &HcCapParams
-                       );
-  
-  ExtendCap = (HcCapParams >> 8) & 0xFF;
-  //
-  // Disable the SMI in USBLEGCTLSTS firstly
-  //
-#ifdef USB_FIXUP
-  DEBUG ((DEBUG_INFO, "EHCI: EECP = 0x%X, USBLEGCTLSTS = 0x%X", ExtendCap, (ExtendCap + 4)));
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
-  Value = SaveValue & 0xFFFF0000;
-  DEBUG ((DEBUG_INFO, ", Save val = 0x%X, Write val = 0x%X", SaveValue, Value));
-#else
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
-  Value &= 0xFFFF0000;
-#endif
-  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
-
-  //
-  // Get EHCI Ownership from legacy bios
-  //
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-  Value |= (0x1 << 24);
-  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-
-  TimeOut = 40;
-  while (TimeOut--) {
-    gBS->Stall (500);
-
-    PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-
-    if ((Value & 0x01010000) == 0x01000000) {
-      break;
-    }
-  }
-#ifdef USB_FIXUP
-#if 0
-  SaveValue &= ~0x003F;
-#endif
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
-  DEBUG ((DEBUG_INFO, ", New val = 0x%X\n", Value));
-  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &SaveValue);
-#endif
-#endif
   DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
@@ -236,7 +178,6 @@ DisableOhciLegacy (
   PCI_TYPE00                *Pci
   )
 {
-#if 0
   EFI_STATUS Status;
   UINT64     pollResult;
   struct {
@@ -304,7 +245,6 @@ DisableOhciLegacy (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (wating for interruptrouting bit clear: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
   }
-#endif
 }
 
 VOID
@@ -313,11 +253,25 @@ DisableUhciLegacy (
   PCI_TYPE00                *Pci
   )
 {
+  EFI_STATUS Status;
+  UINT16     Command;
+
   DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
-#if 0
+
+  Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a: bail out (read usb_legsup: %r)\n", __FUNCTION__, Status));
+    return;
+  }
+  DEBUG ((DEBUG_INFO, "%a: legsup 0x%04x\n", __FUNCTION__, Command));
+
   Command = 0;
   Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
-#endif
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a: bail out (write usb_legsup: %r)\n", __FUNCTION__, Status));
+    return;
+  }
+
   DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
