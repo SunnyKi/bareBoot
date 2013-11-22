@@ -275,6 +275,16 @@ DisableUhciLegacy (
   DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
+VOID
+DisableXhciLegacy (
+  EFI_PCI_IO_PROTOCOL       *PciIo,
+  PCI_TYPE00                *Pci
+  )
+{
+  DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
+}
+
 EFI_STATUS
 DisableUsbLegacySupport (
   VOID
@@ -329,6 +339,9 @@ DisableUsbLegacySupport (
         break;
       case PCI_IF_UHCI:
         DisableUhciLegacy (PciIo, &Pci);
+        break;
+      case PCI_IF_XHCI:
+        DisableXhciLegacy (PciIo, &Pci);
         break;
       default:
         break;
