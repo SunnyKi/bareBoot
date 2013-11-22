@@ -822,6 +822,38 @@ CalculateEdidKey (
 }
 /**
 
+  Search a specified Timing in all the valid EDID timings.
+
+
+  @param ValidEdidTiming - All valid EDID timing information.
+  @param EdidTiming      - The Timing to search for.
+
+  @return TRUE  - Found.
+          FALSE - Not found.
+
+**/
+STATIC
+BOOLEAN
+SearchEdidTiming (
+  VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING *ValidEdidTiming,
+  VESA_BIOS_EXTENSIONS_EDID_TIMING       *EdidTiming
+  )
+{
+  UINT32 Index;
+  UINT32 Key;
+
+  Key = CalculateEdidKey (EdidTiming);
+
+  for (Index = 0; Index < ValidEdidTiming->ValidNumber; Index ++) {
+    if (Key == ValidEdidTiming->Key[Index]) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+/**
+
   Parse the Established Timing and Standard Timing in EDID data block.
 
 
@@ -890,11 +922,13 @@ ParseEdidData (
                  ((EdidDataBlock->EstablishedTimings[2] & 0x80) << 9) ;
     for (Index = 0; Index < VESA_BIOS_EXTENSIONS_EDID_ESTABLISHED_TIMING_MAX_NUMBER; Index ++) {
       if (TimingBits & 0x1) {
-        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&mEstablishedEdidTiming[Index]);
-        DBG("BiosVideo: ParseEdidData, found Established Timing %dx%d\n",
-            mEstablishedEdidTiming[Index].HorizontalResolution,
-            mEstablishedEdidTiming[Index].VerticalResolution);
-        ValidEdidTiming->ValidNumber ++;
+        if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
+          ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&mEstablishedEdidTiming[Index]);
+          DBG("BiosVideo: ParseEdidData, found Established Timing %dx%d\n",
+              mEstablishedEdidTiming[Index].HorizontalResolution,
+              mEstablishedEdidTiming[Index].VerticalResolution);
+          ValidEdidTiming->ValidNumber ++;
+        }
       }
       TimingBits = TimingBits >> 1;
     }
@@ -931,11 +965,13 @@ ParseEdidData (
         TempTiming.HorizontalResolution = HorizontalResolution;
         TempTiming.VerticalResolution = VerticalResolution;
         TempTiming.RefreshRate = RefreshRate;
-        DBG("BiosVideo: ParseEdidData, found Standard    Timing %dx%d\n",
-            TempTiming.HorizontalResolution,
-            TempTiming.VerticalResolution);
-        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
-        ValidEdidTiming->ValidNumber ++;
+        if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
+          DBG("BiosVideo: ParseEdidData, found Standard    Timing %dx%d\n",
+              TempTiming.HorizontalResolution,
+              TempTiming.VerticalResolution);
+          ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+          ValidEdidTiming->ValidNumber ++;
+        }
       }
       BufferIndex += 2;
     }
@@ -1007,8 +1043,10 @@ ParseEdidData (
         DBG("VSync-\n");
       }
 
-      ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
-      ValidEdidTiming->ValidNumber ++;
+      if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
+        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+        ValidEdidTiming->ValidNumber ++;
+      }
 #if 0
       VbeCrtcBlock->HorizontalTotal     = HTotal;
       VbeCrtcBlock->HorizontalSyncStart = (UINT16) (TempTiming.HorizontalResolution + HSyncOffset);
@@ -1050,45 +1088,15 @@ ParseEdidData (
         DBG("BiosVideo: ParseEdidData, found Detailed Timing %dx%d\n",
             TempTiming.HorizontalResolution,
             TempTiming.VerticalResolution);
-        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
-        ValidEdidTiming->ValidNumber ++;
+        if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
+          ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+          ValidEdidTiming->ValidNumber ++;
+        }
       }
     } 
   }
 
   return TRUE;
-}
-/**
-
-  Search a specified Timing in all the valid EDID timings.
-
-
-  @param ValidEdidTiming - All valid EDID timing information.
-  @param EdidTiming      - The Timing to search for.
-
-  @return TRUE  - Found.
-          FALSE - Not found.
-
-**/
-STATIC
-BOOLEAN
-SearchEdidTiming (
-  VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING *ValidEdidTiming,
-  VESA_BIOS_EXTENSIONS_EDID_TIMING       *EdidTiming
-  )
-{
-  UINT32 Index;
-  UINT32 Key;
-
-  Key = CalculateEdidKey (EdidTiming);
-
-  for (Index = 0; Index < ValidEdidTiming->ValidNumber; Index ++) {
-    if (Key == ValidEdidTiming->Key[Index]) {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
 }
 
 #define PCI_DEVICE_ENABLED  (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)
@@ -1188,7 +1196,7 @@ BiosVideoCheckForVbe (
                                               sizeof (VESA_BIOS_EXTENSIONS_CRTC_INFORMATION_BLOCK)
                                               );
 
-  BiosVideoPrivate->PagesBelow1MB = 0x00100000 - 1;
+  BiosVideoPrivate->PagesBelow1MB = 0x000C0000 - 1;
 
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
@@ -1493,6 +1501,12 @@ BiosVideoCheckForVbe (
     if (BiosVideoPrivate->VbeModeInformationBlock->PhysBasePtr == 0) {
       continue;
     }
+		//
+		// Skip modes not supported by the hardware.
+		//
+		if ((BiosVideoPrivate->VbeModeInformationBlock->ModeAttributes & VESA_BIOS_EXTENSIONS_MODE_ATTRIBUTE_HARDWARE) == 0) {
+			continue;
+		}
 
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 800) {
       continue;
@@ -1663,7 +1677,6 @@ BiosVideoCheckForVbe (
   // Find the best mode to initialize
   //
   DBG ("BiosVideo: PreferMode %d\n", PreferMode);
-#if 0
   Status = BiosVideoGraphicsOutputSetMode (&BiosVideoPrivate->GraphicsOutput, (UINT32) PreferMode);
   if (EFI_ERROR (Status)) {
     for (PreferMode = 0; PreferMode < ModeNumber; PreferMode ++) {
@@ -1699,9 +1712,10 @@ Done:
       gBS->FreePool (BiosVideoPrivate->GraphicsOutput.Mode);
     }
   }
-#endif
+#if 0
 Done:
   BiosVideoPrivate->HardwareNeedsStarting = FALSE;
+#endif
   return Status;
 }
 
@@ -1770,6 +1784,7 @@ BiosVideoCheckForVga (
   ModeBuffer->VerticalResolution    = 480;
   ModeBuffer->BitsPerPixel          = 8;  
   ModeBuffer->PixelFormat           = PixelBltOnly;
+	ModeBuffer->RefreshRate           = 60;
 
   BiosVideoPrivate->ModeData = ModeBuffer;
 
@@ -1895,6 +1910,9 @@ BiosVideoGraphicsOutputSetMode (
   if (ModeNumber >= This->Mode->MaxMode) {
     return EFI_UNSUPPORTED;
   }
+	if (ModeNumber == This->Mode->Mode) {
+    return EFI_SUCCESS;
+  }
 
   ModeData = &BiosVideoPrivate->ModeData[ModeNumber];
 
@@ -1955,6 +1973,7 @@ BiosVideoGraphicsOutputSetMode (
       //
       // Allocate a working buffer for BLT operations to the VBE frame buffer
       //
+#if 0
       BiosVideoPrivate->VbeFrameBuffer = NULL;
       Status = gBS->AllocatePool (
                                   EfiBootServicesData,
@@ -1963,6 +1982,12 @@ BiosVideoGraphicsOutputSetMode (
                                   );
       if (EFI_ERROR (Status)) {
         return Status;
+      }
+#endif
+      BiosVideoPrivate->VbeFrameBuffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) AllocatePool (
+                            ModeData->BytesPerScanLine * ModeData->VerticalResolution);
+      if (BiosVideoPrivate->VbeFrameBuffer == NULL) {
+        return EFI_OUT_OF_RESOURCES;
       }
       //
       // Set VBE mode
@@ -2295,7 +2320,10 @@ BiosVideoGraphicsOutputVbeBlt (
       //
       VbeBuffer = ((UINT8 *) VbeFrameBuffer + (SrcY * BytesPerScanLine + SourceX * VbePixelWidth));
       for (DstX = DestinationX; DstX < (Width + DestinationX); DstX++) {
+#if 0
         Pixel         = *(UINT32 *) (VbeBuffer);
+#endif
+        Pixel         = VbeBuffer[0] | VbeBuffer[1] << 8 | VbeBuffer[2] << 16 | VbeBuffer[3] << 24;
         Blt->Red      = (UINT8) ((Pixel >> Mode->Red.Position) & Mode->Red.Mask);
         Blt->Blue     = (UINT8) ((Pixel >> Mode->Blue.Position) & Mode->Blue.Mask);
         Blt->Green    = (UINT8) ((Pixel >> Mode->Green.Position) & Mode->Green.Mask);
