@@ -21,18 +21,71 @@ Abstract:
 
 #include "InternalBdsLib.h"
 
-VOID
-ZhciMemDump (
-  UINT32* mem,
-  UINTN size
-)
-{
-  UINTN i;
+/*
+ * There is no poll function for pci space yet
+ */
 
-  for (i = 0; i < size / sizeof (UINT32); i++) {
-    DEBUG ((DEBUG_INFO, " 0x%08x", mem[i]));
+EFI_STATUS
+EFIAPI
+ZhciPollPci ( 
+  IN  EFI_PCI_IO_PROTOCOL        *This,
+  IN  EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+  IN  UINT64                     Address,
+  IN  UINT64                     Mask,
+  IN  UINT64                     Value,
+  IN  UINT64                     Delay,
+  OUT UINT64                     *Result
+  )
+{
+  EFI_STATUS  Status;
+  UINT64      NumberOfTicks;
+  UINT32       Remainder;
+
+  if (Result == NULL) {
+    return EFI_INVALID_PARAMETER;
   }
-  DEBUG ((DEBUG_INFO, "\n"));
+
+  if ((UINT32)Width > EfiPciIoWidthUint64) {
+    return EFI_INVALID_PARAMETER;
+  }
+  //
+  // No matter what, always do a single poll.
+  //
+  Status = This->Pci.Read (This, Width, (UINT32) Address, 1, Result);
+  if ( EFI_ERROR(Status) ) {
+    return Status;
+  }    
+  if ( (*Result & Mask) == Value ) {
+    return EFI_SUCCESS;
+  }
+
+  if (Delay == 0) {
+    return EFI_SUCCESS;
+  } else {
+
+    NumberOfTicks = DivU64x32Remainder (Delay, 100, &Remainder);
+    if ( Remainder !=0 ) {
+      NumberOfTicks += 1;
+    }
+    NumberOfTicks += 1;
+  
+    while ( NumberOfTicks ) {
+
+      gBS->Stall(10);
+    
+      Status = This->Pci.Read (This, Width, (UINT32) Address, 1, Result);
+      if ( EFI_ERROR(Status) ) {
+        return Status;
+      }
+    
+      if ( (*Result & Mask) == Value ) {
+        return EFI_SUCCESS;
+      }
+
+      NumberOfTicks -= 1;
+    }
+  }
+  return EFI_TIMEOUT;
 }
 
 VOID
@@ -51,8 +104,8 @@ DisableEhciLegacy (
   Status = PciIo->Mem.Read (
                        PciIo,
                        EfiPciIoWidthUint32,
-                       0,                   //EHC_BAR_INDEX
-                       (UINT64) 0x08,       //EHC_HCCPARAMS_OFFSET
+                       0,                   //EHCI_BAR_INDEX
+                       (UINT64) 0x08,       //EHCI_HCCPARAMS_OFFSET
                        1,
                        &HcCapParams
                        );
@@ -61,7 +114,7 @@ DisableEhciLegacy (
     DEBUG ((DEBUG_INFO, "%a: bail out (reading hccparams: %r)\n", __FUNCTION__, Status));
     return;
   }
-  /* Some controllers has debug port capabilities, so search for EHCI_EC_LEGSUP */
+  /* Some controllers has debug port capabilities also, so search for EHCI_EC_LEGSUP */
   for (ExtendCapPtr = (UINT8) (HcCapParams >> 8); ExtendCapPtr != 0; ExtendCapPtr = (UINT8) (ExtendCap >> 8)) {
     DEBUG ((DEBUG_INFO, "%a: extendcapptr 0x%08x\n", __FUNCTION__, (UINT32)ExtendCapPtr));
     Status = PciIo->Pci.Read (
@@ -99,20 +152,19 @@ DisableEhciLegacy (
         DEBUG ((DEBUG_INFO, "%a: bail out (flush: %r)\n", __FUNCTION__, Status));
         return;
       }
-      Status = PciIo->PollIo (
+      Status = ZhciPollPci (
                        PciIo,
                        EfiPciIoWidthUint32,
-                       0,                     // EHCI_BAR_INDEX
                        (UINT64) ExtendCapPtr, // USBLEGSUP
                        (UINT64) (BIOS_OWNED | OS_OWNED),
 		       (UINT64) OS_OWNED,
-		       (UINT64) 4000000,  // wait that number of 100ns units
+		       (UINT64) 10000,  // wait that number of 100ns units
                        &pollResult
                        );
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_INFO, "%a: bail out (wating for ownership change: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
       }
-      return;
+      break;
     }
 #undef BIOS_OWNED
 #undef OS_OWNED
@@ -184,6 +236,7 @@ DisableOhciLegacy (
   PCI_TYPE00                *Pci
   )
 {
+#if 0
   EFI_STATUS Status;
   UINT64     pollResult;
   struct {
@@ -195,7 +248,7 @@ DisableOhciLegacy (
                        PciIo,
                        EfiPciIoWidthUint32,
                        0,                // OHCI_BAR_INDEX
-                       (UINT64) 4,       // OHCI_HC_CONTROL
+                       (UINT64) 4,       // OHCI_HC_CONTROL_OFFSET
                        sizeof (OpRegs) / sizeof (UINT32),
                        &OpRegs
                        );
@@ -251,6 +304,7 @@ DisableOhciLegacy (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (wating for interruptrouting bit clear: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
   }
+#endif
 }
 
 VOID
