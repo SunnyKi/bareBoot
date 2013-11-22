@@ -22,6 +22,20 @@ Abstract:
 #include "InternalBdsLib.h"
 
 VOID
+ZhciMemDump (
+  UINT32* mem,
+  UINTN size
+)
+{
+  UINTN i;
+
+  for (i = 0; i < size / sizeof (UINT32); i++) {
+    DEBUG ((DEBUG_INFO, " 0x%08x", mem[i]));
+  }
+  DEBUG ((DEBUG_INFO, "\n"));
+}
+
+VOID
 DisableEhciLegacy (
   EFI_PCI_IO_PROTOCOL       *PciIo,
   PCI_TYPE00                *Pci
@@ -173,17 +187,15 @@ DisableOhciLegacy (
   EFI_STATUS Status;
   UINT64     pollResult;
   struct {
-    UINT32     HcRevision;
     UINT32     HcControl;
     UINT32     HcCommandStatus;
   } OpRegs;
 
-  DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
   Status = PciIo->Mem.Read (
                        PciIo,
                        EfiPciIoWidthUint32,
                        0,                // OHCI_BAR_INDEX
-                       (UINT64) 0,       // OHCI_HC_OP_REGS
+                       (UINT64) 4,       // OHCI_HC_CONTROL
                        sizeof (OpRegs) / sizeof (UINT32),
                        &OpRegs
                        );
@@ -191,9 +203,7 @@ DisableOhciLegacy (
     DEBUG ((DEBUG_INFO, "%a: bail out (reading opregs: %r)\n", __FUNCTION__, Status));
     return;
   }
-  DEBUG ((DEBUG_INFO, "%a: revision 0x%08x\n", __FUNCTION__, OpRegs.HcRevision));
-  DEBUG ((DEBUG_INFO, "%a: control 0x%08x\n", __FUNCTION__, OpRegs.HcControl));
-  DEBUG ((DEBUG_INFO, "%a: cmd & status 0x%08x\n", __FUNCTION__, OpRegs.HcCommandStatus));
+
   if ((OpRegs.HcControl & 0x100) == 0) {
     /* No SMM driver active */
 #if 0
@@ -212,7 +222,7 @@ DisableOhciLegacy (
     return;
   }
   /* Time to do little dance with SMM driver */
-  OpRegs.HcCommandStatus = 0x80;
+  OpRegs.HcCommandStatus = 0x08; // Ownership Change Request
   Status = PciIo->Mem.Write (
                        PciIo,
                        EfiPciIoWidthUint32,
@@ -225,11 +235,9 @@ DisableOhciLegacy (
     DEBUG ((DEBUG_INFO, "%a: bail out (setting ownership change bit: %r)\n", __FUNCTION__, Status));
     return;
   }
-  Status = PciIo->Flush (PciIo);
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a: bail out (flush: %r)\n", __FUNCTION__, Status));
-    return;
-  }
+
+  MemoryFence (); // Just to be sure
+
   Status = PciIo->PollMem (
                        PciIo,
                        EfiPciIoWidthUint32,
@@ -237,14 +245,12 @@ DisableOhciLegacy (
                        (UINT64) 4,       // OHCI_HC_CONTROL
                        (UINT64) 0x100,   // check InterruptRouting bit
 		       (UINT64) 0,       // we waiting for that
-		       (UINT64) 4000000,  // wait that number of 100ns units
+		       (UINT64) 10000,  // wait that number of 100ns units
                        &pollResult
                        );
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (wating for interruptrouting bit clear: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
   }
-
-  DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
 VOID
