@@ -134,8 +134,8 @@ DisableEhciLegacy (
       continue;
     }
 
-#define BIOS_OWNED (1 << 16)
-#define OS_OWNED (1 << 24)
+#define BIOS_OWNED BIT16
+#define OS_OWNED   BIT24
 
     if ((ExtendCap & BIOS_OWNED) != 0) {
       ExtendCap = OS_OWNED;
@@ -185,6 +185,7 @@ DisableOhciLegacy (
     UINT32     HcCommandStatus;
   } OpRegs;
 
+  DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
   Status = PciIo->Mem.Read (
                        PciIo,
                        EfiPciIoWidthUint32,
@@ -245,6 +246,7 @@ DisableOhciLegacy (
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (wating for interruptrouting bit clear: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
   }
+  DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
 VOID
