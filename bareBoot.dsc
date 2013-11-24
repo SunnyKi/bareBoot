@@ -226,6 +226,9 @@
   MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
   MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !endif
+!ifdef OHCI
+  bareBoot/Bus/Pci/OhciDxe/OhciDxe.inf
+!endif
 
   # ISA Support
   PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
