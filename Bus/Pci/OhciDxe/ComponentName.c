@@ -216,7 +216,7 @@ OhciComponentNameGetControllerName (
     return Status;
   }
 
-  OhciDev = UHC_FROM_USB2_HC_PROTO (Usb2Hc);
+  OhciDev = OHC_FROM_USB2_HC_PROTO (Usb2Hc);
 
   return LookupUnicodeString2 (
            Language,
