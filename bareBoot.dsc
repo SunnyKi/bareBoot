@@ -49,7 +49,11 @@
   DebugAgentLib|MdeModulePkg/Library/DebugAgentLibNull/DebugAgentLibNull.inf
   PeCoffExtraActionLib|MdePkg/Library/BasePeCoffExtraActionLibNull/BasePeCoffExtraActionLibNull.inf
   PeCoffLib|bareBoot/Library/VBoxPeCoffLib/VBoxPeCoffLib.inf
+!ifdef DEBUG2MEMLOG
+  DebugLib|bareBoot/Library/BaseDebugLibMemLog/BaseDebugLibMemLog.inf
+!else
   DebugLib|MdePkg/Library/BaseDebugLibSerialPort/BaseDebugLibSerialPort.inf
+!endif
 !endif
 
   #
