@@ -164,8 +164,10 @@ DisableEhciLegacy (
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_INFO, "%a: bail out (wating for ownership change: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
       }
-      break;
+    } else {
+      DEBUG ((DEBUG_INFO, "%a: no legacy on device\n", __FUNCTION__));
     }
+    break;
 #undef BIOS_OWNED
 #undef OS_OWNED
   }
@@ -201,19 +203,22 @@ DisableOhciLegacy (
 
   if ((OpRegs.HcControl & 0x100) == 0) {
     /* No SMM driver active */
-#if 0
+    DEBUG ((DEBUG_INFO, "%a: no SMM (legacy) on device\n", __FUNCTION__));
     /* XXX: Let see the HostControllerFunctionalState for BIOS driver */
     switch (OpRegs.HcControl & 0xC0) {
     case 0x00: /* UsbReset */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbReset state\n", __FUNCTION__));
       break;
     case 0x40: /* UsbResume */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbResume state\n", __FUNCTION__));
       break;
     case 0x80: /* UsbOperational */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbOperational state\n", __FUNCTION__));
       break;
     case 0xC0: /* UsbSuspend */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbSuspend state\n", __FUNCTION__));
       break;
     }
-#endif
     return;
   }
   /* Time to do little dance with SMM driver */
@@ -227,7 +232,7 @@ DisableOhciLegacy (
                        &OpRegs.HcCommandStatus
                        );
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a: bail out (setting ownership change bit: %r)\n", __FUNCTION__, Status));
+    DEBUG ((DEBUG_INFO, "%a: bail out (setting ownership change request bit: %r)\n", __FUNCTION__, Status));
     return;
   }
 
@@ -266,6 +271,14 @@ DisableUhciLegacy (
     return;
   }
   DEBUG ((DEBUG_INFO, "%a: legsup 0x%04x\n", __FUNCTION__, Command));
+
+  /*
+   * XXX: Is the device in legacy mode?
+   *
+   * (need to read more specs and other implementations)
+   *
+   * Let go blind
+   */
 
   Command = 0;
   Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
