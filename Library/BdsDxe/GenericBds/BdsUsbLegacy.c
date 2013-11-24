@@ -100,7 +100,7 @@ DisableEhciLegacy (
   UINT32     ExtendCap;
   UINT8      ExtendCapPtr;
 
-  DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
   Status = PciIo->Mem.Read (
                        PciIo,
                        EfiPciIoWidthUint32,
@@ -116,7 +116,6 @@ DisableEhciLegacy (
   }
   /* Some controllers has debug port capabilities also, so search for EHCI_EC_LEGSUP */
   for (ExtendCapPtr = (UINT8) (HcCapParams >> 8); ExtendCapPtr != 0; ExtendCapPtr = (UINT8) (ExtendCap >> 8)) {
-    DEBUG ((DEBUG_INFO, "%a: extendcapptr 0x%08x\n", __FUNCTION__, (UINT32)ExtendCapPtr));
     Status = PciIo->Pci.Read (
                        PciIo,
                        EfiPciIoWidthUint32,
@@ -128,7 +127,6 @@ DisableEhciLegacy (
       DEBUG ((DEBUG_INFO, "%a: bail out (reading extendcap at 0x%x: %r)\n", __FUNCTION__, ExtendCapPtr, Status));
       return;
     }
-    DEBUG ((DEBUG_INFO, "%a: extendcap 0x%08x\n", __FUNCTION__, ExtendCap));
     if ((UINT8) ExtendCap != 0x01) {
       /* Not EHCI_EC_LEGSUP */
       continue;
@@ -187,7 +185,7 @@ DisableOhciLegacy (
     UINT32     HcCommandStatus;
   } OpRegs;
 
-  DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
   Status = PciIo->Mem.Read (
                        PciIo,
                        EfiPciIoWidthUint32,
@@ -221,6 +219,9 @@ DisableOhciLegacy (
     }
     return;
   }
+
+  DEBUG ((DEBUG_INFO, "%a: SMM (legacy) on device\n", __FUNCTION__));
+
   /* Time to do little dance with SMM driver */
   OpRegs.HcCommandStatus = 0x08; // Ownership Change Request
   Status = PciIo->Mem.Write (
@@ -263,7 +264,7 @@ DisableUhciLegacy (
   EFI_STATUS Status;
   UINT16     Command;
 
-  DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
 
   Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
   if (EFI_ERROR (Status)) {
@@ -296,7 +297,7 @@ DisableXhciLegacy (
   PCI_TYPE00                *Pci
   )
 {
-  DEBUG ((DEBUG_INFO, "%a: enter\n", __FUNCTION__));
+  DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
   DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
