@@ -17,9 +17,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "BiosVideo.h"
 
-#if 0
-BOOLEAN mNoDetailedTiming;
-#endif
 //
 // EFI Driver Binding Protocol Instance
 //
@@ -836,7 +833,6 @@ STATIC
 BOOLEAN
 ParseEdidData (
   UINT8                                   *EdidBuffer,
-  UINT8                                   *VbeCrtcBuffer,
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING  *ValidEdidTiming
   )
 {
@@ -861,10 +857,8 @@ ParseEdidData (
   UINT8  RefreshRate;
   VESA_BIOS_EXTENSIONS_EDID_TIMING     TempTiming;
   VESA_BIOS_EXTENSIONS_EDID_DATA_BLOCK *EdidDataBlock;
-  VESA_BIOS_EXTENSIONS_CRTC_INFORMATION_BLOCK *VbeCrtcBlock;
 
   EdidDataBlock = (VESA_BIOS_EXTENSIONS_EDID_DATA_BLOCK *) EdidBuffer;
-  VbeCrtcBlock  = (VESA_BIOS_EXTENSIONS_CRTC_INFORMATION_BLOCK *) VbeCrtcBuffer;
 
   //
   // Check the checksum of EDID data
@@ -1013,19 +1007,6 @@ ParseEdidData (
 
       ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
       ValidEdidTiming->ValidNumber ++;
-#if 0
-      VbeCrtcBlock->HorizontalTotal     = HTotal;
-      VbeCrtcBlock->HorizontalSyncStart = (UINT16) (TempTiming.HorizontalResolution + HSyncOffset);
-      VbeCrtcBlock->HorizontalSyncEnd   = (UINT16) (TempTiming.HorizontalResolution + HSyncOffset + HSyncPulse);
-      VbeCrtcBlock->VericalTotal        = VTotal;
-      VbeCrtcBlock->VericalSyncStart    = (UINT16) (TempTiming.VerticalResolution + VSyncOffset);
-      VbeCrtcBlock->VericalSyncEnd      = (UINT16) (TempTiming.VerticalResolution + VSyncOffset + VSyncPulse);
-      VbeCrtcBlock->Flags               = BufferIndex[17];
-      VbeCrtcBlock->PixelClock          = PixelClock;
-      VbeCrtcBlock->RefreshRate         = (UINT16) VFreq;
-
-      mNoDetailedTiming = FALSE;
-#endif
     } else if (BufferIndex[3] == 0xFA) {
       for (Index2 = 0; Index2 < 6; Index2 ++) {
         HorizontalResolution = (UINT16) (BufferIndex[0] * 8 + 248);
@@ -1279,23 +1260,6 @@ BiosVideoCheckForVbe (
   }
   DBG ("BiosVideo: VBE 2.0 or higher\n");
   
-#if 0
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-  Regs.X.BX = 0;
-  Regs.X.CX = 0;
-  Regs.E.ES = 0;
-  Regs.X.DI = 0;
-
-  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-  if ((Regs.X.BX & 0x1)) {
-    DBG ("BiosVideo: DDC 1 supported\n");
-  }
-  if ((Regs.X.BX & 0x2)) {
-    DBG ("BiosVideo: DDC 2 supported\n");
-  }
-
   //
   // Read EDID information
   //
@@ -1313,6 +1277,7 @@ BiosVideoCheckForVbe (
   //    01h failed (e.g. non-DDC monitor)
   //
 
+#if 0
   gBS->SetMem (&Regs, sizeof (Regs), 0);
   Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
   Regs.X.BX = 1;
@@ -1327,13 +1292,8 @@ BiosVideoCheckForVbe (
        Regs.X.AX,
        BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
 
-#if 0
-  mNoDetailedTiming = TRUE;
-#endif
   if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
-    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
-                       (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
-                       &ValidEdidTiming) == TRUE) {
+    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock, &ValidEdidTiming) == TRUE) {
       EdidFound = TRUE;
       DBG ("BiosVideo: Edid1 found\n");
     } else {
@@ -1364,9 +1324,7 @@ BiosVideoCheckForVbe (
     //
     // Parse EDID data structure to retrieve modes supported by monitor
     //
-    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
-                       (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
-                       &ValidEdidTiming) == TRUE) {
+    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock, &ValidEdidTiming) == TRUE) {
       EdidFound = TRUE;
       DBG ("BiosVideo: Edid0 found\n");
     }
@@ -1530,13 +1488,10 @@ BiosVideoCheckForVbe (
       Timing.HorizontalResolution = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
       Timing.VerticalResolution = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
       if (SearchEdidTiming (&ValidEdidTiming, &Timing) == FALSE) {
-        DBG (", not found in edid - rejected");
-#if 0
-        continue;
-#endif
+        DBG (", not found in edid");
       } else {
         ModeFound = TRUE;
-        DBG (", found in edid - accepted", ModeNumber);
+        DBG (", found in edid", ModeNumber);
       }
     }
 
@@ -1547,15 +1502,7 @@ BiosVideoCheckForVbe (
         DBG (", no edid, try this mode");
         ModeFound = TRUE;
     }
-#if 0
-    if (!ModeFound) {
-      //
-      // When no EDID exist, only select three possible resolutions, i.e. 1024x768, 800x600, 640x480
-      //
-      DBG ("BiosVideo: Valid mode not found, skip mode %d\n", ModeNumber);
-      continue;
-    }
-#endif
+
     if (ModeFound &&
         (BestX <= BiosVideoPrivate->VbeModeInformationBlock->XResolution) &&
         (BestY <= BiosVideoPrivate->VbeModeInformationBlock->YResolution)) {
@@ -1564,7 +1511,6 @@ BiosVideoCheckForVbe (
       BestY = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
       DBG (", pref");
     }
-
     DBG ("\n");
 
     //
@@ -1942,121 +1888,61 @@ BiosVideoGraphicsOutputSetMode (
   //
   gBS->SetMem (&Regs, sizeof (Regs), 0);
 
-#if 0
-  if (mNoDetailedTiming) {
-#endif
-    if (ModeData->VbeModeNumber < 0x100) {
-      //
-      // Allocate a working buffer for BLT operations to the VGA frame buffer
-      //
-      BiosVideoPrivate->VgaFrameBuffer = NULL;
-      Status = gBS->AllocatePool (
-                                  EfiBootServicesData,
-                                  4 * 480 * 80,
-                                  (VOID**) &BiosVideoPrivate->VgaFrameBuffer
-                                  );
-      if (EFI_ERROR (Status)) {
-        return Status;
-      }
-      //
-      // Set VGA Mode
-      //
-      Regs.X.AX = ModeData->VbeModeNumber;
-      LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-      DBG ("BiosVideo: Set VGA Mode\n");
-
-    } else {
-      //
-      // Allocate a working buffer for BLT operations to the VBE frame buffer
-      //
-#if 0
-      BiosVideoPrivate->VbeFrameBuffer = NULL;
-      Status = gBS->AllocatePool (
-                                  EfiBootServicesData,
-                                  ModeData->BytesPerScanLine * ModeData->VerticalResolution,
-                                  (VOID**) &BiosVideoPrivate->VbeFrameBuffer
-                                  );
-      if (EFI_ERROR (Status)) {
-        return Status;
-      }
-#endif
-      BiosVideoPrivate->VbeFrameBuffer = (EFI_GRAPHICS_OUTPUT_BLT_PIXEL *) AllocatePool (
-                            ModeData->BytesPerScanLine * ModeData->VerticalResolution);
-      if (BiosVideoPrivate->VbeFrameBuffer == NULL) {
-        return EFI_OUT_OF_RESOURCES;
-      }
-      //
-      // Set VBE mode
-      //
-      Regs.X.AX = VESA_BIOS_EXTENSIONS_SET_MODE;
-      Regs.X.BX = (UINT16) (ModeData->VbeModeNumber | VESA_BIOS_EXTENSIONS_MODE_NUMBER_LINEAR_FRAME_BUFFER);
-      gBS->SetMem (BiosVideoPrivate->VbeCrtcInformationBlock, sizeof (VESA_BIOS_EXTENSIONS_CRTC_INFORMATION_BLOCK), 0);
-      Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeCrtcInformationBlock);
-      Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeCrtcInformationBlock);
-
-      LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-      //
-      // Check to see if the call succeeded
-      //
-      if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
-        return EFI_DEVICE_ERROR;
-      }
-      DBG ("BiosVideo: Set VBE Mode succeeded\n");
-      //
-      // Initialize the state of the VbeFrameBuffer
-      //
-#if 0
-      Status = BiosVideoPrivate->PciIo->Mem.Read (
-                                              BiosVideoPrivate->PciIo,
-                                              EfiPciIoWidthUint32,
-                                              EFI_PCI_IO_PASS_THROUGH_BAR,
-                                              (UINT64) (UINTN) ModeData->LinearFrameBuffer,
-                                              (ModeData->BytesPerScanLine * ModeData->VerticalResolution) >> 2,
-                                              BiosVideoPrivate->VbeFrameBuffer
-                                              );
-      if (EFI_ERROR (Status)) {
-        return Status;
-      }
-      DBG ("BiosVideo: Initialize the state of the VbeFrameBuffer succeeded\n");
-#endif
-    }
-#if 0
-  } else {
-    BiosVideoPrivate->VbeFrameBuffer = NULL;
+  if (ModeData->VbeModeNumber < 0x100) {
+    //
+    // Allocate a working buffer for BLT operations to the VGA frame buffer
+    //
+    BiosVideoPrivate->VgaFrameBuffer = NULL;
     Status = gBS->AllocatePool (
-                    EfiBootServicesData,
-                    ModeData->BytesPerScanLine * ModeData->VerticalResolution,
-                    (VOID**) &BiosVideoPrivate->VbeFrameBuffer
-                    );
+                                EfiBootServicesData,
+                                4 * 480 * 80,
+                                (VOID**) &BiosVideoPrivate->VgaFrameBuffer
+                                );
     if (EFI_ERROR (Status)) {
       return Status;
     }
+    //
+    // Set VGA Mode
+    //
+    Regs.X.AX = ModeData->VbeModeNumber;
+    LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+    DBG ("BiosVideo: Set VGA Mode\n");
+
+  } else {
+    //
+    // Allocate a working buffer for BLT operations to the VBE frame buffer
+    //
+    BiosVideoPrivate->VbeFrameBuffer = NULL;
+    Status = gBS->AllocatePool (
+                                EfiBootServicesData,
+                                ModeData->BytesPerScanLine * ModeData->VerticalResolution,
+                                (VOID**) &BiosVideoPrivate->VbeFrameBuffer
+                                );
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
+    //
+    // Set VBE mode
+    //
     Regs.X.AX = VESA_BIOS_EXTENSIONS_SET_MODE;
-    Regs.X.BX = (UINT16) (ModeData->VbeModeNumber |
-                          VESA_BIOS_EXTENSIONS_MODE_NUMBER_LINEAR_FRAME_BUFFER |
-                          VESA_BIOS_EXTENSIONS_MODE_NUMBER_REFRESH_CONTROL_USER);
+    Regs.X.BX = (UINT16) (ModeData->VbeModeNumber | VESA_BIOS_EXTENSIONS_MODE_NUMBER_LINEAR_FRAME_BUFFER);
+    gBS->SetMem (BiosVideoPrivate->VbeCrtcInformationBlock, sizeof (VESA_BIOS_EXTENSIONS_CRTC_INFORMATION_BLOCK), 0);
     Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeCrtcInformationBlock);
     Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeCrtcInformationBlock);
 
     LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
 
+    //
+    // Check to see if the call succeeded
+    //
     if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
       return EFI_DEVICE_ERROR;
     }
-    Status = BiosVideoPrivate->PciIo->Mem.Read (
-                                            BiosVideoPrivate->PciIo,
-                                            EfiPciIoWidthUint32,
-                                            EFI_PCI_IO_PASS_THROUGH_BAR,
-                                            (UINT64) (UINTN) ModeData->LinearFrameBuffer,
-                                            (ModeData->BytesPerScanLine * ModeData->VerticalResolution) >> 2,
-                                            BiosVideoPrivate->VbeFrameBuffer
-                                            );
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
+    DBG ("BiosVideo: Set VBE Mode succeeded\n");
+    //
+    // Initialize the state of the VbeFrameBuffer
+    //
   }
-#endif
 
   This->Mode->Mode = ModeNumber;
   This->Mode->Info->Version = 0;
@@ -2316,10 +2202,7 @@ BiosVideoGraphicsOutputVbeBlt (
       //
       VbeBuffer = ((UINT8 *) VbeFrameBuffer + (SrcY * BytesPerScanLine + SourceX * VbePixelWidth));
       for (DstX = DestinationX; DstX < (Width + DestinationX); DstX++) {
-#if 0
         Pixel         = *(UINT32 *) (VbeBuffer);
-#endif
-        Pixel         = VbeBuffer[0] | VbeBuffer[1] << 8 | VbeBuffer[2] << 16 | VbeBuffer[3] << 24;
         Blt->Red      = (UINT8) ((Pixel >> Mode->Red.Position) & Mode->Red.Mask);
         Blt->Blue     = (UINT8) ((Pixel >> Mode->Blue.Position) & Mode->Blue.Mask);
         Blt->Green    = (UINT8) ((Pixel >> Mode->Green.Position) & Mode->Green.Mask);
