@@ -250,10 +250,14 @@ BdsLibConnectDevicePath (
   EFI_HANDLE                Handle;
   EFI_HANDLE                PreviousHandle;
   UINTN                     Size;
+  EFI_TPL                   CurrentTpl;
 
+  DBG ("-->BdsLibConnectDevicePath\n");
   if (DevicePathToConnect == NULL) {
     return EFI_SUCCESS;
   }
+
+  CurrentTpl  = EfiGetCurrentTpl ();
 
   DevicePath        = DuplicateDevicePath (DevicePathToConnect);
   if (DevicePath == NULL) {
@@ -303,7 +307,18 @@ BdsLibConnectDevicePath (
           // Status == EFI_SUCCESS means a driver was dispatched
           // Status == EFI_NOT_FOUND means no new drivers were dispatched
           //
-          Status = gDS->Dispatch ();
+          if (CurrentTpl == TPL_APPLICATION) {
+            //
+            // Dispatch calls LoadImage/StartImage which cannot run at TPL > TPL_APPLICATION
+            //
+            Status = gDS->Dispatch ();
+          } else {
+            //
+            // Always return EFI_NOT_FOUND here
+            // to prevent dead loop when control handle is found but connection failded case
+            //
+            Status = EFI_NOT_FOUND;
+          }
         }
 
         if (!EFI_ERROR (Status)) {

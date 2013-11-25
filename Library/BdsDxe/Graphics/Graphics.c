@@ -351,6 +351,9 @@ SetModeScreen (
 {
   EFI_STATUS                      Status = EFI_SUCCESS;
   EFI_GRAPHICS_OUTPUT_PROTOCOL    *GraphicsOutput;
+  EFI_HANDLE                      *HandleBuffer;
+  UINTN                           HandleCount;
+  UINTN                           Index;
 
   GraphicsOutput = NULL;
 
@@ -364,6 +367,35 @@ SetModeScreen (
   }
 
   Status = GraphicsOutput->SetMode (GraphicsOutput, PrefMode);
+
+  Status = gBS->LocateHandleBuffer (
+                  ByProtocol,
+                  &gEfiSimpleTextOutProtocolGuid,
+                  NULL,
+                  &HandleCount,
+                  &HandleBuffer
+                );
+
+  if (!EFI_ERROR (Status)) {
+      for (Index = 0; Index < HandleCount; Index++) {
+          gBS->DisconnectController (
+                 HandleBuffer[Index],
+                 NULL,
+                 NULL
+               );
+      }
+      for (Index = 0; Index < HandleCount; Index++) {
+          gBS->ConnectController (
+                 HandleBuffer[Index],
+                 NULL,
+                 NULL,
+                 TRUE
+               );
+      }
+      if (HandleBuffer != NULL) {
+          FreePool (HandleBuffer);
+      }
+  }
 }
 
 VOID

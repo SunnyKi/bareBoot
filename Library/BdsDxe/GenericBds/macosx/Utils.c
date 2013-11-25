@@ -1217,7 +1217,11 @@ GetBootDefault (
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
     gSettings.BootTimeout = 0xFFFF;
   }
-  DBG ("GetBootDefault: DefaultBootVolume = %s, Timeout = %d\n", gSettings.DefaultBoot, gSettings.BootTimeout);
+  DBG ("GetBootDefault: DefaultBootVolume = %s, Timeout = %d, ScreenMode = %d\n",
+        gSettings.DefaultBoot,
+        gSettings.BootTimeout,
+        gSettings.ScreenMode
+      );
 
   return EFI_SUCCESS;
 }

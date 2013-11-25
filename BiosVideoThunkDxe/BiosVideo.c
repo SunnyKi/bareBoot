@@ -822,38 +822,6 @@ CalculateEdidKey (
 }
 /**
 
-  Search a specified Timing in all the valid EDID timings.
-
-
-  @param ValidEdidTiming - All valid EDID timing information.
-  @param EdidTiming      - The Timing to search for.
-
-  @return TRUE  - Found.
-          FALSE - Not found.
-
-**/
-STATIC
-BOOLEAN
-SearchEdidTiming (
-  VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING *ValidEdidTiming,
-  VESA_BIOS_EXTENSIONS_EDID_TIMING       *EdidTiming
-  )
-{
-  UINT32 Index;
-  UINT32 Key;
-
-  Key = CalculateEdidKey (EdidTiming);
-
-  for (Index = 0; Index < ValidEdidTiming->ValidNumber; Index ++) {
-    if (Key == ValidEdidTiming->Key[Index]) {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
-}
-/**
-
   Parse the Established Timing and Standard Timing in EDID data block.
 
 
@@ -909,7 +877,6 @@ ParseEdidData (
     return FALSE;
   }
 
-  gBS->SetMem (ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING), 0);
   if ((EdidDataBlock->EstablishedTimings[0] != 0) ||
       (EdidDataBlock->EstablishedTimings[1] != 0) ||
       (EdidDataBlock->EstablishedTimings[2] != 0)
@@ -922,60 +889,58 @@ ParseEdidData (
                  ((EdidDataBlock->EstablishedTimings[2] & 0x80) << 9) ;
     for (Index = 0; Index < VESA_BIOS_EXTENSIONS_EDID_ESTABLISHED_TIMING_MAX_NUMBER; Index ++) {
       if (TimingBits & 0x1) {
-        if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
+          DBG("BiosVideo: ParseEdidData, found Established Timing %dx%dx%d\n",
+               mEstablishedEdidTiming[Index].HorizontalResolution,
+               mEstablishedEdidTiming[Index].VerticalResolution,
+               mEstablishedEdidTiming[Index].RefreshRate
+             );
           ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&mEstablishedEdidTiming[Index]);
-          DBG("BiosVideo: ParseEdidData, found Established Timing %dx%d\n",
-              mEstablishedEdidTiming[Index].HorizontalResolution,
-              mEstablishedEdidTiming[Index].VerticalResolution);
           ValidEdidTiming->ValidNumber ++;
-        }
       }
       TimingBits = TimingBits >> 1;
     }
-  } else {
-    //
-    // If no Established timing data, read the standard timing data
-    //
-    BufferIndex = &EdidDataBlock->StandardTimingIdentification[0];
-    for (Index = 0; Index < 8; Index ++) {
-      if ((BufferIndex[0] != 0x1) && (BufferIndex[1] != 0x1)){
-        //
-        // A valid Standard Timing
-        //
-        HorizontalResolution = (UINT8) (BufferIndex[0] * 8 + 248);
-        AspectRatio = (UINT8) (BufferIndex[1] >> 6);
-        switch (AspectRatio) {
-          case 0:
-            VerticalResolution = (UINT8) (HorizontalResolution / 16 * 10);
-            break;
-          case 1:
-            VerticalResolution = (UINT8) (HorizontalResolution / 4 * 3);
-            break;
-          case 2:
-            VerticalResolution = (UINT8) (HorizontalResolution / 5 * 4);
-            break;
-          case 3:
-            VerticalResolution = (UINT8) (HorizontalResolution / 16 * 9);
-            break;
-          default:
-            VerticalResolution = (UINT8) (HorizontalResolution / 4 * 3);
-            break;
-        }
-        RefreshRate = (UINT8) ((BufferIndex[1] & 0x1f) + 60);
-        TempTiming.HorizontalResolution = HorizontalResolution;
-        TempTiming.VerticalResolution = VerticalResolution;
-        TempTiming.RefreshRate = RefreshRate;
-        if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
-          DBG("BiosVideo: ParseEdidData, found Standard    Timing %dx%d\n",
-              TempTiming.HorizontalResolution,
-              TempTiming.VerticalResolution);
-          ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
-          ValidEdidTiming->ValidNumber ++;
-        }
-      }
-      BufferIndex += 2;
-    }
   }
+
+  BufferIndex = &EdidDataBlock->StandardTimingIdentification[0];
+  for (Index = 0; Index < 8; Index ++) {
+    if ((BufferIndex[0] != 0x1) && (BufferIndex[1] != 0x1)){
+      //
+      // A valid Standard Timing
+      //
+      HorizontalResolution = (UINT16) (BufferIndex[0] * 8 + 248);
+      AspectRatio = (UINT8) (BufferIndex[1] >> 6);
+      switch (AspectRatio) {
+        case 0:
+          VerticalResolution = (UINT16) (HorizontalResolution / 16 * 10);
+          break;
+        case 1:
+          VerticalResolution = (UINT16) (HorizontalResolution / 4 * 3);
+          break;
+        case 2:
+          VerticalResolution = (UINT16) (HorizontalResolution / 5 * 4);
+          break;
+        case 3:
+          VerticalResolution = (UINT16) (HorizontalResolution / 16 * 9);
+          break;
+        default:
+          VerticalResolution = (UINT16) (HorizontalResolution / 4 * 3);
+          break;
+      }
+      RefreshRate = (UINT8) ((BufferIndex[1] & 0x1f) + 60);
+      TempTiming.HorizontalResolution = HorizontalResolution;
+      TempTiming.VerticalResolution = VerticalResolution;
+      TempTiming.RefreshRate = RefreshRate;
+      DBG("BiosVideo: ParseEdidData, found Standard    Timing %dx%dx%d\n",
+           TempTiming.HorizontalResolution,
+           TempTiming.VerticalResolution,
+           TempTiming.RefreshRate
+         );
+      ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+      ValidEdidTiming->ValidNumber ++;
+    }
+    BufferIndex += 2;
+  }
+
   // thnx Slice (Detailed Timing)
   BufferIndex = &EdidDataBlock->DetailedTimingDescriptions[0];
   for (Index = 0; Index < 4; Index ++, BufferIndex += DETAILED_TIMING_DESCRIPTION_SIZE) {
@@ -1003,9 +968,12 @@ ParseEdidData (
       HSync = ((BufferIndex[17] & 0x04) == 0x04);
       VSync = ((BufferIndex[17] & 0x02) == 0x02);
 
-      DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%d\n",
-          TempTiming.HorizontalResolution,
-          TempTiming.VerticalResolution);
+      DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%dx%d\n",
+           TempTiming.HorizontalResolution,
+           TempTiming.VerticalResolution,
+           TempTiming.RefreshRate
+         );
+
       DBG("BiosVideo: DotClock = %d MHz\n", (PixelClock/1000000));
       DBG("BiosVideo: HBlanking = %d, HSyncOffset = %d, HSyncPulse = %d\n",
           HBlanking, HSyncOffset, HSyncPulse);
@@ -1043,10 +1011,8 @@ ParseEdidData (
         DBG("VSync-\n");
       }
 
-      if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
-        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
-        ValidEdidTiming->ValidNumber ++;
-      }
+      ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+      ValidEdidTiming->ValidNumber ++;
 #if 0
       VbeCrtcBlock->HorizontalTotal     = HTotal;
       VbeCrtcBlock->HorizontalSyncStart = (UINT16) (TempTiming.HorizontalResolution + HSyncOffset);
@@ -1062,41 +1028,73 @@ ParseEdidData (
 #endif
     } else if (BufferIndex[3] == 0xFA) {
       for (Index2 = 0; Index2 < 6; Index2 ++) {
-        HorizontalResolution = (UINT8) (BufferIndex[0] * 8 + 248);
+        HorizontalResolution = (UINT16) (BufferIndex[0] * 8 + 248);
         AspectRatio = (UINT8) (BufferIndex[1] >> 6);
         switch (AspectRatio) {
           case 0:
-            VerticalResolution = (UINT8) (HorizontalResolution / 16 * 10);
+            VerticalResolution = (UINT16) (HorizontalResolution / 16 * 10);
             break;
           case 1:
-            VerticalResolution = (UINT8) (HorizontalResolution / 4 * 3);
+            VerticalResolution = (UINT16) (HorizontalResolution / 4 * 3);
             break;
           case 2:
-            VerticalResolution = (UINT8) (HorizontalResolution / 5 * 4);
+            VerticalResolution = (UINT16) (HorizontalResolution / 5 * 4);
             break;
           case 3:
-            VerticalResolution = (UINT8) (HorizontalResolution / 16 * 9);
+            VerticalResolution = (UINT16) (HorizontalResolution / 16 * 9);
             break;
           default:
-            VerticalResolution = (UINT8) (HorizontalResolution / 4 * 3);
+            VerticalResolution = (UINT16) (HorizontalResolution / 4 * 3);
             break;
         }
         RefreshRate = (UINT8) ((BufferIndex[1] & 0x1f) + 60);
         TempTiming.HorizontalResolution = HorizontalResolution;
         TempTiming.VerticalResolution = VerticalResolution;
         TempTiming.RefreshRate = RefreshRate;
-        DBG("BiosVideo: ParseEdidData, found Detailed Timing %dx%d\n",
-            TempTiming.HorizontalResolution,
-            TempTiming.VerticalResolution);
-        if (SearchEdidTiming(ValidEdidTiming, &TempTiming) != TRUE) {
-          ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
-          ValidEdidTiming->ValidNumber ++;
-        }
+        DBG("BiosVideo: ParseEdidData, found Detailed Timing %dx%dx%d\n",
+             TempTiming.HorizontalResolution,
+             TempTiming.VerticalResolution,
+             TempTiming.RefreshRate
+           );
+        ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
+        ValidEdidTiming->ValidNumber ++;
       }
     } 
   }
 
   return TRUE;
+}
+/**
+
+  Search a specified Timing in all the valid EDID timings.
+
+
+  @param ValidEdidTiming - All valid EDID timing information.
+  @param EdidTiming      - The Timing to search for.
+
+  @return TRUE  - Found.
+          FALSE - Not found.
+
+**/
+STATIC
+BOOLEAN
+SearchEdidTiming (
+  VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING *ValidEdidTiming,
+  VESA_BIOS_EXTENSIONS_EDID_TIMING       *EdidTiming
+  )
+{
+  UINT32 Index;
+  UINT32 Key;
+
+  Key = CalculateEdidKey (EdidTiming);
+
+  for (Index = 0; Index < ValidEdidTiming->ValidNumber; Index ++) {
+    if (Key == ValidEdidTiming->Key[Index]) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
 }
 
 #define PCI_DEVICE_ENABLED  (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)
@@ -1172,7 +1170,7 @@ BiosVideoCheckForVbe (
   )
 {
   EFI_STATUS                             Status;
-  IA32_REGISTER_SET                  Regs;
+  IA32_REGISTER_SET                      Regs;
   UINT16                                 *ModeNumberPtr;
   BOOLEAN                                ModeFound;
   BOOLEAN                                EdidFound;
@@ -1182,9 +1180,10 @@ BiosVideoCheckForVbe (
   UINTN                                  ModeNumber;
   VESA_BIOS_EXTENSIONS_EDID_TIMING       Timing;
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
-  UINT16 *VMPtr16;
+  UINT16                                 *VMPtr16;
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
-  UINT32                                 BestMode;
+  UINT32                                 BestX;
+  UINT32                                 BestY;
 
   //
   // Allocate buffer under 1MB for VBE data structures
@@ -1227,140 +1226,6 @@ BiosVideoCheckForVbe (
   BiosVideoPrivate->VbeCrtcInformationBlock = (VESA_BIOS_EXTENSIONS_CRTC_INFORMATION_BLOCK *) (BiosVideoPrivate->VbeEdidDataBlock + 1);
   BiosVideoPrivate->VbeSaveRestorePages   = 0;
   BiosVideoPrivate->VbeSaveRestoreBuffer  = 0;
-
-#if 0
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-  Regs.X.BX = 0;
-  Regs.X.CX = 0;
-  Regs.E.ES = 0;
-  Regs.X.DI = 0;
-
-  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-  if ((Regs.X.BX & 0x1)) {
-    DBG ("BiosVideo: DDC 1 supported\n");
-  }
-  if ((Regs.X.BX & 0x2)) {
-    DBG ("BiosVideo: DDC 2 supported\n");
-  }
-#endif
-
-  //
-  // Read EDID information
-  //
-  // INT 10 - VESA VBE/DC (Display Data Channel) - READ EDID
-  //
-  //    AX = 4F15h
-  //    BL = 01h
-  //    CX = 0000h
-  //    DX = 0000h
-  //    ES:DI -> 128-byte buffer for EDID record (see #00127)
-  // Return: AL = 4Fh if function supported
-  //    AH = status
-  //        00h successful
-  //    ES:DI buffer filled
-  //    01h failed (e.g. non-DDC monitor)
-  //
-
-  EdidFound = FALSE;
-
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-  Regs.X.BX = 1;
-  Regs.X.CX = 0;
-  Regs.X.DX = 1;
-  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-
-  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-  DBG ("BiosVideo: block 1 read with status 0x%x, ExtensionFlag 0x%x\n",
-       Regs.X.AX,
-       BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
-
-#if 0
-  mNoDetailedTiming = TRUE;
-#endif
-  if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
-    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
-                       (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
-                       &ValidEdidTiming) == TRUE) {
-      EdidFound = TRUE;
-      DBG ("BiosVideo: Edid1 found\n");
-    } else {
-      ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
-    }
-  }
-
-
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-  Regs.X.BX = 1;
-  Regs.X.CX = 0;
-  Regs.X.DX = 0;
-  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-
-  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
-
-  DBG ("BiosVideo: block 0 read with status 0x%x, ExtensionFlag 0x%x\n",
-       Regs.X.AX,
-       BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
-  //
-  // See if the VESA call succeeded
-  //
-  if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
-    //
-    // Parse EDID data structure to retrieve modes supported by monitor
-    //
-    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
-                       (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
-                       &ValidEdidTiming) == TRUE) {
-      EdidFound = TRUE;
-      DBG ("BiosVideo: Edid0 found\n");
-    }
-  }
-  
-  if (EdidFound) {
-    DBG ("BiosVideo: Edid0 found, ValidEdidTiming.ValidNumber = %d\n", ValidEdidTiming.ValidNumber);
-    BiosVideoPrivate->EdidDiscovered.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
-    Status = gBS->AllocatePool (
-                    EfiBootServicesData,
-                    VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
-                    (VOID**) &BiosVideoPrivate->EdidDiscovered.Edid
-                    );
-    if (EFI_ERROR (Status)) {
-      goto Done;
-    }
-    gBS->CopyMem (
-           BiosVideoPrivate->EdidDiscovered.Edid,
-           BiosVideoPrivate->VbeEdidDataBlock,
-           VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
-           );
-
-    BiosVideoPrivate->EdidActive.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
-    Status = gBS->AllocatePool (
-                    EfiBootServicesData,
-                    VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
-                    (VOID**)&BiosVideoPrivate->EdidActive.Edid
-                    );
-    if (EFI_ERROR (Status)) {
-      goto Done;
-    }
-    gBS->CopyMem (
-           BiosVideoPrivate->EdidActive.Edid,
-           BiosVideoPrivate->VbeEdidDataBlock,
-           VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
-           );
-  } else {
-    BiosVideoPrivate->EdidDiscovered.SizeOfEdid = 0;
-    BiosVideoPrivate->EdidDiscovered.Edid = NULL;
-
-    BiosVideoPrivate->EdidActive.SizeOfEdid = 0;
-    BiosVideoPrivate->EdidActive.Edid = NULL;
-    DBG ("BiosVideo: Edid not found\n");
-  }
 
   //
   // Test to see if the Video Adapter is compliant with VBE 3.0
@@ -1414,6 +1279,139 @@ BiosVideoCheckForVbe (
   }
   DBG ("BiosVideo: VBE 2.0 or higher\n");
   
+#if 0
+  gBS->SetMem (&Regs, sizeof (Regs), 0);
+  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+  Regs.X.BX = 0;
+  Regs.X.CX = 0;
+  Regs.E.ES = 0;
+  Regs.X.DI = 0;
+
+  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+  if ((Regs.X.BX & 0x1)) {
+    DBG ("BiosVideo: DDC 1 supported\n");
+  }
+  if ((Regs.X.BX & 0x2)) {
+    DBG ("BiosVideo: DDC 2 supported\n");
+  }
+
+  //
+  // Read EDID information
+  //
+  // INT 10 - VESA VBE/DC (Display Data Channel) - READ EDID
+  //
+  //    AX = 4F15h
+  //    BL = 01h
+  //    CX = 0000h
+  //    DX = 0000h
+  //    ES:DI -> 128-byte buffer for EDID record (see #00127)
+  // Return: AL = 4Fh if function supported
+  //    AH = status
+  //        00h successful
+  //    ES:DI buffer filled
+  //    01h failed (e.g. non-DDC monitor)
+  //
+
+  gBS->SetMem (&Regs, sizeof (Regs), 0);
+  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+  Regs.X.BX = 1;
+  Regs.X.CX = 0;
+  Regs.X.DX = 1;
+  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+
+  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+  DBG ("BiosVideo: block 1 read with status 0x%x, ExtensionFlag 0x%x\n",
+       Regs.X.AX,
+       BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+
+#if 0
+  mNoDetailedTiming = TRUE;
+#endif
+  if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
+                       (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
+                       &ValidEdidTiming) == TRUE) {
+      EdidFound = TRUE;
+      DBG ("BiosVideo: Edid1 found\n");
+    } else {
+      ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
+    }
+  }
+#endif
+
+  EdidFound = FALSE;
+
+  gBS->SetMem (&Regs, sizeof (Regs), 0);
+  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
+  Regs.X.BX = 1;
+  Regs.X.CX = 0;
+  Regs.X.DX = 0;
+  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
+
+  LegacyBiosInt86 (BiosVideoPrivate, 0x10, &Regs);
+
+  DBG ("BiosVideo: block 0 read with status 0x%x, ExtensionFlag 0x%x\n",
+       Regs.X.AX,
+       BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
+  //
+  // See if the VESA call succeeded
+  //
+  if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+    //
+    // Parse EDID data structure to retrieve modes supported by monitor
+    //
+    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock,
+                       (UINT8 *) BiosVideoPrivate->VbeCrtcInformationBlock,
+                       &ValidEdidTiming) == TRUE) {
+      EdidFound = TRUE;
+      DBG ("BiosVideo: Edid0 found\n");
+    }
+  }
+  
+  if (EdidFound) {
+    DBG ("BiosVideo: Edid found, ValidEdidTiming.ValidNumber = %d\n", ValidEdidTiming.ValidNumber);
+    BiosVideoPrivate->EdidDiscovered.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
+    Status = gBS->AllocatePool (
+                    EfiBootServicesData,
+                    VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
+                    (VOID**) &BiosVideoPrivate->EdidDiscovered.Edid
+                    );
+    if (EFI_ERROR (Status)) {
+      goto Done;
+    }
+    gBS->CopyMem (
+           BiosVideoPrivate->EdidDiscovered.Edid,
+           BiosVideoPrivate->VbeEdidDataBlock,
+           VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
+           );
+
+    BiosVideoPrivate->EdidActive.SizeOfEdid = VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE;
+    Status = gBS->AllocatePool (
+                    EfiBootServicesData,
+                    VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE,
+                    (VOID**)&BiosVideoPrivate->EdidActive.Edid
+                    );
+    if (EFI_ERROR (Status)) {
+      goto Done;
+    }
+    gBS->CopyMem (
+           BiosVideoPrivate->EdidActive.Edid,
+           BiosVideoPrivate->VbeEdidDataBlock,
+           VESA_BIOS_EXTENSIONS_EDID_BLOCK_SIZE
+           );
+  } else {
+    BiosVideoPrivate->EdidDiscovered.SizeOfEdid = 0;
+    BiosVideoPrivate->EdidDiscovered.Edid = NULL;
+
+    BiosVideoPrivate->EdidActive.SizeOfEdid = 0;
+    BiosVideoPrivate->EdidActive.Edid = NULL;
+    DBG ("BiosVideo: Edid not found\n");
+  }
+
   //
   // Walk through the mode list to see if there is at least one mode the is compatible with the EDID mode
   //
@@ -1422,8 +1420,9 @@ BiosVideoCheckForVbe (
 
   PreferMode = 0;
   ModeNumber = 0;
-  BestMode = 0;
-  
+  BestX = 0;
+  BestY = 0;
+
   for (; *ModeNumberPtr != VESA_BIOS_EXTENSIONS_END_OF_MODE_LIST; ModeNumberPtr++) {
     //
     // Make sure this is a mode number defined by the VESA VBE specification.  If it isn'tm then skip this mode number.
@@ -1557,11 +1556,13 @@ BiosVideoCheckForVbe (
       continue;
     }
 #endif
-    if (ModeFound && (BestMode < (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
-                             BiosVideoPrivate->VbeModeInformationBlock->YResolution))) {
+    if (ModeFound &&
+        (BestX <= BiosVideoPrivate->VbeModeInformationBlock->XResolution) &&
+        (BestY <= BiosVideoPrivate->VbeModeInformationBlock->YResolution)) {
       PreferMode = ModeNumber;
-      BestMode = BiosVideoPrivate->VbeModeInformationBlock->XResolution +
-                 BiosVideoPrivate->VbeModeInformationBlock->YResolution;
+      BestX = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
+      BestY = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
+      DBG (", pref");
     }
 
     DBG ("\n");
@@ -1672,7 +1673,6 @@ BiosVideoCheckForVbe (
   // Current mode is unknow till now, set it to an invalid mode.
   //
   GraphicsOutputMode->Mode = GRAPHICS_OUTPUT_INVALIDE_MODE_NUMBER;
-
   //
   // Find the best mode to initialize
   //
@@ -1696,7 +1696,6 @@ BiosVideoCheckForVbe (
       goto Done;
     }
   }
-
 Done:
   //
   // If there was an error, then free the mode structure
@@ -1712,10 +1711,7 @@ Done:
       gBS->FreePool (BiosVideoPrivate->GraphicsOutput.Mode);
     }
   }
-#if 0
-Done:
-  BiosVideoPrivate->HardwareNeedsStarting = FALSE;
-#endif
+
   return Status;
 }
 
