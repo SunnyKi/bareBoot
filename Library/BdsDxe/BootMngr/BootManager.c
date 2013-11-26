@@ -756,9 +756,9 @@ CallBootManager (
  **/
 EFI_STATUS
 WaitForSingleEvent (
-                    IN EFI_EVENT                  Event,
-                    IN UINT64                     Timeout OPTIONAL
-                    )
+  IN EFI_EVENT                  Event,
+  IN UINT64                     Timeout OPTIONAL
+  )
 {
   UINTN       Index;
   EFI_STATUS  Status;
@@ -775,11 +775,11 @@ WaitForSingleEvent (
       // Set the timer event
       //
       gBS->SetTimer (
-                     TimerEvent,
-                     TimerRelative,
-                     Timeout
-                     );
-      
+             TimerEvent,
+             TimerRelative,
+             Timeout
+           );
+
       //
       // Wait for the original event or the timer
       //
