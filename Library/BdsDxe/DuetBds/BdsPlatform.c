@@ -1285,7 +1285,7 @@ Returns:
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");
   BdsLibEnumerateAllBootOption (&gBootOptionList);
 
-  if (gSettings.ScreenMode != 0) {
+  if (gSettings.ScreenMode != 0xffff) {
     SetModeScreen (gSettings.ScreenMode);
     ClearScreen (0xBFBFBF);
   }
