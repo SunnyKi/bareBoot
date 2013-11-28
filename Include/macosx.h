@@ -219,8 +219,13 @@ typedef struct {
   BOOLEAN ETHInjection;
   BOOLEAN USBInjection;
   BOOLEAN SPDScan;
-  // KernelAndKextPatches
-  BOOLEAN KPKernelCpu;
+  // Kexts Patches
+  BOOLEAN KPKernelPatchesNeeded;
+  UINTN   AnyKernelDataLen[100];
+  CHAR8   *AnyKernelData[100];
+  CHAR8   *AnyKernelPatch[100];
+  UINT32   NrKernel;
+  // Kernel Patches
   BOOLEAN KPKextPatchesNeeded;
   CHAR8   *AnyKext[100];
   BOOLEAN AnyKextInfoPlistPatch[100];

@@ -1578,11 +1578,34 @@ GetUserSettings (
   }
 
   // KernelAndKextPatches
-  gSettings.KPKernelCpu = FALSE;
+  gSettings.KPKernelPatchesNeeded = FALSE;
   gSettings.KPKextPatchesNeeded = FALSE;
 
-  dictPointer = plDictFind (gConfigPlist, "KernelPatches", 13, plKindDict);
-  gSettings.KPKernelCpu = GetBoolProperty (dictPointer, "KernelCpu", FALSE);
+  dictPointer = plDictFind (gConfigPlist, "KernelPatches", 13, plKindArray);
+  if (array != NULL) {
+    gSettings.NrKernel = (UINT32) plNodeGetSize (array);
+    DBG ("gSettings.NrKernel = %d\n", gSettings.NrKernel);
+    if ((gSettings.NrKernel <= 100)) {
+      for (i = 0; i < gSettings.NrKexts; i++) {
+        gSettings.AnyKernelData[i] = 0;
+        len = 0;
+
+        dictPointer = plNodeGetItem (array, i);
+        gSettings.AnyKernelData[i] = GetDataSetting (dictPointer, "Find", &gSettings.AnyKernelDataLen[i]);
+        gSettings.AnyKernelPatch[i] = GetDataSetting (dictPointer, "Replace", &len);
+
+        if (gSettings.AnyKernelDataLen[i] != len || len == 0) {
+          gSettings.AnyKernelDataLen[i] = 0;
+          continue;
+        }
+        gSettings.KPKernelPatchesNeeded = TRUE;
+        DBG ("  %d. kernel patch, length = %d, %a\n",
+             (i + 1),
+             gSettings.AnyKernelDataLen[i]
+            );
+      }
+    }
+  }
 
   array = plDictFind (gConfigPlist, "KextPatches", 11, plKindArray);
   if (array != NULL) {

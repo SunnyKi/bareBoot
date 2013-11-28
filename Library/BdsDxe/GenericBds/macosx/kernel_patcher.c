@@ -14,6 +14,8 @@
 #include "device_tree.h"
 #endif
 
+#define KERNEL_MAX_SIZE 40000000
+
 EFI_PHYSICAL_ADDRESS    KernelRelocBase = 0;
 BootArgs1               *bootArgs1      = NULL;
 BootArgs2               *bootArgs2      = NULL;
@@ -62,6 +64,7 @@ SetKernelRelocBase (
     return;
 }
 
+#if 0
 VOID
 KernelPatcher_64 (
   VOID  *kernelData
@@ -463,6 +466,7 @@ Patcher_SSE3_7 (
      // not support yet
   return;
 }
+#endif
 
 VOID
 Get_PreLink (
@@ -727,6 +731,29 @@ KernelAndKextPatcherInit (
 }
 
 VOID
+EFIAPI
+AnyKernelPatch (
+  IN UINT8 *Kernel
+)
+{
+  UINTN   Num = 0, i;
+
+  for (i = 0; i < gSettings.NrKernel; i++) {
+    if (gSettings.AnyKernelData[i] > 0) {
+      Num = SearchAndReplace (
+              Kernel,
+              KERNEL_MAX_SIZE,
+              gSettings.AnyKernelData[i],
+              gSettings.AnyKernelDataLen[i],
+              gSettings.AnyKernelPatch[i],
+              1
+            );
+    }
+  }
+}
+
+
+VOID
 KernelAndKextsPatcherStart (
   VOID
 )
@@ -735,6 +762,7 @@ KernelAndKextsPatcherStart (
   UINT32      deviceTreeLength;
   EFI_STATUS  Status;
 
+#if 0
   // we will call KernelAndKextPatcherInit() only if needed
   if (gSettings.KPKernelCpu) {
     //
@@ -760,8 +788,9 @@ KernelAndKextsPatcherStart (
       }
     }
   }
+#endif
   //
-  // Kext patches
+  // Kernel & Kexts patches
   //
   KernelAndKextPatcherInit ();
 
@@ -770,6 +799,10 @@ KernelAndKextsPatcherStart (
     Print (L"Kernel Patcher: kernel data is NULL.\n");
 #endif
     return;
+  }
+
+  if (gSettings.KPKernelPatchesNeeded) {
+    AnyKernelPatch (KernelData);
   }
 
   if (gSettings.KPKextPatchesNeeded) {
