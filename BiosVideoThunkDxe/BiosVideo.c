@@ -1476,7 +1476,7 @@ BiosVideoCheckForVbe (
 
     ModeFound = FALSE;
 
-    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution <= 1024) {
+    if (BiosVideoPrivate->VbeModeInformationBlock->XResolution <= 1280) {
       DBG (", set as insurance");
       ModeFound = TRUE;
     }
