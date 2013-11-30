@@ -130,8 +130,8 @@
   LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
   EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
 #  EblNetworkLib|EmbeddedPkg/Library/EblNetworkLib/EblNetworkLib.inf
-  CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
-#  CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
+#  CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
+  CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
 
   #
   # To save size, use NULL library for DebugLib and ReportStatusCodeLib.
@@ -188,7 +188,8 @@
   }
 # ----+++++++------
   UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
-  bareBoot/Cpu/CpuDxe2/CpuDxe.inf
+  UefiCpuPkg/CpuDxe/CpuDxe.inf
+#  bareBoot/Cpu/CpuDxe2/CpuDxe.inf
   bareBoot/Cpu/CpuDxe/Cpu.inf
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
   bareBoot/AcpiResetDxe/Reset.inf
