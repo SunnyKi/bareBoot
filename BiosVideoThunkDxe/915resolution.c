@@ -17,9 +17,10 @@ static const UINT8 nvda_pattern[] = {
 
 static const CHAR8 nvda_string[] = "NVID";
 
-
 //more advanced tables from pene
+
 #define RESOLUTIONS_NUMBER 11
+
 static TABLE_0 nvda_res[RESOLUTIONS_NUMBER] = {
   {1280,  720},
   {1280,  800},
@@ -280,14 +281,16 @@ VOID set_mode (
   edid_mode   mode
 )
 {
+  UINTN             NumReplaces;
+  UINTN             NumReplacesTotal;
+  UINTN             Index = 0;
+
 
 	// patch first available mode
 	DBG("PatchVBIOS: ");
 	switch (map->bios) {
 		case BT_INTEL:
     {
-      UINTN     NumReplaces;
-
       DBG("BT_INTEL: ");
 
       NumReplaces = 0;
@@ -350,12 +353,9 @@ VOID set_mode (
 
 		case BT_NVDA:
 		{
-      UINTN             NumReplaces;
-      UINTN             NumReplacesTotal;
-      UINTN             Index = 0;
-      
-			DBG("BT_NVDA\n");
-			// totally revised on work by pene
+      DBG("BT_NVDA\n");
+
+      // totally revised on work by pene
       // http://www.projectosx.com/forum/index.php?showtopic=2562&view=findpost&p=22683
 			
       // Search for desired mode in our matrix
