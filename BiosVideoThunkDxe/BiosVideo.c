@@ -927,7 +927,7 @@ ParseEdidData (
   VESA_BIOS_EXTENSIONS_EDID_DATA_BLOCK *EdidDataBlock;
 
   EdidDataBlock = (VESA_BIOS_EXTENSIONS_EDID_DATA_BLOCK *) EdidBuffer;
-//  mode = AllocateZeroPool (sizeof(edid_mode));
+
   //
   // Check the checksum of EDID data
   //
