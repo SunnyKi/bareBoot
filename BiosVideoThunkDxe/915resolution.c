@@ -353,7 +353,7 @@ VOID set_mode (
 
 		case BT_NVDA:
 		{
-      DBG("BT_NVDA\n");
+      DBG("BT_NVDA");
 
       // totally revised on work by pene
       // http://www.projectosx.com/forum/index.php?showtopic=2562&view=findpost&p=22683
@@ -365,10 +365,11 @@ VOID set_mode (
         }
       }
       if (Index == RESOLUTIONS_NUMBER) {
-        DBG("the patch is not ready for the desired resolution\n");
+        DBG(" - the patch is not ready for the desired resolution\n");
         break; // not found
       }
-      
+      DBG (" - mode %dx%d\n", nvda_res[Index].HRes, nvda_res[Index].VRes);
+
       NumReplaces = 0;
       NumReplacesTotal = 0;
       NumReplaces = VideoBiosPatchSearchAndReplace (

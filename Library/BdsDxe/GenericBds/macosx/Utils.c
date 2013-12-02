@@ -1581,12 +1581,12 @@ GetUserSettings (
   gSettings.KPKernelPatchesNeeded = FALSE;
   gSettings.KPKextPatchesNeeded = FALSE;
 
-  dictPointer = plDictFind (gConfigPlist, "KernelPatches", 13, plKindArray);
+  array = plDictFind (gConfigPlist, "KernelPatches", 13, plKindArray);
   if (array != NULL) {
     gSettings.NrKernel = (UINT32) plNodeGetSize (array);
     DBG ("gSettings.NrKernel = %d\n", gSettings.NrKernel);
     if ((gSettings.NrKernel <= 100)) {
-      for (i = 0; i < gSettings.NrKexts; i++) {
+      for (i = 0; i < gSettings.NrKernel; i++) {
         gSettings.AnyKernelData[i] = 0;
         len = 0;
 
