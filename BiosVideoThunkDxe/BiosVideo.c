@@ -29,6 +29,8 @@ EFI_DRIVER_BINDING_PROTOCOL gBiosVideoDriverBinding = {
   NULL
 };
 
+EFI_LEGACY_REGION2_PROTOCOL   *mLegacyRegion2 = NULL;
+
 //
 // Global lookup tables for VGA graphics modes
 //
@@ -1165,6 +1167,16 @@ BiosVideoCheckForVbe (
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
   UINT32                                 BestX;
   UINT32                                 BestY;
+
+  Status = gBS->LocateProtocol (
+                  &gEfiLegacyRegion2ProtocolGuid,
+                  NULL,
+                  (VOID **) &mLegacyRegion2
+                );
+
+  if (EFI_ERROR (Status)) {
+    mLegacyRegion2 = NULL;
+  }
 
   //
   // Allocate buffer under 1MB for VBE data structures

@@ -199,6 +199,7 @@
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
   bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
 #  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf

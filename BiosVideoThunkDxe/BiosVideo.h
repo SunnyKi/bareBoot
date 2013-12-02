@@ -30,6 +30,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Protocol/EdidActive.h>
 #include <Protocol/EdidDiscovered.h>
 #include <Protocol/DevicePath.h>
+#include <Protocol/LegacyRegion2.h>
 
 #include <Library/UefiLib.h>
 #include <Library/DebugLib.h>

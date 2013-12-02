@@ -49,3 +49,4 @@
   gEfiLegacy8259ProtocolGuid
   gEfiEdidDiscoveredProtocolGuid
   gEfiEdidActiveProtocolGuid
+  gEfiLegacyRegion2ProtocolGuid
