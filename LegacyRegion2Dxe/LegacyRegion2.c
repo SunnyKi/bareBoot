@@ -273,19 +273,19 @@ LegacyRegionManipulationInternal (
   // Program PAM until end PAM is encountered
   //
   for (Index = StartIndex; Index < (sizeof(mSectionArray) / sizeof(mSectionArray[0])); Index++) {
+#if 0
     DBG("LegacyRegion2: %d. PAMRegOffset %x = %x\n", Index,
         mRegisterValues[Index].PAMRegOffset,
         PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, mRegisterValues[Index].PAMRegOffset))
         );
+#endif
     if (ReadEnable != NULL) {
       if (*ReadEnable) {
-        //DBG(" R-");
         PciOr8 (
           PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, mRegisterValues[Index].PAMRegOffset),
           mRegisterValues[Index].ReadEnableData
           );
       } else {
-        //DBG(" R+");
         PciAnd8 (
           PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, mRegisterValues[Index].PAMRegOffset),
           (UINT8) (~mRegisterValues[Index].ReadEnableData)
@@ -294,23 +294,23 @@ LegacyRegionManipulationInternal (
     }
     if (WriteEnable != NULL) {
       if (*WriteEnable) {
-        DBG("LegacyRegion2: Lock region\n");
         PciOr8 (
           PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, mRegisterValues[Index].PAMRegOffset),
           mRegisterValues[Index].WriteEnableData
           );
       } else {
-        DBG("LegacyRegion2: UnLock region\n");
         PciAnd8 (
           PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, mRegisterValues[Index].PAMRegOffset),
           (UINT8) (~mRegisterValues[Index].WriteEnableData)
           );
       }
     }
+#if 0
     DBG("LegacyRegion2: %d. PAMRegOffset %x = %x now\n", Index,
         mRegisterValues[Index].PAMRegOffset,
         PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, mRegisterValues[Index].PAMRegOffset))
         );
+#endif
 
     //
     // If the end PAM is encountered, record its length as granularity and jump out.
