@@ -1034,8 +1034,6 @@ ParseEdidData (
       HSync = ((BufferIndex[17] & 0x04) == 0x04);
       VSync = ((BufferIndex[17] & 0x02) == 0x02);
 
-      VideoBiosPatchNativeFromEdid (BufferIndex, mode);
-
       DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%dx%d\n",
            TempTiming.HorizontalResolution,
            TempTiming.VerticalResolution,
@@ -1081,6 +1079,9 @@ ParseEdidData (
 
       ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
       ValidEdidTiming->ValidNumber ++;
+      // attempt to patch video bios 
+      VideoBiosPatchNativeFromEdid (BufferIndex, mode);
+
     } else if (BufferIndex[3] == 0xFA) {
       for (Index2 = 0; Index2 < 6; Index2 ++) {
         HorizontalResolution = (UINT16) (BufferIndex[0] * 8 + 248);

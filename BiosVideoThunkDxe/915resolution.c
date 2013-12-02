@@ -282,7 +282,7 @@ VOID set_mode (
 {
 
 	// patch first available mode
-	DBG("Patching: ");
+	DBG("PatchVBIOS: ");
 	switch (map->bios) {
 		case BT_INTEL:
     {
