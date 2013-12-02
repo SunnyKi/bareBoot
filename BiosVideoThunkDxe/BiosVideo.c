@@ -16,6 +16,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <macosx.h>
 
 #include "BiosVideo.h"
+#include "915resolution.h"
 
 //
 // EFI Driver Binding Protocol Instance
@@ -28,8 +29,6 @@ EFI_DRIVER_BINDING_PROTOCOL gBiosVideoDriverBinding = {
   NULL,
   NULL
 };
-
-EFI_LEGACY_REGION2_PROTOCOL   *mLegacyRegion2 = NULL;
 
 //
 // Global lookup tables for VGA graphics modes
@@ -819,6 +818,56 @@ CalculateEdidKey (
   Key = (EdidTiming->HorizontalResolution * 2) + EdidTiming->VerticalResolution;
   return Key;
 }
+
+EFI_STATUS
+EFIAPI
+VideoBiosPatchNativeFromEdid (
+  UINT8     *edidInfo,
+  edid_mode mode
+)
+{
+  EFI_STATUS                          Status;
+  EFI_LEGACY_REGION2_PROTOCOL         *LegacyRegion2;
+  UINT32                              Granularity;
+  vbios_map                           *map;
+
+  map = open_vbios(CT_UNKNOWN);
+  if (map == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+  
+  Status = gBS->LocateProtocol (
+                  &gEfiLegacyRegion2ProtocolGuid,
+                  NULL,
+                  (VOID **) &LegacyRegion2
+                );
+
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  Status = LegacyRegion2->UnLock (
+                            LegacyRegion2,
+                            VBIOS_START,
+                            VBIOS_SIZE,
+                            &Granularity
+                          );
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
+  
+  set_mode (map, edidInfo, mode);
+	FreePool(map);
+
+  Status = LegacyRegion2->Lock (
+                            LegacyRegion2,
+                            VBIOS_START,
+                            VBIOS_SIZE,
+                            &Granularity
+                          );
+
+  return Status;
+}
+
 /**
 
   Parse the Established Timing and Standard Timing in EDID data block.
@@ -846,6 +895,8 @@ ParseEdidData (
   UINT8  *BufferIndex;
   UINT16 HorizontalResolution;
   UINT16 VerticalResolution;
+  edid_mode   mode;
+
   UINT16 HBlanking, HSyncOffset, HSyncPulse;
   UINT16 VBlanking, VSyncOffset, VSyncPulse;
   UINT16 HDisplaySize, VDisplaySize;
@@ -861,7 +912,7 @@ ParseEdidData (
   VESA_BIOS_EXTENSIONS_EDID_DATA_BLOCK *EdidDataBlock;
 
   EdidDataBlock = (VESA_BIOS_EXTENSIONS_EDID_DATA_BLOCK *) EdidBuffer;
-
+//  mode = AllocateZeroPool (sizeof(edid_mode));
   //
   // Check the checksum of EDID data
   //
@@ -943,26 +994,47 @@ ParseEdidData (
     if ((BufferIndex[0] != 0x00) || (BufferIndex[1] != 0x00) ||
         (BufferIndex[2] != 0x00) || (BufferIndex[4] != 0x00)) {
       TempTiming.HorizontalResolution = ((UINT16)(BufferIndex[4] & 0xF0) << 4) | (BufferIndex[2]);
+      mode.h_active = TempTiming.HorizontalResolution;
+
       TempTiming.VerticalResolution = ((UINT16)(BufferIndex[7] & 0xF0) << 4) | (BufferIndex[5]);
+      mode.v_active = TempTiming.VerticalResolution;
+
       PixelClock = (UINT32) (((BufferIndex[1] << 8) | BufferIndex[0]) * 10000);
+      mode.pixel_clock = PixelClock;
+
       HBlanking = (UINT16) (((BufferIndex[4] & 0x0F) << 8) | BufferIndex[3]);
+      mode.h_blanking = HBlanking;
       HSyncOffset = (UINT16) (((BufferIndex[11] & 0xC0) << 2) | BufferIndex[8]);
+      mode.h_sync_offset = HSyncOffset;
       HSyncPulse  = (UINT16) (((BufferIndex[11] & 0x30) << 4) | BufferIndex[9]);
+      mode.h_sync_width = HSyncPulse;
+
       VBlanking = (UINT16) (((BufferIndex[7] & 0x0F) << 8) | BufferIndex[6]);
+      mode.v_blanking = VBlanking;
       VSyncOffset = (UINT16) (((BufferIndex[11] & 0x0C) << 2) | ((BufferIndex[10] & 0xF0) >> 4));
+      mode.v_sync_offset = VSyncOffset;
       VSyncPulse  = (UINT16) (((BufferIndex[11] & 0x03) << 4) | (BufferIndex[10] & 0x0F));
+      mode.v_sync_width = VSyncPulse;
+
       HDisplaySize = (UINT16) (((BufferIndex[14] & 0xF0) << 4) | BufferIndex[12]);
       VDisplaySize = (UINT16) (((BufferIndex[14] & 0x0F) << 8) | BufferIndex[13]);
+
       HBorderPixels = BufferIndex[15];
       VBorderLines  = BufferIndex[16];
+
       HTotal = TempTiming.HorizontalResolution + HBlanking;
       VTotal = TempTiming.VerticalResolution + VBlanking;
+
       VFreq = DivU64x32 (MultU64x32 (PixelClock, 100), (UINT32) MultU64x32 (HTotal, VTotal));
       HFreq = DivU64x32 (MultU64x32 (PixelClock, 100), (UINT32) MultU64x32 (HTotal, 1000));
+
       TempTiming.RefreshRate = (UINT16) DivU64x32 (VFreq, 100);
+
       Interlaced = ((BufferIndex[17] & 0x80) == 0x80);
       HSync = ((BufferIndex[17] & 0x04) == 0x04);
       VSync = ((BufferIndex[17] & 0x02) == 0x02);
+
+      VideoBiosPatchNativeFromEdid (BufferIndex, mode);
 
       DBG("BiosVideo: ParseEdidData, found Detailed    Timing %dx%dx%d\n",
            TempTiming.HorizontalResolution,
@@ -1167,16 +1239,6 @@ BiosVideoCheckForVbe (
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
   UINT32                                 BestX;
   UINT32                                 BestY;
-
-  Status = gBS->LocateProtocol (
-                  &gEfiLegacyRegion2ProtocolGuid,
-                  NULL,
-                  (VOID **) &mLegacyRegion2
-                );
-
-  if (EFI_ERROR (Status)) {
-    mLegacyRegion2 = NULL;
-  }
 
   //
   // Allocate buffer under 1MB for VBE data structures

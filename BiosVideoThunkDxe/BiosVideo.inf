@@ -42,7 +42,8 @@
   ComponentName.c
   VesaBiosExtensions.h
   LegacyBiosThunk.c
-  
+  915resolution.c
+
 [Protocols]
   gEfiPciIoProtocolGuid
   gEfiVgaMiniPortProtocolGuid
