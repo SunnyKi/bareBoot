@@ -830,6 +830,8 @@ VideoBiosPatchNativeFromEdid (
   EFI_LEGACY_REGION2_PROTOCOL         *LegacyRegion2;
   UINT32                              Granularity;
   vbios_map                           *map;
+  UINT8                               *TstPtr;
+  UINT8                               TstVar;
 
   map = open_vbios(CT_UNKNOWN);
   if (map == NULL) {
@@ -854,7 +856,20 @@ VideoBiosPatchNativeFromEdid (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  
+  //
+  // Test some vbios address for writing
+  //
+  TstPtr = (UINT8*)(UINTN)(VBIOS_START + 0xA110);
+  TstVar = *TstPtr;
+  *TstPtr = *TstPtr + 1;
+  if (TstVar == *TstPtr) {
+    DBG("Video Bios Unlock: error, not unlocked\n");
+    Status = EFI_DEVICE_ERROR;
+  } else {
+    DBG("Video Bios Unlock: unlocked\n");
+  }
+  *TstPtr = TstVar;
+
   set_mode (map, edidInfo, mode);
 	FreePool(map);
 
@@ -1079,7 +1094,7 @@ ParseEdidData (
 
       ValidEdidTiming->Key[ValidEdidTiming->ValidNumber] = CalculateEdidKey (&TempTiming);
       ValidEdidTiming->ValidNumber ++;
-      // attempt to patch video bios 
+      // attempt to patch video bios
       VideoBiosPatchNativeFromEdid (BufferIndex, mode);
 
     } else if (BufferIndex[3] == 0xFA) {
