@@ -135,16 +135,19 @@ VideoBiosPatchSearchAndReplace (
   BOOLEAN   NoReplacesRestriction = MaxReplaces <= 0;
   UINT8     *End = Source + SourceSize;
   
+  DBG ("VideoBiosPatchSearchAndReplace:");
   while (Source < End && (NoReplacesRestriction || MaxReplaces > 0)) {
     if (CompareMem(Source, Search, SearchSize) == 0) {
       CopyMem(Source, Replace, SearchSize);
       NumReplaces++;
       MaxReplaces--;
+      DBG (" offset = 0x%x.", Source);
       Source += SearchSize;
     } else {
       Source++;
     }
   }
+  DBG ("\n");
   return NumReplaces;
 }
 
@@ -408,11 +411,11 @@ VOID set_mode (
                     );
       NumReplacesTotal += NumReplaces;
       DBG (" patch 3: patched %d time(s)\n", NumReplaces);
-      
+
       if ((*((UINT8*)(UINTN)(VBIOS_START + 0x34)) & 0x8F) == 0x80 ) {
         *((UINT8*)(UINTN)(VBIOS_START + 0x34)) |= 0x01; 
       }
-      
+
 			break;
 		}
 

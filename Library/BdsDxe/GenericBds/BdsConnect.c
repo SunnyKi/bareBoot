@@ -252,7 +252,6 @@ BdsLibConnectDevicePath (
   UINTN                     Size;
   EFI_TPL                   CurrentTpl;
 
-  DBG ("-->BdsLibConnectDevicePath\n");
   if (DevicePathToConnect == NULL) {
     return EFI_SUCCESS;
   }
