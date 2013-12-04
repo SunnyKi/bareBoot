@@ -1009,7 +1009,7 @@ setup_nvidia_devprop (
 )
 {
   const INT32 MAX_BIOS_VERSION_LENGTH = 32;
-
+  EFI_STATUS                Status;
   CHAR8*                    model;
   CHAR8*                    version_str;
   CHAR8*                    s;
@@ -1024,6 +1024,9 @@ setup_nvidia_devprop (
   BOOLEAN                   isVersion;
   DevPropDevice             *device;
   option_rom_pci_header_t*  rom_pci_header;
+  UINTN                     bufferLen;
+  CHAR16                    FileName[40];
+  UINT8*                    buffer;
 
   device = NULL;
   nvCardType = 0;
@@ -1032,6 +1035,9 @@ setup_nvidia_devprop (
   nvPatch = 0;
   crlf_count = 0;
   model = NULL;
+  rom = NULL;
+  buffer = NULL;
+  bufferLen = 0;
   rom_pci_header = NULL;
   version_str = NULL;
 
@@ -1042,12 +1048,33 @@ setup_nvidia_devprop (
   // Amount of VRAM in kilobytes
   videoRam = mem_detect (nvCardType, nvda_dev);
   model = get_nvidia_model ((nvda_dev->vendor_id << 16) | nvda_dev->device_id);
-  rom = AllocateZeroPool (NVIDIA_ROM_SIZE + 1);
-  // PRAMIN first
-  read_nVidia_PRAMIN (nvda_dev, rom, nvCardType);
 
-  if ((rom[0] != 0x55) || (rom[1] != 0xaa)) {
-    read_nVidia_PROM (nvda_dev, rom);
+  if (gSettings.LoadVBios) {
+    if (gPNDirExists) {
+      UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
+                     gProductNameDir, nvda_dev->vendor_id, nvda_dev->device_id);
+    } else {
+      UnicodeSPrint (FileName, sizeof (FileName), L"\\EFI\\bareboot\\rom\\%04x_%04x.rom",
+                     nvda_dev->vendor_id, nvda_dev->device_id);
+    }
+
+    if (FileExists (gRootFHandle, FileName)) {
+      Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
+
+      if ((!EFI_ERROR (Status)) && (bufferLen > 0)) {
+        rom = buffer;
+      }
+    }
+  }
+  
+  if (rom == NULL) {
+    rom = AllocateZeroPool (NVIDIA_ROM_SIZE + 1);
+    // PRAMIN first
+    read_nVidia_PRAMIN (nvda_dev, rom, nvCardType);
+
+    if ((rom[0] != 0x55) || (rom[1] != 0xaa)) {
+      read_nVidia_PROM (nvda_dev, rom);
+    }
   }
 
   if (rom[0] == 0x55 && rom[1] == 0xaa) {
@@ -1148,7 +1175,9 @@ setup_nvidia_devprop (
   }
   devprop_add_value(device, "hda-gfx", (UINT8*) "onboard-1\0", 10);
 
-  FreePool (rom);
+  if (rom != NULL) {
+    FreePool (rom);
+  }
   if (version_str != NULL) {
     FreePool (version_str);
   }
