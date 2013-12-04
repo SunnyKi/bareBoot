@@ -364,34 +364,6 @@ get_pci_dev_path(
   return tmp;
 }
 
-#if 0
-EFI_STATUS
-GetEdid(
-  VOID
-)
-{
-	EFI_STATUS						Status;
-  UINTN                 N;
-
-  gEDID = NULL;
-
-	Status = gBS->LocateProtocol (&gEfiEdidDiscoveredProtocolGuid, NULL, (VOID **)&EdidDiscovered);
-
-	if (!EFI_ERROR (Status))
-    {
-		N = EdidDiscovered->SizeOfEdid;
-		if (N == 0) {
-			return EFI_NOT_FOUND;
-		}
-    gEDID = AllocateAlignedPages(EFI_SIZE_TO_PAGES(N), 128);
-    if (!gSettings.CustomEDID) {
-      gSettings.CustomEDID = gEDID;
-    }
-    CopyMem(gEDID, EdidDiscovered->Edid, N);
-  }
-  return Status;
-}
-#endif
 // ---------------============== Ethernet built-in device injection
 
 BOOLEAN
@@ -1066,7 +1038,7 @@ setup_nvidia_devprop (
       }
     }
   }
-  
+
   if (rom == NULL) {
     rom = AllocateZeroPool (NVIDIA_ROM_SIZE + 1);
     // PRAMIN first
@@ -1652,9 +1624,6 @@ load_vbios_file (
   }
 
   CopyMem (card->rom, buffer, bufferLen);
-#if 0
-  read (fd, (CHAR8 *) card->rom, card->rom_size);
-#endif
 
   if (!validate_rom ((option_rom_header_t *) card->rom, card->pci_dev)) {
     card->rom_size = 0;
@@ -1664,9 +1633,7 @@ load_vbios_file (
 
 	bufferLen = ((option_rom_header_t *) card->rom)->rom_size;
   card->rom_size = ((option_rom_header_t *) card->rom)->rom_size * 512;
-#if 0
-  close (fd);
-#endif
+
   FreePool (buffer);
   return TRUE;
 }
@@ -2187,9 +2154,7 @@ SetDevices (
   UINTN         Function;
   BOOLEAN       StringDirty = FALSE;
   BOOLEAN       TmpDirty = FALSE;
-#if 0
-  GetEdid ();
-#endif
+
   /* Read Pci Bus for GFX */
   Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);
 
