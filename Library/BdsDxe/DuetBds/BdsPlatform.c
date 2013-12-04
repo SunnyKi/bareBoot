@@ -1284,7 +1284,7 @@ Returns:
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");
   BdsLibEnumerateAllBootOption (&gBootOptionList);
-#if 1
+#if 0
   UINT8                             *vrom;
   UINT16                            vrom_size;
 

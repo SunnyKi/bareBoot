@@ -285,7 +285,6 @@ VOID set_mode (
 )
 {
   UINTN             NumReplaces;
-  UINTN             NumReplacesTotal;
   UINTN             Index = 0;
 
 
@@ -373,8 +372,6 @@ VOID set_mode (
       }
       DBG (" - mode %dx%d\n", nvda_res[Index].HRes, nvda_res[Index].VRes);
 
-      NumReplaces = 0;
-      NumReplacesTotal = 0;
       NumReplaces = VideoBiosPatchSearchAndReplace (
                       (UINT8*)(UINTN)VBIOS_START,
                       VBIOS_SIZE,
@@ -382,7 +379,6 @@ VOID set_mode (
                       (UINT8*)&nvda_key0[Index].Matrix[0],
                       -1
                     );
-      NumReplacesTotal += NumReplaces;
       DBG (" patch 0: patched %d time(s)\n", NumReplaces);
       NumReplaces = VideoBiosPatchSearchAndReplace (
                       (UINT8*)(UINTN)VBIOS_START,
@@ -391,7 +387,6 @@ VOID set_mode (
                       (UINT8*)&nvda_key1[Index].Matrix[0],
                       -1
                     );
-      NumReplacesTotal += NumReplaces;
       DBG (" patch 1: patched %d time(s)\n", NumReplaces);
       NumReplaces = VideoBiosPatchSearchAndReplace (
                       (UINT8*)(UINTN)VBIOS_START,
@@ -400,7 +395,6 @@ VOID set_mode (
                       (UINT8*)&nvda_key2[Index].Matrix[0],
                       -1
                     );
-      NumReplacesTotal += NumReplaces;
       DBG (" patch 2: patched %d time(s)\n", NumReplaces);
       NumReplaces = VideoBiosPatchSearchAndReplace (
                       (UINT8*)(UINTN)VBIOS_START,
@@ -409,25 +403,39 @@ VOID set_mode (
                       (UINT8*)&nvda_key3[Index].Matrix[0],
                       -1
                     );
-      NumReplacesTotal += NumReplaces;
       DBG (" patch 3: patched %d time(s)\n", NumReplaces);
 
       if ((*((UINT8*)(UINTN)(VBIOS_START + 0x34)) & 0x8F) == 0x80 ) {
         *((UINT8*)(UINTN)(VBIOS_START + 0x34)) |= 0x01; 
       }
 
-			break;
-		}
+      NV_MODELINE *mode_timing = (NV_MODELINE *) map->nv_mode_table;
+      Index = 0;
 
-		case BT_1:
-		case BT_2:
-		case BT_3:
-		case BT_UNKNOWN:
-		{
-			DBG("unknown - not patching\n");
-			break;
-		}
-	}
+      DBG ("NVDA mode_timing: %dx%d vbios mode %d patched!\n", mode.h_active, mode.v_active, Index);
+
+      mode_timing[Index].usH_Total = mode.h_active + mode.h_blanking;
+      mode_timing[Index].usH_Active = mode.h_active;
+      mode_timing[Index].usH_SyncStart = mode.h_active + mode.h_sync_offset;
+      mode_timing[Index].usH_SyncEnd = mode.h_active + mode.h_sync_offset + mode.h_sync_width;
+      mode_timing[Index].usV_Total = mode.v_active + mode.v_blanking;
+      mode_timing[Index].usV_Active = mode.v_active;
+      mode_timing[Index].usV_SyncStart = mode.v_active + mode.v_sync_offset;
+      mode_timing[Index].usV_SyncEnd = mode.v_active + mode.v_sync_offset + mode.v_sync_width;
+      mode_timing[Index].usPixel_Clock = mode.pixel_clock/10000;
+
+      break;
+    }
+
+    case BT_1:
+    case BT_2:
+    case BT_3:
+    case BT_UNKNOWN:
+    {
+      DBG("unknown - not patching\n");
+      break;
+    }
+  }
 }
 
 #endif // _RESOLUTION_H_
