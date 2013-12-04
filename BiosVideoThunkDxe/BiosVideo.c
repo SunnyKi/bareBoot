@@ -1015,7 +1015,7 @@ ParseEdidData (
       mode.v_active = TempTiming.VerticalResolution;
 
       PixelClock = (UINT32) (((BufferIndex[1] << 8) | BufferIndex[0]) * 10000);
-      mode.pixel_clock = PixelClock;
+      mode.pixel_clock = (UINT16) PixelClock;
 
       HBlanking = (UINT16) (((BufferIndex[4] & 0x0F) << 8) | BufferIndex[3]);
       mode.h_blanking = HBlanking;
