@@ -614,6 +614,10 @@ DetectChipset (
 {
   UINT16  VID = 0;
   UINT16  DID = 0;
+  UINT8   Pam40;
+  UINT8   Pam59;
+  UINT8   Pam80;
+  UINT8   Pam90;
   
   mRegisterValues = NULL;
   
@@ -762,10 +766,10 @@ DetectChipset (
   // Test known PAM addresses.
   // Correct PAM1 value should be 0x11 for locked 0xC0000-0xC7FFF
   //
-  UINT8   Pam40 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x41));
-  UINT8   Pam59 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x5a));
-  UINT8   Pam80 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x81));
-  UINT8   Pam90 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x91));
+  Pam40 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x41));
+  Pam59 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x5a));
+  Pam80 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x81));
+  Pam90 = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, 0x91));
   
   DBG("LegacyRegion2: test PAM1=(0x41=%02x, 0x5a=%02x, 0x81=%02x, 0x91=%02x)", Pam40, Pam59, Pam80, Pam90);
   DBG(" at chipset %08x\n", mVendorDeviceId);
