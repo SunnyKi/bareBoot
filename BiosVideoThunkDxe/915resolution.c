@@ -170,8 +170,8 @@ CHAR8
 detect_ati_bios_type (
   vbios_map * map
 )
-{	
-	return map->mode_table_size % sizeof(ATOM_MODE_TIMING) == 0;
+{  
+  return map->mode_table_size % sizeof(ATOM_MODE_TIMING) == 0;
 }
 
 vbios_map*
@@ -179,103 +179,103 @@ open_vbios (
   chipset_type forced_chipset
 )
 {
-	UINTN i;
-	UINTN j;
-	
-	vbios_map * map = AllocateZeroPool(sizeof(vbios_map));
+  UINTN i;
+  UINTN j;
+  
+  vbios_map * map = AllocateZeroPool(sizeof(vbios_map));
 
-	/*
-	 *  Map the video bios to memory
-	 */
-	map->bios_ptr=(CHAR8*)(UINTN)VBIOS_START;
-	
-	/*
-	 * check if we have ATI Radeon
-	 */
-	map->ati_tables.base = map->bios_ptr;
-	map->ati_tables.AtomRomHeader = (ATOM_ROM_HEADER *) (map->bios_ptr + *(UINT16 *) (map->bios_ptr + OFFSET_TO_POINTER_TO_ATOM_ROM_HEADER)); 
-	if (AsciiStrCmp ((CHAR8 *) map->ati_tables.AtomRomHeader->uaFirmWareSignature, "ATOM") == 0) {
+  /*
+   *  Map the video bios to memory
+   */
+  map->bios_ptr=(CHAR8*)(UINTN)VBIOS_START;
+  
+  /*
+   * check if we have ATI Radeon
+   */
+  map->ati_tables.base = map->bios_ptr;
+  map->ati_tables.AtomRomHeader = (ATOM_ROM_HEADER *) (map->bios_ptr + *(UINT16 *) (map->bios_ptr + OFFSET_TO_POINTER_TO_ATOM_ROM_HEADER)); 
+  if (AsciiStrCmp ((CHAR8 *) map->ati_tables.AtomRomHeader->uaFirmWareSignature, "ATOM") == 0) {
     UINT16 std_vesa_offset;
     ATOM_STANDARD_VESA_TIMING * std_vesa;
 
-		// ATI Radeon Card
-		DBG("PatchVBIOS: ATI");
-		map->bios = BT_ATI_1;
-		
-		map->ati_tables.MasterDataTables = (UINT16 *) &((ATOM_MASTER_DATA_TABLE *) (map->bios_ptr + map->ati_tables.AtomRomHeader->usMasterDataTableOffset))->ListOfDataTables;
-		DBG(", MasterDataTables: 0x%p", map->ati_tables.MasterDataTables);
-		std_vesa_offset = (UINT16) ((ATOM_MASTER_LIST_OF_DATA_TABLES *)map->ati_tables.MasterDataTables)->StandardVESA_Timing;
-		std_vesa = (ATOM_STANDARD_VESA_TIMING *) (map->bios_ptr + std_vesa_offset);
-		DBG(", std_vesa: 0x%p", std_vesa);
-		
-		map->ati_mode_table = (CHAR8 *) &std_vesa->aModeTimings;
-		DBG(", ati_mode_table: 0x%p", map->ati_mode_table);
-		if (map->ati_mode_table == 0)	{
-			DBG("\nPatchVBIOS: Unable to locate the mode table.\n");
+    // ATI Radeon Card
+    DBG("PatchVBIOS: ATI");
+    map->bios = BT_ATI_1;
+    
+    map->ati_tables.MasterDataTables = (UINT16 *) &((ATOM_MASTER_DATA_TABLE *) (map->bios_ptr + map->ati_tables.AtomRomHeader->usMasterDataTableOffset))->ListOfDataTables;
+    DBG(", MasterDataTables: 0x%p", map->ati_tables.MasterDataTables);
+    std_vesa_offset = (UINT16) ((ATOM_MASTER_LIST_OF_DATA_TABLES *)map->ati_tables.MasterDataTables)->StandardVESA_Timing;
+    std_vesa = (ATOM_STANDARD_VESA_TIMING *) (map->bios_ptr + std_vesa_offset);
+    DBG(", std_vesa: 0x%p", std_vesa);
+    
+    map->ati_mode_table = (CHAR8 *) &std_vesa->aModeTimings;
+    DBG(", ati_mode_table: 0x%p", map->ati_mode_table);
+    if (map->ati_mode_table == 0)  {
+      DBG("\nPatchVBIOS: Unable to locate the mode table.\n");
       FreePool(map);
-			return 0;
-		}
-		map->mode_table_size = std_vesa->sHeader.usStructureSize - sizeof(ATOM_COMMON_TABLE_HEADER);
-		DBG(", mode_table_size: 0x%x", map->mode_table_size);
-		
-		if (!detect_ati_bios_type(map)) map->bios = BT_ATI_2;
-		DBG(" %a\n", map->bios == BT_ATI_1 ? "BT_ATI_1" : "BT_ATI_2");
-	}
-	else {
-		
-		/*
-		 * check if we have NVIDIA
-		 */
+      return 0;
+    }
+    map->mode_table_size = std_vesa->sHeader.usStructureSize - sizeof(ATOM_COMMON_TABLE_HEADER);
+    DBG(", mode_table_size: 0x%x", map->mode_table_size);
+    
+    if (!detect_ati_bios_type(map)) map->bios = BT_ATI_2;
+    DBG(" %a\n", map->bios == BT_ATI_1 ? "BT_ATI_1" : "BT_ATI_2");
+  }
+  else {
+    
+    /*
+     * check if we have NVIDIA
+     */
 
-		for (i = 0; i < 512; i++) {
+    for (i = 0; i < 512; i++) {
       // we don't need to look through the whole bios, just the first 512 bytes
-			if (CompareMem(map->bios_ptr+i, nvda_string, 4) == 0) {
-				UINT16 nv_data_table_offset = 0;
-				UINT16 * nv_data_table;
-				NV_VESA_TABLE * std_vesa;
+      if (CompareMem(map->bios_ptr+i, nvda_string, 4) == 0) {
+        UINT16 nv_data_table_offset = 0;
+        UINT16 * nv_data_table;
+        NV_VESA_TABLE * std_vesa;
 
         DBG("PatchVBIOS: nVidia");
         map->bios = BT_NVDA;
 
-				for (j = 0; j < 0x300; j++) {
+        for (j = 0; j < 0x300; j++) {
           //We don't need to look for the table in the whole bios, the 768 first bytes only
-					if (CompareMem(map->bios_ptr+j, nvda_pattern, 4)==0) {
-						nv_data_table_offset = *((UINT16*)(map->bios_ptr+j+4));
-						DBG(", nv_data_table_offset: 0x%x", (UINTN)nv_data_table_offset);
-						break;
-					}
-				}
-				
-				nv_data_table = (UINT16 *) (map->bios_ptr + (nv_data_table_offset + OFFSET_TO_VESA_TABLE_INDEX));
-				DBG(", nv_data_table: 0x%p", nv_data_table);
-				std_vesa = (NV_VESA_TABLE *) (map->bios_ptr + *nv_data_table);
-				DBG(", std_vesa: 0x%p", std_vesa);
-				
-				map->nv_mode_table = (CHAR8*)std_vesa+sizeof(NV_COMMON_TABLE_HEADER);
-				DBG(", nv_mode_table: 0x%p", map->nv_mode_table);
-				
-				if (map->nv_mode_table == 0) {
-					DBG("\nPatchVBIOS: Unable to locate the mode table.\n");
+          if (CompareMem(map->bios_ptr+j, nvda_pattern, 4)==0) {
+            nv_data_table_offset = *((UINT16*)(map->bios_ptr+j+4));
+            DBG(", nv_data_table_offset: 0x%x", (UINTN)nv_data_table_offset);
+            break;
+          }
+        }
+        
+        nv_data_table = (UINT16 *) (map->bios_ptr + (nv_data_table_offset + OFFSET_TO_VESA_TABLE_INDEX));
+        DBG(", nv_data_table: 0x%p", nv_data_table);
+        std_vesa = (NV_VESA_TABLE *) (map->bios_ptr + *nv_data_table);
+        DBG(", std_vesa: 0x%p", std_vesa);
+        
+        map->nv_mode_table = (CHAR8*)std_vesa+sizeof(NV_COMMON_TABLE_HEADER);
+        DBG(", nv_mode_table: 0x%p", map->nv_mode_table);
+        
+        if (map->nv_mode_table == 0) {
+          DBG("\nPatchVBIOS: Unable to locate the mode table.\n");
           FreePool(map);
-					return 0;
-				}
-				map->mode_table_size = std_vesa->sHeader.usTable_Size;
-				DBG(", mode_table_size: 0x%x\n", map->mode_table_size);
-				
-				break;
-			}
-		}
-	}
-	
-	/*
-	 * check if we have Intel
-	 */
+          return 0;
+        }
+        map->mode_table_size = std_vesa->sHeader.usTable_Size;
+        DBG(", mode_table_size: 0x%x\n", map->mode_table_size);
+        
+        break;
+      }
+    }
+  }
   
-	if (*(UINT16*)(map->bios_ptr + 0x44) == 0x8086) {
+  /*
+   * check if we have Intel
+   */
+  
+  if (*(UINT16*)(map->bios_ptr + 0x44) == 0x8086) {
     map->bios = BT_INTEL;
   }
-	
-	return map;
+  
+  return map;
 }
 
 VOID set_mode (
@@ -285,13 +285,15 @@ VOID set_mode (
 )
 {
   UINTN             NumReplaces;
-  UINTN             Index = 0;
+  NV_MODELINE       *mode_timing;
+  UINTN             Index;
 
 
-	// patch first available mode
-	DBG("PatchVBIOS: ");
-	switch (map->bios) {
-		case BT_INTEL:
+  Index = 0;
+  // patch first available mode
+  DBG("PatchVBIOS: ");
+  switch (map->bios) {
+    case BT_INTEL:
     {
       DBG("BT_INTEL: ");
 
@@ -305,14 +307,14 @@ VOID set_mode (
                     );
       DBG (" patched %d time(s)\n", NumReplaces);
       
-			return;
+      return;
     }
 
-		case BT_ATI_1:
-		{
-			ATOM_MODE_TIMING *mode_timing = (ATOM_MODE_TIMING *) map->ati_mode_table;
+    case BT_ATI_1:
+    {
+      ATOM_MODE_TIMING *mode_timing = (ATOM_MODE_TIMING *) map->ati_mode_table;
 
-			DBG("BT_ATI_1\n");
+      DBG("BT_ATI_1\n");
       DBG(" mode 0 (%dx%d) patched to %dx%d\n",
         mode_timing->usCRTC_H_Disp, mode_timing->usCRTC_V_Disp,
         mode.h_active, mode.v_active
@@ -328,14 +330,14 @@ VOID set_mode (
       mode_timing->usCRTC_V_SyncWidth = mode.v_sync_width;
 
       mode_timing->usPixelClock = mode.pixel_clock;
-			break;
-		}
+      break;
+    }
 
-		case BT_ATI_2:
-		{
-			ATOM_DTD_FORMAT *mode_timing = (ATOM_DTD_FORMAT *) map->ati_mode_table;
-			
-			DBG("BT_ATI_2\n");
+    case BT_ATI_2:
+    {
+      ATOM_DTD_FORMAT *mode_timing = (ATOM_DTD_FORMAT *) map->ati_mode_table;
+      
+      DBG("BT_ATI_2\n");
       DBG(" mode 0 (%dx%d) patched to %dx%d\n",
         mode_timing->usHActive, mode_timing->usVActive,
         mode.h_active, mode.v_active
@@ -350,16 +352,16 @@ VOID set_mode (
       mode_timing->usVSyncWidth = mode.v_sync_width;
       mode_timing->usPixClk = mode.pixel_clock;
 
-			break;
-		}
+      break;
+    }
 
-		case BT_NVDA:
-		{
+    case BT_NVDA:
+    {
       DBG("BT_NVDA");
 
       // totally revised on work by pene
       // http://www.projectosx.com/forum/index.php?showtopic=2562&view=findpost&p=22683
-			
+      
       // Search for desired mode in our matrix
       for (Index = 0; Index < RESOLUTIONS_NUMBER; Index++) {
         if ((nvda_res[Index].HRes == mode.h_active) && (nvda_res[Index].VRes == mode.v_active)) {
@@ -409,7 +411,7 @@ VOID set_mode (
         *((UINT8*)(UINTN)(VBIOS_START + 0x34)) |= 0x01; 
       }
 
-      NV_MODELINE *mode_timing = (NV_MODELINE *) map->nv_mode_table;
+      mode_timing = (NV_MODELINE *) map->nv_mode_table;
       Index = 0;
 
       DBG ("NVDA mode_timing: %dx%d vbios mode %d patched!\n", mode.h_active, mode.v_active, Index);
