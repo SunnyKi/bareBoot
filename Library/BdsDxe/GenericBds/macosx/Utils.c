@@ -896,7 +896,6 @@ hex2bin (
     bin[i] = hexstrtouint8 (buf);
     outlen++;
   }
-  bin[outlen] = 0;
   return outlen;
 }
 
