@@ -306,7 +306,7 @@ DisableUsbLegacySupport (
   VOID
   )
 {
-#if 0
+#if 1
   EFI_STATUS                Status;
   UINTN                     HandleCount;
   EFI_HANDLE                *HandleBuffer;
