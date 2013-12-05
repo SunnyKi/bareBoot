@@ -399,7 +399,27 @@ MemMapDone:
         jnc A20GateEnabled                  # Jump if it suceeded
 
 #
-# If INT 15 Function 2401 is not supported, then attempt to Enable A20 (fast method).
+# If INT 15 Function 2401 is not supported, then attempt to Enable A20 manually.
+#
+        call    Empty8042InputBuffer        # Empty the Input Buffer on the 8042 controller
+        jnz     Timeout8042                 # Jump if the 8042 timed out
+        outw    %ax, $DELAY_PORT            # Delay 1 uS
+        movb    $WRITE_DATA_PORT_CMD, %al   # 8042 cmd to write output port
+        outb    %al, $KBD_STATUS_PORT       # Send command to the 8042
+        call    Empty8042InputBuffer        # Empty the Input Buffer on the 8042 controller
+        jnz     Timeout8042                 # Jump if the 8042 timed out
+        movb    $ENABLE_A20_CMD, %al        # gate address bit 20 on
+        outb    %al, $KBD_CONTROL_PORT      # Send command to thre 8042
+        call    Empty8042InputBuffer        # Empty the Input Buffer on the 8042 controller
+        movw    $25,%cx                     # Delay 25 uS for the command to complete on the 8042
+Delay25uS: 
+        outw    %ax, $DELAY_PORT            # Delay 1 uS
+        loop    Delay25uS
+        jmp A20GateEnabled                  # Jump if it suceeded
+Timeout8042:
+
+#
+# attempt to Enable A20 (fast method).
 #
         inb $0x92, %al
         testb $2,%al
@@ -574,6 +594,15 @@ InLongMode:
 
 # ret
     .byte 0xc3
+
+Empty8042InputBuffer: 
+        movw $0,%cx
+Empty8042Loop: 
+        outw    %ax, $DELAY_PORT            # Delay 1us
+        inb     $KBD_STATUS_PORT, %al       # Read the 8042 Status Port
+        andb    $0x2,%al                    # Check the Input Buffer Full Flag
+        loopnz  Empty8042Loop               # Loop until the input buffer is empty or a timout of 65536 uS
+        ret
 
 ##############################################################################
 # data
