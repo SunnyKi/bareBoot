@@ -133,9 +133,6 @@ then
   cat $BOOTSECTOR_BIN_DIR/St_gpt_iT.com $BOOTSECTOR_BIN_DIR/efi64.com2 $BUILD_DIR/FV/Efildr64 > $BUILD_DIR/FV/Efildr20Pure
   $BASETOOLS_DIR/GenPage -f 0x70000 $BUILD_DIR/FV/Efildr20Pure -o $BUILD_DIR/FV/Efildgpt
 
-  cat $BOOTSECTOR_BIN_DIR/st_gpt_32_64m.com $BOOTSECTOR_BIN_DIR/efi64.com2 $BUILD_DIR/FV/Efildr64 > $BUILD_DIR/FV/Efildr20Pure
-  $BASETOOLS_DIR/GenPage -f 0x70000 $BUILD_DIR/FV/Efildr20Pure -o $BUILD_DIR/FV/Efildgpt2
-
   echo Done!
 fi
 }
