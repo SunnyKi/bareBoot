@@ -69,13 +69,13 @@ INF  bareBoot/SmbiosGenDxe/SmbiosGen.inf
 INF  bareBoot/Library/BdsDxe/BdsDxe.inf
 
 #INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
-INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
-!if ($(ARCH) == "X64")
- INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
+#INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
+#!if ($(ARCH) == "X64")
+# INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
 # INF  bareBoot/Cpu/CpuDxe2/CpuDxe.inf
-!elseif ($(ARCH) == "IA32")
+#!elseif ($(ARCH) == "IA32")
  INF  bareBoot/Cpu/CpuDxe/Cpu.inf
-!endif
+#!endif
 INF  bareBoot/AcpiResetDxe/Reset.inf
 INF  bareBoot/LegacyMetronome/Metronome.inf
 
