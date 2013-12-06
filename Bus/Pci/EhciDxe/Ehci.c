@@ -2055,13 +2055,6 @@ EhcDriverBindingStop (
   Ehc   = EHC_FROM_THIS (Usb2Hc);
   PciIo = Ehc->PciIo;
 
-  //
-  // Stop AsyncRequest Polling timer then stop the EHCI driver
-  // and uninstall the EHCI protocl.
-  //
-  gBS->SetTimer (Ehc->PollTimer, TimerCancel, EHC_ASYNC_POLL_INTERVAL);
-  EhcHaltHC (Ehc, EHC_GENERIC_TIMEOUT);
-
   Status = gBS->UninstallProtocolInterface (
                   Controller,
                   &gEfiUsb2HcProtocolGuid,
@@ -2071,6 +2064,13 @@ EhcDriverBindingStop (
   if (EFI_ERROR (Status)) {
     return Status;
   }
+
+  //
+  // Stop AsyncRequest Polling timer then stop the EHCI driver
+  // and uninstall the EHCI protocl.
+  //
+  gBS->SetTimer (Ehc->PollTimer, TimerCancel, EHC_ASYNC_POLL_INTERVAL);
+  EhcHaltHC (Ehc, EHC_GENERIC_TIMEOUT);
 
   if (Ehc->PollTimer != NULL) {
     gBS->CloseEvent (Ehc->PollTimer);

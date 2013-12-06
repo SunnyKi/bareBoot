@@ -1409,6 +1409,7 @@ UsbBusControllerDriverStop (
   EFI_TPL               OldTpl;
   UINTN                 Index;
   EFI_STATUS            Status;
+  EFI_STATUS            ReturnStatus;
 
   Status  = EFI_SUCCESS;
 
@@ -1418,6 +1419,7 @@ UsbBusControllerDriverStop (
     //
     OldTpl   = gBS->RaiseTPL (TPL_CALLBACK);
 
+    ReturnStatus = EFI_SUCCESS;
     for (Index = 0; Index < NumberOfChildren; Index++) {
       Status = gBS->OpenProtocol (
                       ChildHandleBuffer[Index],
@@ -1441,11 +1443,11 @@ UsbBusControllerDriverStop (
       UsbIf   = USB_INTERFACE_FROM_USBIO (UsbIo);
       UsbDev  = UsbIf->Device;
 
-      UsbRemoveDevice (UsbDev);
+      ReturnStatus = UsbRemoveDevice (UsbDev);
     }
 
     gBS->RestoreTPL (OldTpl);
-    return EFI_SUCCESS;
+    return ReturnStatus;
   }
 
   DEBUG (( EFI_D_INFO, "UsbBusStop: usb bus stopped on %p\n", Controller));
@@ -1478,53 +1480,60 @@ UsbBusControllerDriverStop (
   RootHub = Bus->Devices[0];
   RootIf  = RootHub->Interfaces[0];
 
-  mUsbRootHubApi.Release (RootIf);
-
   ASSERT (Bus->MaxDevices <= 256);
+  ReturnStatus = EFI_SUCCESS;
   for (Index = 1; Index < Bus->MaxDevices; Index++) {
     if (Bus->Devices[Index] != NULL) {
-      UsbRemoveDevice (Bus->Devices[Index]);
+      Status = UsbRemoveDevice (Bus->Devices[Index]);
+      if (EFI_ERROR (Status)) {
+        ReturnStatus = Status;
+      }
     }
   }
 
   gBS->RestoreTPL (OldTpl);
 
-  gBS->FreePool   (RootIf);
-  gBS->FreePool   (RootHub);
-  Status = UsbBusFreeUsbDPList (&Bus->WantedUsbIoDPList);
-  ASSERT (!EFI_ERROR (Status));
+  if (!EFI_ERROR (ReturnStatus)) {
+    mUsbRootHubApi.Release (RootIf);
+    gBS->FreePool   (RootIf);
+    gBS->FreePool   (RootHub);
 
-  //
-  // Uninstall the bus identifier and close USB_HC/USB2_HC protocols
-  //
-  gBS->UninstallProtocolInterface (Controller, &gEfiCallerIdGuid, &Bus->BusId);
+    Status = UsbBusFreeUsbDPList (&Bus->WantedUsbIoDPList);
+    ASSERT (!EFI_ERROR (Status));
 
-  if (Bus->Usb2Hc != NULL) {
-    gBS->CloseProtocol (
-           Controller,
-           &gEfiUsb2HcProtocolGuid,
-           This->DriverBindingHandle,
-           Controller
-           );
+    //
+    // Uninstall the bus identifier and close USB_HC/USB2_HC protocols
+    //
+    gBS->UninstallProtocolInterface (Controller, &gEfiCallerIdGuid, &Bus->BusId);
+
+    if (Bus->Usb2Hc != NULL) {
+      Status = gBS->CloseProtocol (
+                      Controller,
+                      &gEfiUsb2HcProtocolGuid,
+                      This->DriverBindingHandle,
+                      Controller
+                      );
+    }
+
+    if (Bus->UsbHc != NULL) {
+      Status = gBS->CloseProtocol (
+                      Controller,
+                      &gEfiUsbHcProtocolGuid,
+                      This->DriverBindingHandle,
+                      Controller
+                      );
+    }
+
+    if (!EFI_ERROR (Status)) {
+      gBS->CloseProtocol (
+             Controller,
+             &gEfiDevicePathProtocolGuid,
+             This->DriverBindingHandle,
+             Controller
+             );
+
+      gBS->FreePool (Bus);
+    }
   }
-
-  if (Bus->UsbHc != NULL) {
-    gBS->CloseProtocol (
-           Controller,
-           &gEfiUsbHcProtocolGuid,
-           This->DriverBindingHandle,
-           Controller
-           );
-  }
-
-  gBS->CloseProtocol (
-         Controller,
-         &gEfiDevicePathProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-         );
-
-  gBS->FreePool (Bus);
-
   return Status;
 }

@@ -18,6 +18,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "Uhci.h"
 
+
 EFI_DRIVER_BINDING_PROTOCOL gUhciDriverBinding = {
   UhciDriverBindingSupported,
   UhciDriverBindingStart,
@@ -1556,19 +1557,24 @@ UhciCleanDevUp (
   )
 {
   USB_HC_DEV          *Uhc;
+  EFI_STATUS          Status;
 
   //
   // Uninstall the USB_HC and USB_HC2 protocol, then disable the controller
   //
   Uhc = UHC_FROM_USB2_HC_PROTO (This);
+
+
+  Status = gBS->UninstallProtocolInterface (
+                  Controller,
+                  &gEfiUsb2HcProtocolGuid,
+                  &Uhc->Usb2Hc
+                  );
+  if (EFI_ERROR (Status)) {
+    return ;
+  }
+
   UhciStopHc (Uhc, UHC_GENERIC_TIMEOUT);
-
-  gBS->UninstallProtocolInterface (
-        Controller,
-        &gEfiUsb2HcProtocolGuid,
-        &Uhc->Usb2Hc
-        );
-
   UhciFreeAllAsyncReq (Uhc);
   UhciDestoryFrameList (Uhc);
 
