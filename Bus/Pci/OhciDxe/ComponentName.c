@@ -1,10 +1,12 @@
 /** @file
   UEFI Component Name(2) protocol implementation for OHCI driver.
 
-Copyright (c) 2013, Intel Corporation. All rights reserved.
+Copyright (c) 2013, Nikolai Saoukh. All rights reserved.
+
 This program and the accompanying materials
-are licensed and made available under the terms and conditions of the BSD License
-which accompanies this distribution.  The full text of the license may be found at
+are licensed and made available under the terms and conditions
+of the BSD License which accompanies this distribution.  The
+full text of the license may be found at
 http://opensource.org/licenses/bsd-license.php
 
 THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
@@ -17,7 +19,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 //
 // EFI Component Name Protocol
 //
-
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL  gOhciComponentName = {
   OhciComponentNameGetDriverName,
   OhciComponentNameGetControllerName,
@@ -33,15 +34,10 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gOhciComponentName2 =
   "en"
 };
 
-
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mOhciDriverNameTable[] = {
   { "eng;en", L"Usb Ohci Driver" },
-  { NULL, NULL }
+  { NULL , NULL }
 };
-
-//
-// EFI Component Name Functions
-//
 
 /**
   Retrieves a Unicode string that is the user readable name of the driver.
@@ -150,7 +146,7 @@ OhciComponentNameGetDriverName (
                                 driver specified by This was returned in
                                 DriverName.
 
-  @retval EFI_INVALID_PARAMETER ControllerHandle is NULL.
+  @retval EFI_INVALID_PARAMETER ControllerHandle is not a valid EFI_HANDLE.
 
   @retval EFI_INVALID_PARAMETER ChildHandle is not NULL and it is not a valid
                                 EFI_HANDLE.
@@ -170,16 +166,16 @@ OhciComponentNameGetDriverName (
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
+  IN  EFI_HANDLE                   ControllerHandle,
+  IN  EFI_HANDLE                   ChildHandle OPTIONAL,
+  IN  CHAR8                        *Language,
+  OUT CHAR16                       **ControllerName
   )
 {
   EFI_STATUS           Status;
-  USB_HC_DEV           *OhciDev;
   EFI_USB2_HC_PROTOCOL *Usb2Hc;
+  USB_OHCI_INSTANCE    *OhciDev;
 
   //
   // This is a device driver, so ChildHandle must be NULL.
@@ -211,17 +207,16 @@ OhciComponentNameGetControllerName (
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
-
   if (EFI_ERROR (Status)) {
     return Status;
   }
 
-  OhciDev = OHC_FROM_USB2_HC_PROTO (Usb2Hc);
+  OhciDev = OHC_FROM_THIS (Usb2Hc);
 
   return LookupUnicodeString2 (
            Language,
            This->SupportedLanguages,
-           OhciDev->CtrlNameTable,
+           OhciDev->ControllerNameTable,
            ControllerName,
            (BOOLEAN)(This == &gOhciComponentName)
            );

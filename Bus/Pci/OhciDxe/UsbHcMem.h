@@ -1,8 +1,8 @@
 /** @file
 
-  This file contains the definination for host controller memory management routines
+  This file contains the definination for host controller memory management routines.
 
-Copyright (c) 2007 - 2010, Intel Corporation. All rights reserved.
+Copyright (c) 2013, Nikolai Saoukh. All rights reserved.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -13,17 +13,13 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
-#ifndef _EFI_EHCI_MEM_H_
-#define _EFI_EHCI_MEM_H_
+#ifndef _EFI_OHCI_MEM_H_
+#define _EFI_OHCI_MEM_H_
 
 #define USB_HC_BIT(a)                  ((UINTN)(1 << (a)))
 
 #define USB_HC_BIT_IS_SET(Data, Bit)   \
           ((BOOLEAN)(((Data) & USB_HC_BIT(Bit)) == USB_HC_BIT(Bit)))
-
-#define USB_HC_HIGH_32BIT(Addr64)    \
-          ((UINT32)(RShiftU64((UINTN)(Addr64), 32) & 0XFFFFFFFF))
-
 
 typedef struct _USBHC_MEM_BLOCK USBHC_MEM_BLOCK;
 struct _USBHC_MEM_BLOCK {
@@ -38,7 +34,7 @@ struct _USBHC_MEM_BLOCK {
 
 //
 // USBHC_MEM_POOL is used to manage the memory used by USB
-// host controller. EHCI requires the control memory and transfer
+// host controller. OHCI requires the control memory and transfer
 // data to be on the same 4G memory.
 //
 typedef struct _USBHC_MEM_POOL {
@@ -71,13 +67,11 @@ typedef struct _USBHC_MEM_POOL {
           } while (0)
 
 
+
 /**
   Initialize the memory management pool for the host controller.
 
   @param  PciIo               The PciIo that can be used to access the host controller.
-  @param  Check4G             Whether the host controller requires allocated memory
-                              from one 4G address space.
-  @param  Which4G             The 4G memory area each memory allocated should be from.
 
   @retval EFI_SUCCESS         The memory pool is initialized.
   @retval EFI_OUT_OF_RESOURCE Fail to init the memory pool.
@@ -85,26 +79,23 @@ typedef struct _USBHC_MEM_POOL {
 **/
 USBHC_MEM_POOL *
 UsbHcInitMemPool (
-  IN EFI_PCI_IO_PROTOCOL  *PciIo,
-  IN BOOLEAN              Check4G,
-  IN UINT32               Which4G
+  IN EFI_PCI_IO_PROTOCOL  *PciIo
   );
 
 
 /**
   Release the memory management pool.
 
-  @param  Pool               The USB memory pool to free.
+  @param   Pool               The USB memory pool to free.
 
-  @return EFI_SUCCESS        The memory pool is freed.
-  @return EFI_DEVICE_ERROR   Failed to free the memory pool.
+  @retval EFI_SUCCESS       The memory pool is freed.
+  @retval EFI_DEVICE_ERROR  Failed to free the memory pool.
 
 **/
 EFI_STATUS
 UsbHcFreeMemPool (
   IN USBHC_MEM_POOL       *Pool
   );
-
 
 
 /**
@@ -124,15 +115,12 @@ UsbHcAllocateMem (
   );
 
 
-
 /**
   Free the allocated memory back to the memory pool.
 
   @param  Pool  The memory pool of the host controller.
   @param  Mem   The memory to free.
   @param  Size  The size of the memory to free.
-
-  @return None.
 
 **/
 VOID
@@ -149,13 +137,77 @@ UsbHcFreeMem (
   @param  Mem            The pointer to host memory.
   @param  Size           The size of the memory region.
 
-  @return the pci memory address
+  @return                The pci memory address
+
 **/
 EFI_PHYSICAL_ADDRESS
-UsbHcGetPciAddressForHostMem (
+UsbHcGetPciAddrForHostAddr (
   IN USBHC_MEM_POOL       *Pool,
   IN VOID                 *Mem,
   IN UINTN                Size
+  );
+
+/**
+  Calculate the corresponding host address according to the pci address.
+
+  @param  Pool           The memory pool of the host controller.
+  @param  Mem            The pointer to pci memory.
+  @param  Size           The size of the memory region.
+
+  @return                The host memory address
+
+**/
+EFI_PHYSICAL_ADDRESS
+UsbHcGetHostAddrForPciAddr (
+  IN USBHC_MEM_POOL       *Pool,
+  IN VOID                 *Mem,
+  IN UINTN                Size
+  );
+
+/**  
+  Allocates pages at a specified alignment that are suitable for an EfiPciIoOperationBusMasterCommonBuffer mapping.
+  
+  If Alignment is not a power of two and Alignment is not zero, then ASSERT().
+
+  @param  PciIo                 The PciIo that can be used to access the host controller.
+  @param  Pages                 The number of pages to allocate.
+  @param  Alignment             The requested alignment of the allocation.  Must be a power of two.
+  @param  HostAddress           The system memory address to map to the PCI controller.
+  @param  DeviceAddress         The resulting map address for the bus master PCI controller to 
+                                use to access the hosts HostAddress.
+  @param  Mapping               A resulting value to pass to Unmap().
+
+  @retval EFI_SUCCESS           Success to allocate aligned pages.
+  @retval EFI_INVALID_PARAMETER Pages or Alignment is not valid.
+  @retval EFI_OUT_OF_RESOURCES  Do not have enough resources to allocate memory.
+  
+
+**/
+EFI_STATUS
+UsbHcAllocateAlignedPages (
+  IN EFI_PCI_IO_PROTOCOL    *PciIo,
+  IN UINTN                  Pages,
+  IN UINTN                  Alignment,
+  OUT VOID                  **HostAddress,
+  OUT EFI_PHYSICAL_ADDRESS  *DeviceAddress,
+  OUT VOID                  **Mapping
+  );
+  
+/**
+  Frees memory that was allocated with UsbHcAllocateAlignedPages().
+  
+  @param  PciIo                 The PciIo that can be used to access the host controller.
+  @param  HostAddress           The system memory address to map to the PCI controller.
+  @param  Pages                 The number of pages to free.
+  @param  Mapping               The mapping value returned from Map().
+
+**/
+VOID
+UsbHcFreeAlignedPages (
+  IN EFI_PCI_IO_PROTOCOL    *PciIo,
+  IN VOID                   *HostAddress,
+  IN UINTN                  Pages,
+  VOID                      *Mapping
   );
 
 #endif

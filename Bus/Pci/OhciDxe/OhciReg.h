@@ -1,8 +1,8 @@
 /** @file
 
-  The definition for OHCI register operation routines.
+  This file contains the register definition of OHCI host controller.
 
-Copyright (c) 2007 - 2010, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2013, Nikolai Saoukh. All rights reserved.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -17,232 +17,275 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define _EFI_OHCI_REG_H_
 
 //
-// OHCI register offset
+// PCI Configuration Registers
 //
 
-#define OHCI_FRAME_NUM        1024
+#define OHC_BAR_INDEX               0x00
+
+//============================================//
+//           OHCI register offset             //
+//============================================//
 
 //
-// Register offset and PCI related staff
+// Operational registers offset
 //
-#define USB_BAR_INDEX         4
+#define OHC_USBCMD_OFFSET                  0x0000 // USB Command Register Offset
+#define OHC_USBSTS_OFFSET                  0x0004 // USB Status Register Offset
+#define OHC_PAGESIZE_OFFSET                0x0008 // USB Page Size Register Offset
+#define OHC_DNCTRL_OFFSET                  0x0014 // Device Notification Control Register Offset
+#define OHC_CRCR_OFFSET                    0x0018 // Command Ring Control Register Offset
+#define OHC_DCBAAP_OFFSET                  0x0030 // Device Context Base Address Array Pointer Register Offset
+#define OHC_CONFIG_OFFSET                  0x0038 // Configure Register Offset
+#define OHC_PORTSC_OFFSET                  0x0400 // Port Status and Control Register Offset
 
-#define USBCMD_OFFSET         0
-#define USBSTS_OFFSET         2
-#define USBINTR_OFFSET        4
-#define USBPORTSC_OFFSET      0x10
-#define USB_FRAME_NO_OFFSET   6
-#define USB_FRAME_BASE_OFFSET 8
-#define USB_EMULATION_OFFSET  0xC0
-
-//
-// Packet IDs
-//
-#define SETUP_PACKET_ID       0x2D
-#define INPUT_PACKET_ID       0x69
-#define OUTPUT_PACKET_ID      0xE1
-#define ERROR_PACKET_ID       0x55
+#define USBLEGSP_BIOS_SEMAPHORE            BIT16 // HC BIOS Owned Semaphore
+#define USBLEGSP_OS_SEMAPHORE              BIT24 // HC OS Owned Semaphore
 
 //
-// USB port status and control bit definition.
+// Register Bit Definition
 //
-#define USBPORTSC_CCS         BIT0  // Current Connect Status
-#define USBPORTSC_CSC         BIT1  // Connect Status Change
-#define USBPORTSC_PED         BIT2  // Port Enable / Disable
-#define USBPORTSC_PEDC        BIT3  // Port Enable / Disable Change
-#define USBPORTSC_LSL         BIT4  // Line Status Low BIT
-#define USBPORTSC_LSH         BIT5  // Line Status High BIT
-#define USBPORTSC_RD          BIT6  // Resume Detect
-#define USBPORTSC_LSDA        BIT8  // Low Speed Device Attached
-#define USBPORTSC_PR          BIT9  // Port Reset
-#define USBPORTSC_SUSP        BIT12 // Suspend
+#define OHC_USBCMD_RUN                     BIT0  // Run/Stop
+#define OHC_USBCMD_RESET                   BIT1  // Host Controller Reset
+#define OHC_USBCMD_INTE                    BIT2  // Interrupter Enable
+#define OHC_USBCMD_HSEE                    BIT3  // Host System Error Enable
+
+#define OHC_USBSTS_HALT                    BIT0  // Host Controller Halted
+#define OHC_USBSTS_HSE                     BIT2  // Host System Error
+#define OHC_USBSTS_EINT                    BIT3  // Event Interrupt
+#define OHC_USBSTS_PCD                     BIT4  // Port Change Detect
+#define OHC_USBSTS_SSS                     BIT8  // Save State Status
+#define OHC_USBSTS_RSS                     BIT9  // Restore State Status
+#define OHC_USBSTS_SRE                     BIT10 // Save/Restore Error
+#define OHC_USBSTS_CNR                     BIT11 // Host Controller Not Ready
+#define OHC_USBSTS_HCE                     BIT12 // Host Controller Error
+
+#define OHC_PAGESIZE_MASK                  0xFFFF // Page Size
+
+#define OHC_CRCR_RCS                       BIT0  // Ring Cycle State
+#define OHC_CRCR_CS                        BIT1  // Command Stop
+#define OHC_CRCR_CA                        BIT2  // Command Abort
+#define OHC_CRCR_CRR                       BIT3  // Command Ring Running
+
+#define OHC_CONFIG_MASK                    0xFF  // Command Ring Running
+
+#define OHC_PORTSC_CCS                     BIT0  // Current Connect Status
+#define OHC_PORTSC_PED                     BIT1  // Port Enabled/Disabled
+#define OHC_PORTSC_OCA                     BIT3  // Over-current Active
+#define OHC_PORTSC_RESET                   BIT4  // Port Reset
+#define OHC_PORTSC_PLS                     (BIT5|BIT6|BIT7|BIT8)     // Port Link State
+#define OHC_PORTSC_PP                      BIT9  // Port Power
+#define OHC_PORTSC_PS                      (BIT10|BIT11|BIT12)       // Port Speed
+#define OHC_PORTSC_LWS                     BIT16 // Port Link State Write Strobe
+#define OHC_PORTSC_CSC                     BIT17 // Connect Status Change
+#define OHC_PORTSC_PEC                     BIT18 // Port Enabled/Disabled Change
+#define OHC_PORTSC_WRC                     BIT19 // Warm Port Reset Change
+#define OHC_PORTSC_OCC                     BIT20 // Over-Current Change
+#define OHC_PORTSC_PRC                     BIT21 // Port Reset Change
+#define OHC_PORTSC_PLC                     BIT22 // Port Link State Change
+#define OHC_PORTSC_CEC                     BIT23 // Port Config Error Change
+#define OHC_PORTSC_CAS                     BIT24 // Cold Attach Status
+
+#define OHC_HUB_PORTSC_CCS                 BIT0  // Hub's Current Connect Status
+#define OHC_HUB_PORTSC_PED                 BIT1  // Hub's Port Enabled/Disabled
+#define OHC_HUB_PORTSC_OCA                 BIT3  // Hub's Over-current Active
+#define OHC_HUB_PORTSC_RESET               BIT4  // Hub's Port Reset
+#define OHC_HUB_PORTSC_PP                  BIT9  // Hub's Port Power
+#define OHC_HUB_PORTSC_CSC                 BIT16 // Hub's Connect Status Change
+#define OHC_HUB_PORTSC_PEC                 BIT17 // Hub's Port Enabled/Disabled Change
+#define OHC_HUB_PORTSC_OCC                 BIT19 // Hub's Over-Current Change
+#define OHC_HUB_PORTSC_PRC                 BIT20 // Hub's Port Reset Change
+#define OHC_HUB_PORTSC_BHRC                BIT21 // Hub's Port Warm Reset Change
+#define OHC_IMAN_IP                        BIT0  // Interrupt Pending
+#define OHC_IMAN_IE                        BIT1  // Interrupt Enable
+
+#define OHC_IMODI_MASK                     0x0000FFFF  // Interrupt Moderation Interval
+#define OHC_IMODC_MASK                     0xFFFF0000  // Interrupt Moderation Counter
 
 //
-// OHCI Spec said it must implement 2 ports each host at least,
-// and if more, check whether the bit7 of PORTSC is always 1.
-// So here assume the max of port number each host is 16.
+//  Hub Class Feature Selector for Clear Port Feature Request
+//  It's the extension of hub class feature selector of USB 2.0 in USB 3.0 Spec.
+//  For more details, Please refer to USB 3.0 Spec Table 10-7.
 //
-#define USB_MAX_ROOTHUB_PORT  0x0F
+typedef enum {
+  Usb3PortBHPortReset          = 28,
+  Usb3PortBHPortResetChange    = 29
+} OHC_PORT_FEATURE;
 
 //
-// Command register bit definitions
+// Structure to map the hardware port states to the
+// UEFI's port states.
 //
-#define USBCMD_RS             BIT0  // Run/Stop
-#define USBCMD_HCRESET        BIT1  // Host reset
-#define USBCMD_GRESET         BIT2  // Global reset
-#define USBCMD_EGSM           BIT3  // Global Suspend Mode
-#define USBCMD_FGR            BIT4  // Force Global Resume
-#define USBCMD_SWDBG          BIT5  // SW Debug mode
-#define USBCMD_CF             BIT6  // Config Flag (sw only)
-#define USBCMD_MAXP           BIT7  // Max Packet (0 = 32, 1 = 64)
+typedef struct {
+  UINT32                  HwState;
+  UINT16                  UefiState;
+} USB_PORT_STATE_MAP;
 
 //
-// USB Status register bit definitions
+// Structure to map the hardware port states to feature selector for clear port feature request.
 //
-#define USBSTS_USBINT         BIT0  // Interrupt due to IOC
-#define USBSTS_ERROR          BIT1  // Interrupt due to error
-#define USBSTS_RD             BIT2  // Resume Detect
-#define USBSTS_HSE            BIT3  // Host System Error
-#define USBSTS_HCPE           BIT4  // Host Controller Process Error
-#define USBSTS_HCH            BIT5  // HC Halted
-
-#define USBTD_ACTIVE          BIT7  // TD is still active
-#define USBTD_STALLED         BIT6  // TD is stalled
-#define USBTD_BUFFERR         BIT5  // Buffer underflow or overflow
-#define USBTD_BABBLE          BIT4  // Babble condition
-#define USBTD_NAK             BIT3  // NAK is received
-#define USBTD_CRC             BIT2  // CRC/Time out error
-#define USBTD_BITSTUFF        BIT1  // Bit stuff error
-
+typedef struct {
+  UINT32                  HwState;
+  UINT16                  Selector;
+} USB_CLEAR_PORT_MAP;
 
 /**
-  Read a OHCI register.
+  Read 4-bytes width OHCI Operational register.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Offset       Register offset to USB_BAR_INDEX.
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the 4-bytes width operational register.
 
-  @return Content of register.
+  @return The register content read.
+  @retval If err, return 0xFFFFFFFF.
 
 **/
-UINT16
-OhciReadReg (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset
+UINT32
+OhcReadOpReg (
+  IN  USB_OHCI_INSTANCE   *Ohc,
+  IN  UINT32              Offset
   );
 
-
-
 /**
-  Write data to OHCI register.
+  Write the data to the 4-bytes width OHCI operational register.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Offset       Register offset to USB_BAR_INDEX.
-  @param  Data         Data to write.
-
-  @return None.
-
-**/
-VOID
-OhciWriteReg (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset,
-  IN UINT16                  Data
-  );
-
-
-
-/**
-  Set a bit of the OHCI Register.
-
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Offset       Register offset to USB_BAR_INDEX.
-  @param  Bit          The bit to set.
-
-  @return None.
-
-**/
-VOID
-OhciSetRegBit (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset,
-  IN UINT16                  Bit
-  );
-
-
-
-/**
-  Clear a bit of the OHCI Register.
-
-  @param  PciIo        The PCI_IO protocol to access the PCI.
-  @param  Offset       Register offset to USB_BAR_INDEX.
-  @param  Bit          The bit to clear.
-
-  @return None.
+  @param  Ohc      The OHCI Instance.
+  @param  Offset   The offset of the 4-bytes width operational register.
+  @param  Data     The data to write.
 
 **/
 VOID
-OhciClearRegBit (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset,
-  IN UINT16                  Bit
+OhcWriteOpReg (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Data
   );
 
-
 /**
-  Clear all the interrutp status bits, these bits
-  are Write-Clean.
+  Set one bit of the operational register while keeping other bits.
 
-  @param  Ohc          The OHCI device.
-
-  @return None.
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the operational register.
+  @param  Bit          The bit mask of the register to set.
 
 **/
 VOID
-OhciAckAllInterrupt (
-  IN  USB_HC_DEV          *Ohc
+OhcSetOpRegBit (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Bit
   );
 
+/**
+  Clear one bit of the operational register while keeping other bits.
+
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the operational register.
+  @param  Bit          The bit mask of the register to clear.
+
+**/
+VOID
+OhcClearOpRegBit (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Bit
+  );
 
 /**
-  Stop the host controller.
+  Wait the operation register's bit as specified by Bit
+  to be set (or clear).
 
-  @param  Ohc          The OHCI device.
-  @param  Timeout      Max time allowed.
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the operational register.
+  @param  Bit          The bit of the register to wait for.
+  @param  WaitToSet    Wait the bit to set or clear.
+  @param  Timeout      The time to wait before abort (in millisecond, ms).
 
-  @retval EFI_SUCCESS  The host controller is stopped.
-  @retval EFI_TIMEOUT  Failed to stop the host controller.
+  @retval EFI_SUCCESS  The bit successfully changed by host controller.
+  @retval EFI_TIMEOUT  The time out occurred.
 
 **/
 EFI_STATUS
-OhciStopHc (
-  IN USB_HC_DEV         *Ohc,
-  IN UINTN              Timeout
+OhcWaitOpRegBit (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Bit,
+  IN BOOLEAN              WaitToSet,
+  IN UINT32               Timeout
   );
 
-
-
 /**
-  Check whether the host controller operates well.
+  Whether the OHCI host controller is halted.
 
-  @param  PciIo        The PCI_IO protocol to use.
+  @param  Ohc     The OHCI Instance.
 
-  @retval TRUE         Host controller is working.
-  @retval FALSE        Host controller is halted or system error.
+  @retval TRUE    The controller is halted.
+  @retval FALSE   It isn't halted.
 
 **/
 BOOLEAN
-OhciIsHcWorking (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo
+OhcIsHalt (
+  IN USB_OHCI_INSTANCE    *Ohc
   );
-
 
 /**
-  Set the OHCI frame list base address. It can't use
-  OhciWriteReg which access memory in UINT16.
+  Whether system error occurred.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Addr         Address to set.
+  @param  Ohc      The OHCI Instance.
 
-  @return None.
+  @retval TRUE     System error happened.
+  @retval FALSE    No system error.
 
 **/
-VOID
-OhciSetFrameListBaseAddr (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN VOID                    *Addr
+BOOLEAN
+OhcIsSysError (
+  IN USB_OHCI_INSTANCE    *Ohc
   );
-
 
 /**
-  Disable USB Emulation.
+  Reset the OHCI host controller.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL protocol to use.
+  @param  Ohc          The OHCI Instance.
+  @param  Timeout      Time to wait before abort (in millisecond, ms).
 
-  @return None.
+  @retval EFI_SUCCESS  The OHCI host controller is reset.
+  @return Others       Failed to reset the OHCI before Timeout.
 
 **/
-VOID
-OhciTurnOffUsbEmulation (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo
+EFI_STATUS
+OhcResetHC (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Timeout
   );
+
+/**
+  Halt the OHCI host controller.
+
+  @param  Ohc          The OHCI Instance.
+  @param  Timeout      Time to wait before abort (in millisecond, ms).
+
+  @return EFI_SUCCESS  The OHCI host controller is halt.
+  @return EFI_TIMEOUT  Failed to halt the OHCI before Timeout.
+
+**/
+EFI_STATUS
+OhcHaltHC (
+  IN USB_OHCI_INSTANCE   *Ohc,
+  IN UINT32              Timeout
+  );
+
+/**
+  Set the OHCI host controller to run.
+
+  @param  Ohc          The OHCI Instance.
+  @param  Timeout      Time to wait before abort (in millisecond, ms).
+
+  @return EFI_SUCCESS  The OHCI host controller is running.
+  @return EFI_TIMEOUT  Failed to set the OHCI to run before Timeout.
+
+**/
+EFI_STATUS
+OhcRunHC (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Timeout
+  );
+
 #endif

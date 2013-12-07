@@ -1,8 +1,8 @@
 /** @file
 
-  The routine procedure for uhci memory allocate/free.
+  Routine procedures for memory allocate/free.
 
-Copyright (c) 2013, Intel Corporation. All rights reserved.
+Copyright (c) 2013, Nikolai Saoukh. All rights reserved.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -12,6 +12,7 @@ THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
+
 
 #include "Ohci.h"
 
@@ -92,15 +93,6 @@ UsbHcAllocMemBlock (
     goto FREE_BUFFER;
   }
 
-  //
-  // Check whether the data structure used by the host controller
-  // should be restricted into the same 4G
-  //
-  if (Pool->Check4G && (Pool->Which4G != USB_HC_HIGH_32BIT (MappedAddr))) {
-    PciIo->Unmap (PciIo, Mapping);
-    goto FREE_BUFFER;
-  }
-
   Block->BufHost  = BufHost;
   Block->Buf      = (UINT8 *) ((UINTN) MappedAddr);
   Block->Mapping  = Mapping;
@@ -150,11 +142,11 @@ UsbHcFreeMemBlock (
 /**
   Alloc some memory from the block.
 
-  @param  Block           The memory block to allocate memory from.
-  @param  Units           Number of memory units to allocate.
+  @param  Block          The memory block to allocate memory from.
+  @param  Units          Number of memory units to allocate.
 
-  @return EFI_SUCCESS     The needed memory is allocated.
-  @return EFI_NOT_FOUND   Can't find the free memory.
+  @return The pointer to the allocated memory. If couldn't allocate the needed memory,
+          the return value is NULL.
 
 **/
 VOID *
@@ -213,11 +205,11 @@ UsbHcAllocMemFromBlock (
   for (Count = 0; Count < Units; Count++) {
     ASSERT (!USB_HC_BIT_IS_SET (Block->Bits[Byte], Bit));
 
-    Block->Bits[Byte] = (UINT8) (Block->Bits[Byte] | (UINT8) USB_HC_BIT (Bit));
+    Block->Bits[Byte] = (UINT8) (Block->Bits[Byte] | USB_HC_BIT (Bit));
     NEXT_BIT (Byte, Bit);
   }
 
-  return Block->Buf + (StartByte * 8 + StartBit) * USBHC_MEM_UNIT;
+  return Block->BufHost + (StartByte * 8 + StartBit) * USBHC_MEM_UNIT;
 }
 
 /**
@@ -227,10 +219,11 @@ UsbHcAllocMemFromBlock (
   @param  Mem            The pointer to host memory.
   @param  Size           The size of the memory region.
 
-  @return the pci memory address
+  @return                The pci memory address
+
 **/
 EFI_PHYSICAL_ADDRESS
-UsbHcGetPciAddressForHostMem (
+UsbHcGetPciAddrForHostAddr (
   IN USBHC_MEM_POOL       *Pool,
   IN VOID                 *Mem,
   IN UINTN                Size
@@ -269,6 +262,55 @@ UsbHcGetPciAddressForHostMem (
 }
 
 /**
+  Calculate the corresponding host address according to the pci address.
+
+  @param  Pool           The memory pool of the host controller.
+  @param  Mem            The pointer to pci memory.
+  @param  Size           The size of the memory region.
+
+  @return                The host memory address
+
+**/
+EFI_PHYSICAL_ADDRESS
+UsbHcGetHostAddrForPciAddr (
+  IN USBHC_MEM_POOL       *Pool,
+  IN VOID                 *Mem,
+  IN UINTN                Size
+  )
+{
+  USBHC_MEM_BLOCK         *Head;
+  USBHC_MEM_BLOCK         *Block;
+  UINTN                   AllocSize;
+  EFI_PHYSICAL_ADDRESS    HostAddr;
+  UINTN                   Offset;
+
+  Head      = Pool->Head;
+  AllocSize = USBHC_MEM_ROUND (Size);
+
+  if (Mem == NULL) {
+    return 0;
+  }
+
+  for (Block = Head; Block != NULL; Block = Block->Next) {
+    //
+    // scan the memory block list for the memory block that
+    // completely contains the allocated memory.
+    //
+    if ((Block->Buf <= (UINT8 *) Mem) && (((UINT8 *) Mem + AllocSize) <= (Block->Buf + Block->BufLen))) {
+      break;
+    }
+  }
+
+  ASSERT ((Block != NULL));
+  //
+  // calculate the pci memory address for host memory address.
+  //
+  Offset = (UINT8 *)Mem - Block->Buf;
+  HostAddr = (EFI_PHYSICAL_ADDRESS)(UINTN) (Block->BufHost + Offset);
+  return HostAddr;
+}
+
+/**
   Insert the memory block to the pool's list of the blocks.
 
   @param  Head           The head of the memory pool's block list.
@@ -290,10 +332,10 @@ UsbHcInsertMemBlockToPool (
 /**
   Is the memory block empty?
 
-  @param  Block     The memory block to check.
+  @param  Block   The memory block to check.
 
-  @return TRUE      The memory block is empty.
-  @return FALSE     The memory block isn't empty.
+  @retval TRUE    The memory block is empty.
+  @retval FALSE   The memory block isn't empty.
 
 **/
 BOOLEAN
@@ -343,20 +385,15 @@ UsbHcUnlinkMemBlock (
 /**
   Initialize the memory management pool for the host controller.
 
-  @param  PciIo                 The PciIo that can be used to access the host controller.
-  @param  Check4G               Whether the host controller requires allocated memory
-                                from one 4G address space.
-  @param  Which4G               The 4G memory area each memory allocated should be from.
+  @param  PciIo                The PciIo that can be used to access the host controller.
 
-  @return EFI_SUCCESS           The memory pool is initialized.
-  @return EFI_OUT_OF_RESOURCE   Fail to init the memory pool.
+  @retval EFI_SUCCESS          The memory pool is initialized.
+  @retval EFI_OUT_OF_RESOURCE  Fail to init the memory pool.
 
 **/
 USBHC_MEM_POOL *
 UsbHcInitMemPool (
-  IN EFI_PCI_IO_PROTOCOL  *PciIo,
-  IN BOOLEAN              Check4G,
-  IN UINT32               Which4G
+  IN EFI_PCI_IO_PROTOCOL  *PciIo
   )
 {
   USBHC_MEM_POOL          *Pool;
@@ -368,8 +405,6 @@ UsbHcInitMemPool (
   }
 
   Pool->PciIo   = PciIo;
-  Pool->Check4G = Check4G;
-  Pool->Which4G = Which4G;
   Pool->Head    = UsbHcAllocMemBlock (Pool, USBHC_MEM_DEFAULT_PAGES);
 
   if (Pool->Head == NULL) {
@@ -384,10 +419,10 @@ UsbHcInitMemPool (
 /**
   Release the memory management pool.
 
-  @param  Pool               The USB memory pool to free.
+  @param  Pool              The USB memory pool to free.
 
-  @return EFI_SUCCESS        The memory pool is freed.
-  @return EFI_DEVICE_ERROR   Failed to free the memory pool.
+  @retval EFI_SUCCESS       The memory pool is freed.
+  @retval EFI_DEVICE_ERROR  Failed to free the memory pool.
 
 **/
 EFI_STATUS
@@ -474,7 +509,7 @@ UsbHcAllocateMem (
   NewBlock = UsbHcAllocMemBlock (Pool, Pages);
 
   if (NewBlock == NULL) {
-    DEBUG ((EFI_D_INFO, "UsbHcAllocateMem: failed to allocate block\n"));
+    DEBUG ((EFI_D_ERROR, "UsbHcAllocateMem: failed to allocate block\n"));
     return NULL;
   }
 
@@ -524,12 +559,12 @@ UsbHcFreeMem (
     // scan the memory block list for the memory block that
     // completely contains the memory to free.
     //
-    if ((Block->Buf <= ToFree) && ((ToFree + AllocSize) <= (Block->Buf + Block->BufLen))) {
+    if ((Block->BufHost <= ToFree) && ((ToFree + AllocSize) <= (Block->BufHost + Block->BufLen))) {
       //
       // compute the start byte and bit in the bit array
       //
-      Byte  = ((ToFree - Block->Buf) / USBHC_MEM_UNIT) / 8;
-      Bit   = ((ToFree - Block->Buf) / USBHC_MEM_UNIT) % 8;
+      Byte  = ((ToFree - Block->BufHost) / USBHC_MEM_UNIT) / 8;
+      Bit   = ((ToFree - Block->BufHost) / USBHC_MEM_UNIT) % 8;
 
       //
       // reset associated bits in bit arry
@@ -561,4 +596,163 @@ UsbHcFreeMem (
   }
 
   return ;
+}
+
+/**  
+  Allocates pages at a specified alignment that are suitable for an EfiPciIoOperationBusMasterCommonBuffer mapping.
+  
+  If Alignment is not a power of two and Alignment is not zero, then ASSERT().
+
+  @param  PciIo                 The PciIo that can be used to access the host controller.
+  @param  Pages                 The number of pages to allocate.
+  @param  Alignment             The requested alignment of the allocation.  Must be a power of two.
+  @param  HostAddress           The system memory address to map to the PCI controller.
+  @param  DeviceAddress         The resulting map address for the bus master PCI controller to 
+                                use to access the hosts HostAddress.
+  @param  Mapping               A resulting value to pass to Unmap().
+
+  @retval EFI_SUCCESS           Success to allocate aligned pages.
+  @retval EFI_INVALID_PARAMETER Pages or Alignment is not valid.
+  @retval EFI_OUT_OF_RESOURCES  Do not have enough resources to allocate memory.
+  
+
+**/
+EFI_STATUS
+UsbHcAllocateAlignedPages (
+  IN EFI_PCI_IO_PROTOCOL    *PciIo,
+  IN UINTN                  Pages,
+  IN UINTN                  Alignment,
+  OUT VOID                  **HostAddress,
+  OUT EFI_PHYSICAL_ADDRESS  *DeviceAddress,
+  OUT VOID                  **Mapping
+  )
+{
+  EFI_STATUS            Status;
+  VOID                  *Memory;
+  UINTN                 AlignedMemory;
+  UINTN                 AlignmentMask;
+  UINTN                 UnalignedPages;
+  UINTN                 RealPages;
+  UINTN                 Bytes;
+
+  //
+  // Alignment must be a power of two or zero.
+  //
+  ASSERT ((Alignment & (Alignment - 1)) == 0);
+  
+  if ((Alignment & (Alignment - 1)) != 0) {
+    return EFI_INVALID_PARAMETER;
+  }
+ 
+  if (Pages == 0) {
+    return EFI_INVALID_PARAMETER;
+  }
+  if (Alignment > EFI_PAGE_SIZE) {
+    //
+    // Caculate the total number of pages since alignment is larger than page size.
+    //
+    AlignmentMask  = Alignment - 1;
+    RealPages      = Pages + EFI_SIZE_TO_PAGES (Alignment);
+    //
+    // Make sure that Pages plus EFI_SIZE_TO_PAGES (Alignment) does not overflow.
+    //
+    ASSERT (RealPages > Pages);
+ 
+    Status = PciIo->AllocateBuffer (
+                      PciIo,
+                      AllocateAnyPages,
+                      EfiBootServicesData,
+                      Pages,
+                      &Memory,
+                      0
+                      );    
+    if (EFI_ERROR (Status)) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    AlignedMemory  = ((UINTN) Memory + AlignmentMask) & ~AlignmentMask;
+    UnalignedPages = EFI_SIZE_TO_PAGES (AlignedMemory - (UINTN) Memory);
+    if (UnalignedPages > 0) {
+      //
+      // Free first unaligned page(s).
+      //
+      Status = PciIo->FreeBuffer (PciIo, UnalignedPages, Memory);
+      ASSERT_EFI_ERROR (Status);
+    }
+    Memory         = (VOID *)(UINTN)(AlignedMemory + EFI_PAGES_TO_SIZE (Pages));
+    UnalignedPages = RealPages - Pages - UnalignedPages;
+    if (UnalignedPages > 0) {
+      //
+      // Free last unaligned page(s).
+      //
+      Status = PciIo->FreeBuffer (PciIo, UnalignedPages, Memory);
+      ASSERT_EFI_ERROR (Status);
+    }
+  } else {
+    //
+    // Do not over-allocate pages in this case.
+    //
+    Status = PciIo->AllocateBuffer (
+                      PciIo,
+                      AllocateAnyPages,
+                      EfiBootServicesData,
+                      Pages,
+                      &Memory,
+                      0
+                      );
+    if (EFI_ERROR (Status)) {
+      return EFI_OUT_OF_RESOURCES;
+    }
+    AlignedMemory  = (UINTN) Memory;
+  }
+
+  Bytes = EFI_PAGES_TO_SIZE (Pages);
+  Status = PciIo->Map (
+                    PciIo,
+                    EfiPciIoOperationBusMasterCommonBuffer,
+                    (VOID *) AlignedMemory,
+                    &Bytes,
+                    DeviceAddress,
+                    Mapping
+                    );
+
+  if (EFI_ERROR (Status) || (Bytes != EFI_PAGES_TO_SIZE (Pages))) {
+    Status = PciIo->FreeBuffer (PciIo, Pages, (VOID *) AlignedMemory);
+    return EFI_OUT_OF_RESOURCES;
+  }
+  
+  *HostAddress = (VOID *) AlignedMemory;
+
+  return EFI_SUCCESS;
+}
+
+/**
+  Frees memory that was allocated with UsbHcAllocateAlignedPages().
+  
+  @param  PciIo                 The PciIo that can be used to access the host controller.
+  @param  HostAddress           The system memory address to map to the PCI controller.
+  @param  Pages                 The number of 4 KB pages to free.
+  @param  Mapping               The mapping value returned from Map().
+
+**/
+VOID
+UsbHcFreeAlignedPages (
+  IN EFI_PCI_IO_PROTOCOL    *PciIo,
+  IN VOID                   *HostAddress,
+  IN UINTN                  Pages,
+  VOID                      *Mapping
+  )
+{
+  EFI_STATUS      Status;
+  
+  ASSERT (Pages != 0);
+  
+  Status = PciIo->Unmap (PciIo, Mapping);
+  ASSERT_EFI_ERROR (Status);
+
+  Status = PciIo->FreeBuffer (
+                    PciIo,
+                    Pages,
+                    HostAddress
+                    );     
+  ASSERT_EFI_ERROR (Status);
 }

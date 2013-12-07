@@ -2,7 +2,7 @@
 
   The OHCI register operation routines.
 
-Copyright (c) 2013, Intel Corporation. All rights reserved.
+Copyright (c) 2013, Nikolai Saoukh. All rights reserved.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -15,267 +15,310 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include "Ohci.h"
 
-
 /**
-  Read a OHCI register.
+  Read 4-bytes width OHCI Operational register.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Offset       Register offset to USB_BAR_INDEX.
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the 4-bytes width operational register.
 
-  @return Content of register.
+  @return The register content read.
+  @retval If err, return 0xFFFFFFFF.
 
 **/
-UINT16
-OhciReadReg (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset
+UINT32
+OhcReadOpReg (
+  IN  USB_OHCI_INSTANCE   *Ohc,
+  IN  UINT32              Offset
   )
 {
-  UINT16      Data;
-  EFI_STATUS  Status;
+  UINT32                  Data;
+  EFI_STATUS              Status;
 
-  Status = PciIo->Io.Read (
-                      PciIo,
-                      EfiPciIoWidthUint16,
-                      USB_BAR_INDEX,
-                      Offset,
-                      1,
-                      &Data
-                      );
+  Status = Ohc->PciIo->Mem.Read (
+                             Ohc->PciIo,
+                             EfiPciIoWidthUint32,
+                             OHC_BAR_INDEX,
+                             0xFEDC, /* XXX: nms */
+                             1,
+                             &Data
+                             );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhciReadReg: PciIo Io.Read error: %r at offset %d\n", Status, Offset));
-
-    Data = 0xFFFF;
+    DEBUG ((EFI_D_ERROR, "OhcReadOpReg: Pci Io Read error - %r at %d\n", Status, Offset));
+    Data = 0xFFFFFFFF;
   }
 
   return Data;
 }
 
-
 /**
-  Write data to OHCI register.
+  Write the data to the 4-bytes width OHCI operational register.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Offset       Register offset to USB_BAR_INDEX.
-  @param  Data         Data to write.
+  @param  Ohc      The OHCI Instance.
+  @param  Offset   The offset of the 4-bytes width operational register.
+  @param  Data     The data to write.
 
 **/
 VOID
-OhciWriteReg (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset,
-  IN UINT16                  Data
+OhcWriteOpReg (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Data
   )
 {
-  EFI_STATUS  Status;
+  EFI_STATUS              Status;
 
-  Status = PciIo->Io.Write (
-                      PciIo,
-                      EfiPciIoWidthUint16,
-                      USB_BAR_INDEX,
-                      Offset,
-                      1,
-                      &Data
-                      );
+  Status = Ohc->PciIo->Mem.Write (
+                             Ohc->PciIo,
+                             EfiPciIoWidthUint32,
+                             OHC_BAR_INDEX,
+                             0xFEDC, /* XXX: nms */
+                             1,
+                             &Data
+                             );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhciWriteReg: PciIo Io.Write error: %r at offset %d\n", Status, Offset));
+    DEBUG ((EFI_D_ERROR, "OhcWriteOpReg: Pci Io Write error: %r at %d\n", Status, Offset));
   }
 }
 
-
 /**
-  Set a bit of the OHCI Register.
+  Set one bit of the operational register while keeping other bits.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Offset       Register offset to USB_BAR_INDEX.
-  @param  Bit          The bit to set.
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the operational register.
+  @param  Bit          The bit mask of the register to set.
 
 **/
 VOID
-OhciSetRegBit (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset,
-  IN UINT16                  Bit
+OhcSetOpRegBit (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Bit
   )
 {
-  UINT16  Data;
+  UINT32                  Data;
 
-  Data = OhciReadReg (PciIo, Offset);
-  Data = (UINT16) (Data |Bit);
-  OhciWriteReg (PciIo, Offset, Data);
+  Data  = OhcReadOpReg (Ohc, Offset);
+  Data |= Bit;
+  OhcWriteOpReg (Ohc, Offset, Data);
 }
 
 
 /**
-  Clear a bit of the OHCI Register.
+  Clear one bit of the operational register while keeping other bits.
 
-  @param  PciIo        The PCI_IO protocol to access the PCI.
-  @param  Offset       Register offset to USB_BAR_INDEX.
-  @param  Bit          The bit to clear.
-
-**/
-VOID
-OhciClearRegBit (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN UINT32                  Offset,
-  IN UINT16                  Bit
-  )
-{
-  UINT16  Data;
-
-  Data = OhciReadReg (PciIo, Offset);
-  Data = (UINT16) (Data & ~Bit);
-  OhciWriteReg (PciIo, Offset, Data);
-}
-
-
-/**
-  Clear all the interrutp status bits, these bits
-  are Write-Clean.
-
-  @param  Ohc          The OHCI device.
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the operational register.
+  @param  Bit          The bit mask of the register to clear.
 
 **/
 VOID
-OhciAckAllInterrupt (
-  IN  USB_HC_DEV          *Ohc
+OhcClearOpRegBit (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Bit
   )
 {
-  OhciWriteReg (Ohc->PciIo, USBSTS_OFFSET, 0x3F);
+  UINT32                  Data;
 
-  //
-  // If current HC is halted, re-enable it. Host Controller Process Error
-  // is a temporary error status.
-  //
-  if (!OhciIsHcWorking (Ohc->PciIo)) {
-    DEBUG ((EFI_D_ERROR, "OhciAckAllInterrupt: re-enable the OHCI from system error\n"));
-    Ohc->Usb2Hc.SetState (&Ohc->Usb2Hc, EfiUsbHcStateOperational);
-  }
+  Data  = OhcReadOpReg (Ohc, Offset);
+  Data &= ~Bit;
+  OhcWriteOpReg (Ohc, Offset, Data);
 }
 
-
 /**
-  Stop the host controller.
+  Wait the operation register's bit as specified by Bit
+  to become set (or clear).
 
-  @param  Ohc          The OHCI device.
-  @param  Timeout      Max time allowed.
+  @param  Ohc          The OHCI Instance.
+  @param  Offset       The offset of the operation register.
+  @param  Bit          The bit of the register to wait for.
+  @param  WaitToSet    Wait the bit to set or clear.
+  @param  Timeout      The time to wait before abort (in millisecond, ms).
 
-  @retval EFI_SUCCESS  The host controller is stopped.
-  @retval EFI_TIMEOUT  Failed to stop the host controller.
+  @retval EFI_SUCCESS  The bit successfully changed by host controller.
+  @retval EFI_TIMEOUT  The time out occurred.
 
 **/
 EFI_STATUS
-OhciStopHc (
-  IN USB_HC_DEV        *Ohc,
-  IN UINTN             Timeout
+OhcWaitOpRegBit (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Offset,
+  IN UINT32               Bit,
+  IN BOOLEAN              WaitToSet,
+  IN UINT32               Timeout
   )
 {
-  UINT16                UsbSts;
-  UINTN                 Index;
+  UINT32                  Index;
+  UINTN                   Loop;
 
-  OhciClearRegBit (Ohc->PciIo, USBCMD_OFFSET, USBCMD_RS);
+  Loop   = (Timeout * OHC_1_MILLISECOND / OHC_POLL_DELAY) + 1;
 
-  //
-  // ensure the HC is in halt status after send the stop command
-  // Timeout is in us unit.
-  //
-  for (Index = 0; Index < (Timeout / 50) + 1; Index++) {
-    UsbSts = OhciReadReg (Ohc->PciIo, USBSTS_OFFSET);
-
-    if ((UsbSts & USBSTS_HCH) == USBSTS_HCH) {
+  for (Index = 0; Index < Loop; Index++) {
+    if (OHC_REG_BIT_IS_SET (Ohc, Offset, Bit) == WaitToSet) {
       return EFI_SUCCESS;
     }
 
-    gBS->Stall (50);
+    gBS->Stall (OHC_POLL_DELAY);
   }
 
   return EFI_TIMEOUT;
 }
 
+/**
+  Set Bios Ownership
+
+  @param  Ohc          The OHCI Instance.
+
+**/
+VOID
+OhcSetBiosOwnership (
+  IN USB_OHCI_INSTANCE    *Ohc
+  )
+{
+  DEBUG ((EFI_D_INFO, "OhcSetBiosOwnership: called to set BIOS ownership\n"));
+}
 
 /**
-  Check whether the host controller operates well.
+  Clear Bios Ownership
 
-  @param  PciIo        The PCI_IO protocol to use.
+  @param  Ohc       The OHCI Instance.
 
-  @retval TRUE         Host controller is working.
-  @retval FALSE        Host controller is halted or system error.
+**/
+VOID
+OhcClearBiosOwnership (
+  IN USB_OHCI_INSTANCE    *Ohc
+  )
+{
+  DEBUG ((EFI_D_INFO, "OhcClearBiosOwnership: called to clear BIOS ownership\n"));
+}
+
+/**
+  Whether the OHCI host controller is halted.
+
+  @param  Ohc     The OHCI Instance.
+
+  @retval TRUE    The controller is halted.
+  @retval FALSE   It isn't halted.
 
 **/
 BOOLEAN
-OhciIsHcWorking (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo
+OhcIsHalt (
+  IN USB_OHCI_INSTANCE    *Ohc
   )
 {
-  UINT16                UsbSts;
-
-  UsbSts = OhciReadReg (PciIo, USBSTS_OFFSET);
-
-  if ((UsbSts & (USBSTS_HCPE | USBSTS_HSE | USBSTS_HCH)) != 0) {
-    DEBUG ((EFI_D_ERROR, "OhciIsHcWorking: current USB state is %x\n", UsbSts));
-    return FALSE;
-  }
-
-  return TRUE;
+  return OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, OHC_USBSTS_HALT);
 }
 
 
 /**
-  Set the OHCI frame list base address. It can't use
-  OhciWriteReg which access memory in UINT16.
+  Whether system error occurred.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL to use.
-  @param  Addr         Address to set.
+  @param  Ohc      The OHCI Instance.
+
+  @retval TRUE     System error happened.
+  @retval FALSE    No system error.
 
 **/
-VOID
-OhciSetFrameListBaseAddr (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo,
-  IN VOID                    *Addr
+BOOLEAN
+OhcIsSysError (
+  IN USB_OHCI_INSTANCE    *Ohc
+  )
+{
+  return OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, OHC_USBSTS_HSE);
+}
+
+/**
+  Reset the OHCI host controller.
+
+  @param  Ohc          The OHCI Instance.
+  @param  Timeout      Time to wait before abort (in millisecond, ms).
+
+  @retval EFI_SUCCESS  The OHCI host controller is reset.
+  @return Others       Failed to reset the OHCI before Timeout.
+
+**/
+EFI_STATUS
+OhcResetHC (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Timeout
   )
 {
   EFI_STATUS              Status;
-  UINT32                  Data;
 
-  Data = (UINT32) ((UINTN) Addr & 0xFFFFF000);
+  Status = EFI_SUCCESS;
 
-  Status = PciIo->Io.Write (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       USB_BAR_INDEX,
-                       (UINT64) USB_FRAME_BASE_OFFSET,
-                       1,
-                       &Data
-                       );
+  DEBUG ((EFI_D_INFO, "OhcResetHC!\n"));
+  //
+  // Host can only be reset when it is halt. If not so, halt it
+  //
+  if (!OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, OHC_USBSTS_HALT)) {
+    Status = OhcHaltHC (Ohc, Timeout);
 
-  if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhciSetFrameListBaseAddr: PciIo Io.Write error: %r\n", Status));
+    if (EFI_ERROR (Status)) {
+      return Status;
+    }
   }
+
+#if 1
+  OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, OHC_USBCMD_RESET);
+  Status = OhcWaitOpRegBit (Ohc, OHC_USBCMD_OFFSET, OHC_USBCMD_RESET, FALSE, Timeout);
+#else
+  if ((Ohc->DebugCapSupOffset == 0xFFFFFFFF) || ((OhcReadExtCapReg (Ohc, Ohc->DebugCapSupOffset) & 0xFF) != OHC_CAP_USB_DEBUG) ||
+      ((OhcReadExtCapReg (Ohc, Ohc->DebugCapSupOffset + OHC_DC_DCCTRL) & BIT0) == 0)) {
+    OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, OHC_USBCMD_RESET);
+    Status = OhcWaitOpRegBit (Ohc, OHC_USBCMD_OFFSET, OHC_USBCMD_RESET, FALSE, Timeout);
+  }
+#endif
+
+  return Status;
 }
 
 
 /**
-  Disable USB Emulation.
+  Halt the OHCI host controller.
 
-  @param  PciIo        The EFI_PCI_IO_PROTOCOL protocol to use.
+  @param  Ohc          The OHCI Instance.
+  @param  Timeout      Time to wait before abort (in millisecond, ms).
+
+  @return EFI_SUCCESS  The OHCI host controller is halt.
+  @return EFI_TIMEOUT  Failed to halt the OHCI before Timeout.
 
 **/
-VOID
-OhciTurnOffUsbEmulation (
-  IN EFI_PCI_IO_PROTOCOL     *PciIo
+EFI_STATUS
+OhcHaltHC (
+  IN USB_OHCI_INSTANCE   *Ohc,
+  IN UINT32              Timeout
   )
 {
-  UINT16            Command;
+  EFI_STATUS              Status;
 
-  Command = 0;
+  OhcClearOpRegBit (Ohc, OHC_USBCMD_OFFSET, OHC_USBCMD_RUN);
+  Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, OHC_USBSTS_HALT, TRUE, Timeout);
+  return Status;
+}
 
-  PciIo->Pci.Write (
-               PciIo,
-               EfiPciIoWidthUint16,
-               USB_EMULATION_OFFSET,
-               1,
-               &Command
-               );
+
+/**
+  Set the OHCI host controller to run.
+
+  @param  Ohc          The OHCI Instance.
+  @param  Timeout      Time to wait before abort (in millisecond, ms).
+
+  @return EFI_SUCCESS  The OHCI host controller is running.
+  @return EFI_TIMEOUT  Failed to set the OHCI to run before Timeout.
+
+**/
+EFI_STATUS
+OhcRunHC (
+  IN USB_OHCI_INSTANCE    *Ohc,
+  IN UINT32               Timeout
+  )
+{
+  EFI_STATUS              Status;
+
+  OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, OHC_USBCMD_RUN);
+  Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, OHC_USBSTS_HALT, FALSE, Timeout);
+  return Status;
 }
