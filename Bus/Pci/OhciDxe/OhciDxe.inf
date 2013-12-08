@@ -1,12 +1,12 @@
 ## @file
-#
+#  
 #  Component Description File For OhciDxe Module.
+# 
+#  OhciDxe driver is responsible for managing the behavior of OHCI controller. 
+#  It implements the interfaces of monitoring the status of all ports and transferring 
+#  Control, Bulk, Interrupt and Isochronous requests to Usb1.1 device.
 #
-#  OhciDxe driver is responsible for managing the behavior of OHCI controller.
-#  It implements the interfaces of monitoring the status of all ports and transferring
-#  Control, Bulk, Interrupt and Isochronous requests to those attached usb LS/FS/HS/SS devices.
-#
-#  Copyright (c) 2013, Nikolai Saoukh. All rights reserved.
+#  Copyright (c) 2013, Intel Corporation. All rights reserved.<BR>
 #
 #  This program and the accompanying materials
 #  are licensed and made available under the terms and conditions of the BSD License
@@ -22,7 +22,7 @@
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = OhciDxe
-  FILE_GUID                      = 25E42623-5F4E-11E3-8797-00E051880131
+  FILE_GUID                      = 70AE4EF4-5FD2-11E3-8797-00E051880131
   MODULE_TYPE                    = UEFI_DRIVER
   VERSION_STRING                 = 1.0
 
@@ -33,25 +33,33 @@
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
 #
-#  DRIVER_BINDING                =  gOhciDriverBinding
+#  DRIVER_BINDING                =  gOhciDriverBinding                        
 #  COMPONENT_NAME                =  gOhciComponentName
 #  COMPONENT_NAME2               =  gOhciComponentName2
 #
 
 [Sources]
-  Ohci.c
-  OhciReg.c
-  OhciSched.c
-  UsbHcMem.c
-  UsbHcMem.h  
   ComponentName.c
   ComponentName.h
+  Ohci.c
   Ohci.h
+  OhciDebug.c
+  OhciDebug.h
+  OhciReg.c
   OhciReg.h
+  OhciSched.c
   OhciSched.h
+  OhciUrb.c
+  OhciUrb.h
+  UsbHcMem.c
+  UsbHcMem.h
 
 [Packages]
   MdePkg/MdePkg.dec
+  MdeModulePkg/MdeModulePkg.dec
+
+[FeaturePcd]
+  gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport  ## SOMETIME_CONSUMES (enable/disable usb legacy support.)
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -61,6 +69,7 @@
   UefiDriverEntryPoint
   BaseMemoryLib
   DebugLib
+  PcdLib
   ReportStatusCodeLib
 
 [Guids]
