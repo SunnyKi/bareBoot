@@ -239,6 +239,7 @@ OhcDumpRegs (
   IN  USB2_HC_DEV         *Ohc
   )
 {
+#if 0
   UINT8   Index;
 
   DEBUG ((EFI_D_VERBOSE, "  OHC_CAPLENGTH_OFFSET   = 0x%08x\n", OhcReadCapRegister (Ohc, OHC_CAPLENGTH_OFFSET)));
@@ -255,4 +256,5 @@ OhcDumpRegs (
   for (Index = 0; Index < (UINT8) (Ohc->HcStructParams & HCSP_NPORTS); Index++) {
     DEBUG ((EFI_D_VERBOSE, "  OHC_PORT_STAT_OFFSET(%d)  = 0x%08x\n", Index, OhcReadOpReg (Ohc, OHC_PORT_STAT_OFFSET + (4 * Index))));
   }
+#endif
 }

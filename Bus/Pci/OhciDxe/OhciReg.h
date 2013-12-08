@@ -17,43 +17,31 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define _EFI_OHCI_REG_H_
 
 //
-// OHCI register offset
-//
-
-
-//
-// Capability register offset
-//
-#define OHC_CAPLENGTH_OFFSET    0    // Capability register length offset
-#define OHC_HCSPARAMS_OFFSET    0x04 // Structural Parameters 04-07h
-#define OHC_HCCPARAMS_OFFSET    0x08 // Capability parameters offset
-
-//
 // Capability register bit definition
 //
-#define HCSP_NPORTS             0x0F // Number of root hub port
 #define HCSP_PPC                0x10 // Port Power Control
 #define HCCP_64BIT              0x01 // 64-bit addressing capability
 
 //
 // Operational register offset
 //
-#define OHC_USBCMD_OFFSET       0x0  // USB command register offset
-#define OHC_USBSTS_OFFSET       0x04 // Statue register offset
-#define OHC_USBINTR_OFFSET      0x08 // USB interrutp offset
-#define OHC_FRINDEX_OFFSET      0x0C // Frame index offset
-#define OHC_CTRLDSSEG_OFFSET    0x10 // Control data structure segment offset
-#define OHC_FRAME_BASE_OFFSET   0x14 // Frame list base address offset
-#define OHC_ASYNC_HEAD_OFFSET   0x18 // Next asynchronous list address offset
-#define OHC_CONFIG_FLAG_OFFSET  0x40 // Configure flag register offset
-#define OHC_PORT_STAT_OFFSET    0x44 // Port status/control offset
+#define OHC_REVISION_OFFSET              0x0000
+#define OHC_CONTROL_OFFSET               0x0004
+#define OHC_COMMANDSTATUS_OFFSET         0x0008
+#define OHC_INTERRUPTSTATUS_OFFSET       0x000C
+#define OHC_INTERRUPTENABLE_OFFSET       0x0010
+#define OHC_INTERRUPTDISABLE_OFFSET      0x0014
+#define OHC_HCHCCA_OFFSET                0x0018
+#define OHC_RHDESCRITORA_OFFSET          0x0048
+#define   HCRHA_NPORTS                     0xFF // Number of root hub port
+#define   HCRHA_PSM                        BIT8 // Power Switching Mode
+#define OHC_RHPORTSTATUS_OFFSET          0x0054 /* XXX: 0x50? */
 
 #define OHC_FRAME_LEN           1024
 
 //
 // Register bit definition
 //
-#define CONFIGFLAG_ROUTE_OHC    0x01 // Route port to OHC
 
 #define USBCMD_RUN              0x01   // Run/stop
 #define USBCMD_RESET            0x02   // Start the host controller reset
@@ -89,11 +77,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 //
 #define OHC_BAR_INDEX           0      // how many bytes away from USB_BASE to 0x10
 
-//
-// Debug port capability id
-//
-#define OHC_DEBUG_PORT_CAP_ID   0x0A
-
 #define OHC_LINK_TERMINATED(Link) (((Link) & 0x01) != 0)
 
 #define OHC_ADDR(High, QhHw32)   \
@@ -120,37 +103,6 @@ typedef struct {
   UINT8                   BaseCode;
 } USB_CLASSC;
 #pragma pack()
-
-/**
-  Read OHCI capability register.
-
-  @param  Ohc     The OHCI device.
-  @param  Offset  Capability register address.
-
-  @return The register content.
-
-**/
-UINT32
-OhcReadCapRegister (
-  IN  USB2_HC_DEV         *Ohc,
-  IN  UINT32              Offset
-  );
-
-/**
-  Read OHCI debug port register.
-
-  @param  Ohc          The OHCI device.
-  @param  Offset       Debug port register address.
-
-  @return The register content read.
-  @retval If err, return 0xffff.
-
-**/
-UINT32
-OhcReadDbgRegister (
-  IN  USB2_HC_DEV         *Ohc,
-  IN  UINT32              Offset
-  );
 
 /**
   Read OHCI Operation register.

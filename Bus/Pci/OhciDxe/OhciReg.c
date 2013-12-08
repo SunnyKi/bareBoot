@@ -35,13 +35,11 @@ OhcReadOpReg (
   UINT32                  Data;
   EFI_STATUS              Status;
 
-  ASSERT (Ohc->CapLen != 0);
-
   Status = Ohc->PciIo->Mem.Read (
                              Ohc->PciIo,
                              EfiPciIoWidthUint32,
                              OHC_BAR_INDEX,
-                             (UINT64) (Ohc->CapLen + Offset),
+                             (UINT64) Offset,
                              1,
                              &Data
                              );
@@ -72,13 +70,11 @@ OhcWriteOpReg (
 {
   EFI_STATUS              Status;
 
-  ASSERT (Ohc->CapLen != 0);
-
   Status = Ohc->PciIo->Mem.Write (
                              Ohc->PciIo,
                              EfiPciIoWidthUint32,
                              OHC_BAR_INDEX,
-                             (UINT64) (Ohc->CapLen + Offset),
+                             (UINT64) Offset,
                              1,
                              &Data
                              );
@@ -184,36 +180,83 @@ OhcClearLegacySupport (
   IN USB2_HC_DEV          *Ohc
   )
 {
-  UINT32                    ExtendCap;
-  EFI_PCI_IO_PROTOCOL       *PciIo;
-  UINT32                    Value;
-  UINT32                    TimeOut;
+#if 0
+  EFI_STATUS Status;
+  UINT64     pollResult;
+  struct {
+    UINT32     HcControl;
+    UINT32     HcCommandStatus;
+  } OpRegs;
 
-  DEBUG ((EFI_D_INFO, "OhcClearLegacySupport: called to clear legacy support\n"));
-
-  PciIo     = Ohc->PciIo;
-  ExtendCap = (Ohc->HcCapParams >> 8) & 0xFF;
-
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
-
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-  Value |= (0x1 << 24);
-  PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-
-  TimeOut = 40;
-  while (TimeOut-- != 0) {
-    gBS->Stall (500);
-
-    PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-
-    if ((Value & 0x01010000) == 0x01000000) {
-      break;
-    }
+  DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
+  Status = Ohc->PciIo->Mem.Read (
+                       PciIo,
+                       EfiPciIoWidthUint32,
+                       OHCI_BAR_INDEX,
+                       (UINT64) OHCI_CONTROL_OFFSET,
+                       sizeof (OpRegs) / sizeof (UINT32),
+                       &OpRegs
+                       );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a: bail out (reading opregs: %r)\n", __FUNCTION__, Status));
+    return;
   }
 
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap, 1, &Value);
-  PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCap + 0x4, 1, &Value);
+  if ((OpRegs.HcControl & 0x100) == 0) {
+    /* No SMM driver active */
+    DEBUG ((DEBUG_INFO, "%a: no SMM (legacy) on device\n", __FUNCTION__));
+    /* XXX: Let see the HostControllerFunctionalState for BIOS driver */
+    switch (OpRegs.HcControl & 0xC0) {
+    case 0x00: /* UsbReset */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbReset state\n", __FUNCTION__));
+      break;
+    case 0x40: /* UsbResume */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbResume state\n", __FUNCTION__));
+      break;
+    case 0x80: /* UsbOperational */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbOperational state\n", __FUNCTION__));
+      break;
+    case 0xC0: /* UsbSuspend */
+      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbSuspend state\n", __FUNCTION__));
+      break;
+    }
+    return;
+  }
+
+  DEBUG ((DEBUG_INFO, "%a: SMM (legacy) on device\n", __FUNCTION__));
+
+  /* Time to do little dance with SMM driver */
+  OpRegs.HcCommandStatus = 0x08; // Ownership Change Request
+  Status = Ohc->PciIo->Mem.Write (
+                       PciIo,
+                       EfiPciIoWidthUint32,
+                       OHCI_BAR_INDEX,
+                       (UINT64) OHCI_COMMANDSTATUS_OFFSET,
+                       1,
+                       &OpRegs.HcCommandStatus
+                       );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a: bail out (setting ownership change request bit: %r)\n", __FUNCTION__, Status));
+    return;
+  }
+
+  MemoryFence (); // Just to be sure
+
+  Status = Ohc->PciIo->PollMem (
+                       PciIo,
+                       EfiPciIoWidthUint32,
+                       OHCI_BAR_INDEX,
+                       (UINT64) OHCI_CONTROL_OFFSET,
+                       (UINT64) 0x100,   // check InterruptRouting bit
+		       (UINT64) 0,       // we waiting for that
+		       (UINT64) 10000,  // wait that number of 100ns units
+                       &pollResult
+                       );
+  if (EFI_ERROR (Status)) {
+    DEBUG ((DEBUG_INFO, "%a: bail out (wating for interruptrouting bit clear: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
+  }
+  DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
+#endif
 }
 
 
@@ -257,7 +300,7 @@ OhcSetAndWaitDoorBell (
 
 
 /**
-  Clear all the interrutp status bits, these bits
+  Clear all the interrupt status bits, these bits
   are Write-Clean.
 
   @param  Ohc          The OHCI device.
@@ -518,11 +561,6 @@ OhcInitHC (
   EFI_STATUS              Status;
   UINT32                  Index;
 
-  // This ASSERT crashes the BeagleBoard. There is some issue in the USB stack.
-  // This ASSERT needs to be removed so the BeagleBoard will boot. When we fix
-  // the USB stack we can put this ASSERT back in
-  // ASSERT (OhcIsHalt (Ohc));
-
   //
   // Allocate the periodic frame and associated memeory
   // management facilities if not already done.
@@ -548,11 +586,11 @@ OhcInitHC (
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RUN);
 
   //
-  // 3. Power up all ports if OHCI has Port Power Control (PPC) support
+  // 3. Power up all ports if OHCI has Power Switching Mode (PSM) support
   //
-  if (Ohc->HcStructParams & HCSP_PPC) {
-    for (Index = 0; Index < (UINT8) (Ohc->HcStructParams & HCSP_NPORTS); Index++) {
-      OhcSetOpRegBit (Ohc, (UINT32) (OHC_PORT_STAT_OFFSET + (4 * Index)), PORTSC_POWER);
+  if ((Ohc->HcRhDescriptorA & HCRHA_PSM) == HCRHA_PSM) {
+    for (Index = 0; Index < (UINT8) (Ohc->HcRhDescriptorA & HCRHA_NPORTS); Index++) {
+      OhcSetOpRegBit (Ohc, (UINT32) (OHC_RHPORTSTATUS_OFFSET + (4 * Index)), PORTSC_POWER);
     }
   }
 
@@ -560,11 +598,6 @@ OhcInitHC (
   // Wait roothub port power stable
   //
   gBS->Stall (OHC_ROOT_PORT_RECOVERY_STALL);
-
-  //
-  // 4. Set all ports routing to OHC
-  //
-  OhcSetOpRegBit (Ohc, OHC_CONFIG_FLAG_OFFSET, CONFIGFLAG_ROUTE_OHC);
 
   Status = OhcEnablePeriodSchd (Ohc, OHC_GENERIC_TIMEOUT);
 

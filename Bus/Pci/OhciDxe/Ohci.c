@@ -82,8 +82,12 @@ OhcGetCapability (
   Ohc             = OHC_FROM_THIS (This);
 
   *MaxSpeed       = EFI_USB_SPEED_HIGH;
-  *PortNumber     = (UINT8) (Ohc->HcStructParams & HCSP_NPORTS);
+  *PortNumber     = (UINT8) (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
+#if 1
+  *Is64BitCapable = 0;
+#else
   *Is64BitCapable = (UINT8) (Ohc->HcCapParams & HCCP_64BIT);
+#endif
 
   DEBUG ((EFI_D_INFO, "OhcGetCapability: %d ports, 64 bit %d\n", *PortNumber, *Is64BitCapable));
 
@@ -115,7 +119,9 @@ OhcReset (
   USB2_HC_DEV             *Ohc;
   EFI_TPL                 OldTpl;
   EFI_STATUS              Status;
+#if 0
   UINT32                  DbgCtrlStatus;
+#endif
 
   Ohc = OHC_FROM_THIS (This);
 
@@ -141,6 +147,7 @@ OhcReset (
     //
     // Host Controller must be Halt when Reset it
     //
+#if 0
     if (Ohc->DebugPortNum != 0) {
       DbgCtrlStatus = OhcReadDbgRegister(Ohc, 0);
       if ((DbgCtrlStatus & (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) == (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) {
@@ -148,6 +155,7 @@ OhcReset (
         goto ON_EXIT;
       }
     }
+#endif
 
     if (!OhcIsHalt (Ohc)) {
       Status = OhcHaltHC (Ohc, OHC_GENERIC_TIMEOUT);
@@ -221,11 +229,13 @@ OhcGetState (
   OldTpl  = gBS->RaiseTPL (OHC_TPL);
   Ohc     = OHC_FROM_THIS (This);
 
+#if 0
   if (OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT)) {
     *State = EfiUsbHcStateHalt;
   } else {
     *State = EfiUsbHcStateOperational;
   }
+#endif
 
   gBS->RestoreTPL (OldTpl);
 
@@ -277,6 +287,7 @@ OhcSetState (
     break;
 
   case EfiUsbHcStateOperational:
+#if 0
     if (OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_SYS_ERROR)) {
       Status = EFI_DEVICE_ERROR;
       break;
@@ -291,7 +302,7 @@ OhcSetState (
       Status = EFI_DEVICE_ERROR;
       break;
     }
-
+#endif
     Status = OhcRunHC (Ohc, OHC_GENERIC_TIMEOUT);
     break;
 
@@ -339,7 +350,9 @@ OhcGetRootHubPortStatus (
   UINTN                   Index;
   UINTN                   MapSize;
   EFI_STATUS              Status;
+#if 0
   UINT32                  DbgCtrlStatus;
+#endif
 
   if (PortStatus == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -350,23 +363,25 @@ OhcGetRootHubPortStatus (
   Ohc       = OHC_FROM_THIS (This);
   Status    = EFI_SUCCESS;
 
-  TotalPort = (Ohc->HcStructParams & HCSP_NPORTS);
+  TotalPort = (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
 
   if (PortNumber >= TotalPort) {
     Status = EFI_INVALID_PARAMETER;
     goto ON_EXIT;
   }
 
-  Offset                        = (UINT32) (OHC_PORT_STAT_OFFSET + (4 * PortNumber));
+  Offset                        = (UINT32) (OHC_RHPORTSTATUS_OFFSET + (4 * PortNumber));
   PortStatus->PortStatus        = 0;
   PortStatus->PortChangeStatus  = 0;
 
+#if 0
   if ((Ohc->DebugPortNum != 0) && (PortNumber == (Ohc->DebugPortNum - 1))) {
     DbgCtrlStatus = OhcReadDbgRegister(Ohc, 0);
     if ((DbgCtrlStatus & (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) == (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) {
       goto ON_EXIT;
     }
   }
+#endif
 
   State                         = OhcReadOpReg (Ohc, Offset);
 
@@ -439,14 +454,14 @@ OhcSetRootHubPortFeature (
   Ohc       = OHC_FROM_THIS (This);
   Status    = EFI_SUCCESS;
 
-  TotalPort = (Ohc->HcStructParams & HCSP_NPORTS);
+  TotalPort = (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
 
   if (PortNumber >= TotalPort) {
     Status = EFI_INVALID_PARAMETER;
     goto ON_EXIT;
   }
 
-  Offset  = (UINT32) (OHC_PORT_STAT_OFFSET + (4 * PortNumber));
+  Offset  = (UINT32) (OHC_RHPORTSTATUS_OFFSET + (4 * PortNumber));
   State   = OhcReadOpReg (Ohc, Offset);
 
   //
@@ -493,9 +508,9 @@ OhcSetRootHubPortFeature (
 
   case EfiUsbPortPower:
     //
-    // Set port power bit when PPC is 1
+    // Set port power bit when PSM is 1
     //
-    if ((Ohc->HcCapParams & HCSP_PPC) == HCSP_PPC) {
+    if ((Ohc->HcRhDescriptorA & HCRHA_PSM) == HCRHA_PSM) {
       State |= PORTSC_POWER;
       OhcWriteOpReg (Ohc, Offset, State);
     }
@@ -552,14 +567,14 @@ OhcClearRootHubPortFeature (
   Ohc       = OHC_FROM_THIS (This);
   Status    = EFI_SUCCESS;
 
-  TotalPort = (Ohc->HcStructParams & HCSP_NPORTS);
+  TotalPort = (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
 
   if (PortNumber >= TotalPort) {
     Status = EFI_INVALID_PARAMETER;
     goto ON_EXIT;
   }
 
-  Offset  = OHC_PORT_STAT_OFFSET + (4 * PortNumber);
+  Offset  = OHC_RHPORTSTATUS_OFFSET + (4 * PortNumber);
   State   = OhcReadOpReg (Ohc, Offset);
   State &= ~PORTSC_CHANGE_MASK;
 
@@ -626,9 +641,9 @@ OhcClearRootHubPortFeature (
 
   case EfiUsbPortPower:
     //
-    // Clear port power bit when PPC is 1
+    // Clear port power bit when PSM is 1
     //
-    if ((Ohc->HcCapParams & HCSP_PPC) == HCSP_PPC) {
+    if ((Ohc->HcRhDescriptorA & HCRHA_PSM) == HCRHA_PSM) {
       State &= ~PORTSC_POWER;
       OhcWriteOpReg (Ohc, Offset, State);
     }
@@ -1395,10 +1410,12 @@ OhcDriverBindingSupported (
   }
 
   //
-  // Test whether the controller belongs to Ohci type
+  // Test whether the controller belongs to OHCI type
   //
-  if ((UsbClassCReg.BaseCode != PCI_CLASS_SERIAL) || (UsbClassCReg.SubClassCode != PCI_CLASS_SERIAL_USB)
-      || ((UsbClassCReg.ProgInterface != PCI_IF_OHCI) && (UsbClassCReg.ProgInterface != PCI_IF_UHCI) && (UsbClassCReg.ProgInterface != PCI_IF_OHCI))) {
+  if ((UsbClassCReg.BaseCode != PCI_CLASS_SERIAL) ||
+      (UsbClassCReg.SubClassCode != PCI_CLASS_SERIAL_USB) ||
+      (UsbClassCReg.ProgInterface != PCI_IF_OHCI)
+      ) {
 
     Status = EFI_UNSUPPORTED;
   }
@@ -1413,130 +1430,6 @@ ON_EXIT:
 
   return Status;
 }
-
-/**
-  Get the usb debug port related information.
-
-  @param  Ohc                The OHCI device.
-
-  @retval RETURN_SUCCESS     Get debug port number, bar and offset successfully.
-  @retval Others             The usb host controller does not supported usb debug port capability.
-
-**/
-EFI_STATUS
-OhcGetUsbDebugPortInfo (
-  IN  USB2_HC_DEV     *Ohc
- )
-{
-  EFI_PCI_IO_PROTOCOL *PciIo;
-  UINT16              PciStatus;
-  UINT8               CapabilityPtr;
-  UINT8               CapabilityId;
-  UINT16              DebugPort;
-  EFI_STATUS          Status;
-
-  ASSERT (Ohc->PciIo != NULL);
-  PciIo = Ohc->PciIo;
-
-  //
-  // Detect if the OHCI host controller support Capaility Pointer.
-  //
-  Status = PciIo->Pci.Read (
-                        PciIo,
-                        EfiPciIoWidthUint8,
-                        PCI_PRIMARY_STATUS_OFFSET,
-                        sizeof (UINT16),
-                        &PciStatus
-                        );
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  if ((PciStatus & EFI_PCI_STATUS_CAPABILITY) == 0) {
-    //
-    // The Pci Device Doesn't Support Capability Pointer.
-    //
-    return EFI_UNSUPPORTED;
-  }
-
-  //
-  // Get Pointer To Capability List
-  //
-  Status = PciIo->Pci.Read (
-                        PciIo,
-                        EfiPciIoWidthUint8,
-                        PCI_CAPBILITY_POINTER_OFFSET,
-                        1,
-                        &CapabilityPtr
-                        );
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  //
-  // Find Capability ID 0xA, Which Is For Debug Port
-  //
-  while (CapabilityPtr != 0) {
-    Status = PciIo->Pci.Read (
-                          PciIo,
-                          EfiPciIoWidthUint8,
-                          CapabilityPtr,
-                          1,
-                          &CapabilityId
-                          );
-
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-
-    if (CapabilityId == OHC_DEBUG_PORT_CAP_ID) {
-      break;
-    }
-
-    Status = PciIo->Pci.Read (
-                          PciIo,
-                          EfiPciIoWidthUint8,
-                          CapabilityPtr + 1,
-                          1,
-                          &CapabilityPtr
-                          );
-
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-  }
-
-  //
-  // No Debug Port Capability Found
-  //
-  if (CapabilityPtr == 0) {
-    return EFI_UNSUPPORTED;
-  }
-
-  //
-  // Get The Base Address Of Debug Port Register In Debug Port Capability Register
-  //
-  Status = PciIo->Pci.Read (
-                        Ohc->PciIo,
-                        EfiPciIoWidthUint8,
-                        CapabilityPtr + 2,
-                        sizeof (UINT16),
-                        &DebugPort
-                        );
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-
-  Ohc->DebugPortOffset = DebugPort & 0x1FFF;
-  Ohc->DebugPortBarNum = (UINT8)((DebugPort >> 13) - 1);
-  Ohc->DebugPortNum    = (UINT8)((Ohc->HcStructParams & 0x00F00000) >> 20);
-
-  return EFI_SUCCESS;
-}
-
 
 /**
   Create and initialize a USB2_HC_DEV.
@@ -1583,30 +1476,14 @@ OhcCreateUsb2Hc (
   Ohc->Usb2Hc.GetRootHubPortStatus      = OhcGetRootHubPortStatus;
   Ohc->Usb2Hc.SetRootHubPortFeature     = OhcSetRootHubPortFeature;
   Ohc->Usb2Hc.ClearRootHubPortFeature   = OhcClearRootHubPortFeature;
-  Ohc->Usb2Hc.MajorRevision             = 0x2;
-  Ohc->Usb2Hc.MinorRevision             = 0x0;
+  Ohc->Usb2Hc.MajorRevision             = 0x1;
+  Ohc->Usb2Hc.MinorRevision             = 0x1;
 
   Ohc->PciIo                 = PciIo;
   Ohc->DevicePath            = DevicePath;
   Ohc->OriginalPciAttributes = OriginalPciAttributes;
 
   InitializeListHead (&Ohc->AsyncIntTransfers);
-
-  Ohc->HcStructParams = OhcReadCapRegister (Ohc, OHC_HCSPARAMS_OFFSET);
-  Ohc->HcCapParams    = OhcReadCapRegister (Ohc, OHC_HCCPARAMS_OFFSET);
-  Ohc->CapLen         = OhcReadCapRegister (Ohc, OHC_CAPLENGTH_OFFSET) & 0x0FF;
-
-  DEBUG ((EFI_D_INFO, "OhcCreateUsb2Hc: capability length %d\n", Ohc->CapLen));
-
-  //
-  // OHCI Controllers with a CapLen of 0 are ignored.
-  //
-  if (Ohc->CapLen == 0) {
-    gBS->FreePool (Ohc);
-    return NULL;
-  }
-  
-  OhcGetUsbDebugPortInfo (Ohc);
 
   //
   // Create AsyncRequest Polling Timer
@@ -1677,23 +1554,9 @@ OhcDriverBindingStart (
   EFI_STATUS              Status;
   USB2_HC_DEV             *Ohc;
   EFI_PCI_IO_PROTOCOL     *PciIo;
-  EFI_PCI_IO_PROTOCOL     *Instance;
   UINT64                  Supports;
   UINT64                  OriginalPciAttributes;
   BOOLEAN                 PciAttributesSaved;
-  USB_CLASSC              UsbClassCReg;
-  EFI_HANDLE              *HandleBuffer;
-  UINTN                   NumberOfHandles;
-  UINTN                   Index;
-  UINTN                   CompanionSegmentNumber;
-  UINTN                   CompanionBusNumber;
-  UINTN                   CompanionDeviceNumber;
-  UINTN                   CompanionFunctionNumber;
-  UINTN                   OhciSegmentNumber;
-  UINTN                   OhciBusNumber;
-  UINTN                   OhciDeviceNumber;
-  UINTN                   OhciFunctionNumber;
-  UINT32                  State;
   EFI_DEVICE_PATH_PROTOCOL  *HcDevicePath;
 
   //
@@ -1763,107 +1626,6 @@ OhcDriverBindingStart (
   }
 
   //
-  // Get the Pci device class code.
-  //
-  Status = PciIo->Pci.Read (
-                        PciIo,
-                        EfiPciIoWidthUint8,
-                        PCI_CLASSCODE_OFFSET,
-                        sizeof (USB_CLASSC) / sizeof (UINT8),
-                        &UsbClassCReg
-                        );
-
-  if (EFI_ERROR (Status)) {
-    Status = EFI_UNSUPPORTED;
-    goto CLOSE_PCIIO;
-  }
-  //
-  // Determine if the device is UHCI or OHCI host controller or not. If yes, then find out the 
-  // companion usb ehci host controller and force OHCI driver get attached to it before
-  // UHCI or OHCI driver attaches to UHCI or OHCI host controller.
-  //
-  if ((UsbClassCReg.ProgInterface == PCI_IF_UHCI || UsbClassCReg.ProgInterface == PCI_IF_OHCI) &&
-       (UsbClassCReg.BaseCode == PCI_CLASS_SERIAL) && 
-       (UsbClassCReg.SubClassCode == PCI_CLASS_SERIAL_USB)) {
-    Status = PciIo->GetLocation (
-                    PciIo,
-                    &CompanionSegmentNumber,
-                    &CompanionBusNumber,
-                    &CompanionDeviceNumber,
-                    &CompanionFunctionNumber
-                    );
-    if (EFI_ERROR (Status)) {
-      goto CLOSE_PCIIO;
-    }
-
-    Status = gBS->LocateHandleBuffer (
-                    ByProtocol,
-                    &gEfiPciIoProtocolGuid,
-                    NULL,
-                    &NumberOfHandles,
-                    &HandleBuffer
-                    );
-    if (EFI_ERROR (Status)) {
-      goto CLOSE_PCIIO;
-    }
-
-    for (Index = 0; Index < NumberOfHandles; Index++) {
-      //
-      // Get the device path on this handle
-      //
-      Status = gBS->HandleProtocol (
-                    HandleBuffer[Index],
-                    &gEfiPciIoProtocolGuid,
-                    (VOID **)&Instance
-                    );
-      ASSERT_EFI_ERROR (Status);
-
-      Status = Instance->Pci.Read (
-                    Instance,
-                    EfiPciIoWidthUint8,
-                    PCI_CLASSCODE_OFFSET,
-                    sizeof (USB_CLASSC) / sizeof (UINT8),
-                    &UsbClassCReg
-                    );
-
-      if (EFI_ERROR (Status)) {
-        Status = EFI_UNSUPPORTED;
-        goto CLOSE_PCIIO;
-      }
-
-      if ((UsbClassCReg.ProgInterface == PCI_IF_OHCI) &&
-           (UsbClassCReg.BaseCode == PCI_CLASS_SERIAL) && 
-           (UsbClassCReg.SubClassCode == PCI_CLASS_SERIAL_USB)) {
-        Status = Instance->GetLocation (
-                    Instance,
-                    &OhciSegmentNumber,
-                    &OhciBusNumber,
-                    &OhciDeviceNumber,
-                    &OhciFunctionNumber
-                    );
-        if (EFI_ERROR (Status)) {
-          goto CLOSE_PCIIO;
-        }
-        //
-        // Currently, the judgment on the companion usb host controller is through the
-        // same bus number, which may vary on different platform.
-        //
-        if (OhciBusNumber == CompanionBusNumber) {
-          gBS->CloseProtocol (
-                    Controller,
-                    &gEfiPciIoProtocolGuid,
-                    This->DriverBindingHandle,
-                    Controller
-                    );
-          OhcDriverBindingStart(This, HandleBuffer[Index], NULL);
-        }
-      }
-    }
-    Status = EFI_NOT_FOUND;
-    goto CLOSE_PCIIO;
-  }
-
-  //
   // Create then install USB2_HC_PROTOCOL
   //
   Ohc = OhcCreateUsb2Hc (PciIo, HcDevicePath, OriginalPciAttributes);
@@ -1893,13 +1655,6 @@ OhcDriverBindingStart (
   //
   if (FeaturePcdGet (PcdTurnOffUsbLegacySupport)) {
     OhcClearLegacySupport (Ohc);
-  }
-
-  if (Ohc->DebugPortNum != 0) {
-    State = OhcReadDbgRegister(Ohc, 0);
-    if ((State & (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) != (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) {
-      OhcResetHC (Ohc, OHC_RESET_TIMEOUT);
-    }
   }
 
   Status = OhcInitHC (Ohc);
@@ -1944,14 +1699,14 @@ OhcDriverBindingStart (
     "eng",
     gOhciComponentName.SupportedLanguages,
     &Ohc->ControllerNameTable,
-    L"Enhanced Host Controller (USB 2.0)",
+    L"USB Open Host Controller",
     TRUE
     );
   AddUnicodeString2 (
     "en",
     gOhciComponentName2.SupportedLanguages,
     &Ohc->ControllerNameTable,
-    L"Enhanced Host Controller (USB 2.0)",
+    L"USB Open Host Controller",
     FALSE
     );
 
@@ -2055,7 +1810,7 @@ OhcDriverBindingStop (
 
   //
   // Stop AsyncRequest Polling timer then stop the OHCI driver
-  // and uninstall the OHCI protocl.
+  // and uninstall the OHCI protocol.
   //
   gBS->SetTimer (Ohc->PollTimer, TimerCancel, OHC_ASYNC_POLL_INTERVAL);
   OhcHaltHC (Ohc, OHC_GENERIC_TIMEOUT);
@@ -2073,12 +1828,6 @@ OhcDriverBindingStop (
   if (Ohc->ControllerNameTable != NULL) {
     FreeUnicodeStringTable (Ohc->ControllerNameTable);
   }
-
-  //
-  // Disable routing of all ports to OHCI controller, so all ports are 
-  // routed back to the UHCI or OHCI controller.
-  //
-  OhcClearOpRegBit (Ohc, OHC_CONFIG_FLAG_OFFSET, CONFIGFLAG_ROUTE_OHC);
 
   //
   // Restore original PCI attributes

@@ -60,7 +60,7 @@ typedef struct _USB2_HC_DEV  USB2_HC_DEV;
 #define OHC_GENERIC_TIMEOUT          (10 * OHC_1_MILLISECOND)
 
 //
-// Wait for roothub port power stable, refers to Spec[OHCI1.0-2.3.9]
+// Wait for roothub port power stable, refers to Spec
 //
 #define OHC_ROOT_PORT_RECOVERY_STALL (20 * OHC_1_MILLISECOND)
 
@@ -156,24 +156,21 @@ struct _USB2_HC_DEV {
   OHC_QH                    *PeriodOne;
   LIST_ENTRY                AsyncIntTransfers;
 
+#if 1
+  UINT32                    HcRhDescriptorA;
+#else
   //
   // OHCI configuration data
   //
   UINT32                    HcStructParams; // Cache of HC structure parameter, OHC_HCSPARAMS_OFFSET
   UINT32                    HcCapParams;    // Cache of HC capability parameter, HCCPARAMS
   UINT32                    CapLen;         // Capability length
+#endif
 
   //
   // Misc
   //
   EFI_UNICODE_STRING_TABLE  *ControllerNameTable;
-
-  //
-  // OHCI debug port info
-  //
-  UINT16                    DebugPortOffset; // The offset of debug port mmio register
-  UINT8                     DebugPortBarNum; // The bar number of debug port mmio register
-  UINT8                     DebugPortNum;    // The port number of usb debug port
 };
 
 
