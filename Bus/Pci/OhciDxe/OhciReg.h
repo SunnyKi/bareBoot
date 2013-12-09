@@ -17,24 +17,33 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define _EFI_OHCI_REG_H_
 
 //
-// Capability register bit definition
-//
-#define HCSP_PPC                0x10 // Port Power Control
-#define HCCP_64BIT              0x01 // 64-bit addressing capability
-
-//
 // Operational register offset
 //
 #define OHC_REVISION_OFFSET              0x0000
+
 #define OHC_CONTROL_OFFSET               0x0004
+#define   HCCTL_PLE                        BIT2  // Periodic List Enable
+#define   HCFS_MASK                        0xc0  /* HostControllerFunctionalState */
+#define   HCFS_RESET                       0x00
+#define   HCFS_RESUME                      0x40
+#define   HCFS_OPERATIONAL                 0x80
+#define   HCFS_SUSPEND                     0xc0
+
 #define OHC_COMMANDSTATUS_OFFSET         0x0008
+
 #define OHC_INTERRUPTSTATUS_OFFSET       0x000C
 #define OHC_INTERRUPTENABLE_OFFSET       0x0010
 #define OHC_INTERRUPTDISABLE_OFFSET      0x0014
+#define   HCINT_RHSC                       BIT6  // Root Hub Status Change
+#define   HCINT_MIE                        BIT31 // Master Interrupt Enable|Disable
+#define   HCINT_ALLINTS                    (HCINT_RHSC)
+
 #define OHC_HCHCCA_OFFSET                0x0018
+
 #define OHC_RHDESCRITORA_OFFSET          0x0048
 #define   HCRHA_NPORTS                     0xFF // Number of root hub port
 #define   HCRHA_PSM                        BIT8 // Power Switching Mode
+
 #define OHC_RHPORTSTATUS_OFFSET          0x0054 /* XXX: 0x50? */
 
 #define OHC_FRAME_LEN           1024

@@ -162,6 +162,7 @@ OhcInitSched (
   Ohc->PeriodFrame      = Buf;
   Ohc->PeriodFrameMap   = Map;
 
+#if 0
   //
   // Program the FRAMELISTBASE register with the low 32 bit addr
   //
@@ -170,17 +171,20 @@ OhcInitSched (
   // Program the CTRLDSSEGMENT register with the high 32 bit addr
   //
   OhcWriteOpReg (Ohc, OHC_CTRLDSSEG_OFFSET, OHC_HIGH_32BIT (PhyAddr));
+#endif
 
   //
   // Init memory pool management then create the helper
   // QTD/QH. If failed, previously allocated resources
   // will be freed by OhcFreeSched
   //
+#if 0
   Ohc->MemPool = UsbHcInitMemPool (
                    PciIo,
                    OHC_BIT_IS_SET (Ohc->HcCapParams, HCCP_64BIT),
                    OHC_HIGH_32BIT (PhyAddr)
                    );
+#endif
 
   if (Ohc->MemPool == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
@@ -221,7 +225,9 @@ OhcInitSched (
   // the reclamation header
   //
   PciAddr = UsbHcGetPciAddressForHostMem (Ohc->MemPool, Ohc->ReclaimHead, sizeof (OHC_QH));
+#if 0
   OhcWriteOpReg (Ohc, OHC_ASYNC_HEAD_OFFSET, OHC_LOW_32BIT (PciAddr));
+#endif
   return EFI_SUCCESS;
 
 ErrorExit:
@@ -261,8 +267,10 @@ OhcFreeSched (
 {
   EFI_PCI_IO_PROTOCOL     *PciIo;
 
+#if 0
   OhcWriteOpReg (Ohc, OHC_FRAME_BASE_OFFSET, 0);
   OhcWriteOpReg (Ohc, OHC_ASYNC_HEAD_OFFSET, 0);
+#endif
 
   if (Ohc->PeriodOne != NULL) {
     UsbHcFreeMem (Ohc->MemPool, Ohc->PeriodOne, sizeof (OHC_QH));

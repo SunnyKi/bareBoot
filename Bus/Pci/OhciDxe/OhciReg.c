@@ -279,6 +279,9 @@ OhcSetAndWaitDoorBell (
   )
 {
   EFI_STATUS              Status;
+#if 1
+  Status = EFI_SUCCESS;
+#else
   UINT32                  Data;
 
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_IAAD);
@@ -294,6 +297,7 @@ OhcSetAndWaitDoorBell (
   Data |= USBSTS_IAA;
 
   OhcWriteOpReg (Ohc, OHC_USBSTS_OFFSET, Data);
+#endif
 
   return Status;
 }
@@ -311,7 +315,7 @@ OhcAckAllInterrupt (
   IN  USB2_HC_DEV         *Ohc
   )
 {
-  OhcWriteOpReg (Ohc, OHC_USBSTS_OFFSET, USBSTS_INTACK_MASK);
+  OhcWriteOpReg (Ohc, OHC_INTERRUPTSTATUS_OFFSET, HCINT_ALLINTS);
 }
 
 
@@ -334,9 +338,13 @@ OhcEnablePeriodSchd (
 {
   EFI_STATUS              Status;
 
-  OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_ENABLE_PERIOD);
+  Status = EFI_SUCCESS;
 
+  OhcSetOpRegBit (Ohc, OHC_CONTROL_OFFSET, HCCTL_PLE);
+
+#if 0
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_PERIOD_ENABLED, TRUE, Timeout);
+#endif
   return Status;
 }
 
@@ -359,9 +367,13 @@ OhcDisablePeriodSchd (
 {
   EFI_STATUS              Status;
 
-  OhcClearOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_ENABLE_PERIOD);
+  Status = EFI_SUCCESS;
 
+  OhcClearOpRegBit (Ohc, OHC_CONTROL_OFFSET, HCCTL_PLE);
+
+#if 0
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_PERIOD_ENABLED, FALSE, Timeout);
+#endif
   return Status;
 }
 
@@ -385,9 +397,12 @@ OhcEnableAsyncSchd (
 {
   EFI_STATUS              Status;
 
+  Status = EFI_SUCCESS;
+#if 0
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_ENABLE_ASYNC);
 
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_ASYNC_ENABLED, TRUE, Timeout);
+#endif
   return Status;
 }
 
@@ -411,9 +426,12 @@ OhcDisableAsyncSchd (
 {
   EFI_STATUS  Status;
 
+  Status = EFI_SUCCESS;
+#if 0
   OhcClearOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_ENABLE_ASYNC);
 
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_ASYNC_ENABLED, FALSE, Timeout);
+#endif
   return Status;
 }
 
@@ -433,7 +451,11 @@ OhcIsHalt (
   IN USB2_HC_DEV          *Ohc
   )
 {
+#if 0
   return OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT);
+#else
+  return FALSE;
+#endif
 }
 
 
@@ -451,7 +473,11 @@ OhcIsSysError (
   IN USB2_HC_DEV          *Ohc
   )
 {
+#if 0
   return OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_SYS_ERROR);
+#else
+  return FALSE;
+#endif
 }
 
 
@@ -473,6 +499,8 @@ OhcResetHC (
 {
   EFI_STATUS              Status;
 
+  Status = EFI_SUCCESS;
+#if 0
   //
   // Host can only be reset when it is halt. If not so, halt it
   //
@@ -486,6 +514,7 @@ OhcResetHC (
 
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RESET);
   Status = OhcWaitOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RESET, FALSE, Timeout);
+#endif
   return Status;
 }
 
@@ -508,8 +537,11 @@ OhcHaltHC (
 {
   EFI_STATUS              Status;
 
+  Status = EFI_SUCCESS;
+#if 0
   OhcClearOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RUN);
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT, TRUE, Timeout);
+#endif
   return Status;
 }
 
@@ -532,20 +564,17 @@ OhcRunHC (
 {
   EFI_STATUS              Status;
 
+  Status = EFI_SUCCESS;
+#if 0
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RUN);
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT, FALSE, Timeout);
+#endif
   return Status;
 }
 
 
 /**
   Initialize the HC hardware.
-  OHCI spec lists the five things to do to initialize the hardware:
-  1. Program CTRLDSSEGMENT
-  2. Set USBINTR to enable interrupts
-  3. Set periodic list base
-  4. Set USBCMD, interrupt threshold, frame list size etc
-  5. Write 1 to CONFIGFLAG to route all ports to OHCI
 
   @param  Ohc          The OHCI device.
 
@@ -562,7 +591,7 @@ OhcInitHC (
   UINT32                  Index;
 
   //
-  // Allocate the periodic frame and associated memeory
+  // Allocate the periodic frame and associated memory
   // management facilities if not already done.
   //
   if (Ohc->PeriodFrame != NULL) {
@@ -576,14 +605,16 @@ OhcInitHC (
   }
 
   //
-  // 1. Clear USBINTR to disable all the interrupt. UEFI works by polling
+  // 1. Disable all the interrupts. UEFI works by polling
   //
-  OhcWriteOpReg (Ohc, OHC_USBINTR_OFFSET, 0);
+  OhcWriteOpReg (Ohc, OHC_INTERRUPTDISABLE_OFFSET, HCINT_MIE);
 
+#if 0
   //
   // 2. Start the Host Controller
   //
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RUN);
+#endif
 
   //
   // 3. Power up all ports if OHCI has Power Switching Mode (PSM) support
