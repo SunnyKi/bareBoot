@@ -84,12 +84,12 @@ OhcGetCapability (
   *MaxSpeed       = EFI_USB_SPEED_HIGH;
   *PortNumber     = (UINT8) (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
 #if 1
-  *Is64BitCapable = 0;
+  *Is64BitCapable = 0; /* XXX: check AMD SB??? */
 #else
   *Is64BitCapable = (UINT8) (Ohc->HcCapParams & HCCP_64BIT);
 #endif
 
-  DEBUG ((EFI_D_INFO, "OhcGetCapability: %d ports, 64 bit %d\n", *PortNumber, *Is64BitCapable));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": %d ports, 64 bit %d\n", *PortNumber, *Is64BitCapable));
 
   gBS->RestoreTPL (OldTpl);
   return EFI_SUCCESS;
@@ -193,7 +193,7 @@ OhcReset (
   }
 
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, "OhcReset: exit status %r\n", Status));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
   gBS->RestoreTPL (OldTpl);
   return Status;
 }
@@ -239,7 +239,7 @@ OhcGetState (
 
   gBS->RestoreTPL (OldTpl);
 
-  DEBUG ((EFI_D_INFO, "OhcGetState: current state %d\n", *State));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": current state %d\n", *State));
   return EFI_SUCCESS;
 }
 
@@ -314,7 +314,7 @@ OhcSetState (
     Status = EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((EFI_D_INFO, "OhcSetState: exit status %r\n", Status));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
   gBS->RestoreTPL (OldTpl);
   return Status;
 }
@@ -493,7 +493,7 @@ OhcSetRootHubPortFeature (
       Status = OhcRunHC (Ohc, OHC_GENERIC_TIMEOUT);
 
       if (EFI_ERROR (Status)) {
-        DEBUG ((EFI_D_INFO, "OhcSetRootHubPortFeature :failed to start HC - %r\n", Status));
+        DEBUG ((EFI_D_INFO, __FUNCTION__ ": failed to start HC - %r\n", Status));
         break;
       }
     }
@@ -526,7 +526,7 @@ OhcSetRootHubPortFeature (
   }
 
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, "OhcSetRootHubPortFeature: exit status %r\n", Status));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
 
   gBS->RestoreTPL (OldTpl);
   return Status;
@@ -661,7 +661,7 @@ OhcClearRootHubPortFeature (
   }
 
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, "OhcClearRootHubPortFeature: exit status %r\n", Status));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
   gBS->RestoreTPL (OldTpl);
   return Status;
 }
@@ -752,7 +752,7 @@ OhcControlTransfer (
   *TransferResult = EFI_USB_ERR_SYSTEM;
 
   if (OhcIsHalt (Ohc) || OhcIsSysError (Ohc)) {
-    DEBUG ((EFI_D_ERROR, "OhcControlTransfer: HC halted at entrance\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": HC halted at entrance\n"));
 
     OhcAckAllInterrupt (Ohc);
     goto ON_EXIT;
@@ -788,7 +788,7 @@ OhcControlTransfer (
           );
 
   if (Urb == NULL) {
-    DEBUG ((EFI_D_ERROR, "OhcControlTransfer: failed to create URB"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to create URB"));
 
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;
@@ -817,7 +817,7 @@ ON_EXIT:
   gBS->RestoreTPL (OldTpl);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcControlTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": error - %r, transfer - %x\n", Status, *TransferResult));
   }
 
   return Status;
@@ -901,7 +901,7 @@ OhcBulkTransfer (
   Status          = EFI_DEVICE_ERROR;
 
   if (OhcIsHalt (Ohc) || OhcIsSysError (Ohc)) {
-    DEBUG ((EFI_D_ERROR, "OhcBulkTransfer: HC is halted\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": HC is halted\n"));
 
     OhcAckAllInterrupt (Ohc);
     goto ON_EXIT;
@@ -931,7 +931,7 @@ OhcBulkTransfer (
           );
 
   if (Urb == NULL) {
-    DEBUG ((EFI_D_ERROR, "OhcBulkTransfer: failed to create URB\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to create URB\n"));
 
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;
@@ -957,7 +957,7 @@ ON_EXIT:
   gBS->RestoreTPL (OldTpl);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcBulkTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": error - %r, transfer - %x\n", Status, *TransferResult));
   }
 
   return Status;
@@ -1047,14 +1047,14 @@ OhcAsyncInterruptTransfer (
   if (!IsNewTransfer) {
     Status = OhciDelAsyncIntTransfer (Ohc, DeviceAddress, EndPointAddress, DataToggle);
 
-    DEBUG ((EFI_D_INFO, "OhcAsyncInterruptTransfer: remove old transfer - %r\n", Status));
+    DEBUG ((EFI_D_INFO, __FUNCTION__ ": remove old transfer - %r\n", Status));
     goto ON_EXIT;
   }
 
   Status = EFI_SUCCESS;
 
   if (OhcIsHalt (Ohc) || OhcIsSysError (Ohc)) {
-    DEBUG ((EFI_D_ERROR, "OhcAsyncInterruptTransfer: HC is halt\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": HC is halt\n"));
     OhcAckAllInterrupt (Ohc);
 
     Status = EFI_DEVICE_ERROR;
@@ -1066,7 +1066,7 @@ OhcAsyncInterruptTransfer (
   Data = AllocatePool (DataLength);
 
   if (Data == NULL) {
-    DEBUG ((EFI_D_ERROR, "OhcAsyncInterruptTransfer: failed to allocate buffer\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to allocate buffer\n"));
 
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;
@@ -1090,7 +1090,7 @@ OhcAsyncInterruptTransfer (
           );
 
   if (Urb == NULL) {
-    DEBUG ((EFI_D_ERROR, "OhcAsyncInterruptTransfer: failed to create URB\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to create URB\n"));
 
     gBS->FreePool (Data);
     Status = EFI_OUT_OF_RESOURCES;
@@ -1160,6 +1160,8 @@ OhcSyncInterruptTransfer (
   URB                     *Urb;
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   //
   // Validates parameters
   //
@@ -1182,6 +1184,8 @@ OhcSyncInterruptTransfer (
     return EFI_INVALID_PARAMETER;
   }
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": params validated\n"));
+
   OldTpl          = gBS->RaiseTPL (OHC_TPL);
   Ohc             = OHC_FROM_THIS (This);
 
@@ -1189,7 +1193,7 @@ OhcSyncInterruptTransfer (
   Status          = EFI_DEVICE_ERROR;
 
   if (OhcIsHalt (Ohc) || OhcIsSysError (Ohc)) {
-    DEBUG ((EFI_D_ERROR, "OhcSyncInterruptTransfer: HC is halt\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": HC is halt\n"));
 
     OhcAckAllInterrupt (Ohc);
     goto ON_EXIT;
@@ -1215,7 +1219,7 @@ OhcSyncInterruptTransfer (
           );
 
   if (Urb == NULL) {
-    DEBUG ((EFI_D_ERROR, "OhcSyncInterruptTransfer: failed to create URB\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to create URB\n"));
 
     Status = EFI_OUT_OF_RESOURCES;
     goto ON_EXIT;
@@ -1238,7 +1242,7 @@ ON_EXIT:
   gBS->RestoreTPL (OldTpl);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcSyncInterruptTransfer: error - %r, transfer - %x\n", Status, *TransferResult));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": error - %r, transfer - %x\n", Status, *TransferResult));
   }
 
   return Status;
@@ -1281,6 +1285,7 @@ OhcIsochronousTransfer (
   OUT UINT32                              *TransferResult
   )
 {
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter/leave\n"));
   return EFI_UNSUPPORTED;
 }
 
@@ -1324,6 +1329,7 @@ OhcAsyncIsochronousTransfer (
   IN  VOID                                *Context
   )
 {
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter/leave\n"));
   return EFI_UNSUPPORTED;
 }
 
@@ -1344,6 +1350,7 @@ OhcDriverEntryPoint (
   IN EFI_SYSTEM_TABLE     *SystemTable
   )
 {
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter/leave\n"));
   return EfiLibInstallDriverBindingComponentName2 (
            ImageHandle,
            SystemTable,
@@ -1380,6 +1387,8 @@ OhcDriverBindingSupported (
   EFI_PCI_IO_PROTOCOL     *PciIo;
   USB_CLASSC              UsbClassCReg;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for %p\n", Controller));
+
   //
   // Test whether there is PCI IO Protocol attached on the controller handle.
   //
@@ -1393,6 +1402,7 @@ OhcDriverBindingSupported (
                   );
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": first bail out for %p with %r\n", Controller, Status));
     return EFI_UNSUPPORTED;
   }
 
@@ -1405,6 +1415,7 @@ OhcDriverBindingSupported (
                         );
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": second bail out for %p with %r\n", Controller, Status));
     Status = EFI_UNSUPPORTED;
     goto ON_EXIT;
   }
@@ -1428,6 +1439,7 @@ ON_EXIT:
          Controller
          );
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave for %p with %r\n", Controller, Status));
   return Status;
 }
 
@@ -1451,6 +1463,8 @@ OhcCreateUsb2Hc (
 {
   USB2_HC_DEV             *Ohc;
   EFI_STATUS              Status;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 
   Ohc = AllocateZeroPool (sizeof (USB2_HC_DEV));
 
@@ -1497,10 +1511,12 @@ OhcCreateUsb2Hc (
                   );
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": bail out with %r\n", Status));
     gBS->FreePool (Ohc);
     return NULL;
   }
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
   return Ohc;
 }
 
@@ -1521,12 +1537,15 @@ OhcExitBootService (
 {
   USB2_HC_DEV   *Ohc;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Ohc = (USB2_HC_DEV *) Context;
 
   //
   // Reset the Host Controller
   //
   OhcResetHC (Ohc, OHC_RESET_TIMEOUT);
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -1559,6 +1578,8 @@ OhcDriverBindingStart (
   BOOLEAN                 PciAttributesSaved;
   EFI_DEVICE_PATH_PROTOCOL  *HcDevicePath;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for %p\n", Controller));
+
   //
   // Open the PciIo Protocol, then enable the USB host controller
   //
@@ -1572,6 +1593,7 @@ OhcDriverBindingStart (
                   );
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": first bail out for %p with %r\n", Controller, Status));
     return Status;
   }
 
@@ -1621,7 +1643,7 @@ OhcDriverBindingStart (
   }
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcDriverBindingStart: failed to enable controller\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to enable controller (%r)\n", Status));
     goto CLOSE_PCIIO;
   }
 
@@ -1631,7 +1653,7 @@ OhcDriverBindingStart (
   Ohc = OhcCreateUsb2Hc (PciIo, HcDevicePath, OriginalPciAttributes);
 
   if (Ohc == NULL) {
-    DEBUG ((EFI_D_ERROR, "OhcDriverBindingStart: failed to create USB2_HC\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to create USB2_HC\n"));
 
     Status = EFI_OUT_OF_RESOURCES;
     goto CLOSE_PCIIO;
@@ -1645,7 +1667,7 @@ OhcDriverBindingStart (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcDriverBindingStart: failed to install USB2_HC Protocol\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to install USB2_HC Protocol (%r)\n", Status));
     goto FREE_POOL;
   }
 
@@ -1660,7 +1682,7 @@ OhcDriverBindingStart (
   Status = OhcInitHC (Ohc);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcDriverBindingStart: failed to init host controller\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to init host controller (%r)\n", Status));
     goto UNINSTALL_USBHC;
   }
 
@@ -1670,7 +1692,7 @@ OhcDriverBindingStart (
   Status = gBS->SetTimer (Ohc->PollTimer, TimerPeriodic, OHC_ASYNC_POLL_INTERVAL);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcDriverBindingStart: failed to start async interrupt monitor\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to start async interrupt monitor (%r)\n", Status));
 
     OhcHaltHC (Ohc, OHC_GENERIC_TIMEOUT);
     goto UNINSTALL_USBHC;
@@ -1711,7 +1733,7 @@ OhcDriverBindingStart (
     );
 
 
-  DEBUG ((EFI_D_INFO, "OhcDriverBindingStart: OHCI started for controller @ %p\n", Controller));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": OHCI started for controller @ %p\n", Controller));
   return EFI_SUCCESS;
 
 UNINSTALL_USBHC:
@@ -1746,6 +1768,7 @@ CLOSE_PCIIO:
          Controller
          );
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave for %p with %r\n", Controller, Status));
   return Status;
 }
 
@@ -1777,6 +1800,8 @@ OhcDriverBindingStop (
   EFI_PCI_IO_PROTOCOL   *PciIo;
   USB2_HC_DEV           *Ohc;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for %p\n", Controller));
+
   //
   // Test whether the Controller handler passed in is a valid
   // Usb controller handle that should be supported, if not,
@@ -1792,6 +1817,7 @@ OhcDriverBindingStop (
                   );
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": first bail out for %p with %r\n", Controller, Status));
     return Status;
   }
 
@@ -1805,6 +1831,7 @@ OhcDriverBindingStop (
                   );
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": second bail out for %p with %r\n", Controller, Status));
     return Status;
   }
 
@@ -1848,5 +1875,6 @@ OhcDriverBindingStop (
 
   FreePool (Ohc);
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave for %p\n", Controller));
   return EFI_SUCCESS;
 }
