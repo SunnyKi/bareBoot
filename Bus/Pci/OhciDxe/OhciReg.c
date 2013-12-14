@@ -45,7 +45,7 @@ OhcReadOpReg (
                              );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcReadOpReg: Pci Io Read error - %r at %d\n", Status, Offset));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Pci Io Read error - %r at %d\n", Status, Offset));
     Data = 0xFFFF;
   }
 
@@ -80,7 +80,7 @@ OhcWriteOpReg (
                              );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcWriteOpReg: Pci Io Write error: %r at %d\n", Status, Offset));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Pci Io Write error: %r at %d\n", Status, Offset));
   }
 }
 
@@ -180,83 +180,44 @@ OhcClearLegacySupport (
   IN USB2_HC_DEV          *Ohc
   )
 {
-#if 0
   EFI_STATUS Status;
-  UINT64     pollResult;
-  struct {
-    UINT32     HcControl;
-    UINT32     HcCommandStatus;
-  } OpRegs;
 
-  DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
-  Status = Ohc->PciIo->Mem.Read (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       OHCI_BAR_INDEX,
-                       (UINT64) OHCI_CONTROL_OFFSET,
-                       sizeof (OpRegs) / sizeof (UINT32),
-                       &OpRegs
-                       );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a: bail out (reading opregs: %r)\n", __FUNCTION__, Status));
-    return;
-  }
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 
-  if ((OpRegs.HcControl & 0x100) == 0) {
+  if (!OHC_REG_BIT_IS_SET (Ohc, OHC_CONTROL_OFFSET, HCCTL_IR)) {
     /* No SMM driver active */
-    DEBUG ((DEBUG_INFO, "%a: no SMM (legacy) on device\n", __FUNCTION__));
+    DEBUG ((EFI_D_INFO, __FUNCTION__ ": no SMM (legacy) on device\n"));
     /* XXX: Let see the HostControllerFunctionalState for BIOS driver */
-    switch (OpRegs.HcControl & 0xC0) {
-    case 0x00: /* UsbReset */
-      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbReset state\n", __FUNCTION__));
+    switch (OhcReadOpReg (Ohc, OHC_CONTROL_OFFSET) & HCFS_MASK) {
+    case HCFS_RESET:
+      DEBUG ((EFI_D_INFO, __FUNCTION__ ": BIOS driver check: device is in UsbReset state\n"));
       break;
-    case 0x40: /* UsbResume */
-      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbResume state\n", __FUNCTION__));
+    case HCFS_RESUME:
+      DEBUG ((EFI_D_INFO, __FUNCTION__ ": BIOS driver check: device is in UsbResume state\n"));
       break;
-    case 0x80: /* UsbOperational */
-      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbOperational state\n", __FUNCTION__));
+    case HCFS_OPERATIONAL:
+      DEBUG ((EFI_D_INFO, __FUNCTION__ ": BIOS driver check: device is in UsbOperational state\n"));
       break;
-    case 0xC0: /* UsbSuspend */
-      DEBUG ((DEBUG_INFO, "%a: BIOS driver check: device is in UsbSuspend state\n", __FUNCTION__));
+    case HCFS_SUSPEND:
+      DEBUG ((EFI_D_INFO, __FUNCTION__ ": BIOS driver check: device is in UsbSuspend state\n"));
       break;
     }
     return;
   }
 
-  DEBUG ((DEBUG_INFO, "%a: SMM (legacy) on device\n", __FUNCTION__));
+  DEBUG ((EFI_D_INFO,  __FUNCTION__ ": SMM (legacy) on device\n"));
 
   /* Time to do little dance with SMM driver */
-  OpRegs.HcCommandStatus = 0x08; // Ownership Change Request
-  Status = Ohc->PciIo->Mem.Write (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       OHCI_BAR_INDEX,
-                       (UINT64) OHCI_COMMANDSTATUS_OFFSET,
-                       1,
-                       &OpRegs.HcCommandStatus
-                       );
-  if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a: bail out (setting ownership change request bit: %r)\n", __FUNCTION__, Status));
-    return;
-  }
+  OhcSetOpRegBit (Ohc, OHC_COMMANDSTATUS_OFFSET, HCCTS_OCR);
 
   MemoryFence (); // Just to be sure
 
-  Status = Ohc->PciIo->PollMem (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       OHCI_BAR_INDEX,
-                       (UINT64) OHCI_CONTROL_OFFSET,
-                       (UINT64) 0x100,   // check InterruptRouting bit
-		       (UINT64) 0,       // we waiting for that
-		       (UINT64) 10000,  // wait that number of 100ns units
-                       &pollResult
-                       );
+  Status = OhcWaitOpRegBit (Ohc, OHC_CONTROL_OFFSET, HCCTL_IR, FALSE, 10000);
+
   if (EFI_ERROR (Status)) {
-    DEBUG ((DEBUG_INFO, "%a: bail out (wating for interruptrouting bit clear: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": bail out (wating for interruptrouting bit clear (%r))\n", Status));
   }
-  DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
-#endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -279,6 +240,8 @@ OhcSetAndWaitDoorBell (
   )
 {
   EFI_STATUS              Status;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 #if 1
   Status = EFI_SUCCESS;
 #else
@@ -299,6 +262,7 @@ OhcSetAndWaitDoorBell (
   OhcWriteOpReg (Ohc, OHC_USBSTS_OFFSET, Data);
 #endif
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -315,7 +279,9 @@ OhcAckAllInterrupt (
   IN  USB2_HC_DEV         *Ohc
   )
 {
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
   OhcWriteOpReg (Ohc, OHC_INTERRUPTSTATUS_OFFSET, HCINT_ALLINTS);
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -338,6 +304,8 @@ OhcEnablePeriodSchd (
 {
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = EFI_SUCCESS;
 
   OhcSetOpRegBit (Ohc, OHC_CONTROL_OFFSET, HCCTL_PLE);
@@ -345,6 +313,7 @@ OhcEnablePeriodSchd (
 #if 0
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_PERIOD_ENABLED, TRUE, Timeout);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -367,6 +336,8 @@ OhcDisablePeriodSchd (
 {
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = EFI_SUCCESS;
 
   OhcClearOpRegBit (Ohc, OHC_CONTROL_OFFSET, HCCTL_PLE);
@@ -374,6 +345,7 @@ OhcDisablePeriodSchd (
 #if 0
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_PERIOD_ENABLED, FALSE, Timeout);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -397,12 +369,15 @@ OhcEnableAsyncSchd (
 {
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = EFI_SUCCESS;
 #if 0
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_ENABLE_ASYNC);
 
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_ASYNC_ENABLED, TRUE, Timeout);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -426,12 +401,15 @@ OhcDisableAsyncSchd (
 {
   EFI_STATUS  Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = EFI_SUCCESS;
 #if 0
   OhcClearOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_ENABLE_ASYNC);
 
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_ASYNC_ENABLED, FALSE, Timeout);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -451,11 +429,16 @@ OhcIsHalt (
   IN USB2_HC_DEV          *Ohc
   )
 {
+  BOOLEAN halted;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
+  halted = FALSE;
 #if 0
-  return OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT);
-#else
-  return FALSE;
+  halted = OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%d)\n", halted));
+  return halted;
 }
 
 
@@ -473,11 +456,16 @@ OhcIsSysError (
   IN USB2_HC_DEV          *Ohc
   )
 {
+  BOOLEAN syserred;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
+  syserred = FALSE;
 #if 0
-  return OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_SYS_ERROR);
-#else
-  return FALSE;
+  syserred = OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_SYS_ERROR);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%d)\n", syserred));
+  return syserred;
 }
 
 
@@ -499,6 +487,8 @@ OhcResetHC (
 {
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = EFI_SUCCESS;
 #if 0
   //
@@ -515,6 +505,7 @@ OhcResetHC (
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RESET);
   Status = OhcWaitOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RESET, FALSE, Timeout);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -537,11 +528,14 @@ OhcHaltHC (
 {
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = EFI_SUCCESS;
 #if 0
   OhcClearOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RUN);
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT, TRUE, Timeout);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -564,11 +558,14 @@ OhcRunHC (
 {
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = EFI_SUCCESS;
 #if 0
   OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RUN);
   Status = OhcWaitOpRegBit (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT, FALSE, Timeout);
 #endif
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -590,6 +587,8 @@ OhcInitHC (
   EFI_STATUS              Status;
   UINT32                  Index;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   //
   // Allocate the periodic frame and associated memory
   // management facilities if not already done.
@@ -601,6 +600,7 @@ OhcInitHC (
   Status = OhcInitSched (Ohc);
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to init schedule (%r)\n", Status));
     return Status;
   }
 
@@ -633,16 +633,17 @@ OhcInitHC (
   Status = OhcEnablePeriodSchd (Ohc, OHC_GENERIC_TIMEOUT);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcInitHC: failed to enable period schedule\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to enable period schedule (%r)\n", Status));
     return Status;
   }
 
   Status = OhcEnableAsyncSchd (Ohc, OHC_GENERIC_TIMEOUT);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcInitHC: failed to enable async schedule\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": failed to enable async schedule (%r)\n", Status));
     return Status;
   }
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return EFI_SUCCESS;
 }

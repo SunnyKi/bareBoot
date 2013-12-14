@@ -110,6 +110,8 @@ OhcInitSched (
   IN USB2_HC_DEV          *Ohc
   )
 {
+  EFI_STATUS            Status;
+#if 0
   EFI_PCI_IO_PROTOCOL   *PciIo;
   VOID                  *Buf;
   EFI_PHYSICAL_ADDRESS  PhyAddr;
@@ -117,9 +119,14 @@ OhcInitSched (
   UINTN                 Pages;
   UINTN                 Bytes;
   UINTN                 Index;
-  EFI_STATUS            Status;
   EFI_PHYSICAL_ADDRESS  PciAddr;
+#endif
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
+  Status = EFI_OUT_OF_RESOURCES;
+
+#if 0
   //
   // First initialize the periodical schedule data:
   // 1. Allocate and map the memory for the frame list
@@ -249,7 +256,9 @@ ErrorExit:
 ErrorExit1:
   PciIo->FreeBuffer (PciIo, Pages, Buf);
   PciIo->Unmap (PciIo, Map);
+#endif
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
