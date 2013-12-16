@@ -31,6 +31,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define   HCCTL_IR                         0x00000100  // Interrupt Routing
 
 #define OHC_COMMANDSTATUS_OFFSET         0x0008
+#define   HCCTS_HCR                        0x00000001  // Host Controller Reset
 #define   HCCTS_OCR                        0x00000008  // Ownership Change Request
 
 #define OHC_INTERRUPTSTATUS_OFFSET       0x000C
@@ -42,12 +43,40 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define OHC_HCHCCA_OFFSET                0x0018
 
-#define OHC_RHDESCRITORA_OFFSET          0x0048
-#define   HCRHA_NPORTS                     0x000000FF // Number of root hub port
-#define   HCRHA_PSM                        BIT8 // Power Switching Mode
+#define OHC_RHDESCRIPTORA_OFFSET         0x0048
+#define   HCRHA_NPORTS_MASK                0x000000FF // Number of root hub ports
+#define   HCRHA_PSM                        0x00000100 // Power Switching Mode
 
 #define OHC_RHPORTSTATUS_OFFSET          0x0054 /* XXX: 0x50? */
+#define   HCRPS_SPE                        0x00000002 // Set Port Enable
+#define   HCRPS_CPE                        0x00000001 // Clear Port Enable
 
+#define   HCRPS_SPS                        0x00000004 // Set Port Suspend
+#define   HCRPS_CPS                        0x00000001 // Clear Port Suspend
+
+#define   HCRPS_SPR                        0x00000010 // Set Port Reset
+
+#define   HCRPS_SPP                        0x00000100 // Set Port Power
+#define   HCRPS_CPP                        0x00000200 // Clear Port Power
+
+#define   HCRPS_CCSC                       0x00010000 // Clear Connect Status Change
+#define   HCRPS_CPESC                      0x00020000 // Clear Port Enable Status Change
+#define   HCRPS_CPOCI                      0x00080000 // Clear Port Over Current Indicator
+
+#define   HCRPS_CCS                        0x00000001 // Current Connect Status
+#define   HCRPS_PES                        0x00000002 // Port Enable Status
+#define   HCRPS_PSS                        0x00000004 // Port Suspend Status
+#define   HCRPS_POCI                       0x00000008 // Port Over Current Indicator
+#define   HCRPS_PRS                        0x00000010 // Port Reset Status
+#define   HCRPS_PPS                        0x00000100 // Port Power Status
+
+#define   HCRPS_CSC                        0x00010000 // Connect Status Change
+#define   HCRPS_PESC                       0x00020000 // Port Enable Status Change
+#define   HCRPS_OCIC                       0x00080000 // Over Current Indicator Change
+
+#define   HCRPS_LSDA                       0x00020000 // Low Speed Device Attached
+
+#if 0
 #define OHC_FRAME_LEN           1024
 
 //
@@ -83,6 +112,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define PORTSC_OWNER            0x2000 // Port Owner
 #define PORTSC_CHANGE_MASK      0x2A   // Mask of the port change bits,
                                        // they are WC (write clean)
+#endif
 //
 // PCI Configuration Registers
 //
@@ -100,7 +130,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 // UEFI's port states.
 //
 typedef struct {
-  UINT16                  HwState;
+  UINT32                  HwState;
   UINT16                  UefiState;
 } USB_PORT_STATE_MAP;
 
@@ -303,12 +333,6 @@ OhcRunHC (
 
 /**
   Initialize the HC hardware.
-  OHCI spec lists the five things to do to initialize the hardware:
-  1. Program CTRLDSSEGMENT
-  2. Set USBINTR to enable interrupts
-  3. Set periodic list base
-  4. Set USBCMD, interrupt threshold, frame list size etc
-  5. Write 1 to CONFIGFLAG to route all ports to OHCI
 
   @param  Ohc          The OHCI device.
 

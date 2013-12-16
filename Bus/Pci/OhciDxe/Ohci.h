@@ -56,7 +56,7 @@ typedef struct _USB2_HC_DEV  USB2_HC_DEV;
 //
 // OHCI register operation timeout, set by experience
 //
-#define OHC_RESET_TIMEOUT            (1 * OHC_1_SECOND)
+#define OHC_RESET_TIMEOUT            (1 * OHC_1_MILLISECOND)
 #define OHC_GENERIC_TIMEOUT          (10 * OHC_1_MILLISECOND)
 
 //
@@ -70,13 +70,6 @@ typedef struct _USB2_HC_DEV  USB2_HC_DEV;
 //
 #define OHC_SYNC_POLL_INTERVAL       (1 * OHC_1_MILLISECOND)
 #define OHC_ASYNC_POLL_INTERVAL      (50 * 10000U)
-
-//
-// OHCI debug port control status register bit definition
-//
-#define USB_DEBUG_PORT_IN_USE        BIT10
-#define USB_DEBUG_PORT_ENABLE        BIT28
-#define USB_DEBUG_PORT_OWNER         BIT30
 
 //
 // OHC raises TPL to TPL_NOTIFY to serialize all its operations
@@ -155,17 +148,6 @@ struct _USB2_HC_DEV {
 
   OHC_QH                    *PeriodOne;
   LIST_ENTRY                AsyncIntTransfers;
-
-#if 1
-  UINT32                    HcRhDescriptorA;
-#else
-  //
-  // OHCI configuration data
-  //
-  UINT32                    HcStructParams; // Cache of HC structure parameter, OHC_HCSPARAMS_OFFSET
-  UINT32                    HcCapParams;    // Cache of HC capability parameter, HCCPARAMS
-  UINT32                    CapLen;         // Capability length
-#endif
 
   //
   // Misc

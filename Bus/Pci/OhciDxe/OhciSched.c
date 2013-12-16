@@ -419,6 +419,7 @@ OhcLinkQhToPeriod (
   IN OHC_QH               *Qh
   )
 {
+#if 0
   UINTN                   Index;
   OHC_QH                  *Prev;
   OHC_QH                  *Next;
@@ -504,6 +505,7 @@ OhcLinkQhToPeriod (
       Prev->QhHw.HorizonLink  = QH_LINK (PciAddr, OHC_TYPE_QH, FALSE);
     }
   }
+#endif
 }
 
 
@@ -521,6 +523,7 @@ OhcUnlinkQhFromPeriod (
   IN OHC_QH               *Qh
   )
 {
+#if 0
   UINTN                   Index;
   OHC_QH                  *Prev;
   OHC_QH                  *This;
@@ -562,6 +565,7 @@ OhcUnlinkQhFromPeriod (
       Prev->QhHw.HorizonLink  = Qh->QhHw.HorizonLink;
     }
   }
+#endif
 }
 
 

@@ -489,22 +489,9 @@ OhcResetHC (
 
   DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 
-  Status = EFI_SUCCESS;
-#if 0
-  //
-  // Host can only be reset when it is halt. If not so, halt it
-  //
-  if (!OHC_REG_BIT_IS_SET (Ohc, OHC_USBSTS_OFFSET, USBSTS_HALT)) {
-    Status = OhcHaltHC (Ohc, Timeout);
+  OhcSetOpRegBit (Ohc, OHC_COMMANDSTATUS_OFFSET, HCCTS_HCR);
+  Status = OhcWaitOpRegBit (Ohc, OHC_COMMANDSTATUS_OFFSET, HCCTS_HCR, FALSE, Timeout);
 
-    if (EFI_ERROR (Status)) {
-      return Status;
-    }
-  }
-
-  OhcSetOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RESET);
-  Status = OhcWaitOpRegBit (Ohc, OHC_USBCMD_OFFSET, USBCMD_RESET, FALSE, Timeout);
-#endif
   DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
@@ -619,9 +606,9 @@ OhcInitHC (
   //
   // 3. Power up all ports if OHCI has Power Switching Mode (PSM) support
   //
-  if ((Ohc->HcRhDescriptorA & HCRHA_PSM) == HCRHA_PSM) {
-    for (Index = 0; Index < (UINT8) (Ohc->HcRhDescriptorA & HCRHA_NPORTS); Index++) {
-      OhcSetOpRegBit (Ohc, (UINT32) (OHC_RHPORTSTATUS_OFFSET + (4 * Index)), PORTSC_POWER);
+  if (OHC_REG_BIT_IS_SET (Ohc, OHC_RHDESCRIPTORA_OFFSET, HCRHA_PSM)) {
+    for (Index = 0; Index < (UINT8) (OhcReadOpReg (Ohc, OHC_RHDESCRIPTORA_OFFSET) & HCRHA_NPORTS_MASK); Index++) {
+      OhcSetOpRegBit (Ohc, (UINT32) (OHC_RHPORTSTATUS_OFFSET + (4 * Index)), HCRPS_SPP);
     }
   }
 

@@ -24,19 +24,18 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 // to the UEFI protocol's port state (change).
 //
 USB_PORT_STATE_MAP  mUsbPortStateMap[] = {
-  {PORTSC_CONN,     USB_PORT_STAT_CONNECTION},
-  {PORTSC_ENABLED,  USB_PORT_STAT_ENABLE},
-  {PORTSC_SUSPEND,  USB_PORT_STAT_SUSPEND},
-  {PORTSC_OVERCUR,  USB_PORT_STAT_OVERCURRENT},
-  {PORTSC_RESET,    USB_PORT_STAT_RESET},
-  {PORTSC_POWER,    USB_PORT_STAT_POWER},
-  {PORTSC_OWNER,    USB_PORT_STAT_OWNER}
+  {HCRPS_CCS,  USB_PORT_STAT_CONNECTION},
+  {HCRPS_PES,  USB_PORT_STAT_ENABLE},
+  {HCRPS_PSS,  USB_PORT_STAT_SUSPEND},
+  {HCRPS_POCI, USB_PORT_STAT_OVERCURRENT},
+  {HCRPS_PRS,  USB_PORT_STAT_RESET},
+  {HCRPS_PPS,  USB_PORT_STAT_POWER},
 };
 
 USB_PORT_STATE_MAP  mUsbPortChangeMap[] = {
-  {PORTSC_CONN_CHANGE,    USB_PORT_STAT_C_CONNECTION},
-  {PORTSC_ENABLE_CHANGE,  USB_PORT_STAT_C_ENABLE},
-  {PORTSC_OVERCUR_CHANGE, USB_PORT_STAT_C_OVERCURRENT}
+  {HCRPS_CSC,  USB_PORT_STAT_C_CONNECTION},
+  {HCRPS_PESC, USB_PORT_STAT_C_ENABLE},
+  {HCRPS_OCIC, USB_PORT_STAT_C_OVERCURRENT}
 };
 
 EFI_DRIVER_BINDING_PROTOCOL
@@ -82,7 +81,7 @@ OhcGetCapability (
   Ohc             = OHC_FROM_THIS (This);
 
   *MaxSpeed       = EFI_USB_SPEED_HIGH;
-  *PortNumber     = (UINT8) (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
+  *PortNumber     = OhcReadOpReg (Ohc, OHC_RHDESCRIPTORA_OFFSET) & HCRHA_NPORTS_MASK;
 #if 1
   *Is64BitCapable = 0; /* XXX: check AMD SB??? */
 #else
@@ -354,6 +353,8 @@ OhcGetRootHubPortStatus (
   UINT32                  DbgCtrlStatus;
 #endif
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for port %d\n", PortNumber));
+
   if (PortStatus == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -363,7 +364,7 @@ OhcGetRootHubPortStatus (
   Ohc       = OHC_FROM_THIS (This);
   Status    = EFI_SUCCESS;
 
-  TotalPort = (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
+  TotalPort = OhcReadOpReg (Ohc, OHC_RHDESCRIPTORA_OFFSET) & HCRHA_NPORTS_MASK;
 
   if (PortNumber >= TotalPort) {
     Status = EFI_INVALID_PARAMETER;
@@ -374,27 +375,11 @@ OhcGetRootHubPortStatus (
   PortStatus->PortStatus        = 0;
   PortStatus->PortChangeStatus  = 0;
 
-#if 0
-  if ((Ohc->DebugPortNum != 0) && (PortNumber == (Ohc->DebugPortNum - 1))) {
-    DbgCtrlStatus = OhcReadDbgRegister(Ohc, 0);
-    if ((DbgCtrlStatus & (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) == (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) {
-      goto ON_EXIT;
-    }
-  }
-#endif
-
   State                         = OhcReadOpReg (Ohc, Offset);
 
-  //
-  // Identify device speed. If in K state, it is low speed.
-  // If the port is enabled after reset, the device is of
-  // high speed. The USB bus driver should retrieve the actual
-  // port speed after reset.
-  //
-  if (OHC_BIT_IS_SET (State, PORTSC_LINESTATE_K)) {
+  if (OHC_BIT_IS_SET (State, HCRPS_LSDA)) {
     PortStatus->PortStatus |= USB_PORT_STAT_LOW_SPEED;
-
-  } else if (OHC_BIT_IS_SET (State, PORTSC_ENABLED)) {
+  } else {
     PortStatus->PortStatus |= USB_PORT_STAT_HIGH_SPEED;
   }
 
@@ -446,15 +431,16 @@ OhcSetRootHubPortFeature (
   USB2_HC_DEV             *Ohc;
   EFI_TPL                 OldTpl;
   UINT32                  Offset;
-  UINT32                  State;
   UINT32                  TotalPort;
   EFI_STATUS              Status;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for port %d\n", PortNumber));
 
   OldTpl    = gBS->RaiseTPL (OHC_TPL);
   Ohc       = OHC_FROM_THIS (This);
   Status    = EFI_SUCCESS;
 
-  TotalPort = (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
+  TotalPort = OhcReadOpReg (Ohc, OHC_RHDESCRIPTORA_OFFSET) & HCRHA_NPORTS_MASK;
 
   if (PortNumber >= TotalPort) {
     Status = EFI_INVALID_PARAMETER;
@@ -462,27 +448,14 @@ OhcSetRootHubPortFeature (
   }
 
   Offset  = (UINT32) (OHC_RHPORTSTATUS_OFFSET + (4 * PortNumber));
-  State   = OhcReadOpReg (Ohc, Offset);
-
-  //
-  // Mask off the port status change bits, these bits are
-  // write clean bit
-  //
-  State &= ~PORTSC_CHANGE_MASK;
 
   switch (PortFeature) {
   case EfiUsbPortEnable:
-    //
-    // Sofeware can't set this bit, Port can only be enable by
-    // OHCI as a part of the reset and enable
-    //
-    State |= PORTSC_ENABLED;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_SPE);
     break;
 
   case EfiUsbPortSuspend:
-    State |= PORTSC_SUSPEND;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_SPS);
     break;
 
   case EfiUsbPortReset:
@@ -498,27 +471,16 @@ OhcSetRootHubPortFeature (
       }
     }
 
-    //
-    // Set one to PortReset bit must also set zero to PortEnable bit
-    //
-    State |= PORTSC_RESET;
-    State &= ~PORTSC_ENABLED;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_SPR);
     break;
 
   case EfiUsbPortPower:
     //
     // Set port power bit when PSM is 1
     //
-    if ((Ohc->HcRhDescriptorA & HCRHA_PSM) == HCRHA_PSM) {
-      State |= PORTSC_POWER;
-      OhcWriteOpReg (Ohc, Offset, State);
+    if (OHC_REG_BIT_IS_SET (Ohc, OHC_RHDESCRIPTORA_OFFSET, HCRHA_PSM)) {
+      OhcWriteOpReg (Ohc, Offset, HCRPS_SPP);
     }
-    break;
-
-  case EfiUsbPortOwner:
-    State |= PORTSC_OWNER;
-    OhcWriteOpReg (Ohc, Offset, State);
     break;
 
   default:
@@ -526,9 +488,10 @@ OhcSetRootHubPortFeature (
   }
 
 ON_EXIT:
+  gBS->RestoreTPL (OldTpl);
+
   DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
 
-  gBS->RestoreTPL (OldTpl);
   return Status;
 }
 
@@ -559,15 +522,16 @@ OhcClearRootHubPortFeature (
   USB2_HC_DEV             *Ohc;
   EFI_TPL                 OldTpl;
   UINT32                  Offset;
-  UINT32                  State;
   UINT32                  TotalPort;
   EFI_STATUS              Status;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for port %d\n", PortNumber));
 
   OldTpl    = gBS->RaiseTPL (OHC_TPL);
   Ohc       = OHC_FROM_THIS (This);
   Status    = EFI_SUCCESS;
 
-  TotalPort = (Ohc->HcRhDescriptorA & HCRHA_NPORTS);
+  TotalPort = OhcReadOpReg (Ohc, OHC_RHDESCRIPTORA_OFFSET) & HCRHA_NPORTS_MASK;
 
   if (PortNumber >= TotalPort) {
     Status = EFI_INVALID_PARAMETER;
@@ -575,77 +539,43 @@ OhcClearRootHubPortFeature (
   }
 
   Offset  = OHC_RHPORTSTATUS_OFFSET + (4 * PortNumber);
-  State   = OhcReadOpReg (Ohc, Offset);
-  State &= ~PORTSC_CHANGE_MASK;
 
   switch (PortFeature) {
   case EfiUsbPortEnable:
-    //
-    // Clear PORT_ENABLE feature means disable port.
-    //
-    State &= ~PORTSC_ENABLED;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_CPE);
     break;
 
   case EfiUsbPortSuspend:
-    //
-    // A write of zero to this bit is ignored by the host
-    // controller. The host controller will unconditionally
-    // set this bit to a zero when:
-    //   1. software sets the Forct Port Resume bit to a zero from a one.
-    //   2. software sets the Port Reset bit to a one frome a zero.
-    //
-    State &= ~PORSTSC_RESUME;
-    OhcWriteOpReg (Ohc, Offset, State);
-    break;
-
-  case EfiUsbPortReset:
-    //
-    // Clear PORT_RESET means clear the reset signal.
-    //
-    State &= ~PORTSC_RESET;
-    OhcWriteOpReg (Ohc, Offset, State);
-    break;
-
-  case EfiUsbPortOwner:
-    //
-    // Clear port owner means this port owned by OHC
-    //
-    State &= ~PORTSC_OWNER;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_CPS);
     break;
 
   case EfiUsbPortConnectChange:
     //
     // Clear connect status change
     //
-    State |= PORTSC_CONN_CHANGE;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_CCSC);
     break;
 
   case EfiUsbPortEnableChange:
     //
-    // Clear enable status change
+    // Clear port enable status change
     //
-    State |= PORTSC_ENABLE_CHANGE;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_CPESC);
     break;
 
   case EfiUsbPortOverCurrentChange:
     //
     // Clear PortOverCurrent change
     //
-    State |= PORTSC_OVERCUR_CHANGE;
-    OhcWriteOpReg (Ohc, Offset, State);
+    OhcWriteOpReg (Ohc, Offset, HCRPS_CPOCI);
     break;
 
   case EfiUsbPortPower:
     //
     // Clear port power bit when PSM is 1
     //
-    if ((Ohc->HcRhDescriptorA & HCRHA_PSM) == HCRHA_PSM) {
-      State &= ~PORTSC_POWER;
-      OhcWriteOpReg (Ohc, Offset, State);
+    if (OHC_REG_BIT_IS_SET (Ohc, OHC_RHDESCRIPTORA_OFFSET, HCRHA_PSM)) {
+      OhcWriteOpReg (Ohc, Offset, HCRPS_CPP);
     }
     break;
   case EfiUsbPortSuspendChange:
