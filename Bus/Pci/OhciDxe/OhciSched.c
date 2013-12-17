@@ -124,7 +124,7 @@ OhcInitSched (
 
   DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 
-  Status = EFI_OUT_OF_RESOURCES;
+  Status = EFI_SUCCESS;
 
 #if 0
   //
@@ -276,6 +276,8 @@ OhcFreeSched (
 {
   EFI_PCI_IO_PROTOCOL     *PciIo;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
 #if 0
   OhcWriteOpReg (Ohc, OHC_FRAME_BASE_OFFSET, 0);
   OhcWriteOpReg (Ohc, OHC_ASYNC_HEAD_OFFSET, 0);
@@ -320,6 +322,7 @@ OhcFreeSched (
     FreePool (Ohc->PeriodFrameHost);
     Ohc->PeriodFrameHost = NULL;
   }
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -343,6 +346,8 @@ OhcLinkQhToAsync (
   OHC_QH                  *Head;
   EFI_PHYSICAL_ADDRESS    PciAddr;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   //
   // Append the queue head after the reclaim header, then
   // fix the hardware visiable parts (OHCI R1.0 page 72).
@@ -357,6 +362,8 @@ OhcLinkQhToAsync (
   Qh->QhHw.HorizonLink    = QH_LINK (PciAddr, OHC_TYPE_QH, FALSE);
   PciAddr = UsbHcGetPciAddressForHostMem (Ohc->MemPool, Head->NextQh, sizeof (OHC_QH));
   Head->QhHw.HorizonLink  = QH_LINK (PciAddr, OHC_TYPE_QH, FALSE);
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -377,6 +384,8 @@ OhcUnlinkQhFromAsync (
   OHC_QH                  *Head;
   EFI_STATUS              Status;
   EFI_PHYSICAL_ADDRESS    PciAddr;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 
   ASSERT (Ohc->ReclaimHead->NextQh == Qh);
 
@@ -399,8 +408,10 @@ OhcUnlinkQhFromAsync (
   Status = OhcSetAndWaitDoorBell (Ohc, OHC_GENERIC_TIMEOUT);
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhcUnlinkQhFromAsync: Failed to synchronize with doorbell\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Failed to synchronize with doorbell\n"));
   }
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -424,7 +435,11 @@ OhcLinkQhToPeriod (
   OHC_QH                  *Prev;
   OHC_QH                  *Next;
   EFI_PHYSICAL_ADDRESS    PciAddr;
+#endif
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
+#if 0
   for (Index = 0; Index < OHC_FRAME_LEN; Index += Qh->Interval) {
     //
     // First QH can't be NULL because we always keep PeriodOne
@@ -506,6 +521,8 @@ OhcLinkQhToPeriod (
     }
   }
 #endif
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -527,7 +544,11 @@ OhcUnlinkQhFromPeriod (
   UINTN                   Index;
   OHC_QH                  *Prev;
   OHC_QH                  *This;
+#endif
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
+
+#if 0
   for (Index = 0; Index < OHC_FRAME_LEN; Index += Qh->Interval) {
     //
     // Frame link can't be NULL because we always keep PeroidOne
@@ -566,8 +587,9 @@ OhcUnlinkQhFromPeriod (
     }
   }
 #endif
-}
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
+}
 
 /**
   Check the URB's execution result and update the URB's
@@ -591,6 +613,8 @@ OhcCheckUrbResult (
   UINT8                   State;
   BOOLEAN                 Finished;
   EFI_PHYSICAL_ADDRESS    PciAddr;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 
   ASSERT ((Ohc != NULL) && (Urb != NULL) && (Urb->Qh != NULL));
 
@@ -662,13 +686,13 @@ OhcCheckUrbResult (
         //
         PciAddr = UsbHcGetPciAddressForHostMem (Ohc->MemPool, Ohc->ShortReadStop, sizeof (OHC_QTD));
         if (QtdHw->AltNext == QTD_LINK (PciAddr, FALSE)) {
-          DEBUG ((EFI_D_VERBOSE, "OhcCheckUrbResult: Short packet read, break\n"));
+          DEBUG ((EFI_D_VERBOSE,  __FUNCTION__ ": Short packet read, break\n"));
 
           Finished = TRUE;
           goto ON_EXIT;
         }
 
-        DEBUG ((EFI_D_VERBOSE, "OhcCheckUrbResult: Short packet read, continue\n"));
+        DEBUG ((EFI_D_VERBOSE,  __FUNCTION__ ": Short packet read, continue\n"));
       }
     }
   }
@@ -685,6 +709,7 @@ ON_EXIT:
   //
   Urb->DataToggle = (UINT8) Urb->Qh->QhHw.DataToggle;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
   return Finished;
 }
 
@@ -714,6 +739,8 @@ OhcExecTransfer (
   BOOLEAN                 Finished;
   BOOLEAN                 InfiniteLoop;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status       = EFI_SUCCESS;
   Loop         = TimeOut * OHC_1_MILLISECOND;
   Finished     = FALSE;
@@ -739,18 +766,19 @@ OhcExecTransfer (
   }
 
   if (!Finished) {
-    DEBUG ((EFI_D_ERROR, "OhcExecTransfer: transfer not finished in %dms\n", (UINT32)TimeOut));
+    DEBUG ((EFI_D_ERROR,  __FUNCTION__ ": transfer not finished in %dms\n", (UINT32)TimeOut));
     OhcDumpQh (Urb->Qh, NULL, FALSE);
 
     Status = EFI_TIMEOUT;
 
   } else if (Urb->Result != EFI_USB_NOERROR) {
-    DEBUG ((EFI_D_ERROR, "OhcExecTransfer: transfer failed with %x\n", Urb->Result));
+    DEBUG ((EFI_D_ERROR,  __FUNCTION__ ": transfer failed with %x\n", Urb->Result));
     OhcDumpQh (Urb->Qh, NULL, FALSE);
 
     Status = EFI_DEVICE_ERROR;
   }
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
@@ -781,6 +809,8 @@ OhciDelAsyncIntTransfer (
   URB                     *Urb;
   EFI_USB_DATA_DIRECTION  Direction;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Direction = (((EpNum & 0x80) != 0) ? EfiUsbDataIn : EfiUsbDataOut);
   EpNum    &= 0x0F;
 
@@ -801,10 +831,12 @@ OhciDelAsyncIntTransfer (
 
       gBS->FreePool (Urb->Data);
       OhcFreeUrb (Ohc, Urb);
+      DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave (success)\n"));
       return EFI_SUCCESS;
     }
   }
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave (not found)\n"));
   return EFI_NOT_FOUND;
 }
 
@@ -824,6 +856,8 @@ OhciDelAllAsyncIntTransfers (
   LIST_ENTRY              *Next;
   URB                     *Urb;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   EFI_LIST_FOR_EACH_SAFE (Entry, Next, &Ohc->AsyncIntTransfers) {
     Urb = EFI_LIST_CONTAINER (Entry, URB, UrbList);
 
@@ -833,6 +867,7 @@ OhciDelAllAsyncIntTransfers (
     gBS->FreePool (Urb->Data);
     OhcFreeUrb (Ohc, Urb);
   }
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
 
 
@@ -860,6 +895,8 @@ OhcFlushAsyncIntMap (
   UINTN                         Len;
   VOID                          *Map;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   PciIo = Ohc->PciIo;
   Len   = Urb->DataLen;
 
@@ -883,9 +920,11 @@ OhcFlushAsyncIntMap (
 
   Urb->DataPhy  = (VOID *) ((UINTN) PhyAddr);
   Urb->DataMap  = Map;
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (success)\n"));
   return EFI_SUCCESS;
 
 ON_ERROR:
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (device error)\n"));
   return EFI_DEVICE_ERROR;
 }
 
@@ -910,6 +949,8 @@ OhcUpdateAsyncRequest (
   QTD_HW                  *QtdHw;
   UINTN                   Index;
   EFI_PHYSICAL_ADDRESS    PciAddr;
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
 
   Qtd = NULL;
 
@@ -970,6 +1011,7 @@ OhcUpdateAsyncRequest (
     QhHw->NextQtd = QTD_LINK (PciAddr, FALSE);
   }
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
   return ;
 }
 
@@ -997,6 +1039,8 @@ OhcMonitorAsyncRequests (
   URB                     *Urb;
   EFI_STATUS              Status;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   OldTpl  = gBS->RaiseTPL (OHC_TPL);
   Ohc     = (USB2_HC_DEV *) Context;
 
@@ -1019,7 +1063,7 @@ OhcMonitorAsyncRequests (
     //
     Status = OhcFlushAsyncIntMap (Ohc, Urb);
     if (EFI_ERROR (Status)) {
-      DEBUG ((EFI_D_ERROR, "OhcMonitorAsyncRequests: Fail to Flush AsyncInt Mapped Memeory\n"));
+      DEBUG ((EFI_D_ERROR,  __FUNCTION__ ": Fail to Flush AsyncInt Mapped Memeory\n"));
     }
 
     //
@@ -1070,4 +1114,5 @@ OhcMonitorAsyncRequests (
   }
 
   gBS->RestoreTPL (OldTpl);
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave\n"));
 }
