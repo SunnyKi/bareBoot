@@ -61,7 +61,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #define   HCRPS_CCSC                       0x00010000 // Clear Connect Status Change
 #define   HCRPS_CPESC                      0x00020000 // Clear Port Enable Status Change
+#define   HCRPS_CPSSC                      0x00040000 // Clear Port Suspend Status Change
 #define   HCRPS_CPOCI                      0x00080000 // Clear Port Over Current Indicator
+#define   HCRPS_CPRSC                      0x00100000 // Clear Port Reset Status Change
 
 #define   HCRPS_CCS                        0x00000001 // Current Connect Status
 #define   HCRPS_PES                        0x00000002 // Port Enable Status

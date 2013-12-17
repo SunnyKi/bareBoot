@@ -88,9 +88,10 @@ OhcGetCapability (
   *Is64BitCapable = (UINT8) (Ohc->HcCapParams & HCCP_64BIT);
 #endif
 
+  gBS->RestoreTPL (OldTpl);
+
   DEBUG ((EFI_D_INFO, __FUNCTION__ ": %d ports, 64 bit %d\n", *PortNumber, *Is64BitCapable));
 
-  gBS->RestoreTPL (OldTpl);
   return EFI_SUCCESS;
 }
 
@@ -122,6 +123,8 @@ OhcReset (
   UINT32                  DbgCtrlStatus;
 #endif
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter with 0x%x\n", Attributes));
+
   Ohc = OHC_FROM_THIS (This);
 
   if (Ohc->DevicePath != NULL) {
@@ -143,19 +146,6 @@ OhcReset (
   // Flow through, same behavior as Host Controller Reset
   //
   case EFI_USB_HC_RESET_HOST_CONTROLLER:
-    //
-    // Host Controller must be Halt when Reset it
-    //
-#if 0
-    if (Ohc->DebugPortNum != 0) {
-      DbgCtrlStatus = OhcReadDbgRegister(Ohc, 0);
-      if ((DbgCtrlStatus & (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) == (USB_DEBUG_PORT_IN_USE | USB_DEBUG_PORT_OWNER)) {
-        Status = EFI_SUCCESS;
-        goto ON_EXIT;
-      }
-    }
-#endif
-
     if (!OhcIsHalt (Ohc)) {
       Status = OhcHaltHC (Ohc, OHC_GENERIC_TIMEOUT);
 
@@ -192,8 +182,10 @@ OhcReset (
   }
 
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
   gBS->RestoreTPL (OldTpl);
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
+
   return Status;
 }
 
@@ -221,7 +213,10 @@ OhcGetState (
   EFI_TPL                 OldTpl;
   USB2_HC_DEV             *Ohc;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   if (State == NULL) {
+    DEBUG ((EFI_D_INFO, __FUNCTION__ ": first leave with (invalid parameter)\n"));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -238,7 +233,8 @@ OhcGetState (
 
   gBS->RestoreTPL (OldTpl);
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": current state %d\n", *State));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with current state 0x%x\n", *State));
+
   return EFI_SUCCESS;
 }
 
@@ -267,13 +263,17 @@ OhcSetState (
   EFI_STATUS              Status;
   EFI_USB_HC_STATE        CurState;
 
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter\n"));
+
   Status = OhcGetState (This, &CurState);
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_INFO, __FUNCTION__ ": first leave with (device error)\n"));
     return EFI_DEVICE_ERROR;
   }
 
   if (CurState == State) {
+    DEBUG ((EFI_D_INFO, __FUNCTION__ ": second leave with (success)\n"));
     return EFI_SUCCESS;
   }
 
@@ -313,8 +313,10 @@ OhcSetState (
     Status = EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
   gBS->RestoreTPL (OldTpl);
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
+
   return Status;
 }
 
@@ -404,6 +406,9 @@ OhcGetRootHubPortStatus (
 
 ON_EXIT:
   gBS->RestoreTPL (OldTpl);
+
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r) (status 0x%x, cstatus 0x%x)\n", Status, PortStatus->PortStatus, PortStatus->PortChangeStatus));
+
   return Status;
 }
 
@@ -434,7 +439,7 @@ OhcSetRootHubPortFeature (
   UINT32                  TotalPort;
   EFI_STATUS              Status;
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for port %d\n", PortNumber));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for port %d with 0x%x\n", PortNumber, PortFeature));
 
   OldTpl    = gBS->RaiseTPL (OHC_TPL);
   Ohc       = OHC_FROM_THIS (This);
@@ -490,7 +495,7 @@ OhcSetRootHubPortFeature (
 ON_EXIT:
   gBS->RestoreTPL (OldTpl);
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
 
   return Status;
 }
@@ -525,7 +530,7 @@ OhcClearRootHubPortFeature (
   UINT32                  TotalPort;
   EFI_STATUS              Status;
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for port %d\n", PortNumber));
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for port %d with 0x%x\n", PortNumber, PortFeature));
 
   OldTpl    = gBS->RaiseTPL (OHC_TPL);
   Ohc       = OHC_FROM_THIS (This);
@@ -578,11 +583,13 @@ OhcClearRootHubPortFeature (
       OhcWriteOpReg (Ohc, Offset, HCRPS_CPP);
     }
     break;
-  case EfiUsbPortSuspendChange:
+
   case EfiUsbPortResetChange:
-    //
-    // Not supported or not related operation
-    //
+    OhcWriteOpReg (Ohc, Offset, HCRPS_CPRSC);
+    break;
+
+  case EfiUsbPortSuspendChange:
+    OhcWriteOpReg (Ohc, Offset, HCRPS_CPSSC);
     break;
 
   default:
@@ -591,8 +598,8 @@ OhcClearRootHubPortFeature (
   }
 
 ON_EXIT:
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": exit status %r\n", Status));
   gBS->RestoreTPL (OldTpl);
+  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave with (%r)\n", Status));
   return Status;
 }
 
