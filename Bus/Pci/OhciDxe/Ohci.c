@@ -1324,8 +1324,6 @@ OhcDriverBindingSupported (
   EFI_PCI_IO_PROTOCOL     *PciIo;
   USB_CLASSC              UsbClassCReg;
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": enter for %p\n", Controller));
-
   //
   // Test whether there is PCI IO Protocol attached on the controller handle.
   //
@@ -1339,7 +1337,6 @@ OhcDriverBindingSupported (
                   );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": first bail out for %p with %r\n", Controller, Status));
     return EFI_UNSUPPORTED;
   }
 
@@ -1352,7 +1349,6 @@ OhcDriverBindingSupported (
                         );
 
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": second bail out for %p with %r\n", Controller, Status));
     Status = EFI_UNSUPPORTED;
     goto ON_EXIT;
   }
@@ -1376,7 +1372,6 @@ ON_EXIT:
          Controller
          );
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": leave for %p with %r\n", Controller, Status));
   return Status;
 }
 
