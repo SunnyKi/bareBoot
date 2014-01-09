@@ -53,8 +53,6 @@ MEM_LOG   *mMemLog = NULL;
 //
 CHAR8     mTimingTxt[32];
 
-
-
 /**
   Produce current time as ascii text string
 
@@ -64,29 +62,29 @@ CHAR8     mTimingTxt[32];
 CHAR8*
 GetTiming(VOID)
 {
-	UINT64    dTStartSec;
-	UINT64    dTStartMs;
-	UINT64    dTLastSec;
-	UINT64    dTLastMs;
-	UINT64    CurrentTsc;
-	
-	mTimingTxt[0] = '\0';
-	
-	if (mMemLog != NULL && mMemLog->TscFreqSec != 0) {
-		CurrentTsc = AsmReadTsc();
+  UINT64    dTStartSec;
+  UINT64    dTStartMs;
+  UINT64    dTLastSec;
+  UINT64    dTLastMs;
+  UINT64    CurrentTsc;
+  
+  mTimingTxt[0] = '\0';
+  
+  if (mMemLog != NULL && mMemLog->TscFreqSec != 0) {
+    CurrentTsc = AsmReadTsc();
     
-		dTStartMs = DivU64x64Remainder(MultU64x32(CurrentTsc - mMemLog->TscStart, 1000), mMemLog->TscFreqSec, NULL);
-		dTStartSec = DivU64x64Remainder(dTStartMs, 1000, &dTStartMs);
+    dTStartMs = DivU64x64Remainder(MultU64x32(CurrentTsc - mMemLog->TscStart, 1000), mMemLog->TscFreqSec, NULL);
+    dTStartSec = DivU64x64Remainder(dTStartMs, 1000, &dTStartMs);
     
-		dTLastMs = DivU64x64Remainder(MultU64x32(CurrentTsc - mMemLog->TscLast, 1000), mMemLog->TscFreqSec, NULL);
-		dTLastSec = DivU64x64Remainder(dTLastMs, 1000, &dTLastMs);
+    dTLastMs = DivU64x64Remainder(MultU64x32(CurrentTsc - mMemLog->TscLast, 1000), mMemLog->TscFreqSec, NULL);
+    dTLastSec = DivU64x64Remainder(dTLastMs, 1000, &dTLastMs);
     
-		AsciiSPrint(mTimingTxt, sizeof(mTimingTxt),
+    AsciiSPrint(mTimingTxt, sizeof(mTimingTxt),
                 "%ld:%03ld  %ld:%03ld", dTStartSec, dTStartMs, dTLastSec, dTLastMs);
-		mMemLog->TscLast = CurrentTsc;
-	}
-	
-	return mTimingTxt;
+    mMemLog->TscLast = CurrentTsc;
+  }
+  
+  return mTimingTxt;
 }
 
 /**
@@ -195,15 +193,18 @@ MemLogVA (
   // Increase buffer if not.
   //
   if ((UINTN)(mMemLog->Cursor - mMemLog->Buffer) + MEM_LOG_MAX_LINE_SIZE > mMemLog->BufferSize) {
-      // not enough place for max line - make buffer bigger
-      // but not too big (if something gets out of controll)
-      if (mMemLog->BufferSize + MEM_LOG_INITIAL_SIZE > MEM_LOG_MAX_SIZE) {
-      // Out of resources!
-        return;
-      }
-      mMemLog->Buffer = ReallocatePool(mMemLog->BufferSize, mMemLog->BufferSize + MEM_LOG_INITIAL_SIZE, mMemLog->Buffer);
-      mMemLog->BufferSize += MEM_LOG_INITIAL_SIZE;
+    UINTN Offset;
+    // not enough place for max line - make buffer bigger
+    // but not too big (if something gets out of controll)
+    if (mMemLog->BufferSize + MEM_LOG_INITIAL_SIZE > MEM_LOG_MAX_SIZE) {
+    // Out of resources!
+      return;
     }
+    Offset = mMemLog->Cursor - mMemLog->Buffer;
+    mMemLog->Buffer = ReallocatePool(mMemLog->BufferSize, mMemLog->BufferSize + MEM_LOG_INITIAL_SIZE, mMemLog->Buffer);
+    mMemLog->BufferSize += MEM_LOG_INITIAL_SIZE;
+    mMemLog->Cursor = mMemLog->Buffer + Offset;
+  }
   
   //
   // Add log to buffer
