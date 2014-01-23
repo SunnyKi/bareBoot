@@ -84,7 +84,7 @@ INF  PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
 INF  PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF  bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
 INF  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-INF  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+INF  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 
   # IDE/AHCI Support
 #INF  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
@@ -100,9 +100,6 @@ INF  MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
   # Usb Support
 !ifdef SPEEDUP
-!ifdef OHCI
-INF  bareBoot/Bus/Pci/OhciDxe/OhciDxe.inf
-!endif
 INF  bareBoot/Bus/Pci/UhciDxe/UhciDxe.inf
 INF  bareBoot/Bus/Pci/EhciDxe/EhciDxe.inf
 INF  bareBoot/Bus/Pci/XhciDxe/XhciDxe.inf
@@ -111,7 +108,7 @@ INF  bareBoot/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF  bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !else
 !ifdef OHCI
-INF  bareBoot/Bus/Pci/OhciDxe/OhciDxe.inf
+INF  OhciDxe/OhciDxe.inf
 !endif
 INF  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
 INF  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
@@ -150,13 +147,13 @@ INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 !endif
 #INF  RuleOverride=BINARY bareBoot/XhciDxe/XhciDxe.inf
 
-FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
-    SECTION RAW = bareBoot/Logo/Logo.bmp
-  }
+FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
+    SECTION RAW = bareBoot/Logo/Logo.bmp
+  }
 
-FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdFontsFile) {
-    SECTION RAW = bareBoot/Fonts/Monaco16.png
-  }
+FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdFontsFile) {
+    SECTION RAW = bareBoot/Fonts/Monaco16.png
+  }
 
 [Rule.Common.DXE_CORE]
   FILE DXE_CORE = $(NAMED_GUID) {
