@@ -479,6 +479,16 @@ BltWithAlpha (
   }
 
   if (Alpha) {
+#if 1
+      UseAlpha (
+        GraphicsOutput,
+        BltBuffer,
+        (UINT32) DestinationX,
+        (UINT32) DestinationY,
+        (UINT32) Width,
+	(UINT32) Height
+      );
+#else
       UseAlpha (
         GraphicsOutput,
         BltBuffer,
@@ -487,6 +497,7 @@ BltWithAlpha (
         Width,
         Height
       );
+#endif
   }
 
   Status = GraphicsOutput->Blt (
