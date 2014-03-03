@@ -234,7 +234,7 @@
   MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !endif
 !ifdef OHCI
-  OhciDxe/OhciDxe.inf
+  Clover/OhciDxe/OhciDxe.inf
 !endif
 
   # ISA Support
