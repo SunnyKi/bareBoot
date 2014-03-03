@@ -108,7 +108,7 @@ INF  bareBoot/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF  bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !else
 !ifdef OHCI
-INF  OhciDxe/OhciDxe.inf
+INF  Clover/OhciDxe/OhciDxe.inf
 !endif
 INF  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
 INF  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
