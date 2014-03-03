@@ -1103,7 +1103,7 @@ PNG_info_t *PNG_decode(const UINT8 *in, UINT32 size)
 			(info->height + 3) / 4, (info->height + 1) / 4, (info->height + 1) / 2,
 			(info->height + 0) / 2
 		};
-		UINT32 passstart[7] = { 0 };
+		UINT32 passstart[7] = { 0, 0, 0, 0, 0, 0, 0 };
 		UINT32 pattern[28] = { 0, 4, 0, 2, 0, 1, 0, 0, 0, 4, 0, 2, 0, 1, 8, 8, 4, 4, 2, 2, 1, 8, 8,
 				8, 4, 4, 2, 2 }; // values for the adam7 passes
 
