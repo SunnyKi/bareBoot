@@ -97,7 +97,7 @@ PartitionDriverBindingSupported (
         DevicePathNodeLength (&Node->DevPath) != sizeof (HARDDRIVE_DEVICE_PATH)) {
         return EFI_UNSUPPORTED;
       }
-#endif
+#else
       if (   Node->DevPath.Type != MEDIA_DEVICE_PATH
           || Node->DevPath.SubType != MEDIA_HARDDRIVE_DP
           || DevicePathNodeLength (&Node->DevPath) != sizeof (HARDDRIVE_DEVICE_PATH)
@@ -105,6 +105,7 @@ PartitionDriverBindingSupported (
           || Node->DevPath.SubType != MSG_SATA_DP) {
         return EFI_UNSUPPORTED;
       }
+#endif
     }
   }
 
