@@ -245,7 +245,11 @@
 
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
+!ifdef EDK2PART
+  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+!else
   bareBoot/PartitionDxe/PartitionDxe.inf
+!endif
 
 
   # Bios Thunk
