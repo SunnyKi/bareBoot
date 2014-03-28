@@ -143,7 +143,7 @@ Returns:
   Handoff = &HandoffCopy;
 
 #if 0
-	UINT32                rcba;
+  UINT32                rcba;
   UINT32                *fdr;
 
   rcba = 0xFED1C000;
