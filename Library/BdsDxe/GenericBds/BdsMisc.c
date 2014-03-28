@@ -220,6 +220,10 @@ BdsLibRegisterNewOption (
   CHAR16                    *TempLoadOption;
 
 
+  if (DevicePath == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   OptionPtr             = NULL;
   OptionSize            = 0;
   TempPtr               = NULL;
