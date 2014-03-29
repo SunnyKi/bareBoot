@@ -319,10 +319,11 @@ ClearScreen (
   UINT32 HexColor
 )
 {
-  EFI_STATUS Status = EFI_SUCCESS;
+  EFI_STATUS Status;
   EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Pixel;
 
+  Status = EFI_SUCCESS;
   GraphicsOutput = NULL;
   Pixel = NULL;
 
@@ -336,17 +337,19 @@ ClearScreen (
   CopyMem ((UINT8 *) Pixel, (UINT8 *) &HexColor,
            sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
 
-/*
+#if 0
   Pixel = AllocateZeroPool (sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL));
   Pixel->Blue = 0;
   Pixel->Green = 0;
   Pixel->Red = 0;
   Pixel->Reserved = 0;
-*/
+#endif
   GraphicsOutput->Blt (GraphicsOutput, Pixel, EfiBltVideoFill, 0, 0, 0, 0,
                        GraphicsOutput->Mode->Info->HorizontalResolution,
                        GraphicsOutput->Mode->Info->VerticalResolution, 0);
-  FreePool (Pixel);
+  if (Pixel != NULL) {
+    FreePool (Pixel);
+  }
 }
 
 VOID
