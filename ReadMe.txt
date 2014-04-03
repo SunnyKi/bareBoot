@@ -1,6 +1,7 @@
 A fork of Clover bootloader
 (http://sourceforge.net/projects/cloverefiboot)
 
+For legacy BIOS computers only.
 No fancy graphics, no black automagic,
 no frills, no thrills, no bells & whistles.
 
