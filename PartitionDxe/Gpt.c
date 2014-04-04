@@ -260,9 +260,12 @@ PartitionInstallGptChildHandles (
   // Verify that the Protective MBR is valid
   //
   for (Index = 0; Index < MAX_MBR_PARTITIONS; Index++) {
-    if ((ProtectiveMbr->Partition[Index].BootIndicator & 0x7F) == 0x00 &&
-        ProtectiveMbr->Partition[Index].OSIndicator == PMBR_GPT_PARTITION &&
-        UNPACK_UINT32 (ProtectiveMbr->Partition[Index].StartingLBA) == 1
+    MBR_PARTITION_RECORD *mpr;
+
+    mpr = &ProtectiveMbr->Partition[Index];
+    if ((mpr->BootIndicator & 0x7F) == 0x00 &&
+        mpr->OSIndicator == PMBR_GPT_PARTITION &&
+        UNPACK_UINT32 (mpr->StartingLBA) == 1
         ) {
       break;
     }
