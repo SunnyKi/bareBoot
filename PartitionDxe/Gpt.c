@@ -2,7 +2,18 @@
   Decode a hard disk partitioned with the GPT scheme in the UEFI 2.0
   specification.
 
-Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
+  Caution: This file requires additional review when modified.
+  This driver will have external input - disk partition.
+  This external input must be validated carefully to avoid security issue like
+  buffer overflow, integer overflow.
+
+  PartitionInstallGptChildHandles() routine will read disk partition content and
+  do basic validation before PartitionInstallChildHandle().
+
+  PartitionValidGptTable(), PartitionCheckGptEntry() routine will accept disk
+  partition content and validate the GPT table and GPT entry.
+
+Copyright (c) 2006 - 2013, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -18,6 +29,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 /**
   Install child handles if the Handle supports GPT partition structure.
+
+  Caution: This function may receive untrusted input.
+  The GPT partition table header is external input, so this routine
+  will do basic validation for GPT partition table header before return.
 
   @param[in]  BlockIo     Parent BlockIo interface.
   @param[in]  DiskIo      Disk Io protocol.
@@ -77,8 +92,11 @@ PartitionRestoreGptTable (
 
 
 /**
-  Restore Partition Table to its alternate place.
-  (Primary -> Backup or Backup -> Primary)
+  This routine will check GPT partition entry and return entry status.
+
+  Caution: This function may receive untrusted input.
+  The GPT partition entry is external input, so this routine
+  will do basic validation for GPT partition entry and report status.
 
   @param[in]    PartHeader    Partition table header structure
   @param[in]    PartEntry     The partition entry array
@@ -158,9 +176,15 @@ PartitionSetCrc (
 /**
   Install child handles if the Handle supports GPT partition structure.
 
+  Caution: This function may receive untrusted input.
+  The GPT partition table is external input, so this routine
+  will do basic validation for GPT partition table before install
+  child handle for each GPT partition.
+
   @param[in]  This       Calling context.
   @param[in]  Handle     Parent Handle.
   @param[in]  DiskIo     Parent DiskIo interface.
+  @param[in]  DiskIo2    Parent DiskIo2 interface.
   @param[in]  BlockIo    Parent BlockIo interface.
   @param[in]  BlockIo2   Parent BlockIo2 interface.
   @param[in]  DevicePath Parent Device Path.
@@ -175,6 +199,7 @@ PartitionInstallGptChildHandles (
   IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN  EFI_HANDLE                   Handle,
   IN  EFI_DISK_IO_PROTOCOL         *DiskIo,
+  IN  EFI_DISK_IO2_PROTOCOL        *DiskIo2,
   IN  EFI_BLOCK_IO_PROTOCOL        *BlockIo,
   IN  EFI_BLOCK_IO2_PROTOCOL       *BlockIo2,
   IN  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
@@ -187,6 +212,7 @@ PartitionInstallGptChildHandles (
   EFI_PARTITION_TABLE_HEADER  *PrimaryHeader;
   EFI_PARTITION_TABLE_HEADER  *BackupHeader;
   EFI_PARTITION_ENTRY         *PartEntry;
+  EFI_PARTITION_ENTRY         *Entry;
   EFI_PARTITION_ENTRY_STATUS  *PEntryStatus;
   UINTN                       Index;
   EFI_STATUS                  GptValidStatus;
@@ -203,7 +229,8 @@ PartitionInstallGptChildHandles (
   LastBlock     = BlockIo->Media->LastBlock;
   MediaId       = BlockIo->Media->MediaId;
 
-  DEBUG ((EFI_D_INFO, "Gpt: BlockSize: %d, LastBlock: %lx\n", BlockSize, LastBlock));
+  DEBUG ((EFI_D_INFO, " BlockSize : %d \n", BlockSize));
+  DEBUG ((EFI_D_INFO, " LastBlock : %lx \n", LastBlock));
 
   GptValidStatus = EFI_NOT_FOUND;
 
@@ -282,7 +309,7 @@ PartitionInstallGptChildHandles (
     DEBUG ((EFI_D_INFO, " Valid primary and !Valid backup partition table\n"));
     DEBUG ((EFI_D_INFO, " Restore backup partition table by the primary\n"));
     if (!PartitionRestoreGptTable (BlockIo, DiskIo, PrimaryHeader)) {
-      DEBUG ((EFI_D_INFO, " Restore  backup partition table error\n"));
+      DEBUG ((EFI_D_INFO, " Restore backup partition table error\n"));
     }
 
     if (PartitionValidGptTable (BlockIo, DiskIo, PrimaryHeader->AlternateLBA, BackupHeader)) {
@@ -296,7 +323,7 @@ PartitionInstallGptChildHandles (
   //
   // Read the EFI Partition Entries
   //
-  PartEntry = AllocatePool (PrimaryHeader->NumberOfPartitionEntries * sizeof (EFI_PARTITION_ENTRY));
+  PartEntry = AllocatePool (PrimaryHeader->NumberOfPartitionEntries * PrimaryHeader->SizeOfPartitionEntry);
   if (PartEntry == NULL) {
     DEBUG ((EFI_D_ERROR, "Allocate pool error\n"));
     goto Done;
@@ -339,7 +366,8 @@ PartitionInstallGptChildHandles (
   // Create child device handles
   //
   for (Index = 0; Index < PrimaryHeader->NumberOfPartitionEntries; Index++) {
-    if (CompareGuid (&PartEntry[Index].PartitionTypeGUID, &gEfiPartTypeUnusedGuid) ||
+    Entry = (EFI_PARTITION_ENTRY *) ((UINT8 *) PartEntry + Index * PrimaryHeader->SizeOfPartitionEntry);
+    if (CompareGuid (&Entry->PartitionTypeGUID, &gEfiPartTypeUnusedGuid) ||
         PEntryStatus[Index].OutOfRange ||
         PEntryStatus[Index].Overlap ||
         PEntryStatus[Index].OsSpecific
@@ -359,29 +387,30 @@ PartitionInstallGptChildHandles (
     HdDev.PartitionNumber = (UINT32) Index + 1;
     HdDev.MBRType         = MBR_TYPE_EFI_PARTITION_TABLE_HEADER;
     HdDev.SignatureType   = SIGNATURE_TYPE_GUID;
-    HdDev.PartitionStart  = PartEntry[Index].StartingLBA;
-    HdDev.PartitionSize   = PartEntry[Index].EndingLBA - PartEntry[Index].StartingLBA + 1;
-    CopyMem (HdDev.Signature, &PartEntry[Index].UniquePartitionGUID, sizeof (EFI_GUID));
+    HdDev.PartitionStart  = Entry->StartingLBA;
+    HdDev.PartitionSize   = Entry->EndingLBA - Entry->StartingLBA + 1;
+    CopyMem (HdDev.Signature, &Entry->UniquePartitionGUID, sizeof (EFI_GUID));
 
     DEBUG ((EFI_D_INFO, " Index : %d\n", (UINT32) Index));
     DEBUG ((EFI_D_INFO, " Start LBA : %lx\n", (UINT64) HdDev.PartitionStart));
-    DEBUG ((EFI_D_INFO, " End LBA : %lx\n", (UINT64) PartEntry[Index].EndingLBA));
+    DEBUG ((EFI_D_INFO, " End LBA : %lx\n", (UINT64) Entry->EndingLBA));
     DEBUG ((EFI_D_INFO, " Partition size: %lx\n", (UINT64) HdDev.PartitionSize));
-    DEBUG ((EFI_D_INFO, " Start : %lx", MultU64x32 (PartEntry[Index].StartingLBA, BlockSize)));
-    DEBUG ((EFI_D_INFO, " End : %lx\n", MultU64x32 (PartEntry[Index].EndingLBA, BlockSize)));
+    DEBUG ((EFI_D_INFO, " Start : %lx", MultU64x32 (Entry->StartingLBA, BlockSize)));
+    DEBUG ((EFI_D_INFO, " End : %lx\n", MultU64x32 (Entry->EndingLBA, BlockSize)));
 
     Status = PartitionInstallChildHandle (
                This,
                Handle,
                DiskIo,
+               DiskIo2,
                BlockIo,
                BlockIo2,
                DevicePath,
                (EFI_DEVICE_PATH_PROTOCOL *) &HdDev,
-               PartEntry[Index].StartingLBA,
-               PartEntry[Index].EndingLBA,
+               Entry->StartingLBA,
+               Entry->EndingLBA,
                BlockSize,
-               CompareGuid(&PartEntry[Index].PartitionTypeGUID, &gEfiPartTypeSystemPartGuid)
+               CompareGuid(&Entry->PartitionTypeGUID, &gEfiPartTypeSystemPartGuid)
                );
   }
 
@@ -408,7 +437,11 @@ Done:
 }
 
 /**
-  Install child handles if the Handle supports GPT partition structure.
+  This routine will read GPT partition table header and return it.
+
+  Caution: This function may receive untrusted input.
+  The GPT partition table header is external input, so this routine
+  will do basic validation for GPT partition table header before return.
 
   @param[in]  BlockIo     Parent BlockIo interface.
   @param[in]  DiskIo      Disk Io protocol.
@@ -457,9 +490,18 @@ PartitionValidGptTable (
 
   if ((PartHdr->Header.Signature != EFI_PTAB_HEADER_ID) ||
       !PartitionCheckCrc (BlockSize, &PartHdr->Header) ||
-      PartHdr->MyLBA != Lba
+      PartHdr->MyLBA != Lba ||
+      (PartHdr->SizeOfPartitionEntry < sizeof (EFI_PARTITION_ENTRY))
       ) {
     DEBUG ((EFI_D_INFO, "Invalid efi partition table header\n"));
+    FreePool (PartHdr);
+    return FALSE;
+  }
+
+  //
+  // Ensure the NumberOfPartitionEntries * SizeOfPartitionEntry doesn't overflow.
+  //
+  if (PartHdr->NumberOfPartitionEntries > DivU64x32 (MAX_UINTN, PartHdr->SizeOfPartitionEntry)) {
     FreePool (PartHdr);
     return FALSE;
   }
@@ -636,10 +678,12 @@ Done:
   return TRUE;
 }
 
-
 /**
-  Restore Partition Table to its alternate place.
-  (Primary -> Backup or Backup -> Primary)
+  This routine will check GPT partition entry and return entry status.
+
+  Caution: This function may receive untrusted input.
+  The GPT partition entry is external input, so this routine
+  will do basic validation for GPT partition entry and report status.
 
   @param[in]    PartHeader    Partition table header structure
   @param[in]    PartEntry     The partition entry array
@@ -654,20 +698,21 @@ PartitionCheckGptEntry (
   OUT EFI_PARTITION_ENTRY_STATUS  *PEntryStatus
   )
 {
-  EFI_LBA StartingLBA;
-  EFI_LBA EndingLBA;
-  UINTN   Index1;
-  UINTN   Index2;
-  UINT64  Attributes;
+  EFI_LBA              StartingLBA;
+  EFI_LBA              EndingLBA;
+  EFI_PARTITION_ENTRY  *Entry;
+  UINTN                Index1;
+  UINTN                Index2;
 
   DEBUG ((EFI_D_INFO, " start check partition entries\n"));
   for (Index1 = 0; Index1 < PartHeader->NumberOfPartitionEntries; Index1++) {
-    if (CompareGuid (&PartEntry[Index1].PartitionTypeGUID, &gEfiPartTypeUnusedGuid)) {
+    Entry = (EFI_PARTITION_ENTRY *) ((UINT8 *) PartEntry + Index1 * PartHeader->SizeOfPartitionEntry);
+    if (CompareGuid (&Entry->PartitionTypeGUID, &gEfiPartTypeUnusedGuid)) {
       continue;
     }
 
-    StartingLBA = PartEntry[Index1].StartingLBA;
-    EndingLBA   = PartEntry[Index1].EndingLBA;
+    StartingLBA = Entry->StartingLBA;
+    EndingLBA   = Entry->EndingLBA;
     if (StartingLBA > EndingLBA ||
         StartingLBA < PartHeader->FirstUsableLBA ||
         StartingLBA > PartHeader->LastUsableLBA ||
@@ -678,29 +723,27 @@ PartitionCheckGptEntry (
       continue;
     }
 
-    for (Index2 = Index1 + 1; Index2 < PartHeader->NumberOfPartitionEntries; Index2++) {
+    if ((Entry->Attributes & BIT1) != 0) {
+      //
+      // If Bit 1 is set, this indicate that this is an OS specific GUID partition. 
+      //
+      PEntryStatus[Index1].OsSpecific = TRUE;
+    }
 
-      if (CompareGuid (&PartEntry[Index2].PartitionTypeGUID, &gEfiPartTypeUnusedGuid)) {
+    for (Index2 = Index1 + 1; Index2 < PartHeader->NumberOfPartitionEntries; Index2++) {
+      Entry = (EFI_PARTITION_ENTRY *) ((UINT8 *) PartEntry + Index2 * PartHeader->SizeOfPartitionEntry);
+      if (CompareGuid (&Entry->PartitionTypeGUID, &gEfiPartTypeUnusedGuid)) {
         continue;
       }
 
-      if (PartEntry[Index2].EndingLBA >= StartingLBA && PartEntry[Index2].StartingLBA <= EndingLBA) {
+      if (Entry->EndingLBA >= StartingLBA && Entry->StartingLBA <= EndingLBA) {
         //
         // This region overlaps with the Index1'th region
         //
         PEntryStatus[Index1].Overlap  = TRUE;
         PEntryStatus[Index2].Overlap  = TRUE;
         continue;
-
       }
-    }
-
-    Attributes = PartEntry[Index1].Attributes;
-    if ((Attributes & BIT1) != 0) {
-      //
-      // If Bit 1 is set, this indicate that this is an OS specific GUID partition. 
-      //
-      PEntryStatus[Index1].OsSpecific = TRUE;
     }
   }
 
