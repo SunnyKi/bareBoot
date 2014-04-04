@@ -261,14 +261,13 @@ PartitionInstallGptChildHandles (
   //
   for (Index = 0; Index < MAX_MBR_PARTITIONS; Index++) {
     MBR_PARTITION_RECORD *mpr;
+    UINT32 slba;
 
     mpr = &ProtectiveMbr->Partition[Index];
+    slba = UNPACK_UINT32 (mpr->StartingLBA);
     DEBUG ((EFI_D_INFO, __FUNCTION__ ": BootIndicator 0x%02x, OSIndicator 0x%02x, StartingLBA 0x%x\n",
-            mpr->BootIndicator, mpr->OSIndicator, UNPACK_UINT32 (mpr->StartingLBA)));
-    if ((mpr->BootIndicator & 0x7F) == 0x00 &&
-        mpr->OSIndicator == PMBR_GPT_PARTITION &&
-        UNPACK_UINT32 (mpr->StartingLBA) == 1
-        ) {
+            mpr->BootIndicator, mpr->OSIndicator, slba));
+    if ((mpr->BootIndicator & 0x7F) == 0x00 && mpr->OSIndicator == PMBR_GPT_PARTITION && slba == 1) {
       break;
     }
   }
@@ -329,7 +328,7 @@ PartitionInstallGptChildHandles (
   //
   PartEntry = AllocatePool (PrimaryHeader->NumberOfPartitionEntries * PrimaryHeader->SizeOfPartitionEntry);
   if (PartEntry == NULL) {
-    DEBUG ((EFI_D_ERROR, __FUNCTION__ ":Allocate pool error\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Allocate pool error\n"));
     goto Done;
   }
 
@@ -570,7 +569,7 @@ PartitionCheckGptEntryArrayCRC (
 
   Status  = gBS->CalculateCrc32 (Ptr, Size, &Crc);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": CheckPEntryArrayCRC: Crc calculation failed\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Crc calculation failed\n"));
     FreePool (Ptr);
     return FALSE;
   }
@@ -843,7 +842,7 @@ PartitionCheckCrcAltSize (
   }
 
   if ((MaxSize != 0) && (Size > MaxSize)) {
-    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": CheckCrc32: Size > MaxSize\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Size > MaxSize\n"));
     return FALSE;
   }
   //
@@ -854,7 +853,7 @@ PartitionCheckCrcAltSize (
 
   Status      = gBS->CalculateCrc32 ((UINT8 *) Hdr, Size, &Crc);
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": CheckCrc32: Crc calculation failed\n"));
+    DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Crc calculation failed\n"));
     return FALSE;
   }
   //
@@ -867,7 +866,7 @@ PartitionCheckCrcAltSize (
   //
   DEBUG_CODE_BEGIN ();
     if (OrgCrc != Crc) {
-      DEBUG ((EFI_D_ERROR, __FUNCTION__ ": CheckCrc32: Crc check failed\n"));
+      DEBUG ((EFI_D_ERROR, __FUNCTION__ ": Crc check failed\n"));
     }
   DEBUG_CODE_END ();
 
