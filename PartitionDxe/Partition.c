@@ -41,10 +41,11 @@ EFI_DRIVER_BINDING_PROTOCOL gPartitionDriverBinding = {
 //
 // Prioritized function list to detect partition table. 
 //
-PARTITION_DETECT_ROUTINE mPartitionDetectRoutineTable[] = {
-  PartitionInstallGptChildHandles,
-  PartitionInstallElToritoChildHandles,
-  PartitionInstallMbrChildHandles,
+PARTITION_DETECT_ROUTINE* mPartitionDetectRoutineTable[] = {
+  &PartitionInstallGptChildHandles,
+  &PartitionInstallAppleChildHandles,
+  &PartitionInstallElToritoChildHandles,
+  &PartitionInstallMbrChildHandles,
   NULL
 };
 
@@ -202,7 +203,7 @@ PartitionDriverBindingStart (
   EFI_DISK_IO_PROTOCOL      *DiskIo;
   EFI_DISK_IO2_PROTOCOL     *DiskIo2;
   EFI_DEVICE_PATH_PROTOCOL  *ParentDevicePath;
-  PARTITION_DETECT_ROUTINE  *Routine;
+  PARTITION_DETECT_ROUTINE  **Routine;
   BOOLEAN                   MediaPresent;
   EFI_TPL                   OldTpl;
 

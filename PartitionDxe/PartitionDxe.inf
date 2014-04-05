@@ -48,7 +48,7 @@
   ElTorito.c
   Partition.c
   Partition.h
-
+  Apple.c
 
 [Packages]
   MdePkg/MdePkg.dec

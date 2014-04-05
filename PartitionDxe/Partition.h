@@ -346,62 +346,6 @@ PartitionInstallChildHandle (
   );
 
 /**
-  Install child handles if the Handle supports GPT partition structure.
-
-  @param[in]  This       Calling context.
-  @param[in]  Handle     Parent Handle.
-  @param[in]  DiskIo     Parent DiskIo interface.
-  @param[in]  DiskIo2    Parent DiskIo2 interface.
-  @param[in]  BlockIo    Parent BlockIo interface.
-  @param[in]  BlockIo2   Parent BlockIo2 interface.
-  @param[in]  DevicePath Parent Device Path.
-
-  @retval EFI_SUCCESS           Valid GPT disk.
-  @retval EFI_MEDIA_CHANGED     Media changed Detected.
-  @retval EFI_INVALID_PARAMETER If both BlockIo and BlockIo2 are NULL;
-  @retval other                 Not a valid GPT disk.
-
-**/
-EFI_STATUS
-PartitionInstallGptChildHandles (
-  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
-  IN  EFI_HANDLE                   Handle,
-  IN  EFI_DISK_IO_PROTOCOL         *DiskIo,
-  IN  EFI_DISK_IO2_PROTOCOL        *DiskIo2,
-  IN  EFI_BLOCK_IO_PROTOCOL        *BlockIo,
-  IN  EFI_BLOCK_IO2_PROTOCOL       *BlockIo2,
-  IN  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
-  );
-
-/**
-  Install child handles if the Handle supports El Torito format.
-
-  @param[in]  This        Calling context.
-  @param[in]  Handle      Parent Handle.
-  @param[in]  DiskIo      Parent DiskIo interface.
-  @param[in]  DiskIo2     Parent DiskIo2 interface.
-  @param[in]  BlockIo     Parent BlockIo interface.
-  @param[in]  BlockIo2    Parent BlockIo2 interface.
-  @param[in]  DevicePath  Parent Device Path
-
-
-  @retval EFI_SUCCESS         Child handle(s) was added.
-  @retval EFI_MEDIA_CHANGED   Media changed Detected.
-  @retval other               no child handle was added.
-
-**/
-EFI_STATUS
-PartitionInstallElToritoChildHandles (
-  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
-  IN  EFI_HANDLE                   Handle,
-  IN  EFI_DISK_IO_PROTOCOL         *DiskIo,
-  IN  EFI_DISK_IO2_PROTOCOL        *DiskIo2,
-  IN  EFI_BLOCK_IO_PROTOCOL        *BlockIo,
-  IN  EFI_BLOCK_IO2_PROTOCOL       *BlockIo2,
-  IN  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
-  );
-
-/**
   Install child handles if the Handle supports MBR format.
 
   @param[in]  This              Calling context.
@@ -417,8 +361,10 @@ PartitionInstallElToritoChildHandles (
   @retval Others            MBR partition was not found.
 
 **/
+
+typedef
 EFI_STATUS
-PartitionInstallMbrChildHandles (
+(PARTITION_DETECT_ROUTINE) (
   IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN  EFI_HANDLE                   Handle,
   IN  EFI_DISK_IO_PROTOCOL         *DiskIo,
@@ -428,16 +374,9 @@ PartitionInstallMbrChildHandles (
   IN  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
   );
 
-typedef
-EFI_STATUS
-(*PARTITION_DETECT_ROUTINE) (
-  IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
-  IN  EFI_HANDLE                   Handle,
-  IN  EFI_DISK_IO_PROTOCOL         *DiskIo,
-  IN  EFI_DISK_IO2_PROTOCOL        *DiskIo2,
-  IN  EFI_BLOCK_IO_PROTOCOL        *BlockIo,
-  IN  EFI_BLOCK_IO2_PROTOCOL       *BlockIo2,
-  IN  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
-  );
+PARTITION_DETECT_ROUTINE PartitionInstallAppleChildHandles;
+PARTITION_DETECT_ROUTINE PartitionInstallElToritoChildHandles;
+PARTITION_DETECT_ROUTINE PartitionInstallGptChildHandles;
+PARTITION_DETECT_ROUTINE PartitionInstallMbrChildHandles;
 
 #endif

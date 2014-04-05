@@ -38,23 +38,26 @@ typedef struct APPLE_PT_ENTRY  {
 /**
   Install child handles if the Handle supports Apple partition table format.
 
-  @param[in]  This        Calling context.
-  @param[in]  Handle      Parent Handle
-  @param[in]  DiskIo      Parent DiskIo interface
-  @param[in]  BlockIo     Parent BlockIo interface
-  @param[in]  DevicePath  Parent Device Path
-
-
-  @retval EFI_SUCCESS         Child handle(s) was added
-  @retval EFI_MEDIA_CHANGED   Media changed Detected
-  @retval other               no child handle was added
+  @param[in]  This              Calling context.
+  @param[in]  Handle            Parent Handle.
+  @param[in]  DiskIo            Parent DiskIo interface.
+  @param[in]  DiskIo2           Parent DiskIo2 interface.
+  @param[in]  BlockIo           Parent BlockIo interface.
+  @param[in]  BlockIo2          Parent BlockIo2 interface.
+  @param[in]  DevicePath        Parent Device Path.
+   
+  @retval EFI_SUCCESS       A child handle was added.
+  @retval EFI_MEDIA_CHANGED Media change was detected.
+  @retval Others            MBR partition was not found.
 
 **/
+
 EFI_STATUS
 PartitionInstallAppleChildHandles (
   IN  EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN  EFI_HANDLE                   Handle,
   IN  EFI_DISK_IO_PROTOCOL         *DiskIo,
+  IN  EFI_DISK_IO2_PROTOCOL        *DiskIo2,
   IN  EFI_BLOCK_IO_PROTOCOL        *BlockIo,
   IN  EFI_BLOCK_IO2_PROTOCOL       *BlockIo2,
   IN  EFI_DEVICE_PATH_PROTOCOL     *DevicePath
@@ -150,6 +153,7 @@ PartitionInstallAppleChildHandles (
               This,
               Handle,
               DiskIo,
+              DiskIo2,
               BlockIo,
               BlockIo2,
               DevicePath,
@@ -157,7 +161,9 @@ PartitionInstallAppleChildHandles (
               CdDev.PartitionStart,
               CdDev.PartitionStart + CdDev.PartitionSize - 1,
               SubBlockSize,
-              FALSE );
+              FALSE
+	      );
+	  DEBUG ((EFI_D_INFO, __FUNCTION__ ": partition (%p) accepted\n", Handle));
       }
 
   } while (0);
