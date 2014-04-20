@@ -312,45 +312,45 @@ VOID set_mode (
 
     case BT_ATI_1:
     {
-      ATOM_MODE_TIMING *mode_timing = (ATOM_MODE_TIMING *) map->ati_mode_table;
+      ATOM_MODE_TIMING *amode_timing = (ATOM_MODE_TIMING *) map->ati_mode_table;
 
       DBG("BT_ATI_1\n");
       DBG(" mode 0 (%dx%d) patched to %dx%d\n",
-        mode_timing->usCRTC_H_Disp, mode_timing->usCRTC_V_Disp,
+        amode_timing->usCRTC_H_Disp, amode_timing->usCRTC_V_Disp,
         mode.h_active, mode.v_active
         );
-      mode_timing->usCRTC_H_Total = mode.h_active + mode.h_blanking;
-      mode_timing->usCRTC_H_Disp = mode.h_active;
-      mode_timing->usCRTC_H_SyncStart = mode.h_active + mode.h_sync_offset;
-      mode_timing->usCRTC_H_SyncWidth = mode.h_sync_width;
+      amode_timing->usCRTC_H_Total = mode.h_active + mode.h_blanking;
+      amode_timing->usCRTC_H_Disp = mode.h_active;
+      amode_timing->usCRTC_H_SyncStart = mode.h_active + mode.h_sync_offset;
+      amode_timing->usCRTC_H_SyncWidth = mode.h_sync_width;
         
-      mode_timing->usCRTC_V_Total = mode.v_active + mode.v_blanking;
-      mode_timing->usCRTC_V_Disp = mode.v_active;
-      mode_timing->usCRTC_V_SyncStart = mode.v_active + mode.v_sync_offset;
-      mode_timing->usCRTC_V_SyncWidth = mode.v_sync_width;
+      amode_timing->usCRTC_V_Total = mode.v_active + mode.v_blanking;
+      amode_timing->usCRTC_V_Disp = mode.v_active;
+      amode_timing->usCRTC_V_SyncStart = mode.v_active + mode.v_sync_offset;
+      amode_timing->usCRTC_V_SyncWidth = mode.v_sync_width;
 
-      mode_timing->usPixelClock = mode.pixel_clock;
+      amode_timing->usPixelClock = mode.pixel_clock;
       break;
     }
 
     case BT_ATI_2:
     {
-      ATOM_DTD_FORMAT *mode_timing = (ATOM_DTD_FORMAT *) map->ati_mode_table;
+      ATOM_DTD_FORMAT *amode_timing = (ATOM_DTD_FORMAT *) map->ati_mode_table;
       
       DBG("BT_ATI_2\n");
       DBG(" mode 0 (%dx%d) patched to %dx%d\n",
-        mode_timing->usHActive, mode_timing->usVActive,
+        amode_timing->usHActive, amode_timing->usVActive,
         mode.h_active, mode.v_active
         );
-      mode_timing->usHBlanking_Time = mode.h_blanking;
-      mode_timing->usHActive = mode.h_active;
-      mode_timing->usHSyncOffset = mode.h_sync_offset;
-      mode_timing->usHSyncWidth = mode.h_sync_width;
-      mode_timing->usVBlanking_Time = mode.v_blanking;
-      mode_timing->usVActive = mode.v_active;
-      mode_timing->usVSyncOffset = mode.v_sync_offset;
-      mode_timing->usVSyncWidth = mode.v_sync_width;
-      mode_timing->usPixClk = mode.pixel_clock;
+      amode_timing->usHBlanking_Time = mode.h_blanking;
+      amode_timing->usHActive = mode.h_active;
+      amode_timing->usHSyncOffset = mode.h_sync_offset;
+      amode_timing->usHSyncWidth = mode.h_sync_width;
+      amode_timing->usVBlanking_Time = mode.v_blanking;
+      amode_timing->usVActive = mode.v_active;
+      amode_timing->usVSyncOffset = mode.v_sync_offset;
+      amode_timing->usVSyncWidth = mode.v_sync_width;
+      amode_timing->usPixClk = mode.pixel_clock;
 
       break;
     }
