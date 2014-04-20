@@ -690,15 +690,15 @@ PatchLoadedKexts (
   VOID
 )
 {
-	DTEntry             MMEntry;
+  DTEntry             MMEntry;
   _BooterKextFileInfo *KextFileInfo;
   CHAR8               *PropName;
   _DeviceTreeBuffer   *PropEntry;
   CHAR8               SavedValue;
   CHAR8               *InfoPlist;
 
-	struct OpaqueDTPropertyIterator OPropIter;
-	DTPropertyIterator	PropIter = &OPropIter;
+  struct OpaqueDTPropertyIterator OPropIter;
+  DTPropertyIterator  PropIter = &OPropIter;
 
   if (!dtRoot) {
     return;
@@ -711,7 +711,7 @@ PatchLoadedKexts (
     if (DTCreatePropertyIteratorNoAlloc(MMEntry, PropIter) == kSuccess)
     {   
       while (DTIterateProperties(PropIter, &PropName) == kSuccess)
-      {	
+      {  
         if (AsciiStrStr(PropName,"Driver-"))
         {
           PropEntry = (_DeviceTreeBuffer*)(((UINT8*)PropIter->currentProperty) + sizeof(DeviceTreeNodeProperty));
