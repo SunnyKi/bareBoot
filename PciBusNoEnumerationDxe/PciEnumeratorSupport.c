@@ -198,6 +198,7 @@ Returns:
   UINT32                rcba;
   UINT32                *fdr;
 
+  PciIoDevice = NULL;
   Status  = EFI_SUCCESS;
   SecBus  = 0;
 

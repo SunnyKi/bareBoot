@@ -1597,6 +1597,7 @@ load_vbios_file (
   CHAR16 FileName[40];
   UINT8*  buffer;
 
+  buffer = NULL;
   if (gPNDirExists) {
     UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom", gProductNameDir, vendor_id, device_id);
   } else {

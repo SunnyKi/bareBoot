@@ -415,8 +415,8 @@ InjectKexts (
 {
 	UINT8					*dtEntry = (UINT8*)(UINTN) deviceTreeP;
 	UINTN					dtLength = (UINTN) *deviceTreeLength;
-	DTEntry				platformEntry;
-	DTEntry				memmapEntry;
+	DTEntry				platformEntry = NULL;
+	DTEntry				memmapEntry = NULL;
 	CHAR8 				*ptr;
 	UINT8					*infoPtr = 0;
 	UINT8					*extraPtr = 0;

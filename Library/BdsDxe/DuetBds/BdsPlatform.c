@@ -716,6 +716,8 @@ Returns:
   EFI_DEVICE_PATH_PROTOCOL  *GopDevicePath;
 
   DevicePath = NULL;
+  GopDevicePath = NULL;
+
   Status = gBS->HandleProtocol (
                   DeviceHandle,
                   &gEfiDevicePathProtocolGuid,

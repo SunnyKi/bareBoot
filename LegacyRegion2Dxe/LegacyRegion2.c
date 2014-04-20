@@ -546,6 +546,7 @@ LegacyRegionGetInfo (
   UINTN                        Index;
   UINTN                        DescriptorIndex;
 
+  SectionInfo = NULL;
   //
   // Get section numbers and information
   //

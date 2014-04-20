@@ -428,6 +428,7 @@ PListXMLParseTagList (char* buffer, TagPtr * tag, unsigned int type, unsigned in
   pos = 0;
   tagList = NULL;
   lastTag = NULL;
+  tmpTag = NULL;
 
   if (!empty) {
     for (;;) {
@@ -495,6 +496,7 @@ PListXMLParseTagKey (char* buffer, TagPtr* tag, unsigned int* lenPtr) {
     return Status;
   }
 
+  subTag = NULL;
   Status = PListXMLParseNextTag (buffer + length, &subTag, &length2);
 
   if (Status != 0) {
