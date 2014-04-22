@@ -154,10 +154,10 @@ BiosBlockIoDriverBindingSupported (
   //
   // See if the Legacy BIOS Protocol is available
   //
- 	Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &Legacy8259);
-	if (EFI_ERROR (Status)) {
-		return Status;
-	}
+   Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &Legacy8259);
+  if (EFI_ERROR (Status)) {
+    return Status;
+  }
 
   Status = gBS->OpenProtocol (
                   Controller,
@@ -259,14 +259,14 @@ BiosBlockIoDriverBindingStart (
     goto Error;
   } */
   if (mLegacy8259 == NULL) {
-		Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &mLegacy8259);
-		if (EFI_ERROR (Status)) {
-			goto Error;
-		}
-		
-		InitializeBiosIntCaller(&mThunkContext);
-		InitializeInterruptRedirection(mLegacy8259);
-	}
+    Status = gBS->LocateProtocol (&gEfiLegacy8259ProtocolGuid, NULL, (VOID **) &mLegacy8259);
+    if (EFI_ERROR (Status)) {
+      goto Error;
+    }
+    
+    InitializeBiosIntCaller(&mThunkContext);
+    InitializeInterruptRedirection(mLegacy8259);
+  }
 
   //
   // Open the IO Abstraction(s) needed

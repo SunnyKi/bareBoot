@@ -475,7 +475,7 @@ EFIAPI
 LegacyBiosInt86 (
                  IN  BIOS_BLOCK_IO_DEV               *BiosDev,
                  IN  UINT8                           BiosInt,
-                 IN  IA32_REGISTER_SET				*Regs
+                 IN  IA32_REGISTER_SET               *Regs
                  );    
 
 

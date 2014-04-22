@@ -38,7 +38,7 @@ EXTRN CommonInterruptEntry:PROC
 
 ALIGN   8
 
-PUBLIC	AsmIdtVector00
+PUBLIC  AsmIdtVector00
 
 AsmIdtVector00 LABEL BYTE
 REPEAT  256

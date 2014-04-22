@@ -1,4 +1,6 @@
+
 /* $Id: Utils.c $ */
+
 /** @file
  * Utils.c - VirtualBox Console control emulation
  */
@@ -11,19 +13,19 @@
 #include "../../BootMaintLib.h"
 
 BOOLEAN
-EfiGrowBuffer (
-  IN OUT EFI_STATUS   *Status,
-  IN OUT VOID         **Buffer,
-  IN UINTN            BufferSize
+  EfiGrowBuffer (
+  IN OUT EFI_STATUS *Status,
+  IN OUT VOID **Buffer,
+  IN UINTN BufferSize
 );
 
-CHAR8*  DefaultMemEntry = "N/A";
-CHAR8*  DefaultSerial = "CT288GT9VT6";
-CHAR8*  BiosVendor = "Apple Inc.";
-CHAR8*  AppleManufacturer = "Apple Computer, Inc.";
-EFI_UNICODE_COLLATION_PROTOCOL  *gUnicodeCollation = NULL;
+CHAR8 *DefaultMemEntry = "N/A";
+CHAR8 *DefaultSerial = "CT288GT9VT6";
+CHAR8 *BiosVendor = "Apple Inc.";
+CHAR8 *AppleManufacturer = "Apple Computer, Inc.";
+EFI_UNICODE_COLLATION_PROTOCOL *gUnicodeCollation = NULL;
 
-CHAR8* AppleFirmwareVersion[24] = {
+CHAR8 *AppleFirmwareVersion[24] = {
   "MB11.88Z.0061.B03.0809221748",
   "MB21.88Z.00A5.B07.0706270922",
   "MB41.88Z.0073.B00.0809221748",
@@ -48,64 +50,63 @@ CHAR8* AppleFirmwareVersion[24] = {
   "MP31.88Z.006C.B05.0802291410",
   "MP41.88Z.0081.B04.0903051113",
   "MP51.88Z.007F.B00.1008031144"
-
 };
 
-CHAR8* AppleBoardID[24] = {
+CHAR8 *AppleBoardID[24] = {
   "Mac-F4208CC8", //MB11 - yonah
-  "Mac-F4208CA9",  //MB21 - merom 05/07
-  "Mac-F22788A9",  //MB41 - penryn
-  "Mac-F22788AA",  //MB52
-  "Mac-F42D86C8",  //MBP51
-  "Mac-94245B3640C91C81",  //MBP81 - i5 SB IntelHD3000
-  "Mac-942459F5819B171B",  //MBP83 - i7 SB  ATI
-  "Mac-6F01561E16C75D06",  //MBP92 - i5-3210M IvyBridge HD4000
-  "Mac-942452F5819B1C1B",  //MBA31
-  "Mac-2E6FAB96566FE58C",  //MBA52 - i5-3427U IVY BRIDGE IntelHD4000 did=166
-  "Mac-F4208EAA",          //MM21 - merom GMA950 07/07
-  "Mac-8ED6AF5B48C039E1",  //MM51 - Sandy + Intel 30000
-  "Mac-F65AE981FFA204ED",  //MM62 - Ivy
-  "Mac-F227BEC8",  //IM81 - merom 01/09
-  "Mac-F2268CC8",  //IM101 - wolfdale? E7600 01/
-  "Mac-F2268DAE",  //IM111 - Nehalem
-  "Mac-F2238AC8",  //IM112 - Clarkdale
-  "Mac-F2238BAE",  //IM113 - lynnfield
-  "Mac-942B5BF58194151B",  //IM121 - i5-2500 - sandy
-  "Mac-942B59F58194171B",  //IM122 - i7-2600
-  "Mac-00BE6ED71E35EB86",  //IM131 - -i5-3470S -IVY
-  "Mac-F2268DC8",  //MP31 - xeon quad 02/09 conroe
-  "Mac-F4238CC8",  //MP41 - xeon wolfdale
-  "Mac-F221BEC8"   //MP51 - Xeon Nehalem 4 cores
+  "Mac-F4208CA9", //MB21 - merom 05/07
+  "Mac-F22788A9", //MB41 - penryn
+  "Mac-F22788AA", //MB52
+  "Mac-F42D86C8", //MBP51
+  "Mac-94245B3640C91C81", //MBP81 - i5 SB IntelHD3000
+  "Mac-942459F5819B171B", //MBP83 - i7 SB  ATI
+  "Mac-6F01561E16C75D06", //MBP92 - i5-3210M IvyBridge HD4000
+  "Mac-942452F5819B1C1B", //MBA31
+  "Mac-2E6FAB96566FE58C", //MBA52 - i5-3427U IVY BRIDGE IntelHD4000 did=166
+  "Mac-F4208EAA", //MM21 - merom GMA950 07/07
+  "Mac-8ED6AF5B48C039E1", //MM51 - Sandy + Intel 30000
+  "Mac-F65AE981FFA204ED", //MM62 - Ivy
+  "Mac-F227BEC8", //IM81 - merom 01/09
+  "Mac-F2268CC8", //IM101 - wolfdale? E7600 01/
+  "Mac-F2268DAE", //IM111 - Nehalem
+  "Mac-F2238AC8", //IM112 - Clarkdale
+  "Mac-F2238BAE", //IM113 - lynnfield
+  "Mac-942B5BF58194151B", //IM121 - i5-2500 - sandy
+  "Mac-942B59F58194171B", //IM122 - i7-2600
+  "Mac-00BE6ED71E35EB86", //IM131 - -i5-3470S -IVY
+  "Mac-F2268DC8", //MP31 - xeon quad 02/09 conroe
+  "Mac-F4238CC8", //MP41 - xeon wolfdale
+  "Mac-F221BEC8"  //MP51 - Xeon Nehalem 4 cores
 };
 
-CHAR8* AppleReleaseDate[24] = {
-  "09/22/08",  //mb11
+CHAR8 *AppleReleaseDate[24] = {
+  "09/22/08", //mb11
   "06/27/07",
   "09/22/08",
   "01/21/09",
-  "06/15/09",  //mbp51
+  "06/15/09", //mbp51
   "02/07/11",
   "10/26/11",
   "05/10/2012", //MBP92
   "12/20/07",
   "05/22/2012", //mba52
-  "08/07/07",  //mm21
-  "02/29/11",  //MM51
+  "08/07/07", //mm21
+  "02/29/11", //MM51
   "08/09/2012", //MM62
   "03/05/08",
-  "09/03/09",  //im101
+  "09/03/09", //im101
   "03/17/10",
-  "03/17/10",  //11,2
+  "03/17/10", //11,2
   "05/03/10",
-  "01/24/12",  //121 120124
-  "02/23/12",  //122
-  "09/04/2012",  //131
+  "01/24/12", //121 120124
+  "02/23/12", //122
+  "09/04/2012", //131
   "02/29/08",
   "03/05/09",
   "08/03/10"
 };
 
-CHAR8* AppleProductName[24] = {
+CHAR8 *AppleProductName[24] = {
   "MacBook1,1",
   "MacBook2,1",
   "MacBook4,1",
@@ -132,7 +133,7 @@ CHAR8* AppleProductName[24] = {
   "MacPro5,1"
 };
 
-CHAR8* AppleFamilies[24] = {
+CHAR8 *AppleFamilies[24] = {
   "MacBook",
   "MacBook",
   "MacBook",
@@ -159,7 +160,7 @@ CHAR8* AppleFamilies[24] = {
   "MacPro"
 };
 
-CHAR8* AppleSystemVersion[24] = {
+CHAR8 *AppleSystemVersion[24] = {
   "1.1",
   "1.2",
   "1.3",
@@ -171,7 +172,7 @@ CHAR8* AppleSystemVersion[24] = {
   "1.0",
   "1.0",
   "1.1",
-  "1.0", //MM51
+  "1.0",  //MM51
   "1.0",
   "1.3",
   "1.0",
@@ -186,12 +187,12 @@ CHAR8* AppleSystemVersion[24] = {
   "1.2"
 };
 
-CHAR8* AppleSerialNumber[24] = {
-  "W80A041AU9B", //MB11
-  "W88A041AWGP", //MB21 - merom 05/07
-  "W88A041A0P0", //MB41
-  "W88AAAAA9GU", //MB52
-  "W88439FE1G0", //MBP51
+CHAR8 *AppleSerialNumber[24] = {
+  "W80A041AU9B",  //MB11
+  "W88A041AWGP",  //MB21 - merom 05/07
+  "W88A041A0P0",  //MB41
+  "W88AAAAA9GU",  //MB52
+  "W88439FE1G0",  //MBP51
   "W89F9196DH2G", //MBP81 - i5 SB IntelHD3000
   "W88F9CDEDF93", //MBP83 -i7 SB  ATI
   "C02HA041DTY3", //MBP92 - i5 IvyBridge HD4000
@@ -200,20 +201,20 @@ CHAR8* AppleSerialNumber[24] = {
   "W88A56BYYL2",  //MM21 - merom GMA950 07/07
   "C07GA041DJD0", //MM51 - sandy
   "C07JD041DWYN", //MM62 - IVY
-  "W89A00AAX88", //IM81 - merom 01/09
-  "W80AA98A5PE", //IM101 - wolfdale? E7600 01/09
-  "G8942B1V5PJ", //IM111 - Nehalem
-  "W8034342DB7", //IM112 - Clarkdale
-  "QP0312PBDNR", //IM113 - lynnfield
+  "W89A00AAX88",  //IM81 - merom 01/09
+  "W80AA98A5PE",  //IM101 - wolfdale? E7600 01/09
+  "G8942B1V5PJ",  //IM111 - Nehalem
+  "W8034342DB7",  //IM112 - Clarkdale
+  "QP0312PBDNR",  //IM113 - lynnfield
   "W80CF65ADHJF", //IM121 - i5-2500 - sandy
   "W88GG136DHJQ", //IM122 -i7-2600
   "C02JA041DNCT", //IM131 -i5-3470S -IVY
-  "W88A77AA5J4", //MP31 - xeon quad 02/09
-  "CT93051DK9Y", //MP41
-  "CG154TB9WU3"  //MP51 C07J50F7F4MC
+  "W88A77AA5J4",  //MP31 - xeon quad 02/09
+  "CT93051DK9Y",  //MP41
+  "CG154TB9WU3" //MP51 C07J50F7F4MC
 };
 
-CHAR8* AppleChassisAsset[24] = {
+CHAR8 *AppleChassisAsset[24] = {
   "MacBook-White",
   "MacBook-White",
   "MacBook-Black",
@@ -240,8 +241,8 @@ CHAR8* AppleChassisAsset[24] = {
   "Pro-Enclosure"
 };
 
-CHAR8* AppleBoardSN = "C02032101R5DC771H";
-CHAR8* AppleBoardLocation = "Part Component";
+CHAR8 *AppleBoardSN = "C02032101R5DC771H";
+CHAR8 *AppleBoardLocation = "Part Component";
 
 UINT16
 GetAdvancedCpuType (
@@ -251,95 +252,102 @@ GetAdvancedCpuType (
   if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
     switch (gCPUStructure.Family) {
 
-      case 0x06: {
+    case 0x06:{
         switch (gCPUStructure.Model) {
-          case CPU_MODEL_DOTHAN:// Dothan
-          case CPU_MODEL_YONAH: // Yonah
-            return 0x201;
+        case CPU_MODEL_DOTHAN: // Dothan
+        case CPU_MODEL_YONAH:  // Yonah
+          return 0x201;
 
-          case CPU_MODEL_NEHALEM_EX: //Xeon 5300
-            return 0x402;
+        case CPU_MODEL_NEHALEM_EX: //Xeon 5300
+          return 0x402;
 
-          case CPU_MODEL_NEHALEM: // Intel Core i7 LGA1366 (45nm)
-            return 0x701; // Core i7
+        case CPU_MODEL_NEHALEM:  // Intel Core i7 LGA1366 (45nm)
+          return 0x701; // Core i7
 
-          case CPU_MODEL_FIELDS: // Lynnfield, Clarksfield, Jasper
-            if (AsciiStrStr (gCPUStructure.BrandString, "i5")) {
-              return 0x601;  // Core i5
+        case CPU_MODEL_FIELDS: // Lynnfield, Clarksfield, Jasper
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5")) {
+            return 0x601; // Core i5
+          }
+
+          return 0x701; // Core i7
+
+        case CPU_MODEL_DALES:  // Intel Core i5, i7 LGA1156 (45nm) (Havendale, Auburndale)
+          if (AsciiStrStr (gCPUStructure.BrandString, "Core(TM) i3")) {
+            return 0x901; // Core i3 //why not 902? Ask Apple
+          }
+
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+              (gCPUStructure.Cores <= 2)) {
+            return 0x602; // Core i5
+          }
+
+          return 0x702; // Core i7
+
+          //case CPU_MODEL_ARRANDALE:
+        case CPU_MODEL_CLARKDALE:  // Intel Core i3, i5, i7 LGA1156 (32nm) (Clarkdale, Arrandale)
+          if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+            return 0x901; // Core i3
+          }
+
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+              (gCPUStructure.Cores <= 2)) {
+            return 0x601; // Core i5 - (M540 -> 0x0602)
+          }
+
+          return 0x701; // Core i7
+
+        case CPU_MODEL_WESTMERE: // Intel Core i7 LGA1366 (32nm) 6 Core (Gulftown, Westmere-EP, Westmere-WS)
+        case CPU_MODEL_WESTMERE_EX:  // Intel Core i7 LGA1366 (45nm) 6 Core ???
+          return 0x701; // Core i7
+
+        case CPU_MODEL_SANDY_BRIDGE:
+          if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+            return 0x903; // Core i3
+          }
+
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+              (gCPUStructure.Cores <= 2)) {
+            return 0x603; // Core i5
+          }
+
+          return 0x703;
+
+        case CPU_MODEL_IVY_BRIDGE:
+        case CPU_MODEL_IVY_BRIDGE_E5:
+          if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+            return 0x903; // Core i3 - Apple doesn't use it
+          }
+
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+              (gCPUStructure.Cores <= 2)) {
+            return 0x604; // Core i5
+          }
+
+          return 0x704;
+
+        case CPU_MODEL_MEROM:  // Merom
+          if (gCPUStructure.Cores >= 2) {
+            if (AsciiStrStr (gCPUStructure.BrandString, "Xeon")) {
+              return 0x402; // Quad-Core Xeon
             }
-
-            return 0x701; // Core i7
-
-          case CPU_MODEL_DALES: // Intel Core i5, i7 LGA1156 (45nm) (Havendale, Auburndale)
-            if (AsciiStrStr (gCPUStructure.BrandString, "Core(TM) i3")) {
-              return 0x901;  // Core i3 //why not 902? Ask Apple
+            else {
+              return 0x301; // Core 2 Duo
             }
+          }
+          else {
+            return 0x201; // Core Solo
+          };
 
-            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
-              return 0x602;  // Core i5
-            }
-
-            return 0x702; // Core i7
-
-            //case CPU_MODEL_ARRANDALE:
-          case CPU_MODEL_CLARKDALE: // Intel Core i3, i5, i7 LGA1156 (32nm) (Clarkdale, Arrandale)
-            if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
-              return 0x901;  // Core i3
-            }
-
-            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
-              return 0x601;  // Core i5 - (M540 -> 0x0602)
-            }
-
-            return 0x701; // Core i7
-
-          case CPU_MODEL_WESTMERE: // Intel Core i7 LGA1366 (32nm) 6 Core (Gulftown, Westmere-EP, Westmere-WS)
-          case CPU_MODEL_WESTMERE_EX: // Intel Core i7 LGA1366 (45nm) 6 Core ???
-            return 0x701; // Core i7
-
-          case CPU_MODEL_SANDY_BRIDGE:
-            if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
-              return 0x903;  // Core i3
-            }
-
-            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
-              return 0x603;  // Core i5
-            }
-
-            return 0x703;
-
-          case CPU_MODEL_IVY_BRIDGE:
-          case CPU_MODEL_IVY_BRIDGE_E5:
-            if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
-              return 0x903;  // Core i3 - Apple doesn't use it
-            }
-
-            if (AsciiStrStr (gCPUStructure.BrandString, "i5") || (gCPUStructure.Cores <= 2)) {
-              return 0x604;  // Core i5
-            }
-
-            return 0x704;
-
-          case CPU_MODEL_MEROM: // Merom
-            if (gCPUStructure.Cores >= 2) {
-              if (AsciiStrStr (gCPUStructure.BrandString, "Xeon")) {
-                return 0x402;   // Quad-Core Xeon
-              } else {
-                return 0x301;   // Core 2 Duo
-              }
-            } else {
-              return 0x201;   // Core Solo
-            };
-
-          case CPU_MODEL_PENRYN:// Penryn
-          case CPU_MODEL_ATOM:  // Atom (45nm)
-          default:
-            if (gCPUStructure.Cores >= 4) {
-              return 0x402;   // Quad-Core Xeon
-            } else if (gCPUStructure.Cores == 1) {
-              return 0x201;   // Core Solo
-            };
-            return 0x301;   // Core 2 Duo
+        case CPU_MODEL_PENRYN: // Penryn
+        case CPU_MODEL_ATOM: // Atom (45nm)
+        default:
+          if (gCPUStructure.Cores >= 4) {
+            return 0x402; // Quad-Core Xeon
+          }
+          else if (gCPUStructure.Cores == 1) {
+            return 0x201; // Core Solo
+          };
+          return 0x301; // Core 2 Duo
         }
       }
     }
@@ -357,146 +365,150 @@ GetDefaultModel (
   // TODO: Add more CPU models and configure the correct machines per CPU/GFX model
   if (gSettings.Mobile) {
     switch (gCPUStructure.Model) {
-      case CPU_MODEL_ATOM:
-        DefaultType = MacBookAir31; //MacBookAir1,1 doesn't support _PSS for speedstep!
+    case CPU_MODEL_ATOM:
+      DefaultType = MacBookAir31; //MacBookAir1,1 doesn't support _PSS for speedstep!
+      break;
+
+    case CPU_MODEL_DOTHAN:
+      DefaultType = MacBook11;
+      break;
+
+    case CPU_MODEL_YONAH:
+      DefaultType = MacBook11;
+      break;
+
+    case CPU_MODEL_MEROM:
+      DefaultType = MacBook21;
+      break;
+
+    case CPU_MODEL_PENRYN:
+      if (gGraphics.Vendor == Nvidia) {
+        DefaultType = MacBookPro51;
+      }
+      else {
+        DefaultType = MacBook41;
+      }
+
+      break;
+
+    case CPU_MODEL_JAKETOWN:
+    case CPU_MODEL_SANDY_BRIDGE:
+      if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
+          (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
+        DefaultType = MacBookPro81;
         break;
+      }
 
-      case CPU_MODEL_DOTHAN:
-        DefaultType = MacBook11;
-        break;
+      DefaultType = MacBookPro83;
+      break;
 
-      case CPU_MODEL_YONAH:
-        DefaultType = MacBook11;
-        break;
+    case CPU_MODEL_IVY_BRIDGE:
+    case CPU_MODEL_IVY_BRIDGE_E5:
+      DefaultType = MacBookAir52;
+      break;
 
-      case CPU_MODEL_MEROM:
-        DefaultType = MacBook21;
-        break;
+    default:
+      if (gGraphics.Vendor == Nvidia) {
+        DefaultType = MacBookPro51;
+      }
+      else {
+        DefaultType = MacBook52;
+      }
 
-      case CPU_MODEL_PENRYN:
-        if (gGraphics.Vendor == Nvidia) {
-          DefaultType = MacBookPro51;
-        } else {
-          DefaultType = MacBook41;
-        }
-
-        break;
-
-      case CPU_MODEL_JAKETOWN:
-      case CPU_MODEL_SANDY_BRIDGE:
-        if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
-            (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
-          DefaultType = MacBookPro81;
-          break;
-        }
-
-        DefaultType = MacBookPro83;
-        break;
-
-      case CPU_MODEL_IVY_BRIDGE:
-      case CPU_MODEL_IVY_BRIDGE_E5:
-        DefaultType = MacBookAir52;
-        break;
-
-      default:
-        if (gGraphics.Vendor == Nvidia) {
-          DefaultType = MacBookPro51;
-        } else {
-          DefaultType = MacBook52;
-        }
-
-        break;
-    }
-  } else {
-    switch (gCPUStructure.Model) {
-      case CPU_MODEL_CELERON:
-        DefaultType = MacMini21;
-        break;
-
-      case CPU_MODEL_LINCROFT:
-        DefaultType = MacMini21;
-        break;
-
-      case CPU_MODEL_ATOM:
-        DefaultType = MacMini21;
-        break;
-
-      case CPU_MODEL_MEROM:
-        DefaultType = iMac81;
-        break;
-
-      case CPU_MODEL_PENRYN:
-        DefaultType = MacPro31;//speedstep without patching; Hapertown is also a Penryn, according to Wikipedia
-        break;
-
-      case CPU_MODEL_NEHALEM:
-        DefaultType = MacPro41;
-        break;
-
-      case CPU_MODEL_NEHALEM_EX:
-        DefaultType = MacPro41;
-        break;
-
-      case CPU_MODEL_FIELDS:
-        DefaultType = iMac112;
-        break;
-
-      case CPU_MODEL_DALES:
-        DefaultType = iMac112;
-        break;
-
-      case CPU_MODEL_CLARKDALE:
-        DefaultType = iMac112;
-        break;
-
-      case CPU_MODEL_WESTMERE:
-        DefaultType = MacPro51;
-        break;
-
-      case CPU_MODEL_WESTMERE_EX:
-        DefaultType = MacPro51;
-        break;
-
-      case CPU_MODEL_SANDY_BRIDGE:
-        if (gGraphics.Vendor == Intel) {
-          DefaultType = MacMini51;
-        }
-
-        if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
-            (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
-          DefaultType = iMac112;
-          break;
-        }
-
-        if (AsciiStrStr (gCPUStructure.BrandString, "i7")) {
-          DefaultType = iMac121;
-          break;
-        }
-        
-        DefaultType = MacPro51;
-        break;
-        
-      case CPU_MODEL_IVY_BRIDGE:
-      case CPU_MODEL_IVY_BRIDGE_E5:
-        DefaultType = iMac122;  //do not make 13,1 by default because of OS 10.8.2 doesn't know it
-        
-      case CPU_MODEL_JAKETOWN:
-        DefaultType = MacPro41;
-        break;
-        
-      default:
-        DefaultType = MacPro31;
-        break;
+      break;
     }
   }
-  
+  else {
+    switch (gCPUStructure.Model) {
+    case CPU_MODEL_CELERON:
+      DefaultType = MacMini21;
+      break;
+
+    case CPU_MODEL_LINCROFT:
+      DefaultType = MacMini21;
+      break;
+
+    case CPU_MODEL_ATOM:
+      DefaultType = MacMini21;
+      break;
+
+    case CPU_MODEL_MEROM:
+      DefaultType = iMac81;
+      break;
+
+    case CPU_MODEL_PENRYN:
+      DefaultType = MacPro31; //speedstep without patching; Hapertown is also a Penryn, according to Wikipedia
+      break;
+
+    case CPU_MODEL_NEHALEM:
+      DefaultType = MacPro41;
+      break;
+
+    case CPU_MODEL_NEHALEM_EX:
+      DefaultType = MacPro41;
+      break;
+
+    case CPU_MODEL_FIELDS:
+      DefaultType = iMac112;
+      break;
+
+    case CPU_MODEL_DALES:
+      DefaultType = iMac112;
+      break;
+
+    case CPU_MODEL_CLARKDALE:
+      DefaultType = iMac112;
+      break;
+
+    case CPU_MODEL_WESTMERE:
+      DefaultType = MacPro51;
+      break;
+
+    case CPU_MODEL_WESTMERE_EX:
+      DefaultType = MacPro51;
+      break;
+
+    case CPU_MODEL_SANDY_BRIDGE:
+      if (gGraphics.Vendor == Intel) {
+        DefaultType = MacMini51;
+      }
+
+      if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
+          (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
+        DefaultType = iMac112;
+        break;
+      }
+
+      if (AsciiStrStr (gCPUStructure.BrandString, "i7")) {
+        DefaultType = iMac121;
+        break;
+      }
+
+      DefaultType = MacPro51;
+      break;
+
+    case CPU_MODEL_IVY_BRIDGE:
+    case CPU_MODEL_IVY_BRIDGE_E5:
+      DefaultType = iMac122;  //do not make 13,1 by default because of OS 10.8.2 doesn't know it
+
+    case CPU_MODEL_JAKETOWN:
+      DefaultType = MacPro41;
+      break;
+
+    default:
+      DefaultType = MacPro31;
+      break;
+    }
+  }
+
   return DefaultType;
 }
+
 //---------------------------------------------------------------------------------
 
 VOID
 Pause (
-  IN CHAR16* Message
+  IN CHAR16 *Message
 )
 {
   if (Message != NULL) {
@@ -508,14 +520,16 @@ Pause (
 
 BOOLEAN
 FileExists (
-            IN EFI_FILE *RootFileHandle,
-            IN CHAR16   *RelativePath
-            )
+  IN EFI_FILE * RootFileHandle,
+  IN CHAR16 *RelativePath
+)
 {
-  EFI_STATUS  Status;
-  EFI_FILE    *TestFile;
+  EFI_STATUS Status;
+  EFI_FILE *TestFile;
 
-  Status = RootFileHandle->Open (RootFileHandle, &TestFile, RelativePath, EFI_FILE_MODE_READ, 0);
+  Status =
+    RootFileHandle->Open (RootFileHandle, &TestFile, RelativePath,
+                          EFI_FILE_MODE_READ, 0);
 
   if (Status == EFI_SUCCESS) {
     TestFile->Close (TestFile);
@@ -533,18 +547,19 @@ egLoadFile (
   OUT UINTN *FileDataLength
 )
 {
-  EFI_STATUS          Status;
-  EFI_FILE_HANDLE     FileHandle;
-  EFI_FILE_INFO       *FileInfo;
-  UINT64              ReadSize;
-  UINTN               BufferSize;
-  UINT8               *Buffer;
+  EFI_STATUS Status;
+  EFI_FILE_HANDLE FileHandle;
+  EFI_FILE_INFO *FileInfo;
+  UINT64 ReadSize;
+  UINTN BufferSize;
+  UINT8 *Buffer;
 
   if (BaseDir == NULL) {
     return EFI_NOT_FOUND;
   }
 
-  Status = BaseDir->Open (BaseDir, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
+  Status =
+    BaseDir->Open (BaseDir, &FileHandle, FileName, EFI_FILE_MODE_READ, 0);
 
   if (EFI_ERROR (Status)) {
     return Status;
@@ -564,7 +579,7 @@ egLoadFile (
   }
 
   FreePool (FileInfo);
-  BufferSize = (UINTN) ReadSize;   // was limited to 1 GB above, so this is safe
+  BufferSize = (UINTN) ReadSize;  // was limited to 1 GB above, so this is safe
   Buffer = (UINT8 *) AllocateAlignedPages (EFI_SIZE_TO_PAGES (BufferSize), 16);
 
   if (Buffer == NULL) {
@@ -588,33 +603,37 @@ egLoadFile (
 EFI_STATUS
 egSaveFile (
   IN EFI_FILE_HANDLE BaseDir,
-  IN CHAR16   *FileName,
-  IN UINT8    *FileData,
-  IN UINTN    FileDataLength
+  IN CHAR16 *FileName,
+  IN UINT8 *FileData,
+  IN UINTN FileDataLength
 )
 {
-  EFI_STATUS          Status;
-  EFI_FILE_HANDLE     FileHandle;
-  UINTN               BufferSize;
+  EFI_STATUS Status;
+  EFI_FILE_HANDLE FileHandle;
+  UINTN BufferSize;
 
   if (BaseDir == NULL) {
     return EFI_NOT_FOUND;
   }
 
-  Status = BaseDir->Open(BaseDir, &FileHandle, FileName, EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
+  Status =
+    BaseDir->Open (BaseDir, &FileHandle, FileName,
+                   EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE, 0);
 
-  if (!EFI_ERROR(Status)) {
+  if (!EFI_ERROR (Status)) {
     FileHandle->Delete (FileHandle);
   }
-  
-  Status = BaseDir->Open(BaseDir, &FileHandle, FileName,
-                         EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE | EFI_FILE_MODE_CREATE, 0);
-  if (EFI_ERROR(Status))
+
+  Status =
+    BaseDir->Open (BaseDir, &FileHandle, FileName,
+                   EFI_FILE_MODE_READ | EFI_FILE_MODE_WRITE |
+                   EFI_FILE_MODE_CREATE, 0);
+  if (EFI_ERROR (Status))
     return Status;
 
   BufferSize = FileDataLength;
-  Status = FileHandle->Write(FileHandle, &BufferSize, FileData);
-  FileHandle->Close(FileHandle);
+  Status = FileHandle->Write (FileHandle, &BufferSize, FileData);
+  FileHandle->Close (FileHandle);
 
   return Status;
 }
@@ -625,17 +644,17 @@ SaveBooterLog (
   IN CHAR16 *FileName
 )
 {
-  CHAR8                   *MemLogBuffer;
-  UINTN                   MemLogLen;
-  
+  CHAR8 *MemLogBuffer;
+  UINTN MemLogLen;
+
   MemLogBuffer = GetMemLogBuffer ();
   MemLogLen = GetMemLogLen ();
-  
+
   if (MemLogBuffer == NULL || MemLogLen == 0) {
     return EFI_NOT_FOUND;
   }
-  
-  return egSaveFile(BaseDir, FileName, (UINT8*) MemLogBuffer, MemLogLen);
+
+  return egSaveFile (BaseDir, FileName, (UINT8 *) MemLogBuffer, MemLogLen);
 }
 
 EFI_STATUS
@@ -643,51 +662,47 @@ InitializeUnicodeCollationProtocol (
   VOID
 )
 {
-	EFI_STATUS  Status;
+  EFI_STATUS Status;
 
-	if (gUnicodeCollation != NULL) {
-		return EFI_SUCCESS;
-	}
+  if (gUnicodeCollation != NULL) {
+    return EFI_SUCCESS;
+  }
 
-	//
-	// BUGBUG: Proper impelmentation is to locate all Unicode Collation Protocol
-	// instances first and then select one which support English language.
-	// Current implementation just pick the first instance.
-	//
-	Status = gBS->LocateProtocol (
-                  &gEfiUnicodeCollation2ProtocolGuid,
-                  NULL,
-                  (VOID **) &gUnicodeCollation
-                  );
-  if (EFI_ERROR(Status)) {
-    Status = gBS->LocateProtocol (
-                    &gEfiUnicodeCollationProtocolGuid,
-                    NULL,
-                    (VOID **) &gUnicodeCollation
-                    );
+  //
+  // BUGBUG: Proper impelmentation is to locate all Unicode Collation Protocol
+  // instances first and then select one which support English language.
+  // Current implementation just pick the first instance.
+  //
+  Status =
+    gBS->LocateProtocol (&gEfiUnicodeCollation2ProtocolGuid, NULL,
+                         (VOID **) &gUnicodeCollation);
+  if (EFI_ERROR (Status)) {
+    Status =
+      gBS->LocateProtocol (&gEfiUnicodeCollationProtocolGuid, NULL,
+                           (VOID **) &gUnicodeCollation);
 
   }
-	return Status;
+  return Status;
 }
 
 BOOLEAN
 MetaiMatch (
-  IN CHAR16   *String,
-  IN CHAR16   *Pattern
+  IN CHAR16 *String,
+  IN CHAR16 *Pattern
 )
 {
-	if (!gUnicodeCollation) {
-		// quick fix for driver loading on UEFIs without UnicodeCollation
-		//return FALSE;
-		return TRUE;
-	}
-	return gUnicodeCollation->MetaiMatch (gUnicodeCollation, String, Pattern);
+  if (!gUnicodeCollation) {
+    // quick fix for driver loading on UEFIs without UnicodeCollation
+    //return FALSE;
+    return TRUE;
+  }
+  return gUnicodeCollation->MetaiMatch (gUnicodeCollation, String, Pattern);
 }
 
 EFI_STATUS
 DirNextEntry (
-  IN EFI_FILE *Directory,
-  IN OUT EFI_FILE_INFO **DirEntry,
+  IN EFI_FILE * Directory,
+  IN OUT EFI_FILE_INFO ** DirEntry,
   IN UINTN FilterMode
 )
 {
@@ -700,45 +715,47 @@ DirNextEntry (
 
     // free pointer from last call
     if (*DirEntry != NULL) {
-      FreePool(*DirEntry);
+      FreePool (*DirEntry);
       *DirEntry = NULL;
     }
 
     // read next directory entry
     LastBufferSize = BufferSize = 256;
     Buffer = AllocateZeroPool (BufferSize);
-    for (IterCount = 0; ; IterCount++) {
-      Status = Directory->Read(Directory, &BufferSize, Buffer);
+    for (IterCount = 0;; IterCount++) {
+      Status = Directory->Read (Directory, &BufferSize, Buffer);
       if (Status != EFI_BUFFER_TOO_SMALL || IterCount >= 4)
         break;
       if (BufferSize <= LastBufferSize) {
         BufferSize = LastBufferSize * 2;
       }
-      Buffer = EfiReallocatePool(Buffer, LastBufferSize, BufferSize);
+      Buffer = EfiReallocatePool (Buffer, LastBufferSize, BufferSize);
       LastBufferSize = BufferSize;
     }
-    if (EFI_ERROR(Status)) {
-      FreePool(Buffer);
+    if (EFI_ERROR (Status)) {
+      FreePool (Buffer);
       break;
     }
 
     // check for end of listing
-    if (BufferSize == 0) {    // end of directory listing
-      FreePool(Buffer);
+    if (BufferSize == 0) {  // end of directory listing
+      FreePool (Buffer);
       break;
     }
 
     // entry is ready to be returned
-    *DirEntry = (EFI_FILE_INFO *)Buffer;
+    *DirEntry = (EFI_FILE_INFO *) Buffer;
     if (*DirEntry) {
       // filter results
-      if (FilterMode == 1) {   // only return directories
+      if (FilterMode == 1) {  // only return directories
         if (((*DirEntry)->Attribute & EFI_FILE_DIRECTORY))
           break;
-      } else if (FilterMode == 2) {   // only return files
+      }
+      else if (FilterMode == 2) { // only return files
         if (((*DirEntry)->Attribute & EFI_FILE_DIRECTORY) == 0)
           break;
-      } else                   // no filter or unknown filter -> return everything
+      }
+      else  // no filter or unknown filter -> return everything
         break;
     }
   }
@@ -747,56 +764,61 @@ DirNextEntry (
 
 VOID
 DirIterOpen (
-  IN EFI_FILE *BaseDir,
+  IN EFI_FILE * BaseDir,
   IN CHAR16 *RelativePath OPTIONAL,
-  OUT DIR_ITER *DirIter
+  OUT DIR_ITER * DirIter
 )
 {
   if (RelativePath == NULL) {
     DirIter->LastStatus = EFI_SUCCESS;
     DirIter->DirHandle = BaseDir;
     DirIter->CloseDirHandle = FALSE;
-  } else {
-    DirIter->LastStatus = BaseDir->Open(BaseDir, &(DirIter->DirHandle), RelativePath, EFI_FILE_MODE_READ, 0);
-    DirIter->CloseDirHandle = EFI_ERROR(DirIter->LastStatus) ? FALSE : TRUE;
+  }
+  else {
+    DirIter->LastStatus =
+      BaseDir->Open (BaseDir, &(DirIter->DirHandle), RelativePath,
+                     EFI_FILE_MODE_READ, 0);
+    DirIter->CloseDirHandle = EFI_ERROR (DirIter->LastStatus) ? FALSE : TRUE;
   }
   DirIter->LastFileInfo = NULL;
 }
 
 BOOLEAN
 DirIterNext (
-  IN OUT DIR_ITER *DirIter,
+  IN OUT DIR_ITER * DirIter,
   IN UINTN FilterMode,
   IN CHAR16 *FilePattern OPTIONAL,
-  OUT EFI_FILE_INFO **DirEntry
+  OUT EFI_FILE_INFO ** DirEntry
 )
 {
   if (DirIter->LastFileInfo != NULL) {
-    FreePool(DirIter->LastFileInfo);
+    FreePool (DirIter->LastFileInfo);
     DirIter->LastFileInfo = NULL;
   }
 
-  if (EFI_ERROR(DirIter->LastStatus)) {
-    return FALSE;   // stop iteration
+  if (EFI_ERROR (DirIter->LastStatus)) {
+    return FALSE; // stop iteration
   }
 
   for (;;) {
-    DirIter->LastStatus = DirNextEntry(DirIter->DirHandle, &(DirIter->LastFileInfo), FilterMode);
-    if (EFI_ERROR(DirIter->LastStatus)) {
+    DirIter->LastStatus =
+      DirNextEntry (DirIter->DirHandle, &(DirIter->LastFileInfo), FilterMode);
+    if (EFI_ERROR (DirIter->LastStatus)) {
       return FALSE;
     }
-    if (DirIter->LastFileInfo == NULL)  {// end of listing
+    if (DirIter->LastFileInfo == NULL) {  // end of listing
       return FALSE;
     }
     if (FilePattern != NULL) {
       if ((DirIter->LastFileInfo->Attribute & EFI_FILE_DIRECTORY)) {
         break;
       }
-      if (MetaiMatch(DirIter->LastFileInfo->FileName, FilePattern)) {
+      if (MetaiMatch (DirIter->LastFileInfo->FileName, FilePattern)) {
         break;
       }
       // else continue loop
-    } else
+    }
+    else
       break;
   }
 
@@ -806,15 +828,15 @@ DirIterNext (
 
 EFI_STATUS
 DirIterClose (
-  IN OUT DIR_ITER *DirIter
+  IN OUT DIR_ITER * DirIter
 )
 {
   if (DirIter->LastFileInfo != NULL) {
-    FreePool(DirIter->LastFileInfo);
+    FreePool (DirIter->LastFileInfo);
     DirIter->LastFileInfo = NULL;
   }
   if (DirIter->CloseDirHandle)
-    DirIter->DirHandle->Close(DirIter->DirHandle);
+    DirIter->DirHandle->Close (DirIter->DirHandle);
   return DirIter->LastStatus;
 }
 
@@ -825,7 +847,8 @@ IsHexDigit (
   CHAR8 c
 )
 {
-  return (IS_DIGIT (c) || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) ? TRUE : FALSE;
+  return (IS_DIGIT (c) || (c >= 'A' && c <= 'F') ||
+          (c >= 'a' && c <= 'f')) ? TRUE : FALSE;
 }
 
 UINT32
@@ -842,7 +865,8 @@ hex2bin (
 
   outlen = 0;
 
-  if (hex == NULL || bin == NULL || len <= 0 || (INT32) AsciiStrLen (hex) != len * 2) {
+  if (hex == NULL || bin == NULL || len <= 0 ||
+      (INT32) AsciiStrLen (hex) != len * 2) {
     return 0;
   }
 
@@ -870,18 +894,20 @@ hex2bin (
 
 VOID *
 GetDataSetting (
-  IN VOID   *dict,
-  IN CHAR8  *propName,
+  IN VOID *dict,
+  IN CHAR8 *propName,
   OUT UINTN *dataLen
 )
 {
-  VOID      *prop;
-  UINT8     *data;
-  UINT32    len;
+  VOID *prop;
+  UINT8 *data;
+  UINT32 len;
 
   data = NULL;
 
-  prop = plDictFind (dict, propName, (unsigned int)AsciiStrLen(propName), plKindAny);
+  prop =
+    plDictFind (dict, propName, (unsigned int) AsciiStrLen (propName),
+                plKindAny);
 
   if (prop == NULL) {
     return NULL;
@@ -896,7 +922,7 @@ GetDataSetting (
     break;
   case plKindString:
     // assume data in hex encoded string property
-    len = plNodeGetSize (prop) >> 1; // 2 chars per byte
+    len = plNodeGetSize (prop) >> 1;  // 2 chars per byte
     data = AllocateZeroPool (len);
     len = hex2bin (plNodeGetBytes (prop), data, len);
 
@@ -913,15 +939,15 @@ GetDataSetting (
 
 EFI_STATUS
 bbStrToBuf (
-  OUT UINT8    *Buf,
-  IN  UINTN    BufferLength,
-  IN  CHAR16   *Str
+  OUT UINT8 *Buf,
+  IN UINTN BufferLength,
+  IN CHAR16 *Str
 )
 {
-  UINTN       Index;
-  UINTN       StrLength;
-  UINT8       Digit;
-  UINT8       Byte;
+  UINTN Index;
+  UINTN StrLength;
+  UINT8 Digit;
+  UINT8 Byte;
 
   Digit = 0;
   //
@@ -932,11 +958,14 @@ bbStrToBuf (
   for (Index = 0; Index < StrLength; Index++, Str++) {
     if ((*Str >= L'a') && (*Str <= L'f')) {
       Digit = (UINT8) (*Str - L'a' + 0x0A);
-    } else if ((*Str >= L'A') && (*Str <= L'F')) {
+    }
+    else if ((*Str >= L'A') && (*Str <= L'F')) {
       Digit = (UINT8) (*Str - L'A' + 0x0A);
-    } else if ((*Str >= L'0') && (*Str <= L'9')) {
+    }
+    else if ((*Str >= L'0') && (*Str <= L'9')) {
       Digit = (UINT8) (*Str - L'0');
-    } else {
+    }
+    else {
       return EFI_INVALID_PARAMETER;
     }
 
@@ -946,7 +975,8 @@ bbStrToBuf (
     //
     if ((Index & 1) == 0) {
       Byte = (UINT8) (Digit << 4);
-    } else {
+    }
+    else {
       Byte = Buf[Index / 2];
       Byte &= 0xF0;
       Byte = (UINT8) (Byte | Digit);
@@ -973,7 +1003,7 @@ bbStrToBuf (
 
 EFI_STATUS
 StrToGuidLE (
-  IN  CHAR16   *Str,
+  IN CHAR16 *Str,
   OUT EFI_GUID *Guid
 )
 {
@@ -982,66 +1012,71 @@ StrToGuidLE (
   bbStrToBuf (&GuidLE[0], 4, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str ++;
+    Str++;
   }
 
   if (IS_HYPHEN (*Str)) {
     Str++;
-  } else {
+  }
+  else {
     return EFI_UNSUPPORTED;
   }
 
   bbStrToBuf (&GuidLE[4], 2, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str ++;
+    Str++;
   }
 
   if (IS_HYPHEN (*Str)) {
     Str++;
-  } else {
+  }
+  else {
     return EFI_UNSUPPORTED;
   }
 
   bbStrToBuf (&GuidLE[6], 2, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str ++;
+    Str++;
   }
 
   if (IS_HYPHEN (*Str)) {
     Str++;
-  } else {
+  }
+  else {
     return EFI_UNSUPPORTED;
   }
 
   bbStrToBuf (&GuidLE[8], 2, Str);
 
   while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str ++;
+    Str++;
   }
 
   if (IS_HYPHEN (*Str)) {
     Str++;
-  } else {
+  }
+  else {
     return EFI_UNSUPPORTED;
   }
 
   bbStrToBuf (&GuidLE[10], 6, Str);
-  CopyMem ((UINT8*) Guid, &GuidLE[0], 16);
+  CopyMem ((UINT8 *) Guid, &GuidLE[0], 16);
   return EFI_SUCCESS;
 }
 
 UINTN
 GetNumProperty (
-  VOID* dict,
-  CHAR8* key,
+  VOID *dict,
+  CHAR8 *key,
   UINTN def
 )
 {
-  VOID* dentry;
+  VOID *dentry;
 
-  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindInteger);
+  dentry =
+    plDictFind (dict, key, (unsigned int) AsciiStrLen (key), plKindInteger);
   if (dentry != NULL) {
     def = (UINTN) plIntegerGet (dentry);
   }
@@ -1050,14 +1085,14 @@ GetNumProperty (
 
 BOOLEAN
 GetBoolProperty (
-  VOID* dict,
-  CHAR8* key,
+  VOID *dict,
+  CHAR8 *key,
   BOOLEAN def
 )
 {
-  VOID* dentry;
+  VOID *dentry;
 
-  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindBool);
+  dentry = plDictFind (dict, key, (unsigned int) AsciiStrLen (key), plKindBool);
   if (dentry != NULL) {
     return plBoolGet (dentry) ? TRUE : FALSE;
   }
@@ -1066,34 +1101,36 @@ GetBoolProperty (
 
 VOID
 GetAsciiProperty (
-  VOID* dict,
-  CHAR8* key,
-  CHAR8* aptr
+  VOID *dict,
+  CHAR8 *key,
+  CHAR8 *aptr
 )
 {
-  VOID* dentry;
+  VOID *dentry;
   UINTN slen;
 
-  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindString);
+  dentry =
+    plDictFind (dict, key, (unsigned int) AsciiStrLen (key), plKindString);
   if (dentry != NULL) {
     slen = plNodeGetSize (dentry);
-    CopyMem (aptr, plNodeGetBytes(dentry), slen);
+    CopyMem (aptr, plNodeGetBytes (dentry), slen);
     aptr[slen] = '\0';
   }
 }
 
 BOOLEAN
 GetUnicodeProperty (
-  VOID* dict,
-  CHAR8* key,
-  CHAR16* uptr
+  VOID *dict,
+  CHAR8 *key,
+  CHAR16 *uptr
 )
 {
-  VOID* dentry;
-  CHAR8* tbuf;
+  VOID *dentry;
+  CHAR8 *tbuf;
   UINTN tsiz;
 
-  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindString);
+  dentry =
+    plDictFind (dict, key, (unsigned int) AsciiStrLen (key), plKindString);
   if (dentry != NULL) {
     tsiz = plNodeGetSize (dentry);
     tbuf = AllocateCopyPool (tsiz + 1, plNodeGetBytes (dentry));
@@ -1107,18 +1144,19 @@ GetUnicodeProperty (
   return FALSE;
 }
 
-CHAR8*
+CHAR8 *
 GetStringProperty (
-  VOID* dict,
-  CHAR8* key
+  VOID *dict,
+  CHAR8 *key
 )
 {
-  VOID* dentry;
-  CHAR8* tbuf;
+  VOID *dentry;
+  CHAR8 *tbuf;
   UINTN tsiz;
 
   tbuf = NULL;
-  dentry = plDictFind (dict, key, (unsigned int)AsciiStrLen(key), plKindString);
+  dentry =
+    plDictFind (dict, key, (unsigned int) AsciiStrLen (key), plKindString);
   if (dentry != NULL) {
     tsiz = plNodeGetSize (dentry);
     tbuf = AllocateCopyPool (tsiz + 1, plNodeGetBytes (dentry));
@@ -1129,20 +1167,22 @@ GetStringProperty (
   return tbuf;
 }
 
-VOID*
+VOID *
 LoadPListFile (
-  IN EFI_FILE *RootFileHandle,
-  IN CHAR16* XmlPlistPath
+  IN EFI_FILE * RootFileHandle,
+  IN CHAR16 *XmlPlistPath
 )
 {
-  EFI_STATUS  Status;
-  plbuf_t     pbuf;
-  VOID*       plist;
+  EFI_STATUS Status;
+  plbuf_t pbuf;
+  VOID *plist;
 
   Status = EFI_NOT_FOUND;
   pbuf.pos = 0;
 
-  Status = egLoadFile (RootFileHandle, XmlPlistPath, (UINT8**) &pbuf.dat, (UINTN *) &pbuf.len);
+  Status =
+    egLoadFile (RootFileHandle, XmlPlistPath, (UINT8 **) &pbuf.dat,
+                (UINTN *) &pbuf.len);
 
   if (EFI_ERROR (Status) || pbuf.dat == NULL) {
     return NULL;
@@ -1157,20 +1197,23 @@ LoadPListFile (
 
   return plist;
 }
+
 // ----============================----
 EFI_STATUS
 GetBootDefault (
-  IN EFI_FILE *RootFileHandle
+  IN EFI_FILE * RootFileHandle
 )
 {
-  VOID*       spdict;
+  VOID *spdict;
 
   ZeroMem (gSettings.DefaultBoot, sizeof (gSettings.DefaultBoot));
-  
+
   if (gPNDirExists) {
     gConfigPlist = LoadPListFile (RootFileHandle, gPNConfigPlist);
-  } else {
-    gConfigPlist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
+  }
+  else {
+    gConfigPlist =
+      LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
   }
 
   if (gConfigPlist == NULL) {
@@ -1185,11 +1228,9 @@ GetBootDefault (
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
     gSettings.BootTimeout = 0xFFFF;
   }
-  DBG ("GetBootDefault: DefaultBootVolume = %s, Timeout = %d, ScreenMode = %d\n",
-        gSettings.DefaultBoot,
-        gSettings.BootTimeout,
-        gSettings.ScreenMode
-      );
+  DBG
+    ("GetBootDefault: DefaultBootVolume = %s, Timeout = %d, ScreenMode = %d\n",
+     gSettings.DefaultBoot, gSettings.BootTimeout, gSettings.ScreenMode);
 
   return EFI_SUCCESS;
 }
@@ -1199,15 +1240,15 @@ GetUserSettings (
   VOID
 )
 {
-  EFI_STATUS      Status;
-  UINTN           size;
-  VOID*           dictPointer;
-  VOID*           array;
-  VOID*           prop;
-  CHAR16          cUUID[40];
-  MACHINE_TYPES   Model;
-  UINTN           len;
-  UINT32          i;
+  EFI_STATUS Status;
+  UINTN size;
+  VOID *dictPointer;
+  VOID *array;
+  VOID *prop;
+  CHAR16 cUUID[40];
+  MACHINE_TYPES Model;
+  UINTN len;
+  UINT32 i;
 
   Status = EFI_NOT_FOUND;
   array = NULL;
@@ -1218,11 +1259,12 @@ GetUserSettings (
 #if 0
   if (gPNDirExists) {
     plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
-  } else {
+  }
+  else {
     plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
   }
 #endif
-    
+
   if (gConfigPlist == NULL) {
     Print (L"Error loading usersettings plist!\r\n");
     return EFI_NOT_FOUND;
@@ -1236,7 +1278,7 @@ GetUserSettings (
   PlatformUuidStatus = EFI_UNSUPPORTED;
   gSettings.CustomEDID = NULL;
   gSettings.ProcessorInterconnectSpeed = 0;
-  
+
   dictPointer = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
 
   GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
@@ -1246,7 +1288,7 @@ GetUserSettings (
     AsciiStrCat (gSettings.BootArgs, AddBootArgs);
   }
 #if 0
-  if (AsciiStrStr(gSettings.BootArgs, AddBootArgs) == 0) {
+  if (AsciiStrStr (gSettings.BootArgs, AddBootArgs) == 0) {
   }
 #endif
   if (dictPointer != NULL) {
@@ -1259,8 +1301,9 @@ GetUserSettings (
   }
 
   dictPointer = plDictFind (gConfigPlist, "Graphics", 8, plKindDict);
-  
-  gSettings.GraphicsInjector = GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
+
+  gSettings.GraphicsInjector =
+    GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
   gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
   gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
   gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
@@ -1272,13 +1315,13 @@ GetUserSettings (
     prop = plDictFind (dictPointer, "NVCAP", 5, plKindString);
 
     if (prop != NULL) {
-      hex2bin (plNodeGetBytes (prop), (UINT8*) &gSettings.NVCAP[0], 20);
+      hex2bin (plNodeGetBytes (prop), (UINT8 *) &gSettings.NVCAP[0], 20);
     }
 
     prop = plDictFind (dictPointer, "DisplayCfg", 10, plKindString);
 
     if (prop != NULL) {
-      hex2bin (plNodeGetBytes (prop), (UINT8*) &gSettings.Dcfg[0], 8);
+      hex2bin (plNodeGetBytes (prop), (UINT8 *) &gSettings.Dcfg[0], 8);
     }
 
     prop = plDictFind (dictPointer, "CustomEDID", 10, plKindData);
@@ -1289,12 +1332,12 @@ GetUserSettings (
   }
 
   dictPointer = plDictFind (gConfigPlist, "PCI", 3, plKindDict);
-  
+
   gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
   gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
   gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-  gSettings.HDALayoutId = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
-
+  gSettings.HDALayoutId =
+    (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
 
   if (dictPointer != NULL) {
     prop = plDictFind (dictPointer, "DeviceProperties", 16, plKindString);
@@ -1316,19 +1359,25 @@ GetUserSettings (
   gSettings.PatchAPIC = GetBoolProperty (dictPointer, "PatchAPIC", FALSE);
 #endif
   // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
-  gSettings.ResetAddr = (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
+  gSettings.ResetAddr =
+    (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
   gSettings.ResetVal = (UINT8) GetNumProperty (dictPointer, "ResetValue", 0);
   gSettings.PMProfile = (UINT8) GetNumProperty (dictPointer, "PMProfile", 0);
-  gSettings.SavePatchedDsdt = GetBoolProperty (dictPointer, "SavePatchedDsdt", FALSE);
+  gSettings.SavePatchedDsdt =
+    GetBoolProperty (dictPointer, "SavePatchedDsdt", FALSE);
 
   gSettings.PatchDsdtNum = 0;
   array = plDictFind (dictPointer, "Patches", 7, plKindArray);
   if (array != NULL) {
     gSettings.PatchDsdtNum = (UINT32) plNodeGetSize (array);
-    gSettings.PatchDsdtFind = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT8*));
-    gSettings.PatchDsdtReplace = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT8*));
-    gSettings.LenToFind = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT32));
-    gSettings.LenToReplace = AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT32));
+    gSettings.PatchDsdtFind =
+      AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT8 *));
+    gSettings.PatchDsdtReplace =
+      AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT8 *));
+    gSettings.LenToFind =
+      AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT32));
+    gSettings.LenToReplace =
+      AllocateZeroPool (gSettings.PatchDsdtNum * sizeof (UINT32));
     DBG ("gSettings.PatchDsdtNum = %d\n", gSettings.PatchDsdtNum);
     for (i = 0; i < gSettings.PatchDsdtNum; i++) {
       prop = plNodeGetItem (array, i);
@@ -1337,36 +1386,34 @@ GetUserSettings (
       gSettings.PatchDsdtReplace[i] = GetDataSetting (prop, "Replace", &len);
       gSettings.LenToReplace[i] = (UINT32) len;
 
-      DBG ("  %d. FindLen = %d; ReplaceLen = %d\n",
-           (i + 1),
-           gSettings.LenToFind[i],
-           gSettings.LenToReplace[i]
-          );
+      DBG ("  %d. FindLen = %d; ReplaceLen = %d\n", (i + 1),
+           gSettings.LenToFind[i], gSettings.LenToReplace[i]
+        );
     }
   }
-  
+
   gSettings.ACPIDropTables = NULL;
   array = plDictFind (dictPointer, "DropTables", 10, plKindArray);
   if (array != NULL) {
-    UINT16            NrTableIds;
-    ACPI_DROP_TABLE   *DropTable;
-    
+    UINT16 NrTableIds;
+    ACPI_DROP_TABLE *DropTable;
+
     NrTableIds = (UINT16) plNodeGetSize (array);
     DBG ("Dropping %d tables\n", NrTableIds);
     if (NrTableIds > 0) {
       for (i = 0; i < NrTableIds; ++i) {
-        UINT32  Signature = 0;
-        UINT64  TableId = 0;
-        CHAR8*  SigStr;
-        CHAR8*  TablStr;
-        CHAR8  s1 = 0, s2 = 0, s3 = 0, s4 = 0;
-        UINTN  idi = 0;
-        CHAR8  id[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+        UINT32 Signature = 0;
+        UINT64 TableId = 0;
+        CHAR8 *SigStr;
+        CHAR8 *TablStr;
+        CHAR8 s1 = 0, s2 = 0, s3 = 0, s4 = 0;
+        UINTN idi = 0;
+        CHAR8 id[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
         DBG (" Drop table %d", (i + 1));
         prop = plNodeGetItem (array, i);
         // Get the table signatures to drop
-        SigStr  = GetStringProperty (prop, "Signature");
+        SigStr = GetStringProperty (prop, "Signature");
         if (AsciiStrLen (SigStr) != 4) {
           DBG (", bad signature\n");
           continue;
@@ -1388,10 +1435,10 @@ GetUserSettings (
           s4 = *SigStr++;
           DBG ("%c", s4);
         }
-        Signature = SIGNATURE_32(s1, s2, s3, s4);
+        Signature = SIGNATURE_32 (s1, s2, s3, s4);
         DBG ("' (%8.8X)", Signature);
         // Get the table ids to drop
-        TablStr  = GetStringProperty (prop, "TableId");
+        TablStr = GetStringProperty (prop, "TableId");
         if (TablStr) {
           DBG (" table-id = '");
           while (*TablStr && (idi < 8)) {
@@ -1399,11 +1446,11 @@ GetUserSettings (
             id[idi++] = *TablStr++;
           }
         }
-        CopyMem (&TableId, (CHAR8*) &id[0], 8);
+        CopyMem (&TableId, (CHAR8 *) &id[0], 8);
         DBG ("' (%16.16lX)\n", TableId);
 
-        DropTable = AllocateZeroPool(sizeof(ACPI_DROP_TABLE));
-        
+        DropTable = AllocateZeroPool (sizeof (ACPI_DROP_TABLE));
+
         DropTable->Signature = Signature;
         DropTable->TableId = TableId;
 
@@ -1419,44 +1466,45 @@ GetUserSettings (
   gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", FALSE);
 
   GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
-  if (AsciiStrLen(gSettings.ProductName) > 0) {
-    for (i=0; i < sizeof(MACHINE_TYPES); i++) {
+  if (AsciiStrLen (gSettings.ProductName) > 0) {
+    for (i = 0; i < sizeof (MACHINE_TYPES); i++) {
       if (AsciiStrStr (gSettings.ProductName, AppleProductName[i]) != 0) {
-        AsciiStrCpy (gSettings.VendorName,             BiosVendor);
-        AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[i]);
-        AsciiStrCpy (gSettings.ReleaseDate,            AppleReleaseDate[i]);
-        AsciiStrCpy (gSettings.ManufactureName,        BiosVendor);
-        AsciiStrCpy (gSettings.ProductName,            AppleProductName[i]);
-        AsciiStrCpy (gSettings.VersionNr,              AppleSystemVersion[i]);
-        AsciiStrCpy (gSettings.SerialNr,               AppleSerialNumber[i]);
-        AsciiStrCpy (gSettings.FamilyName,             AppleFamilies[i]);
-        AsciiStrCpy (gSettings.BoardManufactureName,   BiosVendor);
-        AsciiStrCpy (gSettings.BoardSerialNumber,      AppleBoardSN);
-        AsciiStrCpy (gSettings.BoardNumber,            AppleBoardID[i]);
-        AsciiStrCpy (gSettings.BoardVersion,           AppleSystemVersion[i]);
-        AsciiStrCpy (gSettings.LocationInChassis,      AppleBoardLocation);
-        AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
-        AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[i]);
+        AsciiStrCpy (gSettings.VendorName, BiosVendor);
+        AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[i]);
+        AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[i]);
+        AsciiStrCpy (gSettings.ManufactureName, BiosVendor);
+        AsciiStrCpy (gSettings.ProductName, AppleProductName[i]);
+        AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[i]);
+        AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[i]);
+        AsciiStrCpy (gSettings.FamilyName, AppleFamilies[i]);
+        AsciiStrCpy (gSettings.BoardManufactureName, BiosVendor);
+        AsciiStrCpy (gSettings.BoardSerialNumber, AppleBoardSN);
+        AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[i]);
+        AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[i]);
+        AsciiStrCpy (gSettings.LocationInChassis, AppleBoardLocation);
+        AsciiStrCpy (gSettings.ChassisManufacturer, BiosVendor);
+        AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[i]);
         break;
       }
     }
-  } else {
+  }
+  else {
     Model = GetDefaultModel ();
-    AsciiStrCpy (gSettings.VendorName,             BiosVendor);
-    AsciiStrCpy (gSettings.RomVersion,             AppleFirmwareVersion[Model]);
-    AsciiStrCpy (gSettings.ReleaseDate,            AppleReleaseDate[Model]);
-    AsciiStrCpy (gSettings.ManufactureName,        BiosVendor);
-    AsciiStrCpy (gSettings.ProductName,            AppleProductName[Model]);
-    AsciiStrCpy (gSettings.VersionNr,              AppleSystemVersion[Model]);
-    AsciiStrCpy (gSettings.SerialNr,               AppleSerialNumber[Model]);
-    AsciiStrCpy (gSettings.FamilyName,             AppleFamilies[Model]);
-    AsciiStrCpy (gSettings.BoardManufactureName,   BiosVendor);
-    AsciiStrCpy (gSettings.BoardSerialNumber,      AppleBoardSN);
-    AsciiStrCpy (gSettings.BoardNumber,            AppleBoardID[Model]);
-    AsciiStrCpy (gSettings.BoardVersion,           AppleSystemVersion[Model]);
-    AsciiStrCpy (gSettings.LocationInChassis,      AppleBoardLocation);
-    AsciiStrCpy (gSettings.ChassisManufacturer,    BiosVendor);
-    AsciiStrCpy (gSettings.ChassisAssetTag,        AppleChassisAsset[Model]);
+    AsciiStrCpy (gSettings.VendorName, BiosVendor);
+    AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[Model]);
+    AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[Model]);
+    AsciiStrCpy (gSettings.ManufactureName, BiosVendor);
+    AsciiStrCpy (gSettings.ProductName, AppleProductName[Model]);
+    AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[Model]);
+    AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[Model]);
+    AsciiStrCpy (gSettings.FamilyName, AppleFamilies[Model]);
+    AsciiStrCpy (gSettings.BoardManufactureName, BiosVendor);
+    AsciiStrCpy (gSettings.BoardSerialNumber, AppleBoardSN);
+    AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[Model]);
+    AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[Model]);
+    AsciiStrCpy (gSettings.LocationInChassis, AppleBoardLocation);
+    AsciiStrCpy (gSettings.ChassisManufacturer, BiosVendor);
+    AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[Model]);
   }
 
   GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
@@ -1466,12 +1514,16 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
   GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
   GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
-  GetAsciiProperty (dictPointer, "BoardManufacturer", gSettings.BoardManufactureName);
-  GetAsciiProperty (dictPointer, "BoardSerialNumber", gSettings.BoardSerialNumber);
+  GetAsciiProperty (dictPointer, "BoardManufacturer",
+                    gSettings.BoardManufactureName);
+  GetAsciiProperty (dictPointer, "BoardSerialNumber",
+                    gSettings.BoardSerialNumber);
   GetAsciiProperty (dictPointer, "Board-ID", gSettings.BoardNumber);
   GetAsciiProperty (dictPointer, "BoardVersion", gSettings.BoardVersion);
-  GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
-  GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
+  GetAsciiProperty (dictPointer, "LocationInChassis",
+                    gSettings.LocationInChassis);
+  GetAsciiProperty (dictPointer, "ChassisManufacturer",
+                    gSettings.ChassisManufacturer);
   GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
 
   gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", FALSE);
@@ -1488,23 +1540,37 @@ GetUserSettings (
         prop = plNodeGetItem (array, i);
         Slot = (UINT8) GetNumProperty (prop, "Slot", 0xff);
         gSettings.cMemDevice[Slot].InUse = TRUE;
-        gSettings.cMemDevice[Slot].MemoryType = (UINT8) GetNumProperty (prop, "MemoryType", 0x02);
-        gSettings.cMemDevice[Slot].Speed      = (UINT16) GetNumProperty (prop, "Speed", 0x00); //MHz
-        gSettings.cMemDevice[Slot].Size       = (UINT16) GetNumProperty (prop, "Size", 0xffff); //MB
+        gSettings.cMemDevice[Slot].MemoryType =
+          (UINT8) GetNumProperty (prop, "MemoryType", 0x02);
+        gSettings.cMemDevice[Slot].Speed = (UINT16) GetNumProperty (prop, "Speed", 0x00); //MHz
+        gSettings.cMemDevice[Slot].Size = (UINT16) GetNumProperty (prop, "Size", 0xffff); //MB
 
-        gSettings.cMemDevice[Slot].DeviceLocator  = GetStringProperty (prop, "DeviceLocator");
-        gSettings.cMemDevice[Slot].BankLocator    = GetStringProperty (prop, "BankLocator");
-        gSettings.cMemDevice[Slot].Manufacturer   = GetStringProperty (prop, "Manufacturer");
-        gSettings.cMemDevice[Slot].SerialNumber   = GetStringProperty (prop, "SerialNumber");
-        gSettings.cMemDevice[Slot].PartNumber     = GetStringProperty (prop, "PartNumber");
-        DBG (" gSettings.cMemDevice[%d].MemoryType = 0x%x\n", Slot, gSettings.cMemDevice[Slot].MemoryType);
-        DBG (" gSettings.cMemDevice[%d].Speed = %d MHz\n", Slot, gSettings.cMemDevice[Slot].Speed);
-        DBG (" gSettings.cMemDevice[%d].Size = %d MB\n", Slot, gSettings.cMemDevice[Slot].Size);
-        DBG (" gSettings.cMemDevice[%d].DeviceLocator = %a\n", Slot, gSettings.cMemDevice[Slot].DeviceLocator);
-        DBG (" gSettings.cMemDevice[%d].BankLocator = %a\n", Slot, gSettings.cMemDevice[Slot].BankLocator);
-        DBG (" gSettings.cMemDevice[%d].Manufacturer = %a\n", Slot, gSettings.cMemDevice[Slot].Manufacturer);
-        DBG (" gSettings.cMemDevice[%d].SerialNumber = %a\n", Slot, gSettings.cMemDevice[Slot].SerialNumber);
-        DBG (" gSettings.cMemDevice[%d].PartNumber = %a\n", Slot, gSettings.cMemDevice[Slot].PartNumber);
+        gSettings.cMemDevice[Slot].DeviceLocator =
+          GetStringProperty (prop, "DeviceLocator");
+        gSettings.cMemDevice[Slot].BankLocator =
+          GetStringProperty (prop, "BankLocator");
+        gSettings.cMemDevice[Slot].Manufacturer =
+          GetStringProperty (prop, "Manufacturer");
+        gSettings.cMemDevice[Slot].SerialNumber =
+          GetStringProperty (prop, "SerialNumber");
+        gSettings.cMemDevice[Slot].PartNumber =
+          GetStringProperty (prop, "PartNumber");
+        DBG (" gSettings.cMemDevice[%d].MemoryType = 0x%x\n", Slot,
+             gSettings.cMemDevice[Slot].MemoryType);
+        DBG (" gSettings.cMemDevice[%d].Speed = %d MHz\n", Slot,
+             gSettings.cMemDevice[Slot].Speed);
+        DBG (" gSettings.cMemDevice[%d].Size = %d MB\n", Slot,
+             gSettings.cMemDevice[Slot].Size);
+        DBG (" gSettings.cMemDevice[%d].DeviceLocator = %a\n", Slot,
+             gSettings.cMemDevice[Slot].DeviceLocator);
+        DBG (" gSettings.cMemDevice[%d].BankLocator = %a\n", Slot,
+             gSettings.cMemDevice[Slot].BankLocator);
+        DBG (" gSettings.cMemDevice[%d].Manufacturer = %a\n", Slot,
+             gSettings.cMemDevice[Slot].Manufacturer);
+        DBG (" gSettings.cMemDevice[%d].SerialNumber = %a\n", Slot,
+             gSettings.cMemDevice[Slot].SerialNumber);
+        DBG (" gSettings.cMemDevice[%d].PartNumber = %a\n", Slot,
+             gSettings.cMemDevice[Slot].PartNumber);
       }
     }
   }
@@ -1523,26 +1589,35 @@ GetUserSettings (
     }
     AsmReadMsr64 (MSR_IA32_PERF_STATUS);
   }
-  
-  gSettings.CPUFrequency = (UINT64) GetNumProperty (dictPointer, "CPUFrequency", 0);
-  gSettings.FSBFrequency = (UINT64) GetNumProperty (dictPointer, "FSBFrequency", 0);
-  gSettings.ProcessorInterconnectSpeed = (UINT32) GetNumProperty (dictPointer, "QPI", 0);
-  gSettings.CpuType = (UINT16) GetNumProperty (dictPointer, "ProcessorType", GetAdvancedCpuType());
+
+  gSettings.CPUFrequency =
+    (UINT64) GetNumProperty (dictPointer, "CPUFrequency", 0);
+  gSettings.FSBFrequency =
+    (UINT64) GetNumProperty (dictPointer, "FSBFrequency", 0);
+  gSettings.ProcessorInterconnectSpeed =
+    (UINT32) GetNumProperty (dictPointer, "QPI", 0);
+  gSettings.CpuType =
+    (UINT16) GetNumProperty (dictPointer, "ProcessorType",
+                             GetAdvancedCpuType ());
 
   if (gSettings.FSBFrequency != 0) {
     gCPUStructure.FSBFrequency = gSettings.FSBFrequency;
     if (gSettings.CPUFrequency == 0) {
-      gCPUStructure.CPUFrequency = MultU64x32 (gCPUStructure.FSBFrequency, gCPUStructure.MaxRatio);
+      gCPUStructure.CPUFrequency =
+        MultU64x32 (gCPUStructure.FSBFrequency, gCPUStructure.MaxRatio);
     }
-    DBG ("GetUserSettings: gCPUStructure.FSBFrequency = %d\n", gCPUStructure.FSBFrequency);
+    DBG ("GetUserSettings: gCPUStructure.FSBFrequency = %d\n",
+         gCPUStructure.FSBFrequency);
   }
 
   if (gSettings.CPUFrequency != 0) {
     gCPUStructure.CPUFrequency = gSettings.CPUFrequency;
     if (gSettings.FSBFrequency == 0) {
-      gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
+      gCPUStructure.FSBFrequency =
+        DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
     }
-    DBG ("GetUserSettings: gCPUStructure.CPUFrequency = %d\n", gCPUStructure.CPUFrequency);
+    DBG ("GetUserSettings: gCPUStructure.CPUFrequency = %d\n",
+         gCPUStructure.CPUFrequency);
   }
 
   // KernelAndKextPatches
@@ -1559,18 +1634,19 @@ GetUserSettings (
         len = 0;
 
         dictPointer = plNodeGetItem (array, i);
-        gSettings.AnyKernelData[i] = GetDataSetting (dictPointer, "Find", &gSettings.AnyKernelDataLen[i]);
-        gSettings.AnyKernelPatch[i] = GetDataSetting (dictPointer, "Replace", &len);
+        gSettings.AnyKernelData[i] =
+          GetDataSetting (dictPointer, "Find", &gSettings.AnyKernelDataLen[i]);
+        gSettings.AnyKernelPatch[i] =
+          GetDataSetting (dictPointer, "Replace", &len);
 
         if (gSettings.AnyKernelDataLen[i] != len || len == 0) {
           gSettings.AnyKernelDataLen[i] = 0;
           continue;
         }
         gSettings.KPKernelPatchesNeeded = TRUE;
-        DBG ("  %d. kernel patch, length = %d, %a\n",
-             (i + 1),
+        DBG ("  %d. kernel patch, length = %d, %a\n", (i + 1),
              gSettings.AnyKernelDataLen[i]
-            );
+          );
       }
     }
   }
@@ -1586,35 +1662,38 @@ GetUserSettings (
         dictPointer = plNodeGetItem (array, i);
         gSettings.AnyKext[i] = GetStringProperty (dictPointer, "Name");
         // check if this is Info.plist patch or kext binary patch
-        gSettings.AnyKextInfoPlistPatch[i] = GetBoolProperty (dictPointer, "InfoPlistPatch", FALSE);
+        gSettings.AnyKextInfoPlistPatch[i] =
+          GetBoolProperty (dictPointer, "InfoPlistPatch", FALSE);
         if (gSettings.AnyKextInfoPlistPatch[i]) {
           // Info.plist
           // Find and Replace should be in <string>...</string>
           gSettings.AnyKextData[i] = GetStringProperty (dictPointer, "Find");
           if (gSettings.AnyKextData[i] != NULL) {
-            gSettings.AnyKextDataLen[i] = AsciiStrLen (gSettings.AnyKextData[i]);
+            gSettings.AnyKextDataLen[i] =
+              AsciiStrLen (gSettings.AnyKextData[i]);
           }
-          gSettings.AnyKextPatch[i] = GetStringProperty (dictPointer, "Replace");
+          gSettings.AnyKextPatch[i] =
+            GetStringProperty (dictPointer, "Replace");
           if (gSettings.AnyKextPatch[i] != NULL) {
             len = AsciiStrLen (gSettings.AnyKextPatch[i]);
           }
-        } else {
+        }
+        else {
           // kext binary patch
           // Find and Replace should be in <data>...</data> or <string>...</string>
-          gSettings.AnyKextData[i] = GetDataSetting (dictPointer, "Find", &gSettings.AnyKextDataLen[i]);
-          gSettings.AnyKextPatch[i] = GetDataSetting (dictPointer, "Replace", &len);
+          gSettings.AnyKextData[i] =
+            GetDataSetting (dictPointer, "Find", &gSettings.AnyKextDataLen[i]);
+          gSettings.AnyKextPatch[i] =
+            GetDataSetting (dictPointer, "Replace", &len);
         }
         if (gSettings.AnyKextDataLen[i] != len || len == 0) {
           gSettings.AnyKextDataLen[i] = 0;
           continue;
         }
         gSettings.KPKextPatchesNeeded = TRUE;
-        DBG ("  %d. name = %a, length = %d, %a\n",
-             (i + 1),
-             gSettings.AnyKext[i],
-             gSettings.AnyKextDataLen[i],
-             gSettings.AnyKextInfoPlistPatch[i]?"KextInfoPlistPatch ":""
-            );
+        DBG ("  %d. name = %a, length = %d, %a\n", (i + 1),
+             gSettings.AnyKext[i], gSettings.AnyKextDataLen[i],
+             gSettings.AnyKextInfoPlistPatch[i] ? "KextInfoPlistPatch " : "");
       }
     }
   }
@@ -1624,7 +1703,7 @@ GetUserSettings (
   return Status;
 }
 
-STATIC CHAR16* OSVersionFiles[] = {
+STATIC CHAR16 *OSVersionFiles[] = {
   L"System\\Library\\CoreServices\\SystemVersion.plist",
   L"System\\Library\\CoreServices\\ServerVersion.plist",
   L"\\com.apple.recovery.boot\\SystemVersion.plist"
@@ -1632,11 +1711,11 @@ STATIC CHAR16* OSVersionFiles[] = {
 
 EFI_STATUS
 GetOSVersion (
-  IN EFI_FILE   *FileHandle
+  IN EFI_FILE * FileHandle
 )
 {
   UINTN i;
-  VOID* plist;
+  VOID *plist;
 
   /* Mac OS X */
 

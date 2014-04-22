@@ -162,8 +162,8 @@ PartitionInstallAppleChildHandles (
               CdDev.PartitionStart + CdDev.PartitionSize - 1,
               SubBlockSize,
               FALSE
-	      );
-	  DEBUG ((EFI_D_INFO, __FUNCTION__ ": partition (%p) accepted\n", Handle));
+              );
+         DEBUG ((EFI_D_INFO, __FUNCTION__ ": partition (%p) accepted\n", Handle));
       }
 
   } while (0);

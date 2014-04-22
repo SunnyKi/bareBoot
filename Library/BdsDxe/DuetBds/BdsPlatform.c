@@ -1092,7 +1092,7 @@ EnableSmbus (
   UINTN                 Bus;
   UINTN                 Device;
   UINTN                 Function;
-	UINT32                rcba;
+  UINT32                rcba;
   UINT32                *fdr;
 
   Status = gBS->LocateHandleBuffer (AllHandles, NULL, NULL, &HandleCount, &HandleBuffer);

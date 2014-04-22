@@ -1020,7 +1020,7 @@ PatchMemoryTables (
     for (j = 0; j < gRAM->MaxMemorySlots; j++) {
       if ((((UINT32) Memory17[j]  << 10) - 1) <= newSmbiosTable.Type20->EndingAddress) {
         newSmbiosTable.Type20->MemoryDeviceHandle = Handle17[j];
-				Memory17[j] = 0;
+        Memory17[j] = 0;
         break;
       }
     }

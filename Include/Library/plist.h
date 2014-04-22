@@ -45,9 +45,9 @@ typedef enum _plkind {
 typedef long long vlong;
 
 typedef struct _plbuf {
-	char* dat;
-	unsigned int len; 
-	unsigned int pos;
+  char* dat;
+  unsigned int len; 
+  unsigned int pos;
 } plbuf_t;
 
 char* plNodeGetBytes(void*);

@@ -657,7 +657,7 @@ DetectChipset (
     case 0x27708086: // 945G
     case 0x27748086: // 955X
     case 0x277c8086: // 975X
-    case 0x27a08086: // 945GM - Dell D430 	 Offset 090:  	10 11 11 00 00
+    case 0x27a08086: // 945GM - Dell D430    Offset 090:    10 11 11 00 00
     case 0x27ac8086: // 945GME
     case 0x29208086: // G45
     case 0x29708086: // 946GZ

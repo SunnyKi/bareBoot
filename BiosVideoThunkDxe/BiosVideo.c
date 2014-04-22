@@ -871,7 +871,7 @@ VideoBiosPatchNativeFromEdid (
   *TstPtr = TstVar;
 
   set_mode (map, edidInfo, mode);
-	FreePool(map);
+  FreePool(map);
 
   Status = LegacyRegion2->Lock (
                             LegacyRegion2,
@@ -1548,12 +1548,12 @@ BiosVideoCheckForVbe (
     if (BiosVideoPrivate->VbeModeInformationBlock->PhysBasePtr == 0) {
       continue;
     }
-		//
-		// Skip modes not supported by the hardware.
-		//
-		if ((BiosVideoPrivate->VbeModeInformationBlock->ModeAttributes & VESA_BIOS_EXTENSIONS_MODE_ATTRIBUTE_HARDWARE) == 0) {
-			continue;
-		}
+    //
+    // Skip modes not supported by the hardware.
+    //
+    if ((BiosVideoPrivate->VbeModeInformationBlock->ModeAttributes & VESA_BIOS_EXTENSIONS_MODE_ATTRIBUTE_HARDWARE) == 0) {
+      continue;
+    }
 
     if (BiosVideoPrivate->VbeModeInformationBlock->XResolution < 800) {
       continue;
@@ -1816,7 +1816,7 @@ BiosVideoCheckForVga (
   ModeBuffer->VerticalResolution    = 480;
   ModeBuffer->BitsPerPixel          = 8;  
   ModeBuffer->PixelFormat           = PixelBltOnly;
-	ModeBuffer->RefreshRate           = 60;
+  ModeBuffer->RefreshRate           = 60;
 
   BiosVideoPrivate->ModeData = ModeBuffer;
 
@@ -1942,7 +1942,7 @@ BiosVideoGraphicsOutputSetMode (
   if (ModeNumber >= This->Mode->MaxMode) {
     return EFI_UNSUPPORTED;
   }
-	if (ModeNumber == This->Mode->Mode) {
+  if (ModeNumber == This->Mode->Mode) {
     return EFI_SUCCESS;
   }
 

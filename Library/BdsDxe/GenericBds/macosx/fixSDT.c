@@ -4,6 +4,7 @@
  * Copyright (c) 2011-2012 Frank Peng. All rights reserved.
  *
  */
+
 /*
  *  aml_generator.c
  *  Chameleon
@@ -19,69 +20,63 @@
 UINT32
 aml_write_size (
   UINT32 size,
-  CHAR8* buffer,
+  CHAR8 *buffer,
   UINT32 offset
 )
 {
-	if (size <= 0x3f) /* simple 1 byte length in 6 bits */
-    {
-		buffer[offset++] = (CHAR8)size;
-    }
-	else if (size <= 0xfff)
-    {
-		buffer[offset++] = 0x40 | (size & 0xf); /* 0x40 is type, 0x0X is first nibble of length */
-		buffer[offset++] = (size >> 4) & 0xff; /* +1 bytes for rest length */
-    }
-	else if (size <= 0xfffff)
-    {
-		buffer[offset++] = 0x80 | (size & 0xf); /* 0x80 is type, 0x0X is first nibble of length */
-		buffer[offset++] = (size >> 4) & 0xff; /* +2 bytes for rest length */
-		buffer[offset++] = (size >> 12) & 0xff;
-    }
-  else
-    {
-		buffer[offset++] = 0xc0 | (size & 0xf); /* 0xC0 is type, 0x0X is first nibble of length */
-		buffer[offset++] = (size >> 4) & 0xff; /* +3 bytes for rest length */
-		buffer[offset++] = (size >> 12) & 0xff;
-		buffer[offset++] = (size >> 20) & 0xff;
-    }
-	
-	return offset;
+  if (size <= 0x3f) { /* simple 1 byte length in 6 bits */
+    buffer[offset++] = (CHAR8) size;
+  }
+  else if (size <= 0xfff) {
+    buffer[offset++] = 0x40 | (size & 0xf); /* 0x40 is type, 0x0X is first nibble of length */
+    buffer[offset++] = (size >> 4) & 0xff;  /* +1 bytes for rest length */
+  }
+  else if (size <= 0xfffff) {
+    buffer[offset++] = 0x80 | (size & 0xf); /* 0x80 is type, 0x0X is first nibble of length */
+    buffer[offset++] = (size >> 4) & 0xff;  /* +2 bytes for rest length */
+    buffer[offset++] = (size >> 12) & 0xff;
+  }
+  else {
+    buffer[offset++] = 0xc0 | (size & 0xf); /* 0xC0 is type, 0x0X is first nibble of length */
+    buffer[offset++] = (size >> 4) & 0xff;  /* +3 bytes for rest length */
+    buffer[offset++] = (size >> 12) & 0xff;
+    buffer[offset++] = (size >> 20) & 0xff;
+  }
+
+  return offset;
 }
 
 UINT32
 get_size (
-  UINT8* Buffer,
+  UINT8 *Buffer,
   UINT32 adr
 )
 {
-	UINT32 temp;
-	
-	temp = Buffer[adr] & 0xF0; //keep bits 0x30 to check if this is valid size field
-	
-	if(temp <= 0x30)	{		    // 0
-		temp = Buffer[adr];
-	}
-	else if(temp == 0x40)	{   // 4
-		temp =  (Buffer[adr]   - 0x40)  << 0|
-    Buffer[adr+1]          << 4;
-	}
-	else if(temp == 0x80)	{ 	// 8
-		temp = (Buffer[adr]   - 0x80)  <<  0|
-    Buffer[adr+1]          <<  4|
-    Buffer[adr+2]          << 12;
-	}
-	else if(temp == 0xC0)	{ 	// C
-		temp = (Buffer[adr]   - 0xC0) <<  0|
-    Buffer[adr+1]         <<  4|
-    Buffer[adr+2]         << 12|
-    Buffer[adr+3]         << 20;
-	}
+  UINT32 temp;
+
+  temp = Buffer[adr] & 0xF0;  //keep bits 0x30 to check if this is valid size field
+
+  if (temp <= 0x30) { // 0
+    temp = Buffer[adr];
+  }
+  else if (temp == 0x40) {  // 4
+    temp = (Buffer[adr] - 0x40) << 0 | Buffer[adr + 1] << 4;
+  }
+  else if (temp == 0x80) {  // 8
+    temp =
+      (Buffer[adr] - 0x80) << 0 | Buffer[adr + 1] << 4 | Buffer[adr + 2] << 12;
+  }
+  else if (temp == 0xC0) {  // C
+    temp =
+      (Buffer[adr] - 0xC0) << 0 | Buffer[adr + 1] << 4 | Buffer[adr +
+                                                                2] << 12 |
+      Buffer[adr + 3] << 20;
+  }
   else {
     //  DBG("wrong pointer to size field at %x\n", adr);
     return 0;
   }
-	return temp;
+  return temp;
 }
 
 BOOLEAN
@@ -91,27 +86,27 @@ CmpNum (
   BOOLEAN Sure
 )
 {
-  return ((Sure && ((dsdt[i-1] == 0x0A) ||
-                    (dsdt[i-2] == 0x0B) ||
-                    (dsdt[i-4] == 0x0C))) ||
-          (!Sure && (((dsdt[i-1] >= 0x0A) && (dsdt[i-1] <= 0x0C)) ||
-                     ((dsdt[i-2] == 0x0B) || (dsdt[i-2] == 0x0C)) ||
-                     (dsdt[i-4] == 0x0C))));
+  return ((Sure &&
+           ((dsdt[i - 1] == 0x0A) || (dsdt[i - 2] == 0x0B) ||
+            (dsdt[i - 4] == 0x0C))) || (!Sure && (((dsdt[i - 1] >= 0x0A) &&
+                                                   (dsdt[i - 1] <= 0x0C)) ||
+                                                  ((dsdt[i - 2] == 0x0B) ||
+                                                   (dsdt[i - 2] == 0x0C)) ||
+                                                  (dsdt[i - 4] == 0x0C))));
 }
 
 BOOLEAN
 GetName (
   UINT8 *dsdt,
   INT32 adr,
-  CHAR8* name
+  CHAR8 *name
 )
 {
   INT32 i;
-  INT32 j = (dsdt[adr] == 0x5C)?1:0; //now we accept \NAME
-  
+  INT32 j = (dsdt[adr] == 0x5C) ? 1 : 0;  //now we accept \NAME
+
   for (i = adr + j; i < adr + j + 4; i++) {
-    if ((dsdt[i] < 0x2F) ||
-        ((dsdt[i] > 0x39) && (dsdt[i] < 0x41)) ||
+    if ((dsdt[i] < 0x2F) || ((dsdt[i] > 0x39) && (dsdt[i] < 0x41)) ||
         ((dsdt[i] > 0x5A) && (dsdt[i] != 0x5F))) {
       return FALSE;
     }
@@ -130,21 +125,21 @@ GetName (
 UINT32
 move_data (
   UINT32 start,
-  UINT8* buffer,
+  UINT8 *buffer,
   UINT32 len,
   INT32 offset
 )
 {
   UINT32 i;
-  
-  if (offset<0) {
-    for (i=start; i<len+offset; i++) {
-      buffer[i] = buffer[i-offset];
+
+  if (offset < 0) {
+    for (i = start; i < len + offset; i++) {
+      buffer[i] = buffer[i - offset];
     }
   }
-  else  { // data move to back        
-    for (i=len-1; i>=start; i--) {
-      buffer[i+offset] = buffer[i];
+  else {  // data move to back        
+    for (i = len - 1; i >= start; i--) {
+      buffer[i + offset] = buffer[i];
     }
   }
   return len + offset;
@@ -156,23 +151,23 @@ INT32
 FindBin (
   UINT8 *dsdt,
   UINT32 len,
-  UINT8* bin,
+  UINT8 *bin,
   UINTN N
 )
 {
   UINT32 i, j;
   BOOLEAN eq;
-  
-  for (i=0; i<len-N; i++) {
+
+  for (i = 0; i < len - N; i++) {
     eq = TRUE;
-    for (j=0; j<N; j++) {
-      if (dsdt[i+j] != bin[j]) {
+    for (j = 0; j < N; j++) {
+      if (dsdt[i + j] != bin[j]) {
         eq = FALSE;
         break;
       }
     }
     if (eq) {
-      return (INT32)i;
+      return (INT32) i;
     }
   }
   return -1;
@@ -194,16 +189,16 @@ FindBin (
 INT32
 write_size (
   UINT32 adr,
-  UINT8* buffer,
+  UINT8 *buffer,
   UINT32 len,
   INT32 sizeoffset
 )
 {
   UINT32 size, oldsize;
   INT32 offset = 0;
-  
-  oldsize = get_size(buffer, adr);
-  
+
+  oldsize = get_size (buffer, adr);
+
   if (!oldsize) {
     return 0; //wrong address, will not write here
   }
@@ -211,21 +206,25 @@ write_size (
   // data move to back
   if (oldsize <= 0x3f && size > 0x0fff) {
     offset = 2;
-  } else if ((oldsize <= 0x3f && size > 0x3f) || (oldsize<=0x0fff && size > 0x0fff)) {
+  }
+  else if ((oldsize <= 0x3f && size > 0x3f) ||
+           (oldsize <= 0x0fff && size > 0x0fff)) {
     offset = 1;
-  }  // data move to front
-  else if ((size <= 0x3f && oldsize > 0x3f) || (size<=0x0fff && oldsize > 0x0fff)) {
+  } // data move to front
+  else if ((size <= 0x3f && oldsize > 0x3f) ||
+           (size <= 0x0fff && oldsize > 0x0fff)) {
     offset = -1;
-  }  else if (oldsize > 0x0fff && size <= 0x3f) {
+  }
+  else if (oldsize > 0x0fff && size <= 0x3f) {
     offset = -2;
   }
-  
+
   len = move_data (adr, buffer, len, offset);
-  
+
   size += offset;
-  aml_write_size (size, (CHAR8 *)buffer, adr); //reuse existing codes
-  
-	return offset;
+  aml_write_size (size, (CHAR8 *) buffer, adr); //reuse existing codes
+
+  return offset;
 }
 
 //this procedure corrects size of outer method. Embedded methods is not proposed
@@ -240,34 +239,34 @@ CorrectOuterMethod (
   INT32 shift
 )
 {
-  INT32    i,  k;
-  UINT32   size = 0;
-  INT32  offset = 0;
-  CHAR8  Name[5];
+  INT32 i, k;
+  UINT32 size = 0;
+  INT32 offset = 0;
+  CHAR8 Name[5];
 
   if (shift == 0) {
     return len;
   }
-  i = adr; //usually adr = @5B - 1 = sizefield - 3
+  i = adr;  //usually adr = @5B - 1 = sizefield - 3
   while (i-- > 0x20) {  //find method that previous to adr
     k = i + 1;
-    if ((dsdt[i] == 0x14) && !CmpNum(dsdt, i, FALSE)) { //method candidate
-      size = get_size(dsdt, k);
+    if ((dsdt[i] == 0x14) && !CmpNum (dsdt, i, FALSE)) {  //method candidate
+      size = get_size (dsdt, k);
       if (!size) {
         continue;
       }
-      if (((size <= 0x3F) && !GetName(dsdt, k+1, &Name[0])) ||
-          ((size > 0x3F) && (size <= 0xFFF) && !GetName(dsdt, k+2, &Name[0])) ||
-          ((size > 0xFFF) && !GetName(dsdt, k+3, &Name[0]))) {
-        DBG("method found, size=0x%x but name is not\n", size);
+      if (((size <= 0x3F) && !GetName (dsdt, k + 1, &Name[0])) ||
+          ((size > 0x3F) && (size <= 0xFFF) && !GetName (dsdt, k + 2, &Name[0]))
+          || ((size > 0xFFF) && !GetName (dsdt, k + 3, &Name[0]))) {
+        DBG ("method found, size=0x%x but name is not\n", size);
         continue;
       }
-      if ((k+size) > adr+4) {  //Yes - it is outer
-        DBG("found outer method %a begin=%x end=%x\n", Name, k, k+size);
-        offset = write_size(k, dsdt, len, shift);  //size corrected to sizeoffset at address j
- //       shift += offset;
+      if ((k + size) > adr + 4) { //Yes - it is outer
+        DBG ("found outer method %a begin=%x end=%x\n", Name, k, k + size);
+        offset = write_size (k, dsdt, len, shift);  //size corrected to sizeoffset at address j
+        //       shift += offset;
         len += offset;
-      }  //else not an outer method
+      } //else not an outer method
       break;
     }
   }
@@ -283,70 +282,71 @@ CorrectOuters (
   INT32 shift
 )
 {
-  INT32    i, j, k;
-  UINT32   size = 0;
-  INT32  offset = 0;
-  UINT32   SBSIZE = 0, SBADR = 0;
+  INT32 i, j, k;
+  UINT32 size = 0;
+  INT32 offset = 0;
+  UINT32 SBSIZE = 0, SBADR = 0;
 
   if (shift == 0) {
     return len;
   }
-  i = adr; //usually adr = @5B - 1 = sizefield - 3
+  i = adr;  //usually adr = @5B - 1 = sizefield - 3
   while (i > 0x20) {  //find devices that previous to adr
     //check device
     k = i + 2;
-    if ((dsdt[i] == 0x5B) && (dsdt[i+1] == 0x82) && !CmpNum(dsdt, i, TRUE)) { //device candidate      
-      size = get_size(dsdt, k);
+    if ((dsdt[i] == 0x5B) && (dsdt[i + 1] == 0x82) && !CmpNum (dsdt, i, TRUE)) {  //device candidate      
+      size = get_size (dsdt, k);
       if (size) {
-        if ((k+size) > adr+4) {  //Yes - it is outer
-    //          DBG("found outer device begin=%x end=%x\n", k, k+size);
-          offset = write_size(k, dsdt, len, shift);  //size corrected to sizeoffset at address j
+        if ((k + size) > adr + 4) { //Yes - it is outer
+          //          DBG("found outer device begin=%x end=%x\n", k, k+size);
+          offset = write_size (k, dsdt, len, shift);  //size corrected to sizeoffset at address j
           shift += offset;
           len += offset;
-        }  //else not an outer device          
+        } //else not an outer device          
       } //else wrong size field - not a device
     } //else not a device
     // check scope
     SBSIZE = 0;
-    if (dsdt[i] == '_' && dsdt[i+1] == 'S' && dsdt[i+2] == 'B' && dsdt[i+3] == '_') {
-      for (j=0; j<10; j++) {
-        if ((dsdt[i-j] == 0x10) && !CmpNum(dsdt, i-j, TRUE)) {
-          SBADR = i-j+1;
-          SBSIZE = get_size(dsdt, SBADR);
-       //     DBG("found Scope(\\_SB) address = 0x%08x size = 0x%08x\n", SBADR, SBSIZE);
+    if (dsdt[i] == '_' && dsdt[i + 1] == 'S' && dsdt[i + 2] == 'B' &&
+        dsdt[i + 3] == '_') {
+      for (j = 0; j < 10; j++) {
+        if ((dsdt[i - j] == 0x10) && !CmpNum (dsdt, i - j, TRUE)) {
+          SBADR = i - j + 1;
+          SBSIZE = get_size (dsdt, SBADR);
+          //     DBG("found Scope(\\_SB) address = 0x%08x size = 0x%08x\n", SBADR, SBSIZE);
           if ((SBSIZE != 0) && (SBSIZE < len)) {  //if zero or too large then search more
             //if found
             k = SBADR - 6;
-            if ((SBADR + SBSIZE) > adr+4) {  //Yes - it is outer
-        //      DBG("found outer scope begin=%x end=%x\n", SBADR, SBADR+SBSIZE);
-              offset = write_size(SBADR, dsdt, len, shift);
+            if ((SBADR + SBSIZE) > adr + 4) { //Yes - it is outer
+              //      DBG("found outer scope begin=%x end=%x\n", SBADR, SBADR+SBSIZE);
+              offset = write_size (SBADR, dsdt, len, shift);
               shift += offset;
               len += offset;
-            }  //else not an outer scope
+            } //else not an outer scope
             break;  //SB found
-          }          
+          }
         }
       }
     } //else not a scope
-    i = k - 3;    //if found then search again from found 
-  }  
+    i = k - 3;  //if found then search again from found 
+  }
   return len;
 }
 
 UINT32
 FixAny (
-  UINT8* dsdt,
+  UINT8 *dsdt,
   UINT32 len,
-  UINT8* ToFind,
+  UINT8 *ToFind,
   UINT32 LenTF,
-  UINT8* ToReplace,
+  UINT8 *ToReplace,
   UINT32 LenTR
 )
 {
   INT32 sizeoffset, adr;
   UINT32 i;
   BOOLEAN found = FALSE;
-  
+
   if (!ToFind) {
     return len;
   }
@@ -355,7 +355,7 @@ FixAny (
     return len;
   }
   sizeoffset = LenTR - LenTF;
-      
+
   for (i = 20; i < len; i++) {
     adr = FindBin (dsdt + i, len, ToFind, LenTF);
     if (adr < 0) {

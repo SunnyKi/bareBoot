@@ -797,13 +797,13 @@ Zlib_decompress (
 
 /*************************************************************************************************/
 
-#define PNG_SIGNATURE	0x0a1a0a0d474e5089ull
+#define PNG_SIGNATURE  0x0a1a0a0d474e5089ull
 
-#define CHUNK_IHDR		0x52444849
-#define CHUNK_IDAT		0x54414449
-#define CHUNK_IEND		0x444e4549
-#define CHUNK_PLTE		0x45544c50
-#define CHUNK_tRNS		0x534e5274
+#define CHUNK_IHDR    0x52444849
+#define CHUNK_IDAT    0x54414449
+#define CHUNK_IEND    0x444e4549
+#define CHUNK_PLTE    0x45544c50
+#define CHUNK_tRNS    0x534e5274
 
 UINT8 PNG_error;
 

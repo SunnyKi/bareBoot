@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2000 Apple Computer, Inc. All rights reserved.
  *
@@ -35,42 +34,38 @@
 -------------------------------------------------------------------------------
 */
 enum {
-	kDTPathNameSeparator	= '/'				/* 0x2F */
+  kDTPathNameSeparator = '/'    /* 0x2F */
 };
-
 
 /* Property Name Definitions (Property Names are C-Strings)*/
 enum {
-	kDTMaxPropertyNameLength=31	/* Max length of Property Name (terminator not included) */
+  kDTMaxPropertyNameLength = 31 /* Max length of Property Name (terminator not included) */
 };
 
 typedef char DTPropertyNameBuf[32];
 
-
 /* Entry Name Definitions (Entry Names are C-Strings)*/
 enum {
-	kDTMaxEntryNameLength		= 31	/* Max length of a C-String Entry Name (terminator not included) */
+  kDTMaxEntryNameLength = 31    /* Max length of a C-String Entry Name (terminator not included) */
 };
 
 /* length of DTEntryNameBuf = kDTMaxEntryNameLength +1*/
 typedef char DTEntryNameBuf[32];
 
-
 /* Entry*/
-typedef struct OpaqueDTEntry* DTEntry;
+typedef struct OpaqueDTEntry *DTEntry;
 
 /* Entry Iterator*/
-typedef struct OpaqueDTEntryIterator* DTEntryIterator;
+typedef struct OpaqueDTEntryIterator *DTEntryIterator;
 
 /* Property Iterator*/
-typedef struct OpaqueDTPropertyIterator* DTPropertyIterator;
-
+typedef struct OpaqueDTPropertyIterator *DTPropertyIterator;
 
 /* status values*/
 enum {
-		kError = -1,
-		kIterationDone = 0,
-		kSuccess = 1
+  kError = -1,
+  kIterationDone = 0,
+  kSuccess = 1
 };
 
 /*
@@ -81,45 +76,45 @@ Structures for a Flattened Device Tree
 //These definitions show the primitivity of C-language where there is no possibility to
 //explain the structure of DT
 
-#define kPropNameLength	32
+#define kPropNameLength  32
 
 typedef struct DeviceTreeNodeProperty {
-    char		name[kPropNameLength];	// NUL terminated property name
-    UINT32		length;		// Length (bytes) of following prop value
-//  unsigned long	value[1];	// Variable length value of property
-					// Padded to a multiple of a longword?
+  char name[kPropNameLength];   // NUL terminated property name
+  UINT32 length;                // Length (bytes) of following prop value
+//  unsigned long value[1]; // Variable length value of property
+  // Padded to a multiple of a longword?
 } DeviceTreeNodeProperty;
 
 typedef struct OpaqueDTEntry {
-    UINT32		nProperties;	// Number of props[] elements (0 => end)
-    UINT32		nChildren;	// Number of children[] elements
-//  DeviceTreeNodeProperty	props[];// array size == nProperties
-//  DeviceTreeNode	children[];	// array size == nChildren
+  UINT32 nProperties;           // Number of props[] elements (0 => end)
+  UINT32 nChildren;             // Number of children[] elements
+//  DeviceTreeNodeProperty  props[];// array size == nProperties
+//  DeviceTreeNode  children[]; // array size == nChildren
 } DeviceTreeNode;
 
 typedef DeviceTreeNode *RealDTEntry;
 
 typedef struct DTSavedScope {
-	struct DTSavedScope * nextScope;
-	RealDTEntry scope;
-	RealDTEntry entry;
-	unsigned long index;		
+  struct DTSavedScope *nextScope;
+  RealDTEntry scope;
+  RealDTEntry entry;
+  unsigned long index;
 } *DTSavedScopePtr;
 
 /* Entry Iterator*/
 typedef struct OpaqueDTEntryIterator {
-	RealDTEntry outerScope;
-	RealDTEntry currentScope;
-	RealDTEntry currentEntry;
-	DTSavedScopePtr savedScope;
-	UINT32 currentIndex;		
+  RealDTEntry outerScope;
+  RealDTEntry currentScope;
+  RealDTEntry currentEntry;
+  DTSavedScopePtr savedScope;
+  UINT32 currentIndex;
 } *RealDTEntryIterator;
 
 /* Property Iterator*/
 typedef struct OpaqueDTPropertyIterator {
-	RealDTEntry entry;
-	DeviceTreeNodeProperty *currentProperty;
-	UINT32 currentIndex;
+  RealDTEntry entry;
+  DeviceTreeNodeProperty *currentProperty;
+  UINT32 currentIndex;
 } *RealDTPropertyIterator;
 
 /*
@@ -129,22 +124,30 @@ typedef struct OpaqueDTPropertyIterator {
 */
 
 /* Used to initalize the device tree functions. */
+
 /* base is the base address of the flatened device tree */
-VOID DTInit(VOID *base);
+VOID DTInit (
+  VOID *base
+);
 
 /*
 -------------------------------------------------------------------------------
  Entry Handling
 -------------------------------------------------------------------------------
 */
+
 /* Compare two Entry's for equality. */
-extern INTN DTEntryIsEqual(CONST DTEntry ref1, CONST DTEntry ref2);
+extern INTN DTEntryIsEqual (
+  CONST DTEntry ref1,
+  CONST DTEntry ref2
+);
 
 /*
 -------------------------------------------------------------------------------
  LookUp Entry by Name
 -------------------------------------------------------------------------------
 */
+
 /*
  DTFindEntry:
  Find the device tree entry that contains propName=propValue.
@@ -153,7 +156,11 @@ extern INTN DTEntryIsEqual(CONST DTEntry ref1, CONST DTEntry ref2);
  Returns:    kSuccess = entry was found.  Entry is in entryH.
              kError   = entry was not found
 */
-extern INTN DTFindEntry(const CHAR8 *propName, const CHAR8 *propValue, DTEntry *entryH);
+extern INTN DTFindEntry (
+  const CHAR8 *propName,
+  const CHAR8 *propValue,
+  DTEntry * entryH
+);
 
 /*
  Lookup Entry
@@ -161,13 +168,18 @@ extern INTN DTFindEntry(const CHAR8 *propName, const CHAR8 *propValue, DTEntry *
  searchPoint pointer is NULL, the path name is assumed to be an absolute path
  name rooted to the root of the device tree.
 */
-extern INTN DTLookupEntry(const DTEntry searchPoint, const CHAR8 *pathName, DTEntry *foundEntry);
+extern INTN DTLookupEntry (
+  const DTEntry searchPoint,
+  const CHAR8 *pathName,
+  DTEntry * foundEntry
+);
 
 /*
 -------------------------------------------------------------------------------
  Entry Iteration
 -------------------------------------------------------------------------------
 */
+
 /*
  An Entry Iterator maintains three variables that are of interest to clients.
  First is an "OutermostScope" which defines the outer boundry of the iteration.
@@ -182,10 +194,15 @@ extern INTN DTLookupEntry(const DTEntry searchPoint, const CHAR8 *pathName, DTEn
  currentScope are set to the root entry.  The currentPosition for the iterator is
  set to "nil".
 */
-extern INTN DTCreateEntryIterator(const DTEntry startEntry, DTEntryIterator *iterator);
+extern INTN DTCreateEntryIterator (
+  const DTEntry startEntry,
+  DTEntryIterator * iterator
+);
 
 /* Dispose Entry Iterator*/
-extern INTN DTDisposeEntryIterator(DTEntryIterator iterator);
+extern INTN DTDisposeEntryIterator (
+  DTEntryIterator iterator
+);
 
 /*
  Enter Child Entry
@@ -194,7 +211,10 @@ extern INTN DTDisposeEntryIterator(DTEntryIterator iterator);
  "childEntry" is nil, the currentScope is set to the entry specified by the
  currentPosition of the iterator.
 */
-extern INTN DTEnterEntry(DTEntryIterator iterator, DTEntry childEntry);
+extern INTN DTEnterEntry (
+  DTEntryIterator iterator,
+  DTEntry childEntry
+);
 
 /*
  Exit to Parent Entry
@@ -203,7 +223,10 @@ extern INTN DTEnterEntry(DTEntryIterator iterator, DTEntry childEntry);
  previous currentScope), so the next iteration call will continue where it left off.
  This position is returned in parameter "currentPosition".
 */
-extern INTN DTExitEntry(DTEntryIterator iterator, DTEntry *currentPosition);
+extern INTN DTExitEntry (
+  DTEntryIterator iterator,
+  DTEntry * currentPosition
+);
 
 /*
  Iterate Entries 
@@ -212,7 +235,10 @@ extern INTN DTExitEntry(DTEntryIterator iterator, DTEntry *currentPosition);
 INTN== kIterationDone, all entries have been exhausted, and the
  value of nextEntry will be Nil. 
 */
-extern INTN DTIterateEntries(DTEntryIterator iterator, DTEntry *nextEntry);
+extern INTN DTIterateEntries (
+  DTEntryIterator iterator,
+  DTEntry * nextEntry
+);
 
 /*
  Restart Entry Iteration
@@ -221,41 +247,57 @@ extern INTN DTIterateEntries(DTEntryIterator iterator, DTEntry *nextEntry);
  outermostScope and currentScope of the iterator are unchanged. The currentPosition
  for the iterator is set to "nil".
 */
-extern INTN DTRestartEntryIteration(DTEntryIterator iterator);
+extern INTN DTRestartEntryIteration (
+  DTEntryIterator iterator
+);
 
 /*
 -------------------------------------------------------------------------------
  Get Property Values
 -------------------------------------------------------------------------------
 */
+
 /*
  Get the value of the specified property for the specified entry.  
 
  Get Property
 */
-extern INTN DTGetProperty(const DTEntry entry, const CHAR8 *propertyName, void **propertyValue, UINT32 *propertySize);
+extern INTN DTGetProperty (
+  const DTEntry entry,
+  const CHAR8 *propertyName,
+  void **propertyValue,
+  UINT32 *propertySize
+);
 
 /*
 -------------------------------------------------------------------------------
  Iterating Properties
 -------------------------------------------------------------------------------
 */
+
 /*
  Create Property Iterator
  Create the property iterator structure. The target entry is defined by entry.
 */
 
-extern INTN DTCreatePropertyIterator(const DTEntry entry,
-					DTPropertyIterator *iterator);
+extern INTN DTCreatePropertyIterator (
+  const DTEntry entry,
+  DTPropertyIterator * iterator
+);
 
 /*
  dmazar: version without mem alloc which can be used during or after ExitBootServices.
  caller should not call DTDisposePropertyIterator when using this version.
  */
-extern INTN DTCreatePropertyIteratorNoAlloc(CONST DTEntry entry, DTPropertyIterator iterator);
+extern INTN DTCreatePropertyIteratorNoAlloc (
+  CONST DTEntry entry,
+  DTPropertyIterator iterator
+);
 
 /* Dispose Property Iterator*/
-extern INTN DTDisposePropertyIterator(DTPropertyIterator iterator);
+extern INTN DTDisposePropertyIterator (
+  DTPropertyIterator iterator
+);
 
 /*
  Iterate Properites
@@ -263,8 +305,10 @@ extern INTN DTDisposePropertyIterator(DTPropertyIterator iterator);
  WhenINTN== kIterationDone, all properties have been exhausted.
 */
 
-extern INTN DTIterateProperties(DTPropertyIterator iterator,
-						CHAR8 **foundProperty);
+extern INTN DTIterateProperties (
+  DTPropertyIterator iterator,
+  CHAR8 **foundProperty
+);
 
 /*
  Restart Property Iteration
@@ -272,9 +316,8 @@ extern INTN DTIterateProperties(DTPropertyIterator iterator,
  reset to the beginning of the list of properties for an entry.
 */
 
-extern INTN DTRestartPropertyIteration(DTPropertyIterator iterator);
-
-
-
+extern INTN DTRestartPropertyIteration (
+  DTPropertyIterator iterator
+);
 
 #endif /* _PEXPERT_DEVICE_TREE_H_ */

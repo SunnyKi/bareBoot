@@ -155,8 +155,8 @@ DisableEhciLegacy (
                        EfiPciIoWidthUint32,
                        (UINT64) ExtendCapPtr, // USBLEGSUP
                        (UINT64) (BIOS_OWNED | OS_OWNED),
-		       (UINT64) OS_OWNED,
-		       (UINT64) 10000,  // wait that number of 100ns units
+                       (UINT64) OS_OWNED,
+                       (UINT64) 10000,  // wait that number of 100ns units
                        &pollResult
                        );
       if (EFI_ERROR (Status)) {
@@ -245,8 +245,8 @@ DisableOhciLegacy (
                        0,                // OHCI_BAR_INDEX
                        (UINT64) 4,       // OHCI_HC_CONTROL
                        (UINT64) 0x100,   // check InterruptRouting bit
-		       (UINT64) 0,       // we waiting for that
-		       (UINT64) 10000,  // wait that number of 100ns units
+                       (UINT64) 0,       // we waiting for that
+                       (UINT64) 10000,  // wait that number of 100ns units
                        &pollResult
                        );
   if (EFI_ERROR (Status)) {
