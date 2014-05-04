@@ -163,7 +163,7 @@ PartitionInstallAppleChildHandles (
               SubBlockSize,
               FALSE
               );
-         DEBUG ((EFI_D_INFO, __FUNCTION__ ": partition (%p) accepted\n", Handle));
+         DEBUG ((EFI_D_INFO, "%a: partition (%p) accepted\n", __FUNCTION__, Handle));
       }
 
   } while (0);

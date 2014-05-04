@@ -229,7 +229,7 @@ PartitionInstallGptChildHandles (
   LastBlock     = BlockIo->Media->LastBlock;
   MediaId       = BlockIo->Media->MediaId;
 
-  DEBUG ((EFI_D_INFO, __FUNCTION__ ": BlockSize %d, LastBlock 0x%lx\n", BlockSize, LastBlock));
+  DEBUG ((EFI_D_INFO, "%a: BlockSize %d, LastBlock 0x%lx\n", __FUNCTION__, BlockSize, LastBlock));
 
   GptValidStatus = EFI_NOT_FOUND;
 
