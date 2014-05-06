@@ -781,7 +781,7 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, FALSE, "ATY,Copyright", NULL, STRVAL ("Copyright AMD Inc. All Rights Reserved. 2005-2011") },
   { FLAGTRUE,	FALSE, "ATY,EFIVersion",	NULL,	STRVAL("01.00.3180")                  },
   { FLAGTRUE, FALSE, "ATY,Card#", get_romrevision_val, NULVAL },
-  { FLAGTRUE, FALSE, "ATY,VendorID", NULL, WRDVAL ((UINT16)0x1002) },
+  { FLAGTRUE, FALSE, "ATY,VendorID", NULL, WRDVAL ((UINT32)0x1002) },
   { FLAGTRUE, FALSE, "ATY,DeviceID", get_deviceid_val, NULVAL },
 #if 0
   { FLAGTRUE, FALSE, "ATY,MCLK", get_mclk_val, NULVAL },
