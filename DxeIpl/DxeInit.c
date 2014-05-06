@@ -168,10 +168,6 @@ Returns:
   //   * Don't report FV as physical memory
   //   * MemoryAllocation Hob should only cover physical memory
   //   * Use ResourceDescriptor Hob to report physical memory or Firmware Device and they shouldn't be overlapped
-#if 0
-  PrintString ("Prepare Cpu HOB information ...\n");
-#endif
-  PrepareHobCpu ();
 
   //
   // 1. BFV
@@ -189,6 +185,11 @@ Returns:
 #endif
   MemoryTopOnDescriptor = PrepareHobMemory (Handoff->MemDescCount, Handoff->MemDesc);
   
+#if 0
+  PrintString ("Prepare Cpu HOB information ...\n");
+#endif
+  PrepareHobCpu ();
+
   //
   // 3. Put [NV], [Stack], [PageTable], [MemDesc], [HOB] just below the [top free address under 4GB]
   //
