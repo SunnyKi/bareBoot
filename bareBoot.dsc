@@ -193,7 +193,7 @@
   bareBoot/Cpu/CpuDxe/Cpu.inf
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
   bareBoot/AcpiResetDxe/Reset.inf
-  bareBoot/LegacyMetronome/Metronome.inf
+  MdeModulePkg/Universal/Metronome/Metronome.inf
 
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf

@@ -77,7 +77,7 @@ INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
  INF  bareBoot/Cpu/CpuDxe/Cpu.inf
 #!endif
 INF  bareBoot/AcpiResetDxe/Reset.inf
-INF  bareBoot/LegacyMetronome/Metronome.inf
+INF  MdeModulePkg/Universal/Metronome/Metronome.inf
 
 INF  PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
 INF  PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
