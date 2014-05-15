@@ -1528,7 +1528,7 @@ GetUserSettings (
 
   gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", FALSE);
 
-  DBG ("Product Name used = %s\n", gSettings.ProductName);
+  DBG ("Product Name used = %a\n", gSettings.ProductName);
 
   array = plDictFind (dictPointer, "MemoryDevices", 13, plKindArray);
   if (array != NULL) {
