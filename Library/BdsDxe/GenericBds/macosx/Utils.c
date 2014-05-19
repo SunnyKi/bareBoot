@@ -1526,9 +1526,9 @@ GetUserSettings (
                     gSettings.ChassisManufacturer);
   GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
 
-  gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", FALSE);
-
   DBG ("Product Name used = %a\n", gSettings.ProductName);
+
+  gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", FALSE);
 
   array = plDictFind (dictPointer, "MemoryDevices", 13, plKindArray);
   if (array != NULL) {
