@@ -1,8 +1,8 @@
 /** @file
-  Base Debug library instance base on MemLog library.
+  Base Debug library instance based on MemLog library.
   It uses PrintLib to send debug messages to MemLog.
   
-  Copyright (c) 2013, Intel Corporation. All rights reserved.
+  Copyright (c) 2014, Intel Corporation. All rights reserved.
   This program and the accompanying materials                          
   are licensed and made available under the terms and conditions of the BSD License         
   which accompanies this distribution.  The full text of the license may be found at        
