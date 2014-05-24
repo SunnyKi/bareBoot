@@ -708,7 +708,7 @@ fsw_status_t fsw_dnode_readlink_data(struct fsw_dnode *dno, struct fsw_string *l
 
     struct fsw_string s;
 
-    if (dno->size > FSW_PATH_MAX)
+    if (dno == NULL || dno->size > FSW_PATH_MAX)
         return FSW_VOLUME_CORRUPTED;
 
     s.type = FSW_STRING_TYPE_ISO88591;
@@ -727,6 +727,8 @@ fsw_status_t fsw_dnode_readlink_data(struct fsw_dnode *dno, struct fsw_string *l
     if ((int)buffer_size < s.size)
         return FSW_VOLUME_CORRUPTED;
 
+    if (dno == NULL || dno->vol == NULL)
+        return FSW_VOLUME_CORRUPTED;
     status = fsw_strdup_coerce(link_target, dno->vol->host_string_type, &s);
     return status;
 }

@@ -323,6 +323,7 @@ fsw_hfs_volume_mount (
     /* Setup extents overflow file */
     status =
       fsw_dnode_create_root (vol, kHFSExtentsFileID, &vol->extents_tree.file);
+    CHECK (status);
     fsw_memcpy (vol->extents_tree.file->extents,
                 vol->primary_voldesc->extentsFile.extents,
                 sizeof vol->extents_tree.file->extents);
@@ -341,7 +342,7 @@ fsw_hfs_volume_mount (
       fsw_hfs_read_file (vol->catalog_tree.file, sizeof (BTNodeDescriptor),
                          sizeof (BTHeaderRec), (fsw_u8 *) & tree_header);
     if (r <= 0) {
-      status = FSW_VOLUME_CORRUPTED;
+      rv = FSW_VOLUME_CORRUPTED;
       break;
     }
     vol->case_sensitive = (signature == kHFSXSigWord) &&
@@ -389,7 +390,7 @@ fsw_hfs_volume_mount (
       fsw_hfs_read_file (vol->extents_tree.file, sizeof (BTNodeDescriptor),
                          sizeof (BTHeaderRec), (fsw_u8 *) & tree_header);
     if (r <= 0) {
-      status = FSW_VOLUME_CORRUPTED;
+      rv = FSW_VOLUME_CORRUPTED;
       break;
     }
 
@@ -867,7 +868,7 @@ fsw_hfs_btree_iterate_node (
         (btree->file, next_node * btree->node_size, btree->node_size,
          buffer) <= 0) {
       status = FSW_VOLUME_CORRUPTED;
-      return 1;
+      break;
     }
 
     node = (BTNodeDescriptor *) buffer;
