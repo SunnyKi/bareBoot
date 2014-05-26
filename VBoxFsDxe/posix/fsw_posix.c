@@ -267,6 +267,7 @@ struct dirent * fsw_posix_readdir(struct fsw_posix_dir *dir)
 #endif
     memcpy(dent.d_name, dno->name.data, dno->name.size);
     dent.d_name[dno->name.size] = 0;
+    fsw_dnode_release(dno);
 
     return &dent;
 }

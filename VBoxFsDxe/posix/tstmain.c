@@ -1,5 +1,5 @@
 /**
- * \file lslr.c
+ * \file tstmain.c
  * Test program for the POSIX user space environment.
  */
 
@@ -53,8 +53,32 @@ static struct fsw_fstype_table *fstypes[] = {
     NULL
 };
 
+FILE* outfile = NULL;
+
 static int
-listdir(struct fsw_posix_volume *vol, char *path, int level)
+catfile(struct fsw_posix_volume *vol, char *path)
+{
+    struct fsw_posix_file *file;
+    int r;
+    char buf[4096];
+
+    file = fsw_posix_open(vol, path, 0, 0);
+    if (file == NULL) {
+        printf("open(%s) call failed.\n", path);
+        return 1;
+    }
+    while ((r = fsw_posix_read(file, buf, sizeof(buf))) > 0)
+    {
+        if (outfile != NULL)
+	    (void) fwrite(buf, r, 1, outfile);
+    }
+    fsw_posix_close(file);
+
+    return 0;
+}
+
+static int
+viewdir(struct fsw_posix_volume *vol, char *path, int level, int rflag, int docat)
 {
     struct fsw_posix_dir *dir;
     struct dirent *dent;
@@ -71,50 +95,54 @@ listdir(struct fsw_posix_volume *vol, char *path, int level)
             fputc(' ', stdout);
         printf("%d  %s\n", dent->d_type, dent->d_name);
 
-        if (dent->d_type == DT_DIR) {
+        if (rflag && dent->d_type == DT_DIR) {
             snprintf(subpath, sizeof(subpath) - 1, "%s%s/", path, dent->d_name);
-            listdir(vol, subpath, level + 1);
-        }
+            viewdir(vol, subpath, level + 1, rflag, docat);
+        } else if (docat && dent->d_type == DT_REG) {
+            snprintf(subpath, sizeof(subpath) - 1, "%s%s", path, dent->d_name);
+            catfile(vol, subpath);
+	}
     }
     fsw_posix_closedir(dir);
 
     return 0;
 }
 
-static int
-catfile(struct fsw_posix_volume *vol, char *path)
+void
+usage(char* pname)
 {
-    struct fsw_posix_file *file;
-    int r;
-    char buf[256];
-
-    file = fsw_posix_open(vol, path, 0, 0);
-    if (file == NULL) {
-        printf("open(%s) call failed.\n", path);
-        return 1;
-    }
-    while ((r = fsw_posix_read(file, buf, sizeof(buf))) > 0)
-    {
-        int i;
-        for (i = 0; i < r; i++)
-        {
-           printf("%c", buf[i]);
-        }
-    }
-    fsw_posix_close(file);
-
-    return 0;
+    fprintf(stderr, "Usage: %s <file/device> l|c[r] dir|file\n", pname);
+    exit(1);
 }
 
 int
 main(int argc, char **argv)
 {
+    int lflag, cflag, rflag;
     struct fsw_posix_volume *vol = NULL;
     int i;
+    char* cp;
 
-    if (argc != 2) {
-        printf("Usage: lslr <file/device>\n");
-        return 1;
+    if (argc != 4) {
+        usage(argv[0]);
+    }
+
+    lflag = cflag = rflag = 0;
+
+    for (cp = argv[2]; *cp != '\0'; cp++) {
+	switch (*cp) {
+        case 'l':
+	    lflag = 1;
+	    break;
+        case 'c':
+	    cflag = 1;
+	    break;
+        case 'r':
+	    rflag = 1;
+	    break;
+        default:
+	    usage(argv[0]);
+	}
     }
 
     for (i = 0; fstypes[i] != NULL; i++) {
@@ -135,10 +163,16 @@ main(int argc, char **argv)
     listdir(vol, "/System/Library/Extensions/", 0);
     catfile(vol, "/System/Library/Extensions/AppleHPET.kext/Contents/Info.plist");
 #endif
-    listdir(vol, "/", 0);
+    if (lflag) {
+        viewdir(vol, argv[3], 0, rflag, cflag);
+    } else if (cflag) {
+        catfile(vol, argv[3]);
+    }
 
     fsw_posix_unmount(vol);
 
+    (void) fclose (stdout);
+    (void) fclose (stderr);
     return 0;
 }
 

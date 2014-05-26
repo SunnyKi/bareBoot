@@ -274,6 +274,7 @@ fsw_hfs_volume_mount (
                          ("fsw_hfs: Found HFS+ inside HFS, untested\n")));
         vol->hfs_kind = FSW_HFS_PLUS_EMB;
         vol->emb_block_off = be32_to_cpu (mdb->drEmbedExtent.startBlock);
+        fsw_block_release (vol, blockno, buffer);
         blockno += vol->emb_block_off;
         /* retry */
         continue;
