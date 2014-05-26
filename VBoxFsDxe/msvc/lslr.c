@@ -102,7 +102,7 @@ static int catfile(struct fsw_mswin_volume *vol, char *path)
 
 int main(int argc, char **argv)
 {
-    struct fsw_mswin_volume *vol;
+    struct fsw_mswin_volume *vol = NULL;
     int i;
 
     if (argc != 2) {

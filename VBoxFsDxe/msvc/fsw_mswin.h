@@ -38,12 +38,11 @@
 #ifndef _FSW_MSWIN_H_
 #define _FSW_MSWIN_H_
 
-#include "fsw_core.h"
-
 #include <fcntl.h>
 #include <sys/types.h>
 #include <dirent.h>
 
+#include "fsw_core.h"
 
 /**
  * MSWIN Host: Private per-volume structure.

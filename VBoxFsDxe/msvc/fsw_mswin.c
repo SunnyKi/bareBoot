@@ -84,7 +84,7 @@ struct fsw_mswin_volume * fsw_mswin_mount(const char *path, struct fsw_fstype_ta
     pvol->fd = -1;
 
     // open underlying file/device
-    pvol->fd = open(path, O_RDONLY | O_BINARY, 0);
+    pvol->fd = _open(path, O_RDONLY | O_BINARY, 0);
     if (pvol->fd < 0) {
         fprintf(stderr, "fsw_mswin_mount: %s: %s\n", path, strerror(errno));
         fsw_free(pvol);
@@ -371,10 +371,10 @@ fsw_status_t fsw_mswin_read_block(struct fsw_volume *vol, fsw_u32 phys_bno, void
 
     // read from disk
     block_offset = (off_t)phys_bno * vol->phys_blocksize;
-    seek_result = lseek(pvol->fd, block_offset, SEEK_SET);
+    seek_result = _lseek(pvol->fd, block_offset, SEEK_SET);
     if (seek_result != block_offset)
         return FSW_IO_ERROR;
-    read_result = read(pvol->fd, buffer, vol->phys_blocksize);
+    read_result = _read(pvol->fd, buffer, vol->phys_blocksize);
     if (read_result != vol->phys_blocksize)
         return FSW_IO_ERROR;
 

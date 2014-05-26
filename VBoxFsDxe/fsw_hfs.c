@@ -452,9 +452,9 @@ fsw_hfs_volume_stat (
                  vol->block_size_shift);
 #else
   sb->total_bytes =
-    be32_to_cpu (vol->primary_voldesc->totalBlocks) << vol->block_size_shift;
+    ((fsw_u64) be32_to_cpu (vol->primary_voldesc->totalBlocks)) << vol->block_size_shift;
   sb->free_bytes =
-    be32_to_cpu (vol->primary_voldesc->freeBlocks) << vol->block_size_shift;
+    ((fsw_u64) be32_to_cpu (vol->primary_voldesc->freeBlocks)) << vol->block_size_shift;
 #endif
   return FSW_SUCCESS;
 }

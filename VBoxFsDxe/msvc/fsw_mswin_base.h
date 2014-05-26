@@ -88,6 +88,6 @@ typedef uint64_t      fsw_u64;
 #define DEBUG(x)
 
 #define RShiftU64(val, shift) ((val) >> (shift))
-#define LShiftU64(val, shift) ((val) << (shift))
+#define LShiftU64(val, shift) (((fsw_u64)(val)) << (shift))
 
 #endif
