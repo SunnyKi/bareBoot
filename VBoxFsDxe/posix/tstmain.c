@@ -37,6 +37,10 @@
 
 #include "fsw_posix.h"
 
+#ifndef ITERATIONS
+#define ITERATIONS 1
+#endif
+
 #if 0
 extern struct fsw_fstype_table FSW_FSTYPE_TABLE_NAME(ext2);
 extern struct fsw_fstype_table FSW_FSTYPE_TABLE_NAME(reiserfs);
@@ -64,7 +68,7 @@ catfile(struct fsw_posix_volume *vol, char *path)
 
     file = fsw_posix_open(vol, path, 0, 0);
     if (file == NULL) {
-        printf("open(%s) call failed.\n", path);
+        fprintf(stderr, "open(%s) call failed.\n", path);
         return 1;
     }
     while ((r = fsw_posix_read(file, buf, sizeof(buf))) > 0)
@@ -87,13 +91,15 @@ viewdir(struct fsw_posix_volume *vol, char *path, int level, int rflag, int doca
 
     dir = fsw_posix_opendir(vol, path);
     if (dir == NULL) {
-        printf("opendir(%s) call failed.\n", path);
+        fprintf(stderr, "opendir(%s) call failed.\n", path);
         return 1;
     }
     while ((dent = fsw_posix_readdir(dir)) != NULL) {
-        for (i = 0; i < level*2; i++)
-            fputc(' ', stdout);
-        printf("%d  %s\n", dent->d_type, dent->d_name);
+        if (outfile != NULL) {
+            for (i = 0; i < level*2; i++)
+                fputc(' ', outfile);
+            fprintf(outfile, "%d  %s\n", dent->d_type, dent->d_name);
+	}
 
         if (rflag && dent->d_type == DT_DIR) {
             snprintf(subpath, sizeof(subpath) - 1, "%s%s/", path, dent->d_name);
@@ -148,12 +154,12 @@ main(int argc, char **argv)
     for (i = 0; fstypes[i] != NULL; i++) {
         vol = fsw_posix_mount(argv[1], fstypes[i]);
         if (vol != NULL) {
-            printf("Mounted as '%s'.\n", fstypes[i]->name.data);
+            fprintf(stdout, "Mounted as '%s'.\n", fstypes[i]->name.data);
             break;
         }
     }
     if (vol == NULL) {
-        printf("Mounting failed.\n");
+        fprintf(stderr, "Mounting failed.\n");
         return 1;
     }
 
@@ -163,14 +169,19 @@ main(int argc, char **argv)
     listdir(vol, "/System/Library/Extensions/", 0);
     catfile(vol, "/System/Library/Extensions/AppleHPET.kext/Contents/Info.plist");
 #endif
-    if (lflag) {
-        viewdir(vol, argv[3], 0, rflag, cflag);
-    } else if (cflag) {
-        catfile(vol, argv[3]);
+    for (i = 0; i < ITERATIONS; i++) {
+        if (lflag) {
+            viewdir(vol, argv[3], 0, rflag, cflag);
+        } else if (cflag) {
+            catfile(vol, argv[3]);
+        }
     }
 
     fsw_posix_unmount(vol);
 
+    if (outfile != NULL) {
+        (void) fclose (outfile);
+    }
     (void) fclose (stdout);
     (void) fclose (stderr);
     return 0;
