@@ -1768,7 +1768,6 @@ CheckKeyboardConnect (
 {
   EFI_STATUS     Status;
 
-  Status         = EFI_SUCCESS;
   //
   // enable keyboard itself and wait for its ack
   // If can't receive ack, Keyboard should not be connected.
