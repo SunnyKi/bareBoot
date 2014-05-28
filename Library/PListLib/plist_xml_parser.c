@@ -754,27 +754,25 @@ PListXMLFixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr) {
 //==========================================================================
 // PListXMLNewTag
 
+#define TAGS_CACHE_SIZE 0x1000
+
 TagPtr
 PListXMLNewTag (void) {
   unsigned int i;
   TagPtr       tag;
 
   if (gPListXMLTagsFree == NULL) {
-    tag = (TagPtr) _plzalloc (0x1000 * sizeof (Tag));
+    tag = (TagPtr) _plzalloc (TAGS_CACHE_SIZE * sizeof (Tag));
 
     if (tag == NULL) {
       return NULL;
     }
 
     // Initalize the new tags.
-    for (i = 0; i < 0x1000; i++) {
-      tag[i].type = kTagTypeNone;
-      tag[i].string = NULL;
-      tag[i].tag = NULL;
+    for (i = 0; i < TAGS_CACHE_SIZE; i++) {
       tag[i].tagNext = tag + i + 1;
     }
 
-    tag[0x1000 - 1].tagNext = NULL;
     gPListXMLTagsFree = tag;
     gPListXMLTagsArena = tag;
   }
@@ -783,6 +781,8 @@ PListXMLNewTag (void) {
   gPListXMLTagsFree = tag->tagNext;
   return tag;
 }
+
+#undef TAGS_CACHE_SIZE
 
 char*
 PListXMLNewSymbol (char* string) {

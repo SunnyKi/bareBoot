@@ -35,7 +35,7 @@
 /* Interface to XML parser */
 
 typedef enum {
-  kTagTypeNone,
+  kTagTypeNone = 0,
   kTagTypeDict,
   kTagTypeKey,
   kTagTypeString,
