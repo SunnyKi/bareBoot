@@ -2222,6 +2222,14 @@ BiosVideoGraphicsOutputVbeBlt (
   UINT32                         Pixel;
   UINTN                          TotalBytes;
 
+  if (This == NULL || ((UINTN) BltOperation) >= EfiGraphicsOutputBltOperationMax) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (Width == 0 || Height == 0) {
+    return EFI_INVALID_PARAMETER;
+  }
+
   BiosVideoPrivate  = BIOS_VIDEO_DEV_FROM_GRAPHICS_OUTPUT_THIS (This);
   Mode              = &BiosVideoPrivate->ModeData[This->Mode->Mode];
   PciIo             = BiosVideoPrivate->PciIo;
@@ -2233,13 +2241,6 @@ BiosVideoGraphicsOutputVbeBlt (
   BltUint8          = (UINT8 *) BltBuffer;
   TotalBytes        = Width * VbePixelWidth;
 
-  if (This == NULL || ((UINTN) BltOperation) >= EfiGraphicsOutputBltOperationMax) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if (Width == 0 || Height == 0) {
-    return EFI_INVALID_PARAMETER;
-  }
   //
   // We need to fill the Virtual Screen buffer with the blt data.
   // The virtual screen is upside down, as the first row is the bootom row of
@@ -2631,7 +2632,9 @@ BiosVideoGraphicsOutputVgaBlt (
   EFI_TPL             OriginalTPL;
   UINT8               *MemAddress;
   UINTN               BytesPerScanLine;
-  //UINTN               BytesPerBitPlane;
+#if 0
+  UINTN               BytesPerBitPlane;
+#endif
   UINTN               Bit;
   UINTN               Index;
   UINTN               Index1;
@@ -2657,15 +2660,6 @@ BiosVideoGraphicsOutputVgaBlt (
   UINTN               Y;
   UINTN               CurrentMode;
 
-  BiosVideoPrivate  = BIOS_VIDEO_DEV_FROM_GRAPHICS_OUTPUT_THIS (This);
-
-  CurrentMode = This->Mode->Mode;
-  PciIo             = BiosVideoPrivate->PciIo;
-  MemAddress        = BiosVideoPrivate->ModeData[CurrentMode].LinearFrameBuffer;
-  BytesPerScanLine  = BiosVideoPrivate->ModeData[CurrentMode].BytesPerScanLine >> 3;
-  //BytesPerBitPlane  = BytesPerScanLine * BiosVideoPrivate->ModeData[CurrentMode].VerticalResolution;
-  VgaFrameBuffer    = BiosVideoPrivate->VgaFrameBuffer;
-
   if (This == NULL || ((UINTN) BltOperation) >= EfiGraphicsOutputBltOperationMax) {
     return EFI_INVALID_PARAMETER;
   }
@@ -2673,6 +2667,17 @@ BiosVideoGraphicsOutputVgaBlt (
   if (Width == 0 || Height == 0) {
     return EFI_INVALID_PARAMETER;
   }
+
+  BiosVideoPrivate  = BIOS_VIDEO_DEV_FROM_GRAPHICS_OUTPUT_THIS (This);
+
+  CurrentMode = This->Mode->Mode;
+  PciIo             = BiosVideoPrivate->PciIo;
+  MemAddress        = BiosVideoPrivate->ModeData[CurrentMode].LinearFrameBuffer;
+  BytesPerScanLine  = BiosVideoPrivate->ModeData[CurrentMode].BytesPerScanLine >> 3;
+#if 0
+  BytesPerBitPlane  = BytesPerScanLine * BiosVideoPrivate->ModeData[CurrentMode].VerticalResolution;
+#endif
+  VgaFrameBuffer    = BiosVideoPrivate->VgaFrameBuffer;
   //
   // We need to fill the Virtual Screen buffer with the blt data.
   // The virtual screen is upside down, as the first row is the bootom row of
