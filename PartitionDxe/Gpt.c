@@ -219,7 +219,6 @@ PartitionInstallGptChildHandles (
   HARDDRIVE_DEVICE_PATH       HdDev;
   UINT32                      MediaId;
 
-  ProtectiveMbr = NULL;
   PrimaryHeader = NULL;
   BackupHeader  = NULL;
   PartEntry     = NULL;
@@ -602,7 +601,6 @@ PartitionRestoreGptTable (
   UINT8                       *Ptr;
   UINT32                      MediaId;
 
-  PartHdr   = NULL;
   Ptr       = NULL;
 
   BlockSize = BlockIo->Media->BlockSize;
