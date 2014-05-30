@@ -169,6 +169,9 @@ main(int argc, char **argv)
     listdir(vol, "/System/Library/Extensions/", 0);
     catfile(vol, "/System/Library/Extensions/AppleHPET.kext/Contents/Info.plist");
 #endif
+
+    outfile = stdout;
+
     for (i = 0; i < ITERATIONS; i++) {
         if (lflag) {
             viewdir(vol, argv[3], 0, rflag, cflag);

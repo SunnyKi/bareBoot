@@ -8,7 +8,7 @@ SRCS	= ${MAIN} \
 		${VSRC}/fsw_lib.c \
 		${VSRC}/fsw_hfs.c
 
-CFLAGS	= -g -Wall -I. -I${VSRC} -DHOST_POSIX -DFSTYPE=hfs -DFSW_DEBUG_LEVEL=0 -DITERATIONS=1
+CFLAGS	= -g -Wall -I. -I${VSRC} -DHOST_POSIX -DFSTYPE=hfs -DFSW_DEBUG_LEVEL=3 -DITERATIONS=1
 
 hfstest:	${SRCS}
 	${CC} ${CFLAGS} ${SRCS}

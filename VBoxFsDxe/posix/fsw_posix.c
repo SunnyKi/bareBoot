@@ -123,14 +123,17 @@ int fsw_posix_unmount(struct fsw_posix_volume *pvol)
 struct fsw_posix_file * fsw_posix_open(struct fsw_posix_volume *pvol, const char *path, int flags, mode_t mode)
 {
     fsw_status_t        status;
-    struct fsw_posix_file *file;
+    struct fsw_posix_file *file = NULL;
 
     // TODO: check flags for unwanted values
 
     // allocate file structure
     status = fsw_alloc(sizeof(struct fsw_posix_file), &file);
-    if (status)
+    if (status) {
+        if (file != NULL)
+          fsw_free(file);
         return NULL;
+    }
     file->pvol = pvol;
 
     // open the file
@@ -202,12 +205,15 @@ int fsw_posix_close(struct fsw_posix_file *file)
 struct fsw_posix_dir * fsw_posix_opendir(struct fsw_posix_volume *pvol, const char *path)
 {
     fsw_status_t        status;
-    struct fsw_posix_dir *dir;
+    struct fsw_posix_dir *dir = NULL;
 
     // allocate file structure
     status = fsw_alloc(sizeof(struct fsw_posix_dir), &dir);
-    if (status)
+    if (status) {
+        if (dir != NULL)
+        fsw_free(dir);
         return NULL;
+    }
     dir->pvol = pvol;
 
     // open the directory

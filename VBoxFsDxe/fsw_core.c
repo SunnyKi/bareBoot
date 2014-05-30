@@ -182,7 +182,7 @@ fsw_status_t fsw_block_get(struct VOLSTRUCTNAME *vol, fsw_u32 phys_bno, fsw_u32 
 {
     fsw_status_t    status;
     fsw_u32         i, discard_level, new_bcache_size;
-    struct fsw_blockcache *new_bcache;
+    struct fsw_blockcache *new_bcache = NULL;
 
     // TODO: allow the host driver to do its own caching; just call through if
     //  the appropriate function pointers are set
@@ -224,8 +224,11 @@ fsw_status_t fsw_block_get(struct VOLSTRUCTNAME *vol, fsw_u32 phys_bno, fsw_u32 
         else
             new_bcache_size = vol->bcache_size << 1;
         status = fsw_alloc(new_bcache_size * sizeof(struct fsw_blockcache), &new_bcache);
-        if (status)
+        if (status) {
+            if (new_bcache != NULL)
+              fsw_free(new_bcache);
             return status;
+	}
         if (vol->bcache_size > 0)
             fsw_memcpy(new_bcache, vol->bcache, vol->bcache_size * sizeof(struct fsw_blockcache));
         for (i = vol->bcache_size; i < new_bcache_size; i++) {

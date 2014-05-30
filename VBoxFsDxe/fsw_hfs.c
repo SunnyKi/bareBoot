@@ -590,22 +590,24 @@ fsw_hfs_btree_search (
 {
   BTNodeDescriptor *node;
   fsw_u32 currnode;
-  fsw_u32 rec;
+  fsw_u32 rec = 0;
   fsw_status_t status;
   fsw_u8 *buffer = NULL;
 
   currnode = btree->root_node;
   status = fsw_alloc (btree->node_size, &buffer);
-  if (status)
+  if (status) {
+    if (buffer != NULL)
+      fsw_free(buffer);
     return status;
+  }
   node = (BTNodeDescriptor *) buffer;
 
   for (;;) {
-    int cmp = 0;
+    fsw_s32 cmp = 0;
     int match;
     fsw_u32 count;
 
-  readnode:
     match = 0;
     /* Read a node.  */
     if (fsw_hfs_read_file
@@ -656,7 +658,7 @@ fsw_hfs_btree_search (
 
     if (node->kind == kBTLeafNode && cmp < 0 && node->fLink) {
       currnode = be32_to_cpu (node->fLink);
-      goto readnode;
+      continue;
     }
     else if (!match) {
       status = FSW_NOT_FOUND;
@@ -666,7 +668,6 @@ fsw_hfs_btree_search (
     /* Perform binary search */
     fsw_u32 lower = 0;
     fsw_u32 upper = count - 1;
-    fsw_s32 cmp = -1;
     BTreeKey *currkey = NULL;
 
     if (count == 0) {
@@ -835,8 +836,11 @@ fsw_hfs_btree_iterate_node (
   fsw_u8 *buffer = NULL;
 
   status = fsw_alloc (btree->node_size, &buffer);
-  if (status)
+  if (status) {
+    if (buffer != NULL)
+      fsw_free(buffer);
     return status;
+  }
 
   for (;;) {
     fsw_u32 i;
