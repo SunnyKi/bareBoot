@@ -260,32 +260,30 @@ GetExtraKextsDir (
 {
   CHAR16 *OSTypeStr = NULL;
   CHAR16 *KextsDir;
-  UINT8  OSVersionLen;
 
   OSTypeStr = NULL;
   KextsDir = NULL;
-  OSVersionLen = AsciiStrLen (OSVersion);
 
   // get os version as string
-  if (AsciiStrnCmp (OSVersion, "10.4", OSVersionLen) == 0) {
+  if (AsciiStrnCmp (OSVersion, "10.4", 4) == 0) {
     OSTypeStr = L"10.4";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.5", OSVersionLen) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
     OSTypeStr = L"10.5";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.6", OSVersionLen) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
     OSTypeStr = L"10.6";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.7", OSVersionLen) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
     OSTypeStr = L"10.7";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.8", OSVersionLen) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0) {
     OSTypeStr = L"10.8";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.9", OSVersionLen) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
     OSTypeStr = L"10.9";
   }
-  else if ((OSVersionLen == 5) && (AsciiStrnCmp (OSVersion, "10.10", OSVersionLen) == 0)) {
+  else if ((AsciiStrLen (OSVersion) >= 5) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
     OSTypeStr = L"10.10";
   }
   else {
@@ -339,7 +337,6 @@ LoadKexts (
   UINTN extra_size;
   VOID *extra;
   UINT16 KextCount;
-  UINT8 OSVersionLen;
 
 #if defined(MDE_CPU_X64)
   cpu_type_t archCpuType = CPU_TYPE_X86_64;
@@ -347,21 +344,18 @@ LoadKexts (
   cpu_type_t archCpuType = CPU_TYPE_I386;
 #endif
 
-  OSVersionLen = 0;
-
   if (AsciiStrStr (gSettings.BootArgs, "arch=x86_64") != NULL)
     archCpuType = CPU_TYPE_X86_64;
   else if (AsciiStrStr (gSettings.BootArgs, "arch=i386") != NULL)
     archCpuType = CPU_TYPE_I386;
   else if (OSVersion != NULL) {
-    OSVersionLen = AsciiStrLen (OSVersion);
-    if ((OSVersionLen == 5) && (AsciiStrnCmp (OSVersion, "10.10", OSVersionLen) == 0))
+    if ((AsciiStrLen (OSVersion) >= 5) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0))
       archCpuType = CPU_TYPE_X86_64;
-    else if (AsciiStrnCmp (OSVersion, "10.9", OSVersionLen) == 0)
+    else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0)
       archCpuType = CPU_TYPE_X86_64;
-    else if (AsciiStrnCmp (OSVersion, "10.8", OSVersionLen) == 0)
+    else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0)
       archCpuType = CPU_TYPE_X86_64;
-    else if (AsciiStrnCmp (OSVersion, "10.7", OSVersionLen) != 0)
+    else if (AsciiStrnCmp (OSVersion, "10.7", 4) != 0)
       archCpuType = CPU_TYPE_I386;
   }
 
