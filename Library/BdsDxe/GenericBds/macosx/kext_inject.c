@@ -260,28 +260,33 @@ GetExtraKextsDir (
 {
   CHAR16 *OSTypeStr = NULL;
   CHAR16 *KextsDir;
+  UINT8  OSVersionLen;
 
   OSTypeStr = NULL;
   KextsDir = NULL;
+  OSVersionLen = AsciiStrLen (OSVersion);
 
   // get os version as string
-  if (AsciiStrnCmp (OSVersion, "10.4", 4) == 0) {
+  if (AsciiStrnCmp (OSVersion, "10.4", OSVersionLen) == 0) {
     OSTypeStr = L"10.4";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.5", OSVersionLen) == 0) {
     OSTypeStr = L"10.5";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.6", OSVersionLen) == 0) {
     OSTypeStr = L"10.6";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.7", OSVersionLen) == 0) {
     OSTypeStr = L"10.7";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.8", OSVersionLen) == 0) {
     OSTypeStr = L"10.8";
   }
-  else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
+  else if (AsciiStrnCmp (OSVersion, "10.9", OSVersionLen) == 0) {
     OSTypeStr = L"10.9";
+  }
+  else if ((OSVersionLen == 5) && (AsciiStrnCmp (OSVersion, "10.10", OSVersionLen) == 0)) {
+    OSTypeStr = L"10.10";
   }
   else {
     OSTypeStr = L"other";
@@ -334,6 +339,7 @@ LoadKexts (
   UINTN extra_size;
   VOID *extra;
   UINT16 KextCount;
+  UINT8 OSVersionLen;
 
 #if defined(MDE_CPU_X64)
   cpu_type_t archCpuType = CPU_TYPE_X86_64;
@@ -341,16 +347,21 @@ LoadKexts (
   cpu_type_t archCpuType = CPU_TYPE_I386;
 #endif
 
+  OSVersionLen = 0;
+
   if (AsciiStrStr (gSettings.BootArgs, "arch=x86_64") != NULL)
     archCpuType = CPU_TYPE_X86_64;
   else if (AsciiStrStr (gSettings.BootArgs, "arch=i386") != NULL)
     archCpuType = CPU_TYPE_I386;
   else if (OSVersion != NULL) {
-    if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0)
+    OSVersionLen = AsciiStrLen (OSVersion);
+    if ((OSVersionLen == 5) && (AsciiStrnCmp (OSVersion, "10.10", OSVersionLen) == 0))
       archCpuType = CPU_TYPE_X86_64;
-    else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0)
+    else if (AsciiStrnCmp (OSVersion, "10.9", OSVersionLen) == 0)
       archCpuType = CPU_TYPE_X86_64;
-    else if (AsciiStrnCmp (OSVersion, "10.7", 4) != 0)
+    else if (AsciiStrnCmp (OSVersion, "10.8", OSVersionLen) == 0)
+      archCpuType = CPU_TYPE_X86_64;
+    else if (AsciiStrnCmp (OSVersion, "10.7", OSVersionLen) != 0)
       archCpuType = CPU_TYPE_I386;
   }
 
@@ -608,6 +619,11 @@ UINT8 KBEMLSearch[] =
 UINT8 KBEMLReplace[] =
   { 0xC6, 0xE8, 0x30, 0x00, 0x00, 0x00, 0x90, 0x90, 0x48, 0x89, 0xDF };
 
+UINT8 KBEYSearch[] =
+  { 0xC6, 0xE8, 0x25, 0x00, 0x00, 0x00, 0xEB, 0x05, 0xE8, 0xCE, 0x02 };
+UINT8 KBEYReplace[] =
+  { 0xC6, 0xE8, 0x25, 0x00, 0x00, 0x00, 0x90, 0x90, 0xE8, 0xCE, 0x02 };
+
 //
 // We can not rely on OSVersion global variable for OS version detection,
 // since in some cases it is not correct (install of ML from Lion, for example).
@@ -629,6 +645,7 @@ KernelBooterExtensionsPatch (
   UINTN NumLion_X64 = 0;
   UINTN NumLion_i386 = 0;
   UINTN NumML = 0;
+  UINTN NumY = 0;
 
   if (is64BitKernel) {
     NumLion_X64 =
@@ -637,6 +654,10 @@ KernelBooterExtensionsPatch (
     NumML =
       SearchAndCount (Kernel, KERNEL_MAX_SIZE, (CHAR8 *) KBEMLSearch,
                       sizeof (KBEMLSearch));
+
+    NumY =
+      SearchAndCount (Kernel, KERNEL_MAX_SIZE, (CHAR8 *) KBEYSearch,
+                      sizeof (KBEYSearch));
   }
   else {
     NumLion_i386 =
@@ -644,7 +665,7 @@ KernelBooterExtensionsPatch (
                       sizeof (KBELionSearch_i386));
   }
 
-  if (NumLion_X64 + NumLion_i386 + NumML > 1) {
+  if (NumLion_X64 + NumLion_i386 + NumML + NumY > 1) {
     // more then one pattern found - we do not know what to do with it
     // and we'll skipp it
 #ifdef KEXT_INJECT_DEBUG
@@ -670,6 +691,12 @@ KernelBooterExtensionsPatch (
       SearchAndReplace (Kernel, KERNEL_MAX_SIZE, (CHAR8 *) KBEMLSearch,
                         sizeof (KBEMLSearch), (CHAR8 *) KBEMLReplace, 1);
   }
+  else if (NumY == 1) {
+    Num =
+      SearchAndReplace (Kernel, KERNEL_MAX_SIZE, (CHAR8 *) KBEYSearch,
+                        sizeof (KBEMLSearch), (CHAR8 *) KBEYReplace, 1);
+  }
+
 #ifdef KEXT_INJECT_DEBUG
   DBG (L"Kext Inject: SearchAndReplace %d times.\n", Num);
 #endif
