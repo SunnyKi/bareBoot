@@ -53,6 +53,7 @@
   MdePkg/MdePkg.dec
   bareBoot/bareBoot.dec
 
+
 [LibraryClasses]
   MemoryAllocationLib
   DevicePathLib
@@ -64,6 +65,7 @@
   ReportStatusCodeLib
   MemLogLib
   ShiftKeysLib
+
 
 [Protocols]
   gEfiUsbIoProtocolGuid                         ## BY_START

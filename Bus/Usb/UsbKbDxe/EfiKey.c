@@ -52,7 +52,6 @@ USBKeyboardDriverBindingEntryPoint (
 {
   if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) {
     EFI_STATUS              Status;
-
     Status = EfiLibInstallDriverBindingComponentName2 (
                ImageHandle,
                SystemTable,

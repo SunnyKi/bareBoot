@@ -82,7 +82,6 @@
 [Protocols]
   gEfiPciIoProtocolGuid                         ## TO_START
   gEfiUsb2HcProtocolGuid                        ## BY_START
-  gEfiBlockIoProtocolGuid
 
 # [Event]
 #   ##

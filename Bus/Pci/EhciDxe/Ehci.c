@@ -1347,7 +1347,7 @@ EhcDriverEntryPoint (
              &gEhciComponentName2
              );
   } else {
-    return EFI_UNSUPPORTED;
+      return EFI_UNSUPPORTED;
   }
 }
 

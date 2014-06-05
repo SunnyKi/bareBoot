@@ -16,6 +16,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #ifndef _EFI_EHCI_H_
 #define _EFI_EHCI_H_
 
+
 #include <Uefi.h>
 
 #include <Protocol/Usb2HostController.h>

@@ -75,6 +75,7 @@
   MemLogLib
   ShiftKeysLib
 
+
 [Protocols]
   gEfiUsbIoProtocolGuid                         ## TO_START
   gEfiDevicePathProtocolGuid                    ## TO_START
