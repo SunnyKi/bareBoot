@@ -1283,6 +1283,7 @@ GetUserSettings (
 
   GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
   GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
+  gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
 
   if (AsciiStrLen (AddBootArgs) != 0) {
     AsciiStrCat (gSettings.BootArgs, AddBootArgs);

@@ -809,9 +809,13 @@ KernelAndKextsPatcherStart (
     KextPatcherStart ();
   }
 
-  if (AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr, "<string>org.netkas.driver.FakeSMC</string>") != NULL
-      || AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr, "<string>org.netkas.FakeSMC</string>") != NULL) {
-    WithKexts = FALSE;
+  if (gSettings.CheckFakeSMC) {
+    if ((AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr,
+         "<string>org.netkas.driver.FakeSMC</string>") != NULL) ||
+        (AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr,
+         "<string>org.netkas.FakeSMC</string>") != NULL)) {
+      WithKexts = FALSE;
+    }
   }
 
   if (WithKexts) {

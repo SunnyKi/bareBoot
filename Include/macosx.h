@@ -195,6 +195,7 @@ typedef struct {
   CHAR16  DefaultBoot[40];
   UINT16  BootTimeout;
   UINT32  ScreenMode;
+  BOOLEAN CheckFakeSMC;
   //ACPI
   UINT64  ResetAddr;
   UINT8   ResetVal;
