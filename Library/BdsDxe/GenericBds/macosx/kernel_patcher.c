@@ -808,7 +808,12 @@ KernelAndKextsPatcherStart (
   if (gSettings.KPKextPatchesNeeded) {
     KextPatcherStart ();
   }
-  
+
+  if (AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr, "<string>org.netkas.driver.FakeSMC</string>") != NULL
+      || AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr, "<string>org.netkas.FakeSMC</string>") != NULL) {
+    WithKexts = FALSE;
+  }
+
   if (WithKexts) {
     if (bootArgs1 != NULL) {
       deviceTreeP = bootArgs1->deviceTreeP;
