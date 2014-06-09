@@ -63,14 +63,10 @@ get_size (
     temp = (Buffer[adr] - 0x40) << 0 | Buffer[adr + 1] << 4;
   }
   else if (temp == 0x80) {  // 8
-    temp =
-      (Buffer[adr] - 0x80) << 0 | Buffer[adr + 1] << 4 | Buffer[adr + 2] << 12;
+    temp = (Buffer[adr] - 0x80) << 0 | Buffer[adr + 1] << 4 | Buffer[adr + 2] << 12;
   }
   else if (temp == 0xC0) {  // C
-    temp =
-      (Buffer[adr] - 0xC0) << 0 | Buffer[adr + 1] << 4 | Buffer[adr +
-                                                                2] << 12 |
-      Buffer[adr + 3] << 20;
+    temp = (Buffer[adr] - 0xC0) << 0 | Buffer[adr + 1] << 4 | Buffer[adr + 2] << 12 | Buffer[adr + 3] << 20;
   }
   else {
     //  DBG("wrong pointer to size field at %x\n", adr);
@@ -95,16 +91,39 @@ CmpNum (
                                                   (dsdt[i - 4] == 0x0C))));
 }
 
+INT32
+FindName (
+  UINT8 *dsdt,
+  INT32 len,
+  CHAR8* name
+)
+{
+  INT32 i;
+  for (i = 0; i < len - 5; i++) {
+    if ((dsdt[i] == 0x08) && (dsdt[i+1] == name[0]) &&
+        (dsdt[i+2] == name[1]) && (dsdt[i+3] == name[2]) &&
+        (dsdt[i+4] == name[3])) {
+      return i+1;
+    }
+  }
+  return 0;
+}
+
 BOOLEAN
 GetName (
   UINT8 *dsdt,
   INT32 adr,
-  CHAR8 *name
+  CHAR8 *name,
+  OUT INTN *shift
 )
 {
   INT32 i;
-  INT32 j = (dsdt[adr] == 0x5C) ? 1 : 0;  //now we accept \NAME
+  INT32 j;  //now we accept \NAME
 
+  j = (dsdt[adr] == 0x5C) ? 1 : 0;
+  if (!name) {
+    return FALSE;
+  }
   for (i = adr + j; i < adr + j + 4; i++) {
     if ((dsdt[i] < 0x2F) || ((dsdt[i] > 0x39) && (dsdt[i] < 0x41)) ||
         ((dsdt[i] > 0x5A) && (dsdt[i] != 0x5F))) {
@@ -112,7 +131,10 @@ GetName (
     }
     name[i - adr - j] = dsdt[i];
   }
-  name[5] = 0;
+  name[4] = 0;
+  if (shift) {
+    *shift = j;
+  }  
   return TRUE;
 }
 
@@ -255,9 +277,9 @@ CorrectOuterMethod (
       if (!size) {
         continue;
       }
-      if (((size <= 0x3F) && !GetName (dsdt, k + 1, &Name[0])) ||
-          ((size > 0x3F) && (size <= 0xFFF) && !GetName (dsdt, k + 2, &Name[0]))
-          || ((size > 0xFFF) && !GetName (dsdt, k + 3, &Name[0]))) {
+      if (((size <= 0x3F) && !GetName (dsdt, k + 1, &Name[0], NULL)) ||
+          ((size > 0x3F) && (size <= 0xFFF) && !GetName (dsdt, k + 2, &Name[0], NULL))
+          || ((size > 0xFFF) && !GetName (dsdt, k + 3, &Name[0], NULL))) {
         DBG ("method found, size=0x%x but name is not\n", size);
         continue;
       }
@@ -286,7 +308,9 @@ CorrectOuters (
   UINT32 size = 0;
   INT32 offset = 0;
   UINT32 SBSIZE = 0, SBADR = 0;
+  BOOLEAN SBFound;
 
+  SBFound = FALSE;
   if (shift == 0) {
     return len;
   }
@@ -307,28 +331,32 @@ CorrectOuters (
     } //else not a device
     // check scope
     SBSIZE = 0;
-    if (dsdt[i] == '_' && dsdt[i + 1] == 'S' && dsdt[i + 2] == 'B' &&
-        dsdt[i + 3] == '_') {
+    if (dsdt[i] == '_' && dsdt[i + 1] == 'S' && dsdt[i + 2] == 'B' && dsdt[i + 3] == '_') {
       for (j = 0; j < 10; j++) {
-        if ((dsdt[i - j] == 0x10) && !CmpNum (dsdt, i - j, TRUE)) {
+        if (dsdt[i-j] != 0x10) {
+          continue;
+        }
+        if (!CmpNum (dsdt, i - j, TRUE)) {
           SBADR = i - j + 1;
           SBSIZE = get_size (dsdt, SBADR);
-          //     DBG("found Scope(\\_SB) address = 0x%08x size = 0x%08x\n", SBADR, SBSIZE);
           if ((SBSIZE != 0) && (SBSIZE < len)) {  //if zero or too large then search more
             //if found
             k = SBADR - 6;
             if ((SBADR + SBSIZE) > adr + 4) { //Yes - it is outer
-              //      DBG("found outer scope begin=%x end=%x\n", SBADR, SBADR+SBSIZE);
               offset = write_size (SBADR, dsdt, len, shift);
               shift += offset;
               len += offset;
+              SBFound = TRUE;
+              break;  //SB found
             } //else not an outer scope
-            break;  //SB found
           }
         }
       }
     } //else not a scope
-    i = k - 3;  //if found then search again from found 
+    if (SBFound) {
+      break;
+    }
+    i = k - 3;  //if found then search again from found
   }
   return len;
 }
@@ -380,3 +408,112 @@ FixAny (
 
   return len;
 }
+
+VOID
+FixRegions (
+  UINT8 *dsdt,
+  UINT32 len
+)
+{
+  UINTN         i, j;
+  INTN          shift;
+  CHAR8         Name[8];
+  CHAR8         NameAdr[8];
+  OPER_REGION   *p;
+
+  //  OperationRegion (GNVS, SystemMemory, 0xDE2E9E18, 0x01CD)
+  //  5B 80 47 4E 56 53 00  0C 18 9E 2E DE  0B CD 01
+  //or
+  //  Name (RAMB, 0xDD991188)
+  //  OperationRegion (\RAMW, SystemMemory, RAMB, 0x00010000)
+  //  08 52 41 4D 42   0C 88 11 99 DD 
+  //  5B 80 52 41 4D 57 00   52 41 4D 42   0C 00 00 01 00 
+  
+  if (!gRegions) {
+    return;
+  }
+  for (i = 0x20; i < len - 15; i++) {
+    if ((dsdt[i] == 0x5B) && (dsdt[i+1] == 0x80) && GetName(dsdt, (INT32)(i+2), &Name[0], &shift)) {
+      //this is region. Compare to bios tables
+      p = gRegions;
+      while (p)  {
+        if (AsciiStrStr(p->Name, Name)) {
+          //apply patch
+          if (dsdt[i+7+shift] == 0x0C) {
+            CopyMem(&dsdt[i+8+shift], &p->Address, 4);
+          } else if (dsdt[i+7+shift] == 0x0B) {
+            CopyMem(&dsdt[i+8+shift], &p->Address, 2);
+          } else {
+            //propose this is indirect name
+            if (GetName(dsdt, (INT32)(i+7+shift), &NameAdr[0], NULL)) {
+              j = FindName(dsdt, len, &NameAdr[0]);
+              if (j > 0) {
+                DBG(" FixRegions: indirect name = %a\n", NameAdr);
+                if (dsdt[j+4] == 0x0C) {
+                  CopyMem(&dsdt[j+5], &p->Address, 4);
+                } else if (dsdt[j+4] == 0x0B) {
+                  CopyMem(&dsdt[j+5], &p->Address, 2);
+                } else {
+                  DBG(" FixRegions: ... value not defined\n");
+                }
+              }
+            }
+          }
+          DBG(" FixRegions: OperationRegion (%a...) corrected to addr = 0x%x\n", Name, p->Address);
+          break;
+        }
+        p = p->next;
+      }
+    }
+  }
+}
+
+VOID
+GetBiosRegions (
+  UINT8* buffer
+)
+{
+  EFI_ACPI_DESCRIPTION_HEADER *TableHeader;
+  UINT32                      bufferLen = 0;
+  UINTN                       i, j;
+  INTN                        shift, shift2;
+  OPER_REGION                 *tmpRegion;
+  CHAR8                       Name[8];
+  CHAR8                       NameAdr[8];
+  
+  gRegions = NULL;
+  TableHeader = (EFI_ACPI_DESCRIPTION_HEADER*) buffer;
+  bufferLen = TableHeader->Length;
+  
+  for (i=0x24; i<bufferLen-15; i++) {
+    if ((buffer[i] == 0x5B) && (buffer[i+1] == 0x80) &&
+        GetName(buffer, (INT32)(i+2), &Name[0], &shift)) {
+      if (buffer[i+6+shift] == 0) {
+        //this is SystemMemory region. Write to bios regions tables
+        tmpRegion = gRegions;
+        gRegions = AllocateZeroPool(sizeof(OPER_REGION));
+        CopyMem(&gRegions->Name[0], &buffer[i+2+shift], 4);
+        gRegions->Name[4] = 0;
+        if (buffer[i+7+shift] == 0x0C) {
+          CopyMem(&gRegions->Address, &buffer[i+8+shift], 4);
+        } else if (buffer[i+7+shift] == 0x0B) {
+          CopyMem(&gRegions->Address, &buffer[i+8+shift], 2);
+        } else if (GetName(buffer, (INT32)(i+7+shift), &NameAdr[0], &shift2)) {
+          j = FindName(buffer, bufferLen, &NameAdr[0]);
+          if (j > 0) {
+            if (buffer[j+4] == 0x0C) {
+              CopyMem(&gRegions->Address, &buffer[j+5], 4);
+            } else if (buffer[j+4] == 0x0B) {
+              CopyMem(&gRegions->Address, &buffer[j+5], 2);
+            }          
+          }
+        }      
+        DBG (" GetBiosRegions: Found OperationRegion(%a, SystemMemory, %x, ...)\n",
+             gRegions->Name,
+             gRegions->Address);
+        gRegions->next = tmpRegion;
+      }      
+    }
+  }
+}
+

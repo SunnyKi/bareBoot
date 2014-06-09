@@ -1356,6 +1356,7 @@ GetUserSettings (
 
   gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
   gSettings.DropDMAR = GetBoolProperty (dictPointer, "DropDMAR", FALSE);
+  gSettings.FixRegions = GetBoolProperty (dictPointer, "FixRegions", FALSE);
 #if 0
   gSettings.PatchAPIC = GetBoolProperty (dictPointer, "PatchAPIC", FALSE);
 #endif

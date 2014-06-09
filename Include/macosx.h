@@ -202,6 +202,7 @@ typedef struct {
   BOOLEAN DropSSDT;
   BOOLEAN DropDMAR;
   UINT8   PMProfile;
+  BOOLEAN FixRegions;
   // Graphics
   BOOLEAN GraphicsInjector;
   BOOLEAN LoadVBios;
@@ -325,6 +326,13 @@ typedef struct {
   UINT16            Height;
 } GFX_PROPERTIES;
 
+struct _oper_region {
+  CHAR8 Name[8];
+  UINT32 Address;
+  struct _oper_region *next;
+};
+typedef struct _oper_region OPER_REGION;
+
 MEM_STRUCTURE                   *gRAM;
 EFI_RUNTIME_SERVICES            *gRS;
 EFI_FILE_HANDLE                 gRootFHandle;
@@ -347,6 +355,7 @@ BOOLEAN                         gPNDirExists;
 BOOLEAN                         WithKexts;
 VOID                            *gConfigPlist;
 BOOLEAN                         gFronPage;
+OPER_REGION                     *gRegions;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
@@ -571,6 +580,17 @@ FixAny (
   UINT32 LenTF,
   UINT8* ToReplace,
   UINT32 LenTR
+);
+
+VOID
+GetBiosRegions (
+  UINT8* buffer
+);
+
+VOID
+FixRegions (
+  UINT8 *dsdt,
+  UINT32 len
 );
 
 #endif

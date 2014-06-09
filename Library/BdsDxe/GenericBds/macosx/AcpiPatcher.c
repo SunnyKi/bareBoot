@@ -295,6 +295,7 @@ PatchACPI (
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
   BOOLEAN                                           PatchedBios;
+  OPER_REGION                                       *tmpRegion;
 
 #if 0
   EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
@@ -713,6 +714,17 @@ PatchACPI (
 
           if (!EFI_ERROR (Status)) {
             CopyMem ((UINT8*) (UINTN) dsdt, buffer, bufferLen);
+            if (gSettings.FixRegions && (BiosDsdt != 0)) {
+              DBG ("PatchACPI: fix regions start\n");
+              GetBiosRegions ((UINT8*) (UINTN) BiosDsdt);
+              FixRegions ((UINT8*) (UINTN) dsdt, bufferLen);
+              while (gRegions) {
+                tmpRegion = gRegions->next;
+                FreePool(gRegions);
+                gRegions = tmpRegion;
+              }
+              DBG ("PatchACPI: fix regions finish\n");
+            }
             newFadt->XDsdt = dsdt;
             newFadt->Dsdt  = (UINT32) dsdt;
             PatchedBios = TRUE;
