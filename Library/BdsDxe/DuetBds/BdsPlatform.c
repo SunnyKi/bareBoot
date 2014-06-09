@@ -1289,7 +1289,7 @@ Returns:
 
   if (gSettings.SaveVideoRom) {
     UINT8                             *vrom;
-    UINT16                            vrom_size;
+    UINT32                            vrom_size;
     
     vrom = (UINT8*) (UINTN) 0xc0000;
     vrom_size = vrom[2] * 512;
