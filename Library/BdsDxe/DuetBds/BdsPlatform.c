@@ -1294,7 +1294,7 @@ Returns:
     vrom = (UINT8*) (UINTN) 0xc0000;
     vrom_size = vrom[2] * 512;
     if (vrom_size == 0) {
-      vrom_size = 0x20000
+      vrom_size = 0x20000;
     }
     DBG ("BdsPlatorm: vrom_size = 0x%x\n", vrom_size);
     egSaveFile (gRootFHandle, L"EFI\\bareboot\\rom.rom", vrom, vrom_size);
