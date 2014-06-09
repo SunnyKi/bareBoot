@@ -1253,9 +1253,8 @@ BiosVideoCheckForVbe (
   VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING ValidEdidTiming;
   UINT16                                 *VMPtr16;
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
-  UINT32                                 BestX;
-  UINT32                                 BestY;
-
+  UINT32                                 BestMode;
+  
   //
   // Allocate buffer under 1MB for VBE data structures
   //
@@ -1468,8 +1467,7 @@ BiosVideoCheckForVbe (
 
   PreferMode = 0;
   ModeNumber = 0;
-  BestX = 0;
-  BestY = 0;
+  BestMode = 0;
 
   for (; *ModeNumberPtr != VESA_BIOS_EXTENSIONS_END_OF_MODE_LIST; ModeNumberPtr++) {
     //
@@ -1594,11 +1592,11 @@ BiosVideoCheckForVbe (
     }
 
     if (ModeFound &&
-        (BestX <= BiosVideoPrivate->VbeModeInformationBlock->XResolution) &&
-        (BestY <= BiosVideoPrivate->VbeModeInformationBlock->YResolution)) {
+        (BestMode < (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
+                              BiosVideoPrivate->VbeModeInformationBlock->YResolution))) {
       PreferMode = ModeNumber;
-      BestX = BiosVideoPrivate->VbeModeInformationBlock->XResolution;
-      BestY = BiosVideoPrivate->VbeModeInformationBlock->YResolution;
+      BestMode = BiosVideoPrivate->VbeModeInformationBlock->XResolution +
+                 BiosVideoPrivate->VbeModeInformationBlock->YResolution;
       DBG (", pref");
     }
     DBG ("\n");
