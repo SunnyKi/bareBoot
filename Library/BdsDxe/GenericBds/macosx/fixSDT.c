@@ -99,9 +99,11 @@ FindName (
 )
 {
   INT32 i;
-  for (i = 0; i < len - 5; i++) {
-    if ((dsdt[i] == 0x08) && (dsdt[i+1] == name[0]) &&
-        (dsdt[i+2] == name[1]) && (dsdt[i+3] == name[2]) &&
+  for (i = 0; i < len - 4; i++) {
+    if ((dsdt[i] == 0x08) &&
+        (dsdt[i+1] == name[0]) &&
+        (dsdt[i+2] == name[1]) &&
+        (dsdt[i+3] == name[2]) &&
         (dsdt[i+4] == name[3])) {
       return i+1;
     }
@@ -125,7 +127,8 @@ GetName (
     return FALSE;
   }
   for (i = adr + j; i < adr + j + 4; i++) {
-    if ((dsdt[i] < 0x2F) || ((dsdt[i] > 0x39) && (dsdt[i] < 0x41)) ||
+    if ((dsdt[i] < 0x2F) ||
+        ((dsdt[i] > 0x39) && (dsdt[i] < 0x41)) ||
         ((dsdt[i] > 0x5A) && (dsdt[i] != 0x5F))) {
       return FALSE;
     }
@@ -439,27 +442,29 @@ FixRegions (
       while (p)  {
         if (AsciiStrStr(p->Name, Name)) {
           //apply patch
-          if (dsdt[i+7+shift] == 0x0C) {
-            CopyMem(&dsdt[i+8+shift], &p->Address, 4);
-          } else if (dsdt[i+7+shift] == 0x0B) {
-            CopyMem(&dsdt[i+8+shift], &p->Address, 2);
-          } else {
-            //propose this is indirect name
-            if (GetName(dsdt, (INT32)(i+7+shift), &NameAdr[0], NULL)) {
-              j = FindName(dsdt, len, &NameAdr[0]);
-              if (j > 0) {
-                DBG(" FixRegions: indirect name = %a\n", NameAdr);
-                if (dsdt[j+4] == 0x0C) {
-                  CopyMem(&dsdt[j+5], &p->Address, 4);
-                } else if (dsdt[j+4] == 0x0B) {
-                  CopyMem(&dsdt[j+5], &p->Address, 2);
-                } else {
-                  DBG(" FixRegions: ... value not defined\n");
+          if (p->Address != 0) {
+            if (dsdt[i+7+shift] == 0x0C) {
+              CopyMem(&dsdt[i+8+shift], &p->Address, 4);
+            } else if (dsdt[i+7+shift] == 0x0B) {
+              CopyMem(&dsdt[i+8+shift], &p->Address, 2);
+            } else {
+              //propose this is indirect name
+              if (GetName(dsdt, (INT32)(i+7+shift), &NameAdr[0], NULL)) {
+                j = FindName(dsdt, len, &NameAdr[0]);
+                if (j > 0) {
+                  DBG(" FixRegions: indirect name = %a\n", NameAdr);
+                  if (dsdt[j+4] == 0x0C) {
+                    CopyMem(&dsdt[j+5], &p->Address, 4);
+                  } else if (dsdt[j+4] == 0x0B) {
+                    CopyMem(&dsdt[j+5], &p->Address, 2);
+                  } else {
+                    DBG(" FixRegions: ... value not defined\n");
+                  }
                 }
               }
             }
+            DBG(" FixRegions: OperationRegion (%a...) corrected to addr = 0x%x\n", Name, p->Address);
           }
-          DBG(" FixRegions: OperationRegion (%a...) corrected to addr = 0x%x\n", Name, p->Address);
           break;
         }
         p = p->next;
@@ -476,7 +481,7 @@ GetBiosRegions (
   EFI_ACPI_DESCRIPTION_HEADER *TableHeader;
   UINT32                      bufferLen = 0;
   UINTN                       i, j;
-  INTN                        shift, shift2;
+  INTN                        shift;
   OPER_REGION                 *tmpRegion;
   CHAR8                       Name[8];
   CHAR8                       NameAdr[8];
@@ -498,16 +503,21 @@ GetBiosRegions (
           CopyMem(&gRegions->Address, &buffer[i+8+shift], 4);
         } else if (buffer[i+7+shift] == 0x0B) {
           CopyMem(&gRegions->Address, &buffer[i+8+shift], 2);
-        } else if (GetName(buffer, (INT32)(i+7+shift), &NameAdr[0], &shift2)) {
-          j = FindName(buffer, bufferLen, &NameAdr[0]);
-          if (j > 0) {
-            if (buffer[j+4] == 0x0C) {
-              CopyMem(&gRegions->Address, &buffer[j+5], 4);
-            } else if (buffer[j+4] == 0x0B) {
-              CopyMem(&gRegions->Address, &buffer[j+5], 2);
-            }          
+        } else {
+          if (GetName(buffer, (INT32)(i+7+shift), &NameAdr[0], NULL)) {
+            DBG (" GetBiosRegions:  name = %a indirect to %a\n", Name, NameAdr);
+            j = FindName(buffer, bufferLen, &NameAdr[0]);
+            DBG (" GetBiosRegions:  indirect name = 0x08%a found at 0x%x\n", NameAdr, j);
+            if (j > 0) {
+              if (buffer[j+4] == 0x0C) {
+                CopyMem(&gRegions->Address, &buffer[j+5], 4);
+              } else if (buffer[j+4] == 0x0B) {
+                CopyMem(&gRegions->Address, &buffer[j+5], 2);
+              }          
+              DBG (" GetBiosRegions:  indirect addr = %x\n", gRegions->Address);
+            }
           }
-        }      
+        }
         DBG (" GetBiosRegions: Found OperationRegion(%a, SystemMemory, %x, ...)\n",
              gRegions->Name,
              gRegions->Address);
