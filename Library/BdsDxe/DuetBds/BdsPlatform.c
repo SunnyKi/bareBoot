@@ -1286,15 +1286,17 @@ Returns:
 
   DBG ("BdsPlatorm: Starting BdsLibEnumerateAllBootOption\n");
   BdsLibEnumerateAllBootOption (&gBootOptionList);
-#if 0
-  UINT8                             *vrom;
-  UINT16                            vrom_size;
 
-  vrom = (UINT8*) (UINTN) 0xc0000;
-  vrom_size = vrom[2] * 512;
-  DBG ("BdsPlatorm: vrom_size = 0x%x\n", vrom_size);
-  egSaveFile (gRootFHandle, L"EFI\\bareboot\\rom.rom", vrom, vrom_size);
-#endif
+  if (gSettings.SaveVideoRom) {
+    UINT8                             *vrom;
+    UINT16                            vrom_size;
+    
+    vrom = (UINT8*) (UINTN) 0xc0000;
+    vrom_size = vrom[2] * 512;
+    DBG ("BdsPlatorm: vrom_size = 0x%x\n", vrom_size);
+    egSaveFile (gRootFHandle, L"EFI\\bareboot\\rom.rom", vrom, vrom_size);
+  }
+
   if (gSettings.ScreenMode != 0xffff) {
     SetModeScreen (gSettings.ScreenMode);
     ClearScreen (0xBFBFBF);

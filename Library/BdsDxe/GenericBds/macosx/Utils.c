@@ -1223,6 +1223,7 @@ GetBootDefault (
 
   spdict = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
 
+  gSettings.SaveVideoRom = GetBoolProperty (spdict, "SaveVideoRom", FALSE);
   gSettings.ScreenMode = (UINT32) GetNumProperty (spdict, "ScreenMode", 0xffff);
   gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
