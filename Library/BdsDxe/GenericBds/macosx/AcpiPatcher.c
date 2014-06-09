@@ -724,6 +724,10 @@ PatchACPI (
                 gRegions = tmpRegion;
               }
               DBG ("PatchACPI: fix regions finish\n");
+              ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum = 0;
+              ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum =
+                (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) dsdt, bufferLen));
+
             }
             newFadt->XDsdt = dsdt;
             newFadt->Dsdt  = (UINT32) dsdt;
