@@ -717,7 +717,7 @@ PatchACPI (
             if (gSettings.FixRegions && (BiosDsdt != 0)) {
               DBG ("PatchACPI: fix regions start\n");
               GetBiosRegions ((UINT8*) (UINTN) BiosDsdt);
-              FixRegions ((UINT8*) (UINTN) dsdt, bufferLen);
+              FixRegions ((UINT8*) (UINTN) dsdt, (UINT32) bufferLen);
               while (gRegions) {
                 tmpRegion = gRegions->next;
                 FreePool(gRegions);
