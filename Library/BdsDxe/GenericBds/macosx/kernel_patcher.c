@@ -761,7 +761,6 @@ KernelAndKextsPatcherStart (
   UINT32      deviceTreeP;
   UINT32      deviceTreeLength;
   EFI_STATUS  Status;
-  BOOLEAN     WithKexts;
 
 #if 0
   // we will call KernelAndKextPatcherInit() only if needed
@@ -810,18 +809,13 @@ KernelAndKextsPatcherStart (
     KextPatcherStart ();
   }
 
-  WithKexts = TRUE;
   if (gSettings.CheckFakeSMC) {
     if ((AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr,
          "<string>org.netkas.driver.FakeSMC</string>") != NULL) ||
         (AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr,
          "<string>org.netkas.FakeSMC</string>") != NULL)) {
       WithKexts = FALSE;
-    } else {
-      WithKexts = LoadKexts ();
     }
-  } else {
-    WithKexts = LoadKexts ();
   }
 
   if (WithKexts) {

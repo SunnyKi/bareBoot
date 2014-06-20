@@ -353,6 +353,7 @@ CHAR16                          *gProductNameDir;
 CHAR16                          *gPNConfigPlist;
 CHAR16                          *gPNAcpiDir;
 BOOLEAN                         gPNDirExists;
+BOOLEAN                         WithKexts;
 VOID                            *gConfigPlist;
 BOOLEAN                         gFronPage;
 OPER_REGION                     *gRegions;
