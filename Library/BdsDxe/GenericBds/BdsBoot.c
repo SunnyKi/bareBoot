@@ -302,7 +302,6 @@ MacOS:
     ClearScreen (0x00);
   }
 
-  WithKexts = LoadKexts ();
 #ifdef BOOT_DEBUG
   SaveBooterLog (gRootFHandle, BOOT_LOG);
 #endif
