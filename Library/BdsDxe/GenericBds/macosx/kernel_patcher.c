@@ -418,10 +418,12 @@ KernelPatcher_64 (
     return;
   }
   // make sure only kernels for OSX 10.6.0 to 10.7.3 are being patched by this approach
-  if ((AsciiStrnCmp(OSVersion,"10.6",4)==0) || ((AsciiStrnCmp(OSVersion,"10.7",4)==0) &&
-                                                ((AsciiStrnCmp(OSVersion,"10.7.4",6)==!0) || (AsciiStrnCmp(OSVersion,"10.7.5",6)==!0)))) {
+  if ((AsciiStrnCmp (OSVersion,"10.6",4) == 0) ||
+      ((AsciiStrnCmp (OSVersion,"10.7",4) == 0) && ((AsciiStrnCmp (OSVersion,"10.7.4",6) != 0) ||
+                                                 (AsciiStrnCmp (OSVersion,"10.7.5",6) != 0)))) {
     // remove tsc_init: unknown CPU family panic for kernels prior to 10.6.2 which still had Atom support
-    if ((AsciiStrnCmp(OSVersion,"10.6.0",6)==0) || (AsciiStrnCmp(OSVersion,"10.6.1",6)==0)) {
+    if ((AsciiStrnCmp (OSVersion,"10.6.0",6) == 0) ||
+        (AsciiStrnCmp (OSVersion,"10.6.1",6) == 0)) {
       for (i=0; i<0x1000000; i++) {
         // find _tsc_init panic address by byte sequence 488d3df4632a00
         if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
@@ -442,7 +444,7 @@ KernelPatcher_64 (
     else { // assume patching logic for OSX 10.6.2 to 10.7.3
       // Determine cpuid_model address
       // 10.6.2 to 10.6.8 kernels
-      if ((AsciiStrnCmp(OSVersion,"10.6",4)==0)) {
+      if ((AsciiStrnCmp (OSVersion,"10.6",4) == 0)) {
         // C1E004           shl        eax, 0x4
         // 000575E44900     add        byte [ds:0xffffff80006c69cd], al
         for (i=0; i<0x1000000; i++) {
@@ -509,17 +511,21 @@ KernelPatcher_64 (
       }
     }
     // patch ssse3
-    if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.6",4)==0)) {
+    if (!SSSE3 &&
+        (AsciiStrnCmp (OSVersion,"10.6",4) == 0)) {
       Patcher_SSE3_6((VOID*)bytes);
     }
-    if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.7",4)==0)) {
+    if (!SSSE3 &&
+        (AsciiStrnCmp (OSVersion,"10.7",4) == 0)) {
       Patcher_SSE3_7((VOID*)bytes);
     }
   }
   // all 10.7.4+ kernels share common CPUID switch statement logic,
   // it needs to be exploited in diff manner due to the lack of space
-  if ((AsciiStrnCmp(OSVersion,"10.7.4",6)==0) || (AsciiStrnCmp(OSVersion,"10.7.5",6)==0) ||
-      (AsciiStrnCmp(OSVersion,"10.8",  4)==0) || (AsciiStrnCmp(OSVersion,"10.9",  4)==0)) {
+  if ((AsciiStrnCmp (OSVersion,"10.7.4",6) == 0) ||
+      (AsciiStrnCmp (OSVersion,"10.7.5",6) == 0) ||
+      (AsciiStrnCmp (OSVersion,"10.8",  4) == 0) ||
+      (AsciiStrnCmp (OSVersion,"10.9",  4) == 0)) {
     /*
      Here is our switchaddress location ... it should be case 20 from CPUID switch statement
      833D78945F0000  cmp        dword [ds:0xffffff80008a21d0], 0x0;
@@ -539,7 +545,8 @@ KernelPatcher_64 (
       bytes[switchaddr - 1] << 24;
       cpuid_family_addr = cpuid_family_addr + switchaddr;
       // Determine cpuid_model address
-      if ((AsciiStrnCmp(OSVersion,"10.8",4)==0) || (AsciiStrnCmp(OSVersion,"10.9",4)==0)) {
+      if ((AsciiStrnCmp (OSVersion,"10.8",4) == 0) ||
+          (AsciiStrnCmp (OSVersion,"10.9",4) == 0)) {
         // C0EB04       shr bl, 0x4
         // 881D2B675E00 mov byte [ds:0xffffff80008b204d], bl
         for (i=0; i<0x1000000; i++) {
