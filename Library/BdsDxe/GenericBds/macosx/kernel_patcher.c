@@ -15,6 +15,8 @@
 #endif
 
 #define KERNEL_MAX_SIZE 40000000
+#define KERNEL_PATCH_SIGNATURE     0x85d08941e5894855ULL
+#define KERNEL_YOS_PATCH_SIGNATURE 0x56415741e5894855ULL
 
 EFI_PHYSICAL_ADDRESS    KernelRelocBase = 0;
 BootArgs1               *bootArgs1      = NULL;
@@ -64,266 +66,188 @@ SetKernelRelocBase (
     return;
 }
 
-#if 0
+#if 1
+// Power management patch for kernel 13.0
+STATIC UINT8 KernelPatchPmSrc[] = {
+  0x55, 0x48, 0x89, 0xe5, 0x41, 0x89, 0xd0, 0x85,
+  0xf6, 0x74, 0x6c, 0x48, 0x83, 0xc7, 0x28, 0x90,
+  0x8b, 0x05, 0x5e, 0x30, 0x5e, 0x00, 0x85, 0x47,
+  0xdc, 0x74, 0x54, 0x8b, 0x4f, 0xd8, 0x45, 0x85,
+  0xc0, 0x74, 0x08, 0x44, 0x39, 0xc1, 0x44, 0x89,
+  0xc1, 0x75, 0x44, 0x0f, 0x32, 0x89, 0xc0, 0x48,
+  0xc1, 0xe2, 0x20, 0x48, 0x09, 0xc2, 0x48, 0x89,
+  0x57, 0xf8, 0x48, 0x8b, 0x47, 0xe8, 0x48, 0x85,
+  0xc0, 0x74, 0x06, 0x48, 0xf7, 0xd0, 0x48, 0x21,
+  0xc2, 0x48, 0x0b, 0x57, 0xf0, 0x49, 0x89, 0xd1,
+  0x49, 0xc1, 0xe9, 0x20, 0x89, 0xd0, 0x8b, 0x4f,
+  0xd8, 0x4c, 0x89, 0xca, 0x0f, 0x30, 0x8b, 0x4f,
+  0xd8, 0x0f, 0x32, 0x89, 0xc0, 0x48, 0xc1, 0xe2,
+  0x20, 0x48, 0x09, 0xc2, 0x48, 0x89, 0x17, 0x48,
+  0x83, 0xc7, 0x30, 0xff, 0xce, 0x75, 0x99, 0x5d,
+  0xc3, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90
+};
+
+STATIC UINT8 KernelPatchPmRepl[] = {
+  0x55, 0x48, 0x89, 0xe5, 0x41, 0x89, 0xd0, 0x85,
+  0xf6, 0x74, 0x73, 0x48, 0x83, 0xc7, 0x28, 0x90,
+  0x8b, 0x05, 0x5e, 0x30, 0x5e, 0x00, 0x85, 0x47,
+  0xdc, 0x74, 0x5b, 0x8b, 0x4f, 0xd8, 0x45, 0x85,
+  0xc0, 0x74, 0x08, 0x44, 0x39, 0xc1, 0x44, 0x89,
+  0xc1, 0x75, 0x4b, 0x0f, 0x32, 0x89, 0xc0, 0x48,
+  0xc1, 0xe2, 0x20, 0x48, 0x09, 0xc2, 0x48, 0x89,
+  0x57, 0xf8, 0x48, 0x8b, 0x47, 0xe8, 0x48, 0x85,
+  0xc0, 0x74, 0x06, 0x48, 0xf7, 0xd0, 0x48, 0x21,
+  0xc2, 0x48, 0x0b, 0x57, 0xf0, 0x49, 0x89, 0xd1,
+  0x49, 0xc1, 0xe9, 0x20, 0x89, 0xd0, 0x8b, 0x4f,
+  0xd8, 0x4c, 0x89, 0xca, 0x66, 0x81, 0xf9, 0xe2,
+  0x00, 0x74, 0x02, 0x0f, 0x30, 0x8b, 0x4f, 0xd8,
+  0x0f, 0x32, 0x89, 0xc0, 0x48, 0xc1, 0xe2, 0x20,
+  0x48, 0x09, 0xc2, 0x48, 0x89, 0x17, 0x48, 0x83,
+  0xc7, 0x30, 0xff, 0xce, 0x75, 0x92, 0x5d, 0xc3
+};
+// Power management patch for kernel 12.5
+STATIC UINT8 KernelPatchPmSrc2[] = {
+  0x55, 0x48, 0x89, 0xe5, 0x41, 0x89, 0xd0, 0x85,
+  0xf6, 0x74, 0x69, 0x48, 0x83, 0xc7, 0x28, 0x90,
+  0x8b, 0x05, 0xfe, 0xce, 0x5f, 0x00, 0x85, 0x47,
+  0xdc, 0x74, 0x51, 0x8b, 0x4f, 0xd8, 0x45, 0x85,
+  0xc0, 0x74, 0x05, 0x44, 0x39, 0xc1, 0x75, 0x44,
+  0x0f, 0x32, 0x89, 0xc0, 0x48, 0xc1, 0xe2, 0x20,
+  0x48, 0x09, 0xc2, 0x48, 0x89, 0x57, 0xf8, 0x48,
+  0x8b, 0x47, 0xe8, 0x48, 0x85, 0xc0, 0x74, 0x06,
+  0x48, 0xf7, 0xd0, 0x48, 0x21, 0xc2, 0x48, 0x0b,
+  0x57, 0xf0, 0x49, 0x89, 0xd1, 0x49, 0xc1, 0xe9,
+  0x20, 0x89, 0xd0, 0x8b, 0x4f, 0xd8, 0x4c, 0x89,
+  0xca, 0x0f, 0x30, 0x8b, 0x4f, 0xd8, 0x0f, 0x32,
+  0x89, 0xc0, 0x48, 0xc1, 0xe2, 0x20, 0x48, 0x09,
+  0xc2, 0x48, 0x89, 0x17, 0x48, 0x83, 0xc7, 0x30,
+  0xff, 0xce, 0x75, 0x9c, 0x5d, 0xc3, 0x90, 0x90,
+  0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90
+};
+
+STATIC UINT8 KernelPatchPmRepl2[] = {
+  0x55, 0x48, 0x89, 0xe5, 0x41, 0x89, 0xd0, 0x85,
+  0xf6, 0x74, 0x70, 0x48, 0x83, 0xc7, 0x28, 0x90,
+  0x8b, 0x05, 0xfe, 0xce, 0x5f, 0x00, 0x85, 0x47,
+  0xdc, 0x74, 0x58, 0x8b, 0x4f, 0xd8, 0x45, 0x85,
+  0xc0, 0x74, 0x05, 0x44, 0x39, 0xc1, 0x75, 0x4b,
+  0x0f, 0x32, 0x89, 0xc0, 0x48, 0xc1, 0xe2, 0x20,
+  0x48, 0x09, 0xc2, 0x48, 0x89, 0x57, 0xf8, 0x48,
+  0x8b, 0x47, 0xe8, 0x48, 0x85, 0xc0, 0x74, 0x06,
+  0x48, 0xf7, 0xd0, 0x48, 0x21, 0xc2, 0x48, 0x0b,
+  0x57, 0xf0, 0x49, 0x89, 0xd1, 0x49, 0xc1, 0xe9,
+  0x20, 0x89, 0xd0, 0x8b, 0x4f, 0xd8, 0x4c, 0x89,
+  0xca, 0x66, 0x81, 0xf9, 0xe2, 0x00, 0x74, 0x02,
+  0x0f, 0x30, 0x8b, 0x4f, 0xd8, 0x0f, 0x32, 0x89,
+  0xc0, 0x48, 0xc1, 0xe2, 0x20, 0x48, 0x09, 0xc2,
+  0x48, 0x89, 0x17, 0x48, 0x83, 0xc7, 0x30, 0xff,
+  0xce, 0x75, 0x95, 0x5d, 0xc3, 0x90, 0x90, 0x90
+};
+
+STATIC UINT8 KernelPatchPmSrc1010[] = {
+  0x55, 0x48, 0x89, 0xe5, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54,
+  0x53, 0x50, 0x41, 0x89, 0xd6, 0x41, 0x89, 0xf7, 0x48, 0x89, 0xfb, 0x45,
+  0x85, 0xff, 0x0f, 0x84, 0x9b, 0x00, 0x00, 0x00, 0x48, 0x83, 0xc3, 0x28,
+  0x4c, 0x8d, 0x25, 0x89, 0xae, 0x53, 0x00, 0x4c, 0x8d, 0x2d, 0x9c, 0xae,
+  0x53, 0x00, 0x66, 0x66, 0x66, 0x66, 0x66, 0x2e, 0x0f, 0x1f, 0x84, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x8b, 0x05, 0x96, 0x75, 0x69, 0x00, 0x85, 0x43,
+  0xdc, 0x74, 0x67, 0x45, 0x85, 0xf6, 0x74, 0x06, 0x44, 0x39, 0x73, 0xd8,
+  0x75, 0x5c, 0x83, 0x3d, 0x13, 0xed, 0x5f, 0x00, 0x00, 0x74, 0x10, 0x8b,
+  0x53, 0xd8, 0x31, 0xc0, 0x4c, 0x89, 0xe7, 0x4c, 0x89, 0xee, 0xe8, 0xa1,
+  0xb0, 0x4d, 0x00, 0x8b, 0x4b, 0xd8, 0x0f, 0x32, 0x89, 0xd1, 0x48, 0xc1,
+  0xe1, 0x20, 0x89, 0xc2, 0x48, 0x09, 0xca, 0x48, 0x89, 0x53, 0xf8, 0x48,
+  0x8b, 0x43, 0xe8, 0x48, 0x85, 0xc0, 0x74, 0x06, 0x48, 0xf7, 0xd0, 0x48,
+  0x21, 0xc2, 0x48, 0x0b, 0x53, 0xf0, 0x8b, 0x4b, 0xd8, 0x89, 0xd0, 0x48,
+  0xc1, 0xea, 0x20, 0x0f, 0x30, 0x8b, 0x4b, 0xd8, 0x0f, 0x32, 0x48, 0xc1,
+  0xe2, 0x20, 0x89, 0xc0, 0x48, 0x09, 0xd0, 0x48, 0x89, 0x03, 0x48, 0x83,
+  0xc3, 0x30, 0x41, 0xff, 0xcf, 0x75, 0x85, 0x48, 0x83, 0xc4, 0x08, 0x5b,
+  0x41, 0x5c, 0x41, 0x5d, 0x41, 0x5e, 0x41, 0x5f, 0x5d, 0xc3, 0x66, 0x0f,
+  0x1f, 0x44, 0x00, 0x00
+};
+
+static UINT8 KernelPatchPmRepl1010[] = {
+  0x55, 0x48, 0x89, 0xe5, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54,
+  0x53, 0x50, 0x41, 0x89, 0xd6, 0x41, 0x89, 0xf7, 0x48, 0x89, 0xfb, 0x45,
+  0x85, 0xff, 0x0f, 0x84, 0x9f, 0x00, 0x00, 0x00, 0x48, 0x83, 0xc3, 0x28,
+  0x4c, 0x8d, 0x25, 0x89, 0xae, 0x53, 0x00, 0x4c, 0x8d, 0x2d, 0x9c, 0xae,
+  0x53, 0x00, 0x66, 0x66, 0x66, 0x66, 0x66, 0x2e, 0x0f, 0x1f, 0x84, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x8b, 0x05, 0x96, 0x75, 0x69, 0x00, 0x85, 0x43,
+  0xdc, 0x74, 0x6b, 0x45, 0x85, 0xf6, 0x74, 0x06, 0x44, 0x39, 0x73, 0xd8,
+  0x74, 0x60, 0x83, 0x3d, 0x13, 0xed, 0x5f, 0x00, 0x00, 0x74, 0x10, 0x8b,
+  0x53, 0xd8, 0x31, 0xc0, 0x4c, 0x89, 0xe7, 0x4c, 0x89, 0xee, 0xe8, 0xa1,
+  0xb0, 0x4d, 0x00, 0x8b, 0x4b, 0xd8, 0x0f, 0x32, 0x89, 0xd1, 0x48, 0xc1,
+  0xe1, 0x20, 0x89, 0xc2, 0x48, 0x09, 0xca, 0x48, 0x89, 0x53, 0xf8, 0x48,
+  0x8b, 0x43, 0xe8, 0x48, 0x85, 0xc0, 0x74, 0x06, 0x48, 0xf7, 0xd0, 0x48,
+  0x21, 0xc2, 0x48, 0x0b, 0x53, 0xf0, 0x8b, 0x4b, 0xd8, 0x89, 0xd0, 0x48,
+  0xc1, 0xea, 0x20, 0x85, 0xc9, 0x74, 0x02, 0x0f, 0x30, 0x8b, 0x4b, 0xd8,
+  0x0f, 0x32, 0x48, 0xc1, 0xe2, 0x20, 0x89, 0xc0, 0x48, 0x09, 0xd0, 0x48,
+  0x89, 0x03, 0x48, 0x83, 0xc3, 0x30, 0x41, 0xff, 0xcf, 0x75, 0x81, 0x48,
+  0x83, 0xc4, 0x08, 0x5b, 0x41, 0x5c, 0x41, 0x5d, 0x41, 0x5e, 0x41, 0x5f,
+  0x5d, 0xc3, 0x90, 0x90
+};
+
 VOID
-KernelPatcher_64 (
-  VOID  *kernelData
+KernelPatchPm (
+  VOID *kernelData
 )
 {
-  BOOLEAN     check;
-  UINT8       *bytes;
-  UINT32      patchLocation;
-  UINT32      patchLocation1;
-  UINT32      i;
-  UINT32      jumpaddr;
-  UINT32      cpuid_family_addr;
-
-  check = TRUE;
-  bytes = (UINT8 *) kernelData;
-  patchLocation=0;
-  patchLocation1=0;
-
-#if 0
-  if (AsciiStrnCmp (OSVersion,"10.7",4) == 0) return;
-#endif
-  // _cpuid_set_info _panic address
-  for (i = 0; i < 0x1000000; i++) {
-    if (bytes[i] == 0xC7 && bytes[i+1] == 0x05 && bytes[i+6] == 0x07 && bytes[i+7] == 0x00 &&
-        bytes[i+8] == 0x00 && bytes[i+9] == 0x00 && bytes[i+10] == 0xC7 && bytes[i+11] == 0x05 &&
-        bytes[i-5] == 0xE8) {
-      patchLocation = i-5;
-      break;
-    }
-  }
-   
-  if (!patchLocation) {
-       return;
-  }
+  UINT8  *Ptr = (UINT8 *) kernelData;
+  UINT8  *End = Ptr + 0x1000000;
   
-  // this for 10.6.0 and 10.6.1 kernel and remove tsc.c unknow cpufamily panic
-  //  488d3df4632a00
-  // find _tsc_init panic address
-  for (i = 0; i < 0x1000000; i++) {   // _cpuid_set_info _panic address
-    if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
-        bytes[i+4] == 0x63 && bytes[i+5] == 0x2A && bytes[i+6] == 0x00) {
-      patchLocation1 = i+9;
-      break;
-    }
-  }
-  
-  // found _tsc_init panic addres and patch it
-  if (patchLocation1) {
-    bytes[patchLocation1 + 0] = 0x90;
-    bytes[patchLocation1 + 1] = 0x90;
-    bytes[patchLocation1 + 2] = 0x90;
-    bytes[patchLocation1 + 3] = 0x90;
-    bytes[patchLocation1 + 4] = 0x90;
-  }
-  // end tsc.c panic
-
-  //first move panic code total 5 bytes, if patch cpuid fail still can boot with kernel
-  bytes[patchLocation + 0] = 0x90;
-  bytes[patchLocation + 1] = 0x90;
-  bytes[patchLocation + 2] = 0x90;
-  bytes[patchLocation + 3] = 0x90;
-  bytes[patchLocation + 4] = 0x90;
-  
-  jumpaddr = patchLocation;
-       
-  for (i = 0; i < 500; i++) {
-    if( bytes[jumpaddr-i-4] == 0x85 && bytes[jumpaddr-i-3] == 0xC0 &&
-        bytes[jumpaddr-i-2] == 0x0f ) {
-      jumpaddr -= i;
-      bytes[jumpaddr-1] = 0x87;
-      bytes[jumpaddr] -= 10;
-      break;
-    }
-  }
-  
-  if (jumpaddr == patchLocation) {
-    for(i = 0; i < 500; i++) {
-      if( bytes[jumpaddr-i-3] == 0x85 && bytes[jumpaddr-i-2] == 0xC0 &&
-          bytes[jumpaddr-i-1] == 0x75 ) {
-        jumpaddr -= i;
-        bytes[jumpaddr-1] = 0x77;
-        check = FALSE;
+  // Credits to RehabMan for the kernel patch information
+  while (Ptr < End) {
+    if (KERNEL_PATCH_SIGNATURE == (*((UINT64 *)Ptr))) {
+      // Bytes 19,20 of KernelPm patch for kernel 13.x change between kernel versions, so we skip them in search&replace
+      if ((CompareMem(Ptr + sizeof(UINT64),
+                      KernelPatchPmSrc + sizeof (UINT64),
+                      18 * sizeof (UINT8) - sizeof (UINT64)) == 0) &&
+          (CompareMem(Ptr + 20 * sizeof(UINT8),
+                      KernelPatchPmSrc + 20 * sizeof (UINT8),
+                      sizeof (KernelPatchPmSrc) - 20 * sizeof(UINT8)) == 0)) {
+        // Don't copy more than the source here!
+        CopyMem (Ptr,
+                 KernelPatchPmRepl,
+                 18 * sizeof(UINT8));
+        CopyMem (Ptr + 20 * sizeof(UINT8),
+                 KernelPatchPmRepl + 20*sizeof(UINT8),
+                 sizeof(KernelPatchPmSrc) - 20 * sizeof(UINT8));
+        break;
+      } else if (CompareMem(Ptr + sizeof(UINT64),
+                            KernelPatchPmSrc2 + sizeof (UINT64),
+                            sizeof (KernelPatchPmSrc2) - sizeof (UINT64)) == 0) {
+        // Don't copy more than the source here!
+        CopyMem (Ptr,
+                 KernelPatchPmRepl2,
+                 sizeof(KernelPatchPmSrc2));
         break;
       }
-    }    
-  }
-  
-  if (jumpaddr == patchLocation) {
-    return;  //can't find jump location
-  }
-  
-  if (check) {
-    cpuid_family_addr = bytes[jumpaddr + 6] <<  0 |
-                        bytes[jumpaddr + 7] <<  8 |
-                        bytes[jumpaddr + 8] << 16 |
-                        bytes[jumpaddr + 9] << 24;
-  } else {
-    cpuid_family_addr = bytes[jumpaddr + 3] <<  0 |
-                        bytes[jumpaddr + 4] <<  8 |
-                        bytes[jumpaddr + 5] << 16 |
-                        bytes[jumpaddr + 6] << 24;
-  }
-     
-  if (check) {
-    bytes[patchLocation - 13] = (CPUFAMILY_INTEL_YONAH & 0x000000FF) >>  0;
-    bytes[patchLocation - 12] = (CPUFAMILY_INTEL_YONAH & 0x0000FF00) >>  8;
-    bytes[patchLocation - 11] = (CPUFAMILY_INTEL_YONAH & 0x00FF0000) >> 16;
-    bytes[patchLocation - 10] = (CPUFAMILY_INTEL_YONAH & 0xFF000000) >> 24;
-  }
-      
-  if (check && (AsciiStrnCmp (OSVersion, "10.6.8", 6) != 0) &&
-      (AsciiStrnCmp (OSVersion, "10.7", 4) == 0)) {
-    cpuid_family_addr -= 255;
-  }
-
-  if (!check) {
-    cpuid_family_addr += 10;
-  }
-  
-  if (AsciiStrnCmp (OSVersion,"10.6.8",6) == 0) goto SE3;
-  
-  //patch info->cpuid_cpufamily
-  bytes[patchLocation -  9] = 0x90;
-  bytes[patchLocation -  8] = 0x90;
-  
-  bytes[patchLocation -  7] = 0xC7;
-  bytes[patchLocation -  6] = 0x05;
-
-  bytes[patchLocation -  5] = (cpuid_family_addr & 0x000000FF);
-  bytes[patchLocation -  4] = (UINT8) ((cpuid_family_addr & 0x0000FF00) >>  8);
-  bytes[patchLocation -  3] = (UINT8) ((cpuid_family_addr & 0x00FF0000) >> 16);
-  bytes[patchLocation -  2] = (UINT8) ((cpuid_family_addr & 0xFF000000) >> 24);
-  
-  bytes[patchLocation -  1] = CPUIDFAMILY_DEFAULT; //cpuid_family need alway set 0x06
-  bytes[patchLocation +  0] = CPUID_MODEL_YONAH;   //cpuid_model set CPUID_MODEL_MEROM
-  bytes[patchLocation +  1] = 0x01;                //cpuid_extmodel alway set 0x01
-  bytes[patchLocation +  2] = 0x00;                //cpuid_extfamily alway set 0x00
-  bytes[patchLocation +  3] = 0x90;                
-  bytes[patchLocation +  4] = 0x90;
-SE3:
-  // patch sse3
-  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.6", 4) == 0)) {
-      Patcher_SSE3_6 ((VOID *) bytes);
-  }
-  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.7", 4) == 0)) {
-      Patcher_SSE3_7 ((VOID *) bytes);
-  }
-}
-
-VOID
-KernelPatcher_32 (
-  VOID  *kernelData
-)
-{
-  UINT8   *bytes;
-  UINT32  patchLocation;
-  UINT32  patchLocation1;
-  UINT32  i;
-  UINT32  jumpaddr;
-
-  bytes = (UINT8 *) kernelData;
-  patchLocation = 0;
-  patchLocation1 = 0;
-  
-  // _cpuid_set_info _panic address
-  for (i = 0; i < 0x1000000; i++) {
-    if (bytes[i] == 0xC7 && bytes[i+1] == 0x05 && bytes[i+6] == 0x07 && bytes[i+7] == 0x00 &&
-        bytes[i+8] == 0x00 && bytes[i+9] == 0x00 && bytes[i+10] == 0xC7 && bytes[i+11] == 0x05 &&
-        bytes[i-5] == 0xE8) {
-      patchLocation = i-5;
-      break;
     }
-  }
-   
-  if (!patchLocation) {
-    return;
-  }
-  
-  // this for 10.6.0 and 10.6.1 kernel and remove tsc.c unknow cpufamily panic
-  //  c70424540e5900
-  // find _tsc_init panic address
-  for (i = 0; i < 0x1000000; i++) {   // _cpuid_set_info _panic address
-    if (bytes[i] == 0xC7 && bytes[i+1] == 0x04 && bytes[i+2] == 0x24 && bytes[i+3] == 0x54 &&
-        bytes[i+4] == 0x0E && bytes[i+5] == 0x59 && bytes[i+6] == 0x00) {
-      patchLocation1 = i+7;
-      break;
-    }
-  }
-  
-  // found _tsc_init panic addres and patch it
-  if (patchLocation1) {
-    bytes[patchLocation1 + 0] = 0x90;
-    bytes[patchLocation1 + 1] = 0x90;
-    bytes[patchLocation1 + 2] = 0x90;
-    bytes[patchLocation1 + 3] = 0x90;
-    bytes[patchLocation1 + 4] = 0x90;
-  }
-  // end tsc.c panic
-  
-  //first move panic code total 5 bytes, if patch cpuid fail still can boot with kernel
-  bytes[patchLocation + 0] = 0x90;
-  bytes[patchLocation + 1] = 0x90;
-  bytes[patchLocation + 2] = 0x90;
-  bytes[patchLocation + 3] = 0x90;
-  bytes[patchLocation + 4] = 0x90;
-   
-  jumpaddr = patchLocation;
-   
-  for (i = 0; i < 500; i++) {
-    if (bytes[jumpaddr-i-3] == 0x85 && bytes[jumpaddr-i-2] == 0xC0 &&
-        bytes[jumpaddr-i-1] == 0x75 ) {
-      jumpaddr -= i;
-      bytes[jumpaddr-1] = 0x77;
-      if(bytes[patchLocation - 17] == 0xC7) {
-        bytes[jumpaddr] -=10;
+    //rehabman: for 10.10.dp1 (code portion)
+    else if (KERNEL_YOS_PATCH_SIGNATURE == (*((UINT64 *)Ptr))) {
+      if (0 == CompareMem (Ptr + sizeof (UINT64),
+                           KernelPatchPmSrc1010 + sizeof (UINT64),
+                           sizeof (KernelPatchPmSrc1010)-sizeof (UINT64))) {
+        // copy assuming find/replace are same sizes
+        CopyMem (Ptr,
+                 KernelPatchPmRepl1010,
+                 sizeof (KernelPatchPmRepl1010));
       }
+    }
+    //rehabman: for 10.10.dp1 (data portion)
+    else if (0x00000002000000E2ULL == (*((UINT64 *)Ptr))) {
+      (*((UINT64 *)Ptr)) = 0x0000000200000000ULL;
+    }
+    else if (0x0000004C000000E2ULL == (*((UINT64 *)Ptr))) {
+      (*((UINT64 *)Ptr)) = 0x0000004C00000000ULL;
+    }
+    else if (0x00000190000000E2ULL == (*((UINT64 *)Ptr))) {
+      (*((UINT64 *)Ptr)) = 0x0000019000000000ULL;
       break;
-    } 
+    }
+    Ptr += 16;
   }
-
-  if (jumpaddr == patchLocation) {
-      return;  //can't find jump location
-  }
-
-  // patch info_p->cpufamily to CPUFAMILY_INTEL_MEROM
-  if (bytes[patchLocation - 17] == 0xC7) {
-    bytes[patchLocation - 11] = (CPUFAMILY_INTEL_YONAH & 0x000000FF) >>  0;
-    bytes[patchLocation - 10] = (CPUFAMILY_INTEL_YONAH & 0x0000FF00) >>  8;
-    bytes[patchLocation -  9] = (CPUFAMILY_INTEL_YONAH & 0x00FF0000) >> 16;
-    bytes[patchLocation -  8] = (CPUFAMILY_INTEL_YONAH & 0xFF000000) >> 24;
-  } 
-  
-  //patch info->cpuid_cpufamily
-  bytes[patchLocation -  7] = 0xC7;
-  bytes[patchLocation -  6] = 0x05;
-  bytes[patchLocation -  5] = bytes[jumpaddr + 3];
-  bytes[patchLocation -  4] = bytes[jumpaddr + 4];
-  bytes[patchLocation -  3] = bytes[jumpaddr + 5];
-  bytes[patchLocation -  2] = bytes[jumpaddr + 6];
-  
-  bytes[patchLocation -  1] = CPUIDFAMILY_DEFAULT; //cpuid_family  need alway set 0x06
-  bytes[patchLocation +  0] = CPUID_MODEL_YONAH;   //cpuid_model set CPUID_MODEL_MEROM
-  bytes[patchLocation +  1] = 0x01;                //cpuid_extmodel alway set 0x01
-  bytes[patchLocation +  2] = 0x00;                //cpuid_extfamily alway set 0x00
-  bytes[patchLocation +  3] = 0x90;
-  bytes[patchLocation +  4] = 0x90;
-  
-  if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
-    return;
-  }
-  
-  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.6", 4) == 0)) {
-    Patcher_SSE3_6 ((VOID *) bytes);
-  }
-  if (!SSSE3 && (AsciiStrnCmp (OSVersion, "10.5", 4) == 0)) {
-    Patcher_SSE3_5 ((VOID *) bytes);
-  } 
 }
-       
+
 VOID
 Patcher_SSE3_6 (
   VOID  *kernelData
@@ -333,21 +257,21 @@ Patcher_SSE3_6 (
   UINT32  patchLocation1;
   UINT32  patchLocation2;
   UINT32  patchlast;
-  UINT32  i; 
-
+  UINT32  i;
+  
   bytes = (UINT8 *) kernelData;
   patchLocation1 = 0;
   patchLocation2 = 0;
   patchlast = 0;
   i = 0;
-
+  
   while (TRUE) {
-    if (bytes[i] == 0x66 && bytes[i+1] == 0x0F && bytes[i+2] == 0x6F && 
+    if (bytes[i] == 0x66 && bytes[i+1] == 0x0F && bytes[i+2] == 0x6F &&
         bytes[i+3] == 0x44 && bytes[i+4] == 0x0E && bytes[i+5] == 0xF1 &&
         bytes[i-1664-32] == 0x55) {
       patchLocation1 = i-1664-32;
     }
-
+    
     // khasSSE2+..... title
     if (bytes[i] == 0xE3 && bytes[i+1] == 0x07 && bytes[i+2] == 0x00 &&
         bytes[i+3] == 0x00 && bytes[i+4] == 0x80 && bytes[i+5] == 0x07 &&
@@ -362,7 +286,7 @@ Patcher_SSE3_6 (
   if (!patchLocation1 || !patchLocation2) {
     return;
   }
-   
+  
   i = patchLocation1 + 1500;
   while (TRUE) {
     if (bytes[i] == 0x90 && bytes[i+1] == 0x90 && bytes[i+2] == 0x55 ) {
@@ -371,11 +295,11 @@ Patcher_SSE3_6 (
     }
     i++;
   }
-   
+  
   if (!patchlast) {
     return;
   }
-
+  
   // patch sse3_64 data
   for (i = 0; i < patchlast; i++) {
     if (i < sizeof (sse3_patcher)) {
@@ -384,7 +308,7 @@ Patcher_SSE3_6 (
       bytes[patchLocation1 + i] = 0x90;
     }
   }
-
+  
   // patch kHasSSE3 title
   bytes[patchLocation2 + 0] = 0xFC;
   bytes[patchLocation2 + 1] = 0x05;
@@ -402,69 +326,474 @@ Patcher_SSE3_5 (
   UINT32  patchLocation2;
   UINT32  patchlast;
   UINT32  Length;
-  UINT32  i; 
-
+  UINT32  i;
+  
   bytes = (UINT8 *) kernelData;
   patchLocation1 = 0;
   patchLocation2 = 0;
   patchlast = 0;
   Length = sizeof (kernelData);
-
+  
   for (i = 256; i < (Length - 256); i++) {
     if (bytes[i] == 0x66 && bytes[i+1] == 0x0F && bytes[i+2] == 0x6F &&
         bytes[i+3] == 0x44 && bytes[i+4] == 0x0E && bytes[i+5] == 0xF1 &&
         bytes[i-1680-32] == 0x55) {
       patchLocation1 = i-1680-32;
     }
-
+    
     // khasSSE2+..... title
     if (bytes[i] == 0xF3 && bytes[i+1] == 0x07 && bytes[i+2] == 0x00 &&
         bytes[i+3] == 0x00 && bytes[i+4] == 0x80 && bytes[i+5] == 0x07 &&
         bytes[i+6] == 0xFF && bytes[i+7] == 0xFF && bytes[i+8] == 0x24 &&
         bytes[i+9] == 0x01) {
-       patchLocation2 = i;
-       break;
+      patchLocation2 = i;
+      break;
     }
-  }            
+  }
   
   if (!patchLocation1 || !patchLocation2)  {
     return;
   }
-   
+  
   for (i = (patchLocation1 + 1500); i < Length; i++) {
     if (bytes[i] == 0x90 && bytes[i+1] == 0x90 && bytes[i+2] == 0x55) {
-     patchlast = (i+1) - patchLocation1;
-     break;
+      patchlast = (i+1) - patchLocation1;
+      break;
     }
   }
-
+  
   if (!patchlast) {
     return;
   }
-
+  
   // patech sse3_64 data
   for (i = 0; i < patchlast; i++) {
     if (i < sizeof (sse3_5_patcher)) {
       bytes[patchLocation1 + i] = sse3_5_patcher[i];
     } else {
-        bytes[patchLocation1 + i] = 0x90;
+      bytes[patchLocation1 + i] = 0x90;
     }
   }
-
+  
   // patch kHasSSE3 title
   bytes[patchLocation2 + 0] = 0x0C;
   bytes[patchLocation2 + 1] = 0x06;
   bytes[patchLocation2 + 8] = 0x2C;
   bytes[patchLocation2 + 9] = 0x00;
-} 
+}
 
 VOID
 Patcher_SSE3_7 (
   VOID  *kernelData
 )
 {
-     // not support yet
+  // not support yet
   return;
+}
+
+VOID
+KernelPatcher_64 (
+  VOID* kernelData
+)
+{
+  UINT8       *bytes = (UINT8*)kernelData;
+  UINT32      patchLocation=0, patchLocation1=0;
+  UINT32      i;
+  UINT32      switchaddr=0;
+  UINT32      mask_family=0, mask_model=0;
+  UINT32      cpuid_family_addr=0, cpuid_model_addr=0;
+  
+  // Determine location of _cpuid_set_info _panic call for refrence
+  // basically looking for info_p->cpuid_model = bitfield32(reg[eax],  7,  4);
+  for (i=0; i<0x1000000; i++) {
+    if (bytes[i+ 0] == 0xC7 && bytes[i+ 1] == 0x05 && bytes[i+ 5] == 0x00 && bytes[i+ 6] == 0x07 && bytes[i+ 7] == 0x00 && bytes[i+ 8] == 0x00 && bytes[i+ 9] == 0x00 &&
+        bytes[i+10] == 0xC7 && bytes[i+11] == 0x05 && bytes[i+15] == 0x00 && bytes[i+16] == 0x04 && bytes[i+17] == 0x00 && bytes[i+18] == 0x00 && bytes[i+19] == 0x00) {
+      // matching bytes[i-5] == 0xE8 for _panic call doesn't seem to always work
+      // i made sure _panic call is only place wit this sequence in all the kernels i've looked at
+      patchLocation = i-5;
+      break;
+    }
+  }
+  if (!patchLocation) {
+    return;
+  }
+  // make sure only kernels for OSX 10.6.0 to 10.7.3 are being patched by this approach
+  if ((AsciiStrnCmp(OSVersion,"10.6",4)==0) || ((AsciiStrnCmp(OSVersion,"10.7",4)==0) &&
+                                                ((AsciiStrnCmp(OSVersion,"10.7.4",6)==!0) || (AsciiStrnCmp(OSVersion,"10.7.5",6)==!0)))) {
+    // remove tsc_init: unknown CPU family panic for kernels prior to 10.6.2 which still had Atom support
+    if ((AsciiStrnCmp(OSVersion,"10.6.0",6)==0) || (AsciiStrnCmp(OSVersion,"10.6.1",6)==0)) {
+      for (i=0; i<0x1000000; i++) {
+        // find _tsc_init panic address by byte sequence 488d3df4632a00
+        if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
+            bytes[i+4] == 0x63 && bytes[i+5] == 0x2A && bytes[i+6] == 0x00) {
+          patchLocation1 = i+9;
+          break;
+        }
+      }
+      // NOP _panic call
+      if (patchLocation1) {
+        bytes[patchLocation1 + 0] = 0x90;
+        bytes[patchLocation1 + 1] = 0x90;
+        bytes[patchLocation1 + 2] = 0x90;
+        bytes[patchLocation1 + 3] = 0x90;
+        bytes[patchLocation1 + 4] = 0x90;
+      }
+    }
+    else { // assume patching logic for OSX 10.6.2 to 10.7.3
+      // Determine cpuid_model address
+      // 10.6.2 to 10.6.8 kernels
+      if ((AsciiStrnCmp(OSVersion,"10.6",4)==0)) {
+        // C1E004           shl        eax, 0x4
+        // 000575E44900     add        byte [ds:0xffffff80006c69cd], al
+        for (i=0; i<0x1000000; i++) {
+          if(bytes[i+0] == 0xC0 && bytes[i+1] == 0xE0 && bytes[i+2] == 0x04 &&
+             bytes[i+3] == 0x00 && bytes[i+4] == 0x5) {
+            cpuid_model_addr =
+            bytes[i + 5] <<  0 |
+            bytes[i + 6] <<  8 |
+            bytes[i + 7] << 16 |
+            bytes[i + 8] << 24;
+            cpuid_model_addr = cpuid_model_addr + i + 9;
+          }
+        }
+      }
+      else { // 10.7.0 to 10.7.3 kernels
+        // C0E004           shl        al, 0x4
+        // 0005B82D5F00     add        byte [ds:0xffffff80008a216d], al
+        for (i=0; i<0x1000000; i++) {
+          if(bytes[i+0] == 0xC0 && bytes[i+1] == 0xE0 && bytes[i+2] == 0x04 &&
+             bytes[i+3] == 0x00 && bytes[i+4] == 0x5) {
+            
+            cpuid_model_addr =
+            bytes[i + 5] <<  0 |
+            bytes[i + 6] <<  8 |
+            bytes[i + 7] << 16 |
+            bytes[i + 8] << 24;
+            cpuid_model_addr = cpuid_model_addr + i + 9;
+          }
+        }
+      }
+      /*
+       Here is our case from CPUID switch statement, it sets CPUFAMILY_UNKNOWN
+       C7051C2C5F0000000000   mov     dword [ds:0xffffff80008a22c0], 0x0 (example from 10.7)
+       */
+      switchaddr = patchLocation-19;
+      
+      if (bytes[switchaddr+0] == 0xC7 && bytes[switchaddr+1] == 0x05 &&
+          bytes[switchaddr+5] == 0x00 && bytes[switchaddr+6] == 0x00 &&
+          bytes[switchaddr+7] == 0x00 && bytes[switchaddr+8] == 0x00) {
+        if (cpuid_model_addr) {
+          switchaddr += 6; // offset 6 bytes in mov operation to write a dword instead of zero
+          // calculate mask for patching, cpuid_family mask not needed as we offset on a valid mask
+          mask_model   = cpuid_model_addr -  (switchaddr+14);
+          bytes[switchaddr+0] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
+          bytes[switchaddr+1] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
+          bytes[switchaddr+2] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
+          bytes[switchaddr+3] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
+          // mov  dword [ds:0xffffff80008a216d], 0x2000117
+          bytes[switchaddr+4] = 0xC7;
+          bytes[switchaddr+5] = 0x05;
+          bytes[switchaddr+6] = (mask_model & 0x000000FF) >> 0;
+          bytes[switchaddr+7] = (mask_model & 0x0000FF00) >> 8;
+          bytes[switchaddr+8] = (mask_model & 0x00FF0000) >> 16;
+          bytes[switchaddr+9] = (mask_model & 0xFF000000) >> 24;
+          bytes[switchaddr+10] = 0x17; // cpuid_model
+          bytes[switchaddr+11] = 0x01; // cpuid_extmodel
+          bytes[switchaddr+12] = 0x00; // cpuid_extfamily
+          bytes[switchaddr+13] = 0x02; // cpuid_stepping
+          // fill remainder with 4 NOPs
+          for (i=14; i<18; i++) {
+            bytes[switchaddr+i] = 0x90;
+          }
+        }
+      }
+    }
+    // patch ssse3
+    if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.6",4)==0)) {
+      Patcher_SSE3_6((VOID*)bytes);
+    }
+    if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.7",4)==0)) {
+      Patcher_SSE3_7((VOID*)bytes);
+    }
+  }
+  // all 10.7.4+ kernels share common CPUID switch statement logic,
+  // it needs to be exploited in diff manner due to the lack of space
+  if ((AsciiStrnCmp(OSVersion,"10.7.4",6)==0) || (AsciiStrnCmp(OSVersion,"10.7.5",6)==0) ||
+      (AsciiStrnCmp(OSVersion,"10.8",  4)==0) || (AsciiStrnCmp(OSVersion,"10.9",  4)==0)) {
+    /*
+     Here is our switchaddress location ... it should be case 20 from CPUID switch statement
+     833D78945F0000  cmp        dword [ds:0xffffff80008a21d0], 0x0;
+     7417            je         0xffffff80002a8d71
+     */
+    switchaddr = patchLocation-45;
+    
+    if(bytes[switchaddr+0] == 0x83 && bytes[switchaddr+1] == 0x3D &&
+       bytes[switchaddr+5] == 0x00 && bytes[switchaddr+6] == 0x00 &&
+       bytes[switchaddr+7] == 0x74) {
+      // Determine cpuid_family address
+      // 891D4F945F00    mov        dword [ds:0xffffff80008a21a0], ebx
+      cpuid_family_addr =
+      bytes[switchaddr - 4] <<  0 |
+      bytes[switchaddr - 3] <<  8 |
+      bytes[switchaddr - 2] << 16 |
+      bytes[switchaddr - 1] << 24;
+      cpuid_family_addr = cpuid_family_addr + switchaddr;
+      // Determine cpuid_model address
+      if ((AsciiStrnCmp(OSVersion,"10.8",4)==0) || (AsciiStrnCmp(OSVersion,"10.9",4)==0)) {
+        // C0EB04       shr bl, 0x4
+        // 881D2B675E00 mov byte [ds:0xffffff80008b204d], bl
+        for (i=0; i<0x1000000; i++) {
+          if(bytes[i+0] == 0xC0 && bytes[i+1] == 0xEB && bytes[i+2] == 0x04 &&
+             bytes[i+3] == 0x88 && bytes[i+4] == 0x1D) {
+            cpuid_model_addr =
+            bytes[i + 5] <<  0 |
+            bytes[i + 6] <<  8 |
+            bytes[i + 7] << 16 |
+            bytes[i + 8] << 24;
+            cpuid_model_addr = cpuid_model_addr + i + 9;
+          }
+        }
+      }
+      else { // special case for 10.7.4+ kernels
+        // C0E004           shl        al, 0x4
+        // 0005B82D5F00     add        byte [ds:0xffffff80008a216d], al
+        for (i=0; i<0x1000000; i++) {
+          if(bytes[i+0] == 0xC0 && bytes[i+1] == 0xE0 && bytes[i+2] == 0x04 &&
+             bytes[i+3] == 0x00 && bytes[i+4] == 0x5) {
+            
+            cpuid_model_addr =
+            bytes[i + 5] <<  0 |
+            bytes[i + 6] <<  8 |
+            bytes[i + 7] << 16 |
+            bytes[i + 8] << 24;
+            cpuid_model_addr = cpuid_model_addr + i + 9;
+          }
+        }
+      }
+      if (cpuid_family_addr && cpuid_model_addr) {
+        // Calculate masks for patching
+        mask_family  = cpuid_family_addr - (switchaddr +15);
+        mask_model   = cpuid_model_addr -  (switchaddr +25);
+        // retain original
+        // test ebx, ebx
+        bytes[switchaddr+0] = 0x85;
+        bytes[switchaddr+1] = 0xDB;
+        // retain original
+        // jne for above test
+        bytes[switchaddr+2] = 0x75;
+        bytes[switchaddr+3] = 0x2E;
+        // mov ebx, 0x78ea4fbc
+        bytes[switchaddr+4] = 0xBB;
+        bytes[switchaddr+5] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
+        bytes[switchaddr+6] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
+        bytes[switchaddr+7] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
+        bytes[switchaddr+8] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
+        // mov dword, ebx
+        bytes[switchaddr+9]  = 0x89;
+        bytes[switchaddr+10] = 0x1D;
+        // cpuid_cpufamily address 0xffffff80008a21a0
+        bytes[switchaddr+11] = (mask_family & 0x000000FF) >> 0;
+        bytes[switchaddr+12] = (mask_family & 0x0000FF00) >> 8;
+        bytes[switchaddr+13] = (mask_family & 0x00FF0000) >> 16;
+        bytes[switchaddr+14] = (mask_family & 0xFF000000) >> 24;
+        // mov dword
+        bytes[switchaddr+15] = 0xC7;
+        bytes[switchaddr+16] = 0x05;
+        // cpuid_model address 0xffffff80008b204d
+        bytes[switchaddr+17] = (mask_model & 0x000000FF) >> 0;
+        bytes[switchaddr+18] = (mask_model & 0x0000FF00) >> 8;
+        bytes[switchaddr+19] = (mask_model & 0x00FF0000) >> 16;
+        bytes[switchaddr+20] = (mask_model & 0xFF000000) >> 24;
+        bytes[switchaddr+21] = 0x17; // cpuid_model
+        bytes[switchaddr+22] = 0x01; // cpuid_extmodel
+        bytes[switchaddr+23] = 0x00; // cpuid_extfamily
+        bytes[switchaddr+24] = 0x02; // cpuid_stepping
+        // fill remainder with 25 NOPs
+        for (i=25; i<25+25; i++) {
+          bytes[switchaddr+i] = 0x90;
+        }
+      }
+    }
+  }
+}
+
+VOID
+KernelPatcher_32 (
+  VOID* kernelData
+)
+{
+  UINT8* bytes = (UINT8*)kernelData;
+  UINT32 patchLocation=0, patchLocation1=0;
+  UINT32 i;
+  UINT32 jumpaddr;
+  
+  // _cpuid_set_info _panic address
+  for (i=0; i<0x1000000; i++) {
+    if (bytes[i] == 0xC7 && bytes[i+1] == 0x05 && bytes[i+6] == 0x07 && bytes[i+7] == 0x00 &&
+        bytes[i+8] == 0x00 && bytes[i+9] == 0x00 && bytes[i+10] == 0xC7 && bytes[i+11] == 0x05 &&
+        bytes[i-5] == 0xE8) {
+      patchLocation = i-5;
+      break;
+    }
+  }
+  if (!patchLocation) {
+    return;
+  }
+  // this for 10.6.0 and 10.6.1 kernel and remove tsc.c unknow cpufamily panic
+  //  c70424540e5900
+  // find _tsc_init panic address
+  for (i=0; i<0x1000000; i++) {
+    // _cpuid_set_info _panic address
+    if (bytes[i] == 0xC7 && bytes[i+1] == 0x04 && bytes[i+2] == 0x24 && bytes[i+3] == 0x54 &&
+        bytes[i+4] == 0x0E && bytes[i+5] == 0x59 && bytes[i+6] == 0x00) {
+      patchLocation1 = i+7;
+      break;
+    }
+  }
+  // found _tsc_init panic addres and patch it
+  if (patchLocation1) {
+    bytes[patchLocation1 + 0] = 0x90;
+    bytes[patchLocation1 + 1] = 0x90;
+    bytes[patchLocation1 + 2] = 0x90;
+    bytes[patchLocation1 + 3] = 0x90;
+    bytes[patchLocation1 + 4] = 0x90;
+  }
+  //first move panic code total 5 bytes, if patch cpuid fail still can boot with kernel
+  bytes[patchLocation + 0] = 0x90;
+  bytes[patchLocation + 1] = 0x90;
+  bytes[patchLocation + 2] = 0x90;
+  bytes[patchLocation + 3] = 0x90;
+  bytes[patchLocation + 4] = 0x90;
+  
+  jumpaddr = patchLocation;
+  
+  for (i=0;i<500;i++) {
+    if (bytes[jumpaddr-i-3] == 0x85 && bytes[jumpaddr-i-2] == 0xC0 &&
+        bytes[jumpaddr-i-1] == 0x75 ) {
+      jumpaddr -= i;
+      bytes[jumpaddr-1] = 0x77;
+      if (bytes[patchLocation - 17] == 0xC7) {
+        bytes[jumpaddr] -=10;
+      }
+      break;
+    }
+  }
+  
+  if (jumpaddr == patchLocation) {
+    return;  //can't find jump location
+  }
+  // patch info_p->cpufamily to CPUFAMILY_INTEL_MEROM
+  if (bytes[patchLocation - 17] == 0xC7) {
+    bytes[patchLocation - 11] = (CPUFAMILY_INTEL_YONAH & 0x000000FF) >>  0;
+    bytes[patchLocation - 10] = (CPUFAMILY_INTEL_YONAH & 0x0000FF00) >>  8;
+    bytes[patchLocation -  9] = (CPUFAMILY_INTEL_YONAH & 0x00FF0000) >> 16;
+    bytes[patchLocation -  8] = (CPUFAMILY_INTEL_YONAH & 0xFF000000) >> 24;
+  }
+  //patch info->cpuid_cpufamily
+  bytes[patchLocation -  7] = 0xC7;
+  bytes[patchLocation -  6] = 0x05;
+  bytes[patchLocation -  5] = bytes[jumpaddr + 3];
+  bytes[patchLocation -  4] = bytes[jumpaddr + 4];
+  bytes[patchLocation -  3] = bytes[jumpaddr + 5];
+  bytes[patchLocation -  2] = bytes[jumpaddr + 6];
+  
+  bytes[patchLocation -  1] = CPUIDFAMILY_DEFAULT; //cpuid_family  need alway set 0x06
+  bytes[patchLocation +  0] = CPUID_MODEL_YONAH;   //cpuid_model set CPUID_MODEL_MEROM
+  bytes[patchLocation +  1] = 0x01;                //cpuid_extmodel alway set 0x01
+  bytes[patchLocation +  2] = 0x00;                //cpuid_extfamily alway set 0x00
+  bytes[patchLocation +  3] = 0x90;
+  bytes[patchLocation +  4] = 0x90;
+  
+  if (OSVersion) {
+    if (AsciiStrnCmp(OSVersion,"10.7",4)==0) return;
+    if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.6",4)==0)) {
+      Patcher_SSE3_6((VOID*)bytes);
+    }
+    if (!SSSE3 && (AsciiStrnCmp(OSVersion,"10.5",4)==0)) {
+      Patcher_SSE3_5((VOID*)bytes);
+    }
+  }
+}
+
+VOID
+KernelLapicPatch_64 (
+  VOID *kernelData
+)
+{
+  // Credits to donovan6000 and sherlocks for providing the lapic kernel patch source used to build this function
+  UINT8       *bytes = (UINT8*)kernelData;
+  UINT32      patchLocation=0;
+  UINT32      i;
+  
+  for (i=0; i<0x1000000; i++) {
+    if (bytes[i+0]  == 0x65 && bytes[i+1]  == 0x8B && bytes[i+2]  == 0x04 && bytes[i+3]  == 0x25 &&
+        bytes[i+4]  == 0x14 && bytes[i+5]  == 0x00 && bytes[i+6]  == 0x00 && bytes[i+7]  == 0x00 &&
+        bytes[i+35] == 0x65 && bytes[i+36] == 0x8B && bytes[i+37] == 0x04 && bytes[i+38] == 0x25 &&
+        bytes[i+39] == 0x14 && bytes[i+40] == 0x00 && bytes[i+41] == 0x00 && bytes[i+42] == 0x00) {
+      patchLocation = i+30;
+      break;
+    } else if (bytes[i+0] == 0x65 && bytes[i+1] == 0x8B && bytes[i+2] == 0x04 && bytes[i+3] == 0x25 &&
+               bytes[i+4] == 0x1C && bytes[i+5] == 0x00 && bytes[i+6] == 0x00 && bytes[i+7] == 0x00 &&
+               bytes[i+36] == 0x65 && bytes[i+37] == 0x8B && bytes[i+38] == 0x04 && bytes[i+39] == 0x25 &&
+               bytes[i+40] == 0x1C && bytes[i+41] == 0x00 && bytes[i+42] == 0x00 && bytes[i+43] == 0x00) {
+      patchLocation = i+31;
+      break;
+      //rehabman: 10.10.DP1 lapic
+    } else if (bytes[i+0] == 0x65 && bytes[i+1] == 0x8B && bytes[i+2] == 0x04 && bytes[i+3] == 0x25 &&
+               bytes[i+4] == 0x1C && bytes[i+5] == 0x00 && bytes[i+6] == 0x00 && bytes[i+7] == 0x00 &&
+               bytes[i+33] == 0x65 && bytes[i+34] == 0x8B && bytes[i+35] == 0x04 && bytes[i+36] == 0x25 &&
+               bytes[i+37] == 0x1C && bytes[i+38] == 0x00 && bytes[i+39] == 0x00 && bytes[i+40] == 0x00) {
+      patchLocation = i+28;
+      break;
+    }
+  }
+  if (!patchLocation) {
+    return;
+  }
+  // Already patched?  May be running a non-vanilla kernel already?
+  if ((bytes[patchLocation + 0] == 0x90 && bytes[patchLocation + 1] == 0x90 &&
+      bytes[patchLocation + 2] == 0x90 && bytes[patchLocation + 3] == 0x90 &&
+      bytes[patchLocation + 4] == 0x90) != TRUE) {
+    bytes[patchLocation + 0] = 0x90;
+    bytes[patchLocation + 1] = 0x90;
+    bytes[patchLocation + 2] = 0x90;
+    bytes[patchLocation + 3] = 0x90;
+    bytes[patchLocation + 4] = 0x90;
+  }
+}
+
+VOID
+KernelLapicPatch_32 (
+  VOID *kernelData
+)
+{
+  // Credits to donovan6000 and sherlocks for providing the lapic kernel patch source used to build this function
+  UINT8       *bytes = (UINT8*)kernelData;
+  UINT32      patchLocation=0;
+  UINT32      i;
+  
+  for (i=0; i<0x1000000; i++) {
+    if (bytes[i+0]  == 0x65 && bytes[i+1]  == 0xA1 && bytes[i+2]  == 0x0C && bytes[i+3]  == 0x00 &&
+        bytes[i+4]  == 0x00 && bytes[i+5]  == 0x00 &&
+        bytes[i+30] == 0x65 && bytes[i+31] == 0xA1 && bytes[i+32] == 0x0C && bytes[i+33] == 0x00 &&
+        bytes[i+34] == 0x00 && bytes[i+35] == 0x00) {
+      patchLocation = i+25;
+      break;
+    }
+  }
+  if (!patchLocation) {
+    return;
+  }
+  // Already patched?  May be running a non-vanilla kernel already?
+  if ((bytes[patchLocation + 0] == 0x90 && bytes[patchLocation + 1] == 0x90 &&
+      bytes[patchLocation + 2] == 0x90 && bytes[patchLocation + 3] == 0x90 &&
+      bytes[patchLocation + 4] == 0x90) != TRUE) {
+    bytes[patchLocation + 0] = 0x90;
+    bytes[patchLocation + 1] = 0x90;
+    bytes[patchLocation + 2] = 0x90;
+    bytes[patchLocation + 3] = 0x90;
+    bytes[patchLocation + 4] = 0x90;
+  }
 }
 #endif
 
@@ -762,33 +1091,6 @@ KernelAndKextsPatcherStart (
   UINT32      deviceTreeLength;
   EFI_STATUS  Status;
 
-#if 0
-  // we will call KernelAndKextPatcherInit() only if needed
-  if (gSettings.KPKernelCpu) {
-    //
-    // Kernel patches
-    //
-    if ((gCPUStructure.Family != 0x06 && AsciiStrStr(OSVersion,"10.7") != 0)||
-        (gCPUStructure.Model == CPU_MODEL_ATOM &&
-        ((AsciiStrStr (OSVersion, "10.7") != 0) || AsciiStrStr (OSVersion, "10.6") != 0)) ||
-        (gCPUStructure.Model == CPU_MODEL_IVY_BRIDGE && AsciiStrStr (OSVersion, "10.7") != 0) ||
-        (gCPUStructure.Model == CPU_MODEL_IVY_BRIDGE_E5 && AsciiStrStr (OSVersion, "10.7") != 0)) {
-      KernelAndKextPatcherInit ();
-      if (KernelData == NULL) {
-#ifdef KEXT_PATCH_DEBUG
-        Print (L"Kernel Patcher: kernel data is NULL.\n");
-#endif
-        return;
-      }
-
-      if(is64BitKernel) {
-        KernelPatcher_64 (KernelData);
-      } else {
-        KernelPatcher_32 (KernelData);
-      }
-    }
-  }
-#endif
   //
   // Kernel & Kexts patches
   //
@@ -801,6 +1103,29 @@ KernelAndKextsPatcherStart (
     return;
   }
 
+  if (gSettings.PatchCPU) {
+    if (is64BitKernel) {
+      KernelPatcher_64 (KernelData);
+    } else {
+      KernelPatcher_32 (KernelData);
+    }
+  }
+
+  // CPU power management patch for haswell with locked msr
+  if (gSettings.PatchPM) {
+    if (is64BitKernel) {
+      KernelPatchPm (KernelData);
+    }
+  }
+
+  if (gSettings.PatchLAPIC) {
+    if (is64BitKernel) {
+      KernelLapicPatch_64 (KernelData);
+    } else {
+      KernelLapicPatch_32 (KernelData);
+    }
+  }
+  
   if (gSettings.KPKernelPatchesNeeded) {
     AnyKernelPatch (KernelData);
   }

@@ -1358,9 +1358,6 @@ GetUserSettings (
   gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
   gSettings.DropDMAR = GetBoolProperty (dictPointer, "DropDMAR", FALSE);
   gSettings.FixRegions = GetBoolProperty (dictPointer, "FixRegions", FALSE);
-#if 0
-  gSettings.PatchAPIC = GetBoolProperty (dictPointer, "PatchAPIC", FALSE);
-#endif
   // known pair for ResetAddr/ResetVal is 0x0[C/2]F9/0x06, 0x64/0xFE
   gSettings.ResetAddr =
     (UINT64) GetNumProperty (dictPointer, "ResetAddress", 0);
@@ -1580,6 +1577,10 @@ GetUserSettings (
     }
   }
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
+
+  gSettings.PatchLAPIC = GetBoolProperty (dictPointer, "PatchLAPIC", FALSE);
+  gSettings.PatchPM = GetBoolProperty (dictPointer, "PatchPM", FALSE);
+  gSettings.PatchCPU = GetBoolProperty (dictPointer, "PatchCPU", FALSE);
 
   if (GetBoolProperty (dictPointer, "Turbo", FALSE)) {
     if (gCPUStructure.TurboMsr != 0) {

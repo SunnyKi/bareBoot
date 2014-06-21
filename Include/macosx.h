@@ -69,7 +69,7 @@
 #define EFI_SYSTEM_TABLE_MAX_ADDRESS 0xFFFFFFFF
 #define ROUND_PAGE(x)  ((((unsigned)(x)) + EFI_PAGE_SIZE - 1) & ~(EFI_PAGE_SIZE - 1))
 
-#define CPUID_MAX 9
+#define CPUID_MAX 10
 #define EFI_CPU_DATA_MAXIMUM_LENGTH 0x100
 //
 #define MAX_RAM_SLOTS 8
@@ -189,6 +189,9 @@ typedef struct {
   // SMBIOS TYPE131
   UINT16  CpuType;
   UINT32  ProcessorInterconnectSpeed; //Hz
+  BOOLEAN PatchLAPIC;
+  BOOLEAN PatchPM;
+  BOOLEAN PatchCPU;
   // OS parameters
   CHAR8   Language[10];
   CHAR8   BootArgs[256];

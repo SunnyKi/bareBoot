@@ -171,10 +171,6 @@ GetCpuProps (
   gCPUStructure.MaxRatio = 10;
   gCPUStructure.ProcessorInterconnectSpeed = 0;
 
-  AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
-  gCPUStructure.MicroCode = RShiftU64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32);
-  gCPUStructure.ProcessorFlag = RShiftU64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50) & 3;
-
   DoCpuid (0x00000000, gCPUStructure.CPUID[CPUID_0]);
   DoCpuid (0x00000001, gCPUStructure.CPUID[CPUID_1]);
   DoCpuid (0x80000000, gCPUStructure.CPUID[CPUID_80]);
@@ -188,6 +184,12 @@ GetCpuProps (
   gCPUStructure.Extmodel    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 19, 16);
   gCPUStructure.Extfamily   = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 27, 20);
   gCPUStructure.Features    = quad (gCPUStructure.CPUID[CPUID_1][ECX], gCPUStructure.CPUID[CPUID_1][EDX]);
+
+  if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
+    AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
+    gCPUStructure.MicroCode = RShiftU64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32);
+    gCPUStructure.ProcessorFlag = RShiftU64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50) & 3;
+  }
 
   if (gCPUStructure.Family == 0x0f) {
     gCPUStructure.Family += gCPUStructure.Extfamily;
@@ -220,9 +222,15 @@ GetCpuProps (
   }
 #endif
   // Number of APIC IDs reserved per package
-  DoCpuidEx (0x00000004, 0, gCPUStructure.CPUID[CPUID_4]);
-  gCPUStructure.CoresPerPackage =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 31, 26) + 1;
-  
+  if (gCPUStructure.Vendor == CPU_VENDOR_INTEL) {
+    DoCpuidEx (0x00000004, 0, gCPUStructure.CPUID[CPUID_4]);
+    gCPUStructure.CoresPerPackage =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 31, 26) + 1;
+  } else {
+    if (gCPUStructure.Vendor == CPU_VENDOR_AMD) {
+      DoCpuid(0x80000008, gCPUStructure.CPUID[CPUID_88]);
+      gCPUStructure.CoresPerPackage =  (gCPUStructure.CPUID[CPUID_88][ECX] & 0xFF) + 1;
+    }
+  }
 #if 0
   // Total number of threads serviced by this cache
   gCPUStructure.ThreadsPerCache =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 25, 14) + 1;
@@ -249,6 +257,10 @@ GetCpuProps (
       case CPU_MODEL_SANDY_BRIDGE:
       case CPU_MODEL_IVY_BRIDGE:
       case CPU_MODEL_IVY_BRIDGE_E5:
+      case CPU_MODEL_HASWELL:
+      case CPU_MODEL_HASWELL_MB:
+      case CPU_MODEL_HASWELL_ULT:
+      case CPU_MODEL_HASWELL_ULX:
         msr = AsmReadMsr64 (MSR_CORE_THREAD_COUNT);
         gCPUStructure.Cores   = (UINT8) bitfield ((UINT32) msr, 31, 16);
         gCPUStructure.Threads = (UINT8) bitfield ((UINT32) msr, 15,  0);
@@ -312,6 +324,9 @@ GetCpuProps (
       case CPU_MODEL_IVY_BRIDGE:
       case CPU_MODEL_IVY_BRIDGE_E5:
       case CPU_MODEL_HASWELL:
+      case CPU_MODEL_HASWELL_MB:
+      case CPU_MODEL_HASWELL_ULT:
+      case CPU_MODEL_HASWELL_ULX:
         msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
         gCPUStructure.MaxRatio = (UINT8) (RShiftU64 (msr, 8) & 0xff);
         if (gCPUStructure.MaxRatio != 0) {
@@ -371,6 +386,23 @@ GetCpuProps (
       gCPUStructure.Mobile = TRUE;
     }
 #endif
+  } else {
+    if (gCPUStructure.Vendor == CPU_VENDOR_AMD ) {
+      if (gCPUStructure.Extfamily == 0x00) {
+        msr = AsmReadMsr64 (K8_FIDVID_STATUS);
+        gCPUStructure.MaxRatio = (UINT32) (RShiftU64 ((RShiftU64 (msr, 16) & 0x3f), 2) + 4);
+      } else {
+        msr = AsmReadMsr64 (K10_COFVID_STATUS);
+        gCPUStructure.MaxRatio = (UINT32) DivU64x32 (((msr & 0x3f) + 0x10),
+                                                     (1 << ((RShiftU64 (msr, 6) & 0x7))));
+      }
+      if (!gCPUStructure.MaxRatio) {
+        gCPUStructure.MaxRatio = 1;
+      }
+      gCPUStructure.FSBFrequency = DivU64x32 (LShiftU64 (gCPUStructure.TSCFrequency, 1),
+                                              gCPUStructure.MaxRatio);
+      gCPUStructure.MaxRatio *= 5;
+    }
   }
 
   if ((gCPUStructure.Model == CPU_MODEL_NEHALEM) ||

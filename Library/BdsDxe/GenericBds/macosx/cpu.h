@@ -18,7 +18,8 @@
 #define CPUID_80  5
 #define CPUID_81  6
 #define CPUID_87  7
-#define CPUID_0B  8
+#define CPUID_88  8
+#define CPUID_0B  9
 
 #define CPU_MODEL_DOTHAN        0x0D
 #define CPU_MODEL_YONAH         0x0E
