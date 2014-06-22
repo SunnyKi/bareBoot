@@ -498,7 +498,7 @@ KernelPatcher_64 (
           bytes[switchaddr+5] = 0x05;
           bytes[switchaddr+6] = (mask_model & 0x000000FF) >> 0;
           bytes[switchaddr+7] = (mask_model & 0x0000FF00) >> 8;
-          bytes[switchaddr+8] = (mask_model & 0x00FF0000) >> 16;
+          bytes[switchaddr+8] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
           bytes[switchaddr+9] = (mask_model & 0xFF000000) >> 24;
           bytes[switchaddr+10] = 0x17; // cpuid_model
           bytes[switchaddr+11] = 0x01; // cpuid_extmodel
@@ -602,7 +602,7 @@ KernelPatcher_64 (
         // cpuid_cpufamily address 0xffffff80008a21a0
         bytes[switchaddr+11] = (mask_family & 0x000000FF) >> 0;
         bytes[switchaddr+12] = (mask_family & 0x0000FF00) >> 8;
-        bytes[switchaddr+13] = (mask_family & 0x00FF0000) >> 16;
+        bytes[switchaddr+13] = (UINT8) ((mask_family & 0x00FF0000) >> 16);
         bytes[switchaddr+14] = (mask_family & 0xFF000000) >> 24;
         // mov dword
         bytes[switchaddr+15] = 0xC7;
@@ -610,7 +610,7 @@ KernelPatcher_64 (
         // cpuid_model address 0xffffff80008b204d
         bytes[switchaddr+17] = (mask_model & 0x000000FF) >> 0;
         bytes[switchaddr+18] = (mask_model & 0x0000FF00) >> 8;
-        bytes[switchaddr+19] = (mask_model & 0x00FF0000) >> 16;
+        bytes[switchaddr+19] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
         bytes[switchaddr+20] = (mask_model & 0xFF000000) >> 24;
         bytes[switchaddr+21] = 0x17; // cpuid_model
         bytes[switchaddr+22] = 0x01; // cpuid_extmodel
