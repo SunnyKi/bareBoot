@@ -144,7 +144,7 @@
     <ClCompile Include="..\fsw_hfs.c" />
     <ClCompile Include="..\fsw_lib.c" />
     <ClCompile Include="fsw_mswin.c" />
-    <ClCompile Include="lslr.c" />
+    <ClCompile Include="tstmain.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fsw_mswin.h" />
