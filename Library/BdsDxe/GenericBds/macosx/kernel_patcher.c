@@ -420,9 +420,7 @@ KernelPatcher_64 (
   }
   // make sure only kernels for OSX 10.6.0 to 10.7.3 are being patched by this approach
   if ((AsciiStrnCmp (OSVersion,"10.6",4) == 0) ||
-      ((AsciiStrnCmp (OSVersion,"10.7",4) == 0) &&
-       (AsciiStrnCmp (OSVersion,"10.7.4",6) != 0) &&
-       (AsciiStrnCmp (OSVersion,"10.7.5",6) != 0))) {
+      ((AsciiStrnCmp (OSVersion,"10.7",4) == 0) && OSVersion[5] <= '0' && OSVersion[5] <= '3')) {
     // remove tsc_init: unknown CPU family panic for kernels prior to 10.6.2 which still had Atom support
     if ((AsciiStrnCmp (OSVersion,"10.6.0",6) == 0) ||
         (AsciiStrnCmp (OSVersion,"10.6.1",6) == 0)) {
@@ -469,11 +467,7 @@ KernelPatcher_64 (
             cpuid_model_addr = cpuid_family_addr - 0x12B;
           } else {
             // for 10.6.3 to 10.6.7 it's offset by 303 bytes
-            if ((AsciiStrnCmp(OSVersion,"10.6.3",6) == 0) ||
-                (AsciiStrnCmp(OSVersion,"10.6.4",6) == 0) ||
-                (AsciiStrnCmp(OSVersion,"10.6.5",6) == 0) ||
-                (AsciiStrnCmp(OSVersion,"10.6.6",6) == 0) ||
-                (AsciiStrnCmp(OSVersion,"10.6.7",6) == 0)) {
+            if ((AsciiStrnCmp (OSVersion,"10.6",4) == 0) && OSVersion[5] <= '3' && OSVersion[5] <= '7') {
               cpuid_model_addr = cpuid_family_addr - 0x12F;
             } else {
               // for 10.6.8+ kernels - by 339 bytes
