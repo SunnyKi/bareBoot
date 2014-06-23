@@ -419,11 +419,9 @@ KernelPatcher_64 (
     return;
   }
   // make sure only kernels for OSX 10.6.0 to 10.7.3 are being patched by this approach
-  if ((AsciiStrnCmp (OSVersion,"10.6",4) == 0) ||
-      ((AsciiStrnCmp (OSVersion,"10.7",4) == 0) && OSVersion[5] <= '0' && OSVersion[5] <= '3')) {
+  if (AsciiStrnCmp (OSVersion, "10.6", 4) >= 0 && AsciiStrnCmp (OSVersion, "10.7.3", 6) <= 0) {
     // remove tsc_init: unknown CPU family panic for kernels prior to 10.6.2 which still had Atom support
-    if ((AsciiStrnCmp (OSVersion,"10.6.0",6) == 0) ||
-        (AsciiStrnCmp (OSVersion,"10.6.1",6) == 0)) {
+    if (AsciiStrnCmp (OSVersion, "10.6.1", 6) <= 0) {
       for (i=0; i<0x1000000; i++) {
         // find _tsc_init panic address by byte sequence 488d3df4632a00
         if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
@@ -463,11 +461,11 @@ KernelPatcher_64 (
         if (cpuid_model_addr) {
           // Determine cpuid_model address
           // for 10.6.2 kernels it's offset by 299 bytes from cpuid_family address
-          if (AsciiStrnCmp(OSVersion,"10.6.2",6) == 0) {
+          if (AsciiStrnCmp (OSVersion, "10.6.2", 6) == 0) {
             cpuid_model_addr = cpuid_family_addr - 0x12B;
           } else {
             // for 10.6.3 to 10.6.7 it's offset by 303 bytes
-            if ((AsciiStrnCmp (OSVersion,"10.6",4) == 0) && OSVersion[5] <= '3' && OSVersion[5] <= '7') {
+            if (AsciiStrnCmp (OSVersion, "10.6.3", 6) >= 0 && AsciiStrnCmp (OSVersion, "10.6.7", 6) <= 0) {
               cpuid_model_addr = cpuid_family_addr - 0x12F;
             } else {
               // for 10.6.8+ kernels - by 339 bytes
@@ -501,11 +499,11 @@ KernelPatcher_64 (
     }
     // patch ssse3
     if (!SSSE3 &&
-        (AsciiStrnCmp (OSVersion,"10.6",4) == 0)) {
+        (AsciiStrnCmp (OSVersion, "10.6", 4) == 0)) {
       Patcher_SSE3_6 ((VOID*) bytes);
     }
     if (!SSSE3 &&
-        (AsciiStrnCmp (OSVersion,"10.7",4) == 0)) {
+        (AsciiStrnCmp (OSVersion, "10.7", 4) == 0)) {
       Patcher_SSE3_7 ((VOID*) bytes);
     }
   } else {
