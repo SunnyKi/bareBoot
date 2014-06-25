@@ -475,10 +475,17 @@ KernelPatcher_64 (
           switchaddr += 6; // offset 6 bytes in mov operation to write a dword instead of zero
           // calculate mask for patching, cpuid_family mask not needed as we offset on a valid mask
           mask_model   = cpuid_model_addr -  (switchaddr+14);
-          bytes[switchaddr+0] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
-          bytes[switchaddr+1] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
-          bytes[switchaddr+2] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
-          bytes[switchaddr+3] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
+          if (gSettings.CpuFamily != 0) {
+            bytes[switchaddr+0] = (gSettings.CpuFamily & 0x000000FF) >>  0;
+            bytes[switchaddr+1] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
+            bytes[switchaddr+2] = (gSettings.CpuFamily & 0x00FF0000) >> 16;
+            bytes[switchaddr+3] = (gSettings.CpuFamily & 0xFF000000) >> 24;
+          } else {
+            bytes[switchaddr+0] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
+            bytes[switchaddr+1] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
+            bytes[switchaddr+2] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
+            bytes[switchaddr+3] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
+          }
           // mov  dword [ds:0xffffff80008a216d], 0x2000117
           bytes[switchaddr+4] = 0xC7;
           bytes[switchaddr+5] = 0x05;
@@ -486,10 +493,18 @@ KernelPatcher_64 (
           bytes[switchaddr+7] = (mask_model & 0x0000FF00) >> 8;
           bytes[switchaddr+8] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
           bytes[switchaddr+9] = (mask_model & 0xFF000000) >> 24;
-          bytes[switchaddr+10] = 0x17; // cpuid_model
-          bytes[switchaddr+11] = 0x01; // cpuid_extmodel
-          bytes[switchaddr+12] = 0x00; // cpuid_extfamily
-          bytes[switchaddr+13] = 0x02; // cpuid_stepping
+          if (gSettings.CpuIdVars != 0) {
+            bytes[switchaddr+10] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
+            bytes[switchaddr+11] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
+            bytes[switchaddr+12] = (gSettings.CpuIdVars & 0x00FF0000) >> 16; // cpuid_extfamily
+            bytes[switchaddr+13] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
+
+          } else {
+            bytes[switchaddr+10] = 0x17; // cpuid_model
+            bytes[switchaddr+11] = 0x01; // cpuid_extmodel
+            bytes[switchaddr+12] = 0x00; // cpuid_extfamily
+            bytes[switchaddr+13] = 0x02; // cpuid_stepping
+          }
           // fill remainder with 4 NOPs
           for (i=14; i<18; i++) {
             bytes[switchaddr+i] = 0x90;
@@ -546,10 +561,17 @@ KernelPatcher_64 (
         bytes[switchaddr+3] = bytes[patchLocation-10]+0x20;
         // mov ebx, 0x78ea4fbc
         bytes[switchaddr+4] = 0xBB;
-        bytes[switchaddr+5] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
-        bytes[switchaddr+6] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
-        bytes[switchaddr+7] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
-        bytes[switchaddr+8] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
+        if (gSettings.CpuFamily != 0) {
+          bytes[switchaddr+5] = (gSettings.CpuFamily & 0x000000FF) >>  0;
+          bytes[switchaddr+6] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
+          bytes[switchaddr+7] = (gSettings.CpuFamily & 0x00FF0000) >> 16;
+          bytes[switchaddr+8] = (gSettings.CpuFamily & 0xFF000000) >> 24;
+        } else {
+          bytes[switchaddr+5] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
+          bytes[switchaddr+6] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
+          bytes[switchaddr+7] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
+          bytes[switchaddr+8] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
+        }
         // mov dword, ebx
         bytes[switchaddr+9]  = 0x89;
         bytes[switchaddr+10] = 0x1D;
@@ -566,10 +588,18 @@ KernelPatcher_64 (
         bytes[switchaddr+18] = (mask_model & 0x0000FF00) >> 8;
         bytes[switchaddr+19] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
         bytes[switchaddr+20] = (mask_model & 0xFF000000) >> 24;
-        bytes[switchaddr+21] = 0x17; // cpuid_model
-        bytes[switchaddr+22] = 0x01; // cpuid_extmodel
-        bytes[switchaddr+23] = 0x00; // cpuid_extfamily
-        bytes[switchaddr+24] = 0x02; // cpuid_stepping
+        if (gSettings.CpuIdVars != 0) {
+          bytes[switchaddr+21] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
+          bytes[switchaddr+22] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
+          bytes[switchaddr+23] = (gSettings.CpuIdVars & 0x00FF0000) >> 16; // cpuid_extfamily
+          bytes[switchaddr+24] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
+          
+        } else {
+          bytes[switchaddr+21] = 0x17; // cpuid_model
+          bytes[switchaddr+22] = 0x01; // cpuid_extmodel
+          bytes[switchaddr+23] = 0x00; // cpuid_extfamily
+          bytes[switchaddr+24] = 0x02; // cpuid_stepping
+        }
         // fill remainder with 25 NOPs
         for (i=25; i<25+25; i++) {
           bytes[switchaddr+i] = 0x90;

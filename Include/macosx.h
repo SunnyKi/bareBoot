@@ -192,6 +192,8 @@ typedef struct {
   BOOLEAN PatchLAPIC;
   BOOLEAN PatchPM;
   BOOLEAN PatchCPU;
+  UINT32  CpuFamily;
+  UINT32  CpuIdVars;
   // OS parameters
   CHAR8   Language[10];
   CHAR8   BootArgs[256];
