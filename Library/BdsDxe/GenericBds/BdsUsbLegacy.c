@@ -301,12 +301,12 @@ DisableXhciLegacy (
   DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
+#if 1
 EFI_STATUS
 DisableUsbLegacySupport (
   VOID
   )
 {
-#if 1
   EFI_STATUS                Status;
   UINTN                     HandleCount;
   EFI_HANDLE                *HandleBuffer;
@@ -365,7 +365,14 @@ DisableUsbLegacySupport (
     }
   }
   gBS->FreePool (HandleBuffer);
+  return EFI_SUCCESS;
+}
 #else
+EFI_STATUS
+DisableUsbLegacySupport (
+  VOID
+  )
+{
   EFI_STATUS                            Status;
   EFI_HANDLE                            *HandleArray;
   UINTN                                 HandleArrayCount;
@@ -480,6 +487,6 @@ DisableUsbLegacySupport (
     return Status;
   }
   gBS->FreePool (HandleArray);
-#endif
   return EFI_SUCCESS;
 }
+#endif
