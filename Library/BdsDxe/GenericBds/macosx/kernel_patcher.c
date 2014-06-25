@@ -478,7 +478,7 @@ KernelPatcher_64 (
           if (gSettings.CpuFamily != 0) {
             bytes[switchaddr+0] = (gSettings.CpuFamily & 0x000000FF) >>  0;
             bytes[switchaddr+1] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
-            bytes[switchaddr+2] = (gSettings.CpuFamily & 0x00FF0000) >> 16;
+            bytes[switchaddr+2] = (UINT8) ((gSettings.CpuFamily & 0x00FF0000) >> 16);
             bytes[switchaddr+3] = (gSettings.CpuFamily & 0xFF000000) >> 24;
           } else {
             bytes[switchaddr+0] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
@@ -496,7 +496,7 @@ KernelPatcher_64 (
           if (gSettings.CpuIdVars != 0) {
             bytes[switchaddr+10] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
             bytes[switchaddr+11] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
-            bytes[switchaddr+12] = (gSettings.CpuIdVars & 0x00FF0000) >> 16; // cpuid_extfamily
+            bytes[switchaddr+12] = (UINT8) ((gSettings.CpuIdVars & 0x00FF0000) >> 16); // cpuid_extfamily
             bytes[switchaddr+13] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
 
           } else {
@@ -564,7 +564,7 @@ KernelPatcher_64 (
         if (gSettings.CpuFamily != 0) {
           bytes[switchaddr+5] = (gSettings.CpuFamily & 0x000000FF) >>  0;
           bytes[switchaddr+6] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
-          bytes[switchaddr+7] = (gSettings.CpuFamily & 0x00FF0000) >> 16;
+          bytes[switchaddr+7] = (UINT8) ((gSettings.CpuFamily & 0x00FF0000) >> 16);
           bytes[switchaddr+8] = (gSettings.CpuFamily & 0xFF000000) >> 24;
         } else {
           bytes[switchaddr+5] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
@@ -591,7 +591,7 @@ KernelPatcher_64 (
         if (gSettings.CpuIdVars != 0) {
           bytes[switchaddr+21] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
           bytes[switchaddr+22] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
-          bytes[switchaddr+23] = (gSettings.CpuIdVars & 0x00FF0000) >> 16; // cpuid_extfamily
+          bytes[switchaddr+23] = (UINT8) ((gSettings.CpuIdVars & 0x00FF0000) >> 16); // cpuid_extfamily
           bytes[switchaddr+24] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
           
         } else {
