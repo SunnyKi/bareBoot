@@ -1162,15 +1162,4 @@ KernelAndKextsPatcherStart (
 #endif
     }
   }
-#ifdef KERNEL_PATCH_DEBUG
-  gBS->Stall (5000000);
-#else
-#ifdef KEXT_INJECT_DEBUG
-  gBS->Stall (5000000);
-#else
-#ifdef KEXT_PATCH_DEBUG
-  gBS->Stall (5000000);
-#endif
-#endif
-#endif
 }
