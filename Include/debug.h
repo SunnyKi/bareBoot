@@ -13,6 +13,9 @@
 #if 0
 #define KEXT_INJECT_DEBUG
 #endif
+#if 0
+#define KERNEL_PATCH_DEBUG
+#endif
 
 #if 1
 #define BOOT_DEBUG

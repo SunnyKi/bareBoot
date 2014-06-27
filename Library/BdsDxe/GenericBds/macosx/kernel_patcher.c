@@ -1087,6 +1087,9 @@ KernelAndKextsPatcherStart (
   // Kernel & Kexts patches
   //
   KernelAndKextPatcherInit ();
+#ifdef KERNEL_PATCH_DEBUG
+    Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
+#endif
 
   if (KernelData == NULL) {
 #ifdef KEXT_PATCH_DEBUG
@@ -1145,7 +1148,6 @@ KernelAndKextsPatcherStart (
     } else {
 #ifdef KEXT_INJECT_DEBUG
       Print (L"Kext Injection: bootArgs not found.\n");
-      gBS->Stall (5000000);
 #endif
       return;
     }
@@ -1157,8 +1159,18 @@ KernelAndKextsPatcherStart (
     } else {
 #ifdef KEXT_INJECT_DEBUG
       Print (L"Kext Injection: InjectKexts error with status %r.\n", Status);
-      gBS->Stall (5000000);
 #endif
     }
   }
+#ifdef KERNEL_PATCH_DEBUG
+  gBS->Stall (5000000);
+#else
+#ifdef KEXT_INJECT_DEBUG
+  gBS->Stall (5000000);
+#else
+#ifdef KEXT_PATCH_DEBUG
+  gBS->Stall (5000000);
+#endif
+#endif
+#endif
 }
