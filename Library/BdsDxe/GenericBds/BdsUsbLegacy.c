@@ -275,13 +275,11 @@ DisableUhciLegacy (
 
   /*
    * XXX: Is the device in legacy mode?
-   *
    * (need to read more specs and other implementations)
-   *
    * Let go blind
    */
 
-  Command = 0;
+  Command = 0;  /* No need in PIRQD, asi efi runs in polling mode */
   Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (write usb_legsup: %r)\n", __FUNCTION__, Status));
@@ -345,6 +343,7 @@ DisableUsbLegacySupport (
       continue;
     }
     if (IS_PCI_USB (&Pci)) {
+      DBG ("%a: usb device %04x&%04x (0x%02x)\n", __FUNCTION__, Pci.Hdr.VendorId, Pci.Hdr.DeviceId, Pci.Hdr.ClassCode[0]);
       switch (Pci.Hdr.ClassCode[0]) {
       case PCI_IF_EHCI:
         DisableEhciLegacy (PciIo, &Pci);
