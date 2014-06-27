@@ -98,6 +98,8 @@ DisableEhciLegacy (
   UINT64     pollResult;
   UINT32     HcCapParams;
   UINT32     ExtendCap;
+  UINT32     UsbLegSup;
+  UINT32     UsbLegCtlSts;
   UINT8      ExtendCapPtr;
 
   DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
@@ -116,13 +118,7 @@ DisableEhciLegacy (
   }
   /* Some controllers has debug port capabilities also, so search for EHCI_EC_LEGSUP */
   for (ExtendCapPtr = (UINT8) (HcCapParams >> 8); ExtendCapPtr != 0; ExtendCapPtr = (UINT8) (ExtendCap >> 8)) {
-    Status = PciIo->Pci.Read (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       ExtendCapPtr,
-                       1,
-                       &ExtendCap
-                       );
+    Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &ExtendCap);
     if (EFI_ERROR (Status)) {
       DEBUG ((DEBUG_INFO, "%a: bail out (reading extendcap at 0x%x: %r)\n", __FUNCTION__, ExtendCapPtr, Status));
       return;
@@ -132,19 +128,16 @@ DisableEhciLegacy (
       continue;
     }
 
+    UsbLegSup = ExtendCap;
+    /* Read CtlSts to dismiss possible pending interrupts */
+    (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
+
 #define BIOS_OWNED BIT16
 #define OS_OWNED   BIT24
 
-    if ((ExtendCap & BIOS_OWNED) != 0) {
-      ExtendCap = OS_OWNED;
-      Status = PciIo->Pci.Write (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       ExtendCapPtr,
-                       1,
-                       &ExtendCap
-                       );
-      
+    if ((UsbLegSup & BIOS_OWNED) != 0) {
+      UsbLegSup |= OS_OWNED;
+      (void) PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
       Status = PciIo->Flush (PciIo);
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_INFO, "%a: bail out (flush: %r)\n", __FUNCTION__, Status));
@@ -162,6 +155,9 @@ DisableEhciLegacy (
       if (EFI_ERROR (Status)) {
         DEBUG ((DEBUG_INFO, "%a: bail out (wating for ownership change: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
       }
+      /* Read back registers to dismiss pending interrupts */
+      (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
+      (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
     } else {
       DEBUG ((DEBUG_INFO, "%a: no legacy on device\n", __FUNCTION__));
     }
