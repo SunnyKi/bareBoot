@@ -101,6 +101,7 @@ typedef struct {
 } EFI_INTERFACE_SCREEN_INFO;
 
 EFI_STATUS
+EFIAPI
 GetScreenInfo (
   VOID* This,
   UINT64* baseAddress,
