@@ -275,7 +275,7 @@ DisableUhciLegacy (
    * Let go blind
    */
 
-  Command = 0;  /* No need in PIRQD, asi efi runs in polling mode */
+  Command = 0;  /* No need in PIRQD, as efi runs in polling mode */
   Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (write usb_legsup: %r)\n", __FUNCTION__, Status));
