@@ -488,7 +488,6 @@ PatchKext (
       AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
 #ifdef KEXT_PATCH_DEBUG
       Print (L"  %d. name = %a, length = %d\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
-      Pause (NULL);
 #endif
     }
   }    
@@ -753,10 +752,6 @@ KextPatcherStart (
   else {
     PatchLoadedKexts();
   }
-#endif
-#ifdef KEXT_PATCH_DEBUG
-  Pause (NULL);
-  Pause (NULL);
 #endif
 }
 

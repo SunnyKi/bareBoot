@@ -1092,7 +1092,7 @@ KernelAndKextsPatcherStart (
 #endif
 
   if (KernelData == NULL) {
-#ifdef KEXT_PATCH_DEBUG
+#ifdef KERNEL_PATCH_DEBUG
     Print (L"Kernel Patcher: kernel data is NULL.\n");
 #endif
     return;

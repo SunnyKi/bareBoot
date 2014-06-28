@@ -217,7 +217,7 @@ GetListCount (
   }
   else {
 #ifdef KEXT_INJECT_DEBUG
-    DBG (L"Kext Inject: Get List Count - list is empty.\n");
+    Print (L"Kext Inject: Get List Count - list is empty.\n");
 #endif
   }
   return Count;
@@ -485,7 +485,7 @@ InjectKexts (
 
   if (GetKextCount () == 0) {
 #ifdef KEXT_INJECT_DEBUG
-    DBG (L"Kext Inject: extra kexts not found.\n");
+    Print (L"Kext Inject: extra kexts not found.\n");
 #endif
     return EFI_NOT_FOUND;
   }
@@ -532,7 +532,7 @@ InjectKexts (
   if (drvPtr == 0 || infoPtr == 0 || extraPtr == 0 || drvPtr > infoPtr ||
       drvPtr > extraPtr || infoPtr > extraPtr) {
 #ifdef KEXT_INJECT_DEBUG
-    DBG (L"Kext Inject: Invalid device tree for kext injection\n");
+    Print (L"Kext Inject: Invalid device tree for kext injection\n");
 #endif
     return EFI_INVALID_PARAMETER;
   }
@@ -584,7 +584,7 @@ InjectKexts (
   }
   else {
 #ifdef KEXT_INJECT_DEBUG
-    DBG (L"Kext Inject: kext list is empty.\n");
+    Print (L"Kext Inject: kext list is empty.\n");
 #endif
     return EFI_INVALID_PARAMETER;
   }
@@ -663,7 +663,7 @@ KernelBooterExtensionsPatch (
     // more then one pattern found - we do not know what to do with it
     // and we'll skipp it
 #ifdef KEXT_INJECT_DEBUG
-    DBG (L"Kext Inject: more then one pattern found - we do not know what to do with it.\n");
+    Print (L"Kext Inject: more then one pattern found - we do not know what to do with it.\n");
 #endif
     return;
   }
@@ -692,6 +692,6 @@ KernelBooterExtensionsPatch (
   }
 
 #ifdef KEXT_INJECT_DEBUG
-  DBG (L"Kext Inject: SearchAndReplace %d times.\n", Num);
+  Print (L"Kext Inject: Patch Kernel - SearchAndReplace %d times.\n", Num);
 #endif
 }
