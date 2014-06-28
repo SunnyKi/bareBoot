@@ -1,4 +1,3 @@
-
 /* $Id: fsw_hfs.c $ */
 
 /** @file
@@ -127,12 +126,20 @@ static fsw_status_t fsw_hfs_readlink (
 struct fsw_fstype_table FSW_FSTYPE_TABLE_NAME (
   hfs
 ) = {
-  {
-FSW_STRING_TYPE_ISO88591, 4, 4, "hfs"}, sizeof (struct fsw_hfs_volume),
-    sizeof (struct fsw_hfs_dnode), fsw_hfs_volume_mount, fsw_hfs_volume_free,
-    fsw_hfs_volume_stat, fsw_hfs_dnode_fill, fsw_hfs_dnode_free,
-    fsw_hfs_dnode_stat, fsw_hfs_get_extent, fsw_hfs_dir_lookup,
-    fsw_hfs_dir_read, fsw_hfs_readlink,};
+  { FSW_STRING_TYPE_ISO88591, 4, 4, "hfs"},
+  sizeof (struct fsw_hfs_volume),
+  sizeof (struct fsw_hfs_dnode),
+  fsw_hfs_volume_mount,
+  fsw_hfs_volume_free,
+  fsw_hfs_volume_stat,
+  fsw_hfs_dnode_fill,
+  fsw_hfs_dnode_free,
+  fsw_hfs_dnode_stat,
+  fsw_hfs_get_extent,
+  fsw_hfs_dir_lookup,
+  fsw_hfs_dir_read,
+  fsw_hfs_readlink
+};
 
 static fsw_s32
 fsw_hfs_read_block (
@@ -163,7 +170,6 @@ fsw_hfs_read_block (
   fsw_block_release (dno->g.vol, phys_bno, buffer);
 
   return FSW_SUCCESS;
-
 }
 
 /* Read data from HFS file. */
@@ -175,7 +181,6 @@ fsw_hfs_read_file (
   fsw_u8 * buf
 )
 {
-
   fsw_status_t status;
   fsw_u32 log_bno;
   fsw_u32 block_size_bits = dno->g.vol->block_size_shift;
@@ -631,13 +636,12 @@ fsw_hfs_btree_search (
       cmp = compare_keys (currkey, key);
 #if 0
       FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d rec=%d cmp=%d kind=%d\n"), currnode, rec, cmp, node->kind));
-      fprintf(stderr, "rec=%d cmp=%d kind=%d \n", rec, cmp, node->kind);
 #endif
 
-      /* Leaf node. */
+      /* Leaf node */
       if (node->kind == kBTLeafNode) {
         if (cmp == 0) {
-          /* Found!  */
+          /* Found! */
           *result = node;
           *key_offset = rec;
 
@@ -651,9 +655,7 @@ fsw_hfs_btree_search (
         if (cmp > 0)
           break;
 
-        pointer =
-          (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16)
-                       + 2);
+        pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16) + 2);
         currnode = be32_to_cpu (*pointer);
         match = 1;
       }
@@ -689,7 +691,7 @@ fsw_hfs_btree_search (
       if (cmp > 0)
         lower = index + 1;
       if (cmp == 0) {
-        /* Found!  */
+        /* Found! */
         *result = node;
         *key_offset = rec;
 
@@ -704,8 +706,7 @@ fsw_hfs_btree_search (
     if (node->kind == kBTIndexNode && currkey) {
       fsw_u32 *pointer;
 
-      pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16)
-                             + 2);
+      pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16) + 2);
       currnode = be32_to_cpu (*pointer);
     }
     else {
@@ -749,8 +750,7 @@ fsw_hfs_btree_visit_node (
 )
 {
   visitor_parameter_t *vp = (visitor_parameter_t *) param;
-  fsw_u8 *base =
-    (fsw_u8 *) record->rawData + be16_to_cpu (record->length16) + 2;
+  fsw_u8 *base = (fsw_u8 *) record->rawData + be16_to_cpu (record->length16) + 2;
   fsw_u16 rec_type = be16_to_cpu (*(fsw_u16 *) base);
   struct HFSPlusCatalogKey *cat_key = (HFSPlusCatalogKey *) record;
   fsw_u16 name_len;
@@ -850,7 +850,7 @@ fsw_hfs_btree_iterate_node (
     fsw_u32 count = be16_to_cpu (node->numRecords);
     fsw_u32 next_node;
 
-    /* Iterate over all records in this node.  */
+    /* Iterate over all records in this node */
     for (i = first_rec; i < count; i++) {
       int rv = callback (fsw_hfs_btree_rec (btree, node, i), param);
 
@@ -874,7 +874,7 @@ fsw_hfs_btree_iterate_node (
 
     if (fsw_hfs_read_file
         (btree->file, next_node * btree->node_size, btree->node_size,
-         buffer) <= 0) {
+         buffer) != btree->node_size) {
       status = FSW_VOLUME_CORRUPTED;
       break;
     }
@@ -1097,24 +1097,6 @@ fsw_hfs_get_extent (
   return status;
 }
 
-#ifdef HFS_FILE_BLACKLIST
-static const fsw_u16 *g_blacklist[] = {
-  L"AppleIntelCPUPowerManagement.kext",
-  NULL
-};
-#endif
-
-#ifdef HFS_FILE_INJECTION
-static struct {
-  const fsw_u16 *path;
-  const fsw_u16 *name;
-} g_injectList[] = {
-  {
-  L"/System/Library/Extensions", L"ApplePS2Controller.kext"}, {
-  NULL, NULL}
-};
-#endif
-
 static fsw_status_t
 create_hfs_dnode (
   struct fsw_hfs_dnode *dno,
@@ -1172,10 +1154,6 @@ fsw_hfs_dir_lookup (
   file_info_t file_info;
   fsw_u8 *base;
 
-#ifdef HFS_FILE_BLACKLIST
-  int i;
-#endif
-
   fsw_memzero (&file_info, sizeof file_info);
   file_info.name = &rec_name;
 
@@ -1195,27 +1173,6 @@ fsw_hfs_dir_lookup (
     free_data = 1;
     fsw_memcpy (catkey.nodeName.unicode, rec_name.data, rec_name.size);
   }
-
-#ifdef HFS_FILE_BLACKLIST
-  /* Dirty hack: blacklisting of certain files on FS driver level */
-  for (i = 0; g_blacklist[i]; i++) {
-    if (fsw_memeq
-        (g_blacklist[i], catkey.nodeName.unicode, catkey.nodeName.length * 2)) {
-      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": blacklisted `%s'\n"),
-                       g_blacklist[i]));
-      status = FSW_NOT_FOUND;
-      goto done;
-    }
-  }
-#endif
-
-#ifdef HFS_FILE_INJECTION
-  if (fsw_hfs_inject
-      (vol, dno, catkey.nodeName.unicode, catkey.nodeName.length, &file_info)) {
-    status = FSW_SUCCESS;
-    goto create;
-  }
-#endif
 
   catkey.keyLength = (fsw_u16) (6 + rec_name.size);
 
@@ -1270,9 +1227,7 @@ fsw_hfs_dir_lookup (
 
     break;
   }
-#ifdef HFS_FILE_INJECTION
-create:
-#endif
+
   status = create_hfs_dnode (dno, &file_info, child_dno_out);
   if (status)
     goto done;
