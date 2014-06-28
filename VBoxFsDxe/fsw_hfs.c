@@ -610,9 +610,9 @@ fsw_hfs_btree_search (
 
     match = 0;
     /* Read a node.  */
-    if (fsw_hfs_read_file
+    if ((fsw_u32) fsw_hfs_read_file
         (btree->file, (fsw_u64) currnode * btree->node_size, btree->node_size,
-         buffer) <= 0) {
+         buffer) != btree->node_size) {
       status = FSW_VOLUME_CORRUPTED;
       break;
     }
@@ -629,7 +629,10 @@ fsw_hfs_btree_search (
 
       currkey = fsw_hfs_btree_rec (btree, node, rec);
       cmp = compare_keys (currkey, key);
-      //fprintf(stderr, "rec=%d cmp=%d kind=%d \n", rec, cmp, node->kind);
+#if 0
+      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d rec=%d cmp=%d kind=%d\n"), currnode, rec, cmp, node->kind));
+      fprintf(stderr, "rec=%d cmp=%d kind=%d \n", rec, cmp, node->kind);
+#endif
 
       /* Leaf node. */
       if (node->kind == kBTLeafNode) {
@@ -1214,7 +1217,7 @@ fsw_hfs_dir_lookup (
   }
 #endif
 
-  catkey.keyLength = (fsw_u16) (5 + rec_name.size);
+  catkey.keyLength = (fsw_u16) (6 + rec_name.size);
 
   status =
     fsw_hfs_btree_search (&vol->catalog_tree, (BTreeKey *) & catkey,
