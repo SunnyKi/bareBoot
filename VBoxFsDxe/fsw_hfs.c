@@ -29,20 +29,17 @@
 #ifdef HOST_POSIX
 #define DPRINT(x) printf(x)
 #define DPRINT2(x,y) printf(x,y)
-#define BP(msg)    do { printf("ERROR: %s", msg); asm("int3"); } while (0)
 #endif
 
 #ifdef HOST_MSWIN
 #define DPRINT(x) printf(x)
 #define DPRINT2(x,y) printf(x,y)
-#define BP(msg)    do { printf("ERROR: %s", msg); fflush(stdout); __debugbreak(); } while (0)
 #endif
 
 #ifndef DPRINT
 #define CONCAT(x,y) x##y
 #define DPRINT(x) Print(CONCAT(L,x))
 #define DPRINT2(x,y) Print(CONCAT(L,x), y)
-#define BP(msg) DPRINT(msg)
 #endif
 
 // functions
@@ -220,7 +217,6 @@ fsw_hfs_compute_shift (
       return i - 1;
   }
 
-  BP ("BUG\n");
   return 0;
 }
 
@@ -623,8 +619,10 @@ fsw_hfs_btree_search (
     }
 
     if (be16_to_cpu (*(fsw_u16 *) (buffer + btree->node_size - 2)) !=
-        sizeof (BTNodeDescriptor))
-      BP ("corrupted node\n");
+        sizeof (BTNodeDescriptor)) {
+      status = FSW_VOLUME_CORRUPTED;
+      break;
+    }
 
     count = be16_to_cpu (node->numRecords);
 
@@ -801,7 +799,6 @@ fsw_hfs_btree_visit_node (
       return 0;
     }
   default:
-    BP ("unknown file type\n");
     vp->file_info.type = FSW_DNODE_TYPE_UNKNOWN;
     break;
   }
@@ -1222,7 +1219,6 @@ fsw_hfs_dir_lookup (
       break;
     }
   default:
-    BP ("unknown file type\n");
     file_info.type = FSW_DNODE_TYPE_UNKNOWN;
 
     break;
