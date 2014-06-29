@@ -347,7 +347,7 @@ fsw_hfs_volume_mount (
     r =
       fsw_hfs_read_file (vol->catalog_tree.file, sizeof (BTNodeDescriptor),
                          sizeof (BTHeaderRec), (fsw_u8 *) & tree_header);
-    if (r <= 0) {
+    if (r != sizeof (BTHeaderRec)) {
       rv = FSW_VOLUME_CORRUPTED;
       break;
     }
@@ -395,7 +395,7 @@ fsw_hfs_volume_mount (
     r =
       fsw_hfs_read_file (vol->extents_tree.file, sizeof (BTNodeDescriptor),
                          sizeof (BTHeaderRec), (fsw_u8 *) & tree_header);
-    if (r <= 0) {
+    if (r != sizeof (BTHeaderRec)) {
       rv = FSW_VOLUME_CORRUPTED;
       break;
     }
