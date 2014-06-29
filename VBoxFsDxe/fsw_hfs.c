@@ -610,7 +610,7 @@ fsw_hfs_btree_search (
     fsw_u32 count;
 
     match = 0;
-    /* Read a node.  */
+    /* Read a node */
     if ((fsw_u32) fsw_hfs_read_file
         (btree->file, (fsw_u64) currnode * btree->node_size, btree->node_size,
          buffer) != btree->node_size) {
