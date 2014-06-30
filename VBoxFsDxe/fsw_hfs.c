@@ -43,22 +43,6 @@
 #endif
 
 // functions
-#if 0
-void
-dump_str (
-  fsw_u16 * p,
-  fsw_u32 len,
-  int swap
-)
-{
-  int i;
-
-  for (i = 0; i < len; i++) {
-    fprintf (stderr, "%c", swap ? be16_to_cpu (p[i]) : p[i]);
-  }
-  fprintf (stderr, "\n");
-}
-#endif
 
 static fsw_status_t fsw_hfs_volume_mount (
   struct fsw_hfs_volume *vol
