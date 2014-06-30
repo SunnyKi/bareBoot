@@ -303,7 +303,7 @@ OnExitBootServices (
   UINTN                           Index;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   EFI_FILE_PROTOCOL               *FHandle;
-	EFI_STATUS                      Status;
+  EFI_STATUS                      Status;
   
   gBS->LocateHandleBuffer (
          ByProtocol,
