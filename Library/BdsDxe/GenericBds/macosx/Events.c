@@ -295,6 +295,59 @@ OnExitBootServices (
   // Patch kernel and kexts if needed
   //
   KernelAndKextsPatcherStart ();
+  
+#ifdef BOOT_DEBUG
+  EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
+  UINTN                           NumberFileSystemHandles;
+  EFI_HANDLE                      *FileSystemHandles;
+  UINTN                           Index;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
+  EFI_FILE_PROTOCOL               *FHandle;
+	EFI_STATUS                      Status;
+  
+  gBS->LocateHandleBuffer (
+         ByProtocol,
+         &gEfiSimpleFileSystemProtocolGuid,
+         NULL,
+         &NumberFileSystemHandles,
+         &FileSystemHandles
+         );
+  
+  for (Index = 0; Index < NumberFileSystemHandles; Index++) {
+    DevicePath  = DevicePathFromHandle (FileSystemHandles[Index]);
+#if 0
+    Print (L"%a: Device = %s\n",__FUNCTION__, ConvertDevicePathToText (DevicePath, FALSE, FALSE));
+    Print (L"%a: DevicePath->Type = 0x%x, DevicePath->SubType = 0x%x\n",
+           __FUNCTION__, DevicePath->Type, DevicePath->SubType);
+#endif
+    // at this stage attempt to write a file on the USB device ends with error 'Device Error'
+    // so we will write to device that contains bareboot's config file and non USB
+    // most likely it will first ESP
+    // temporary workaround
+    if (StrStr (ConvertDevicePathToText (DevicePath, FALSE, FALSE), L"USB") == NULL) {
+      Status = gBS->HandleProtocol (
+                      FileSystemHandles[Index],
+                      &gEfiSimpleFileSystemProtocolGuid,
+                      (VOID *) &Volume
+                      );
+      if (!EFI_ERROR (Status)) {
+        Status = Volume->OpenVolume (
+                           Volume,
+                           &FHandle
+                           );
+        if ((!EFI_ERROR (Status)) &&
+            (gPNConfigPlist != NULL) &&
+            (FileExists (FHandle, gPNConfigPlist))) {
+          break;
+        }
+      }
+    }
+  }
+  
+  DBG ("%a: Finished.\n",__FUNCTION__);
+  Status = SaveBooterLog (FHandle, BOOT_LOG);
+#endif
+
 #ifdef KERNEL_PATCH_DEBUG
     gBS->Stall (5000000);
 #else

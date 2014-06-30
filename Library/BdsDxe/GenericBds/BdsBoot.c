@@ -210,7 +210,7 @@ MacOS:
   if (gFronPage) {
     ClearScreen (0xBFBFBF);
   }
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting InitializeConsoleSim\n"));
+  DBG ("%a: launching InitializeConsoleSim.\n",__FUNCTION__);
   InitializeConsoleSim (gImageHandle);
   
   Status = gBS->HandleProtocol (
@@ -224,27 +224,27 @@ MacOS:
                        &FHandle
                      );
   }
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetOSVersion\n"));
+  DBG ("%a: launching GetOSVersion.\n",__FUNCTION__);
   GetOSVersion (FHandle);
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetCpuProps\n"));
+  DBG ("%a: launching GetCpuProps.\n",__FUNCTION__);
   GetCpuProps ();
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting GetUserSettings\n"));
+  DBG ("%a: launching GetUserSettings.\n",__FUNCTION__);
   GetUserSettings ();
   if (cDevProp == NULL) {
-    DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetDevices\n"));
+    DBG ("%a: launching SetDevices (no cDevProp).\n",__FUNCTION__);
     SetDevices ();
   }
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchSmbios\n"));
+  DBG ("%a: launching PatchSmbios.\n",__FUNCTION__);
   PatchSmbios ();
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting PatchACPI\n"));
+  DBG ("%a: launching PatchACPI.\n",__FUNCTION__);
   PatchACPI (gRootFHandle);
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetVariablesForOSX\n"));
+  DBG ("%a: launching SetVariablesForOSX.\n",__FUNCTION__);
   SetVariablesForOSX ();
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetPrivateVarProto\n"));
+  DBG ("%a: launching SetPrivateVarProto.\n",__FUNCTION__);
   SetPrivateVarProto ();
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting SetupDataForOSX\n"));
+  DBG ("%a: launching SetupDataForOSX.\n",__FUNCTION__);
   SetupDataForOSX ();
-  DEBUG ((DEBUG_INFO, "BdsBoot: Starting EventsInitialize\n"));
+  DBG ("%a: launching EventsInitialize.\n",__FUNCTION__);
   EventsInitialize ();
 #if 0
   DBG ("gST->Hdr.Signature = 0x%x\n", gST->Hdr.Signature);
@@ -287,7 +287,7 @@ MacOS:
 #endif
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
-  DEBUG ((DEBUG_INFO, "AddBootArgs = %a, gSettings.BootArgs = %a\n", AddBootArgs, gSettings.BootArgs));
+  DBG ("%a: AddBootArgs = %a, gSettings.BootArgs = %a\n",__FUNCTION__, AddBootArgs, gSettings.BootArgs);
   AsciiStrToUnicodeStr (gSettings.BootArgs, buffer);
   
   if (StrLen(buffer) > 0) 
@@ -303,9 +303,6 @@ MacOS:
   }
 
   WithKexts = LoadKexts ();
-#ifdef BOOT_DEBUG
-  SaveBooterLog (gRootFHandle, BOOT_LOG);
-#endif
 
 #if 0
   gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);
@@ -315,9 +312,17 @@ Next:
   if (ImageHandle == NULL) {
     goto Done;
   }
+#ifdef BOOT_DEBUG
+  DBG ("%a: launching StartImage.\n",__FUNCTION__);
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
   Status = gBS->StartImage (ImageHandle, ExitDataSize, ExitData);
 
 Done:
+#ifdef BOOT_DEBUG
+  DBG ("%a: something wrong. we can not launch StartImage.\n",__FUNCTION__);
+  SaveBooterLog (gRootFHandle, BOOT_LOG);
+#endif
   gRT->SetVariable (
         L"BootCurrent",
         &gEfiGlobalVariableGuid,
