@@ -305,6 +305,7 @@ OnExitBootServices (
   EFI_FILE_PROTOCOL               *FHandle;
   EFI_STATUS                      Status;
   
+  FHandle = NULL;
   gBS->LocateHandleBuffer (
          ByProtocol,
          &gEfiSimpleFileSystemProtocolGuid,
@@ -345,7 +346,10 @@ OnExitBootServices (
   }
   
   DBG ("%a: Finished.\n",__FUNCTION__);
-  Status = SaveBooterLog (FHandle, BOOT_LOG);
+  if (FHandle != NULL) {
+    Status = SaveBooterLog (FHandle, BOOT_LOG);
+  }
+  /* XXX: Shall we CloseVolume()? */
 #endif
 
 #ifdef KERNEL_PATCH_DEBUG
