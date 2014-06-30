@@ -98,7 +98,7 @@ viewdir(struct fsw_mswin_volume *vol, char *path, int level, int rflag, int doca
         if (outfile != NULL) {
             for (i = 0; i < level*2; i++)
                 fputc(' ', outfile);
-            fprintf(outfile, "%d  %s\n", dent->d_type, dent->d_name);
+            fprintf(outfile, "0x%04x %s\n", dent->d_type, dent->d_name);
 	}
 
         if (rflag && dent->d_type == DT_DIR) {
