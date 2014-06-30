@@ -870,23 +870,6 @@ done:
   return status;
 }
 
-#if 0
-void
-deb (
-  fsw_u16 * p,
-  int len,
-  int swap
-)
-{
-  int i;
-
-  for (i = 0; i < len; i++) {
-    printf ("%c", swap ? be16_to_cpu (p[i]) : p[i]);
-  }
-  printf ("\n");
-}
-#endif
-
 static int
 fsw_hfs_cmp_extkey (
   BTreeKey * key1,
