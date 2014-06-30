@@ -853,7 +853,7 @@ fsw_hfs_btree_iterate_node (
       break;
     }
 
-    if (fsw_hfs_read_file
+    if ((fsw_u32) fsw_hfs_read_file
         (btree->file, next_node * btree->node_size, btree->node_size,
          buffer) != btree->node_size) {
       status = FSW_VOLUME_CORRUPTED;
