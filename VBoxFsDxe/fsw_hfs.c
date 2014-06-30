@@ -616,8 +616,8 @@ fsw_hfs_btree_search (
 
       currkey = fsw_hfs_btree_rec (btree, node, rec);
       cmp = compare_keys (currkey, key);
-#if 0
-      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d rec=%d cmp=%d kind=%d\n"), currnode, rec, cmp, node->kind));
+#if 1
+      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d rec=%d/%d cmp=%d kind=%d\n"), currnode, rec, count, cmp, node->kind));
 #endif
 
       /* Leaf node */
@@ -640,6 +640,7 @@ fsw_hfs_btree_search (
         pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16) + 2);
         currnode = be32_to_cpu (*pointer);
         match = 1;
+		break;
       }
     }
 
