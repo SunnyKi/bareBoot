@@ -402,7 +402,13 @@ KernelPatcher_64 (
   UINT32      switchaddr=0;
   UINT32      mask_family=0, mask_model=0;
   UINT32      cpuid_family_addr=0, cpuid_model_addr=0;
-  
+
+#ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
+#endif
+  DBG ("%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
+  DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n",__FUNCTION__);
+
   // Determine location of _cpuid_set_info _panic call for refrence
   // basically looking for info_p->cpuid_model = bitfield32(reg[eax],  7,  4);
   for (i=0; i<0x1000000; i++) {
@@ -416,10 +422,12 @@ KernelPatcher_64 (
     }
   }
   if (!patchLocation) {
+    DBG ("%a: _cpuid_set_info Unsupported CPU _panic not found\n",__FUNCTION__);
     return;
   }
   // make sure only kernels for OSX 10.6.0 to 10.7.3 are being patched by this approach
   if (AsciiStrnCmp (OSVersion, "10.6", 4) >= 0 && AsciiStrnCmp (OSVersion, "10.7.3", 6) <= 0) {
+    DBG ("%a: will patch kernel for OSX 10.6.0 to 10.7.3\n",__FUNCTION__);
     // remove tsc_init: unknown CPU family panic for kernels prior to 10.6.2 which still had Atom support
     if (AsciiStrnCmp (OSVersion, "10.6.1", 6) <= 0) {
       for (i=0; i<0x1000000; i++) {
@@ -427,6 +435,7 @@ KernelPatcher_64 (
         if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
             bytes[i+4] == 0x63 && bytes[i+5] == 0x2A && bytes[i+6] == 0x00) {
           patchLocation1 = i+9;
+          DBG ("%a: found _tsc_init _panic address at 0x%08x\n",__FUNCTION__, patchLocation1);
           break;
         }
       }
@@ -445,6 +454,7 @@ KernelPatcher_64 (
        C7051C2C5F0000000000   mov     dword [ds:0xffffff80008a22c0], 0x0 (example from 10.7)
        */
       switchaddr = patchLocation-19;
+      DBG ("%a: switch statement patch location is 0x%08x\n",__FUNCTION__, (switchaddr+6));
       
       if (bytes[switchaddr+0] == 0xC7 && bytes[switchaddr+1] == 0x05 &&
           bytes[switchaddr+5] == 0x00 && bytes[switchaddr+6] == 0x00 &&
@@ -472,15 +482,20 @@ KernelPatcher_64 (
               cpuid_model_addr = cpuid_family_addr - 0x153;
             }
           }
+          DBG ("%a: cpuid_family address = 0x%08x\n",__FUNCTION__, cpuid_family_addr);
+          DBG ("%a: cpuid_model address  = 0x%08x\n",__FUNCTION__, cpuid_model_addr);
           switchaddr += 6; // offset 6 bytes in mov operation to write a dword instead of zero
           // calculate mask for patching, cpuid_family mask not needed as we offset on a valid mask
           mask_model   = cpuid_model_addr -  (switchaddr+14);
+          DBG ("%a: model mask = 0x%08x\n",__FUNCTION__, mask_model);
           if (gSettings.CpuFamily != 0) {
+            DBG ("%a: overriding custom cpuid_family = 0x08x\n",__FUNCTION__, gSettings.CpuFamily);
             bytes[switchaddr+0] = (gSettings.CpuFamily & 0x000000FF) >>  0;
             bytes[switchaddr+1] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
             bytes[switchaddr+2] = (UINT8) ((gSettings.CpuFamily & 0x00FF0000) >> 16);
             bytes[switchaddr+3] = (gSettings.CpuFamily & 0xFF000000) >> 24;
           } else {
+            DBG ("%a: overriding cpuid_family as CPUID_INTEL_PENRYN\n",__FUNCTION__);
             bytes[switchaddr+0] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
             bytes[switchaddr+1] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
             bytes[switchaddr+2] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
@@ -494,12 +509,14 @@ KernelPatcher_64 (
           bytes[switchaddr+8] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
           bytes[switchaddr+9] = (mask_model & 0xFF000000) >> 24;
           if (gSettings.CpuIdVars != 0) {
+            DBG ("%a: overriding custom cpuid_model = 0x08x\n",__FUNCTION__, gSettings.CpuIdVars);
             bytes[switchaddr+10] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
             bytes[switchaddr+11] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
             bytes[switchaddr+12] = (UINT8) ((gSettings.CpuIdVars & 0x00FF0000) >> 16); // cpuid_extfamily
             bytes[switchaddr+13] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
 
           } else {
+            DBG ("%a: overriding cpuid_model as CPUID_INTEL_PENRYN\n",__FUNCTION__);
             bytes[switchaddr+10] = 0x17; // cpuid_model
             bytes[switchaddr+11] = 0x01; // cpuid_extmodel
             bytes[switchaddr+12] = 0x00; // cpuid_extfamily
@@ -510,6 +527,9 @@ KernelPatcher_64 (
             bytes[switchaddr+i] = 0x90;
           }
         }
+      } else {
+        DBG ("%a: unable to determine cpuid_family address, patching aborted\n",__FUNCTION__);
+        return;
       }
     }
     // patch ssse3
@@ -522,14 +542,14 @@ KernelPatcher_64 (
       Patcher_SSE3_7 ((VOID*) bytes);
     }
   } else {
-    // all 10.7.4+ kernels share common CPUID switch statement logic,
-    // it needs to be exploited in diff manner due to the lack of space
+    DBG ("%a: will patch kernel for OSX 10.7.4+\n",__FUNCTION__);
     /*
      Here is our switchaddress location ... it should be case 20 from CPUID switch statement
      833D78945F0000  cmp        dword [ds:0xffffff80008a21d0], 0x0;
      7417            je         0xffffff80002a8d71
      */
     switchaddr = patchLocation-45;
+    DBG ("%a: switch statement patch location = 0x%08x\n",__FUNCTION__, switchaddr);
     
     if(bytes[switchaddr+0] == 0x83 && bytes[switchaddr+1] == 0x3D &&
        bytes[switchaddr+5] == 0x00 && bytes[switchaddr+6] == 0x00 &&
@@ -548,9 +568,13 @@ KernelPatcher_64 (
         // Determine cpuid_model address
         // for 10.6.8+ kernels it's 339 bytes apart from cpuid_family address
         cpuid_model_addr = cpuid_family_addr - 0x153;
+        DBG ("%a: cpuid_family address = 0x%08x\n",__FUNCTION__, cpuid_family_addr);
+        DBG ("%a: cpuid_model address  = 0x%08x\n",__FUNCTION__, cpuid_model_addr);
         // Calculate masks for patching
         mask_family  = cpuid_family_addr - (switchaddr +15);
         mask_model   = cpuid_model_addr -  (switchaddr +25);
+        DBG ("%a: family mask = 0x%08x\n",__FUNCTION__, mask_family);
+        DBG ("%a: model mask  = 0x%08x\n",__FUNCTION__, mask_model);
         // retain original
         // test ebx, ebx
         bytes[switchaddr+0] = bytes[patchLocation-13];
@@ -562,11 +586,13 @@ KernelPatcher_64 (
         // mov ebx, 0x78ea4fbc
         bytes[switchaddr+4] = 0xBB;
         if (gSettings.CpuFamily != 0) {
+          DBG ("%a: overriding custom cpuid_family = 0x08x\n",__FUNCTION__, gSettings.CpuFamily);
           bytes[switchaddr+5] = (gSettings.CpuFamily & 0x000000FF) >>  0;
           bytes[switchaddr+6] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
           bytes[switchaddr+7] = (UINT8) ((gSettings.CpuFamily & 0x00FF0000) >> 16);
           bytes[switchaddr+8] = (gSettings.CpuFamily & 0xFF000000) >> 24;
         } else {
+          DBG ("%a: overriding cpuid_model as CPUID_INTEL_PENRYN\n",__FUNCTION__);
           bytes[switchaddr+5] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
           bytes[switchaddr+6] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
           bytes[switchaddr+7] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
@@ -589,12 +615,14 @@ KernelPatcher_64 (
         bytes[switchaddr+19] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
         bytes[switchaddr+20] = (mask_model & 0xFF000000) >> 24;
         if (gSettings.CpuIdVars != 0) {
+          DBG ("%a: overriding custom cpuid_model = 0x08x\n",__FUNCTION__, gSettings.CpuIdVars);
           bytes[switchaddr+21] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
           bytes[switchaddr+22] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
           bytes[switchaddr+23] = (UINT8) ((gSettings.CpuIdVars & 0x00FF0000) >> 16); // cpuid_extfamily
           bytes[switchaddr+24] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
           
         } else {
+          DBG ("%a: overriding cpuid_model as CPUID_INTEL_PENRYN\n",__FUNCTION__);
           bytes[switchaddr+21] = 0x17; // cpuid_model
           bytes[switchaddr+22] = 0x01; // cpuid_extmodel
           bytes[switchaddr+23] = 0x00; // cpuid_extfamily
@@ -605,6 +633,9 @@ KernelPatcher_64 (
           bytes[switchaddr+i] = 0x90;
         }
       }
+    } else {
+      DBG ("%a: unable to determine cpuid_family address, patching aborted\n",__FUNCTION__);
+      return;
     }
   }
 }
@@ -910,48 +941,46 @@ FindBootArgs (
       // set vars
       dtRoot = (CHAR8 *) (UINTN) bootArgs2->deviceTreeP;
       KernelSlide = bootArgs2->kslide;
-      DEBUG ((DEBUG_INFO, "bootArgs2->Revision 0x%x\n",bootArgs2->Revision));
-      DEBUG ((DEBUG_INFO, "bootArgs2->Version 0x%x\n",bootArgs2->Version));
-      DEBUG ((DEBUG_INFO, "bootArgs2->efiMode 0x%x\n",bootArgs2->efiMode));
-      DEBUG ((DEBUG_INFO, "bootArgs2->debugMode 0x%x\n",bootArgs2->debugMode));
-      DEBUG ((DEBUG_INFO, "bootArgs2->flags 0x%x\n",bootArgs2->flags));
-      DEBUG ((DEBUG_INFO, "bootArgs2->CommandLine %a\n",bootArgs2->CommandLine));
-      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMap 0x%x\n",bootArgs2->MemoryMap));
-      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMapSize 0x%x\n",bootArgs2->MemoryMapSize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMapDescriptorSize 0x%x\n",bootArgs2->MemoryMapDescriptorSize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->MemoryMapDescriptorVersion 0x%x\n",bootArgs2->MemoryMapDescriptorVersion));
-      DEBUG ((DEBUG_INFO, "bootArgs2->deviceTreeP 0x%x\n",bootArgs2->deviceTreeP));
-      DEBUG ((DEBUG_INFO, "bootArgs2->deviceTreeLength 0x%x\n",bootArgs2->deviceTreeLength));
-      DEBUG ((DEBUG_INFO, "bootArgs2->kaddr 0x%x\n",bootArgs2->kaddr));
-      DEBUG ((DEBUG_INFO, "bootArgs2->ksize 0x%x\n",bootArgs2->ksize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->efiRuntimeServicesPageStart 0x%x\n",bootArgs2->efiRuntimeServicesPageStart));
-      DEBUG ((DEBUG_INFO, "bootArgs2->efiRuntimeServicesPageCount 0x%x\n",bootArgs2->efiRuntimeServicesPageCount));
-      DEBUG ((DEBUG_INFO, "bootArgs2->efiRuntimeServicesVirtualPageStart 0x%x\n",bootArgs2->efiRuntimeServicesVirtualPageStart));
-      DEBUG ((DEBUG_INFO, "bootArgs2->efiSystemTable 0x%x\n",bootArgs2->efiSystemTable));
-      DEBUG ((DEBUG_INFO, "bootArgs2->kslide 0x%x\n",bootArgs2->kslide));
-      DEBUG ((DEBUG_INFO, "bootArgs2->performanceDataSize 0x%x\n",bootArgs2->performanceDataSize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->performanceDataSize 0x%x\n",bootArgs2->performanceDataSize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->keyStoreDataStart 0x%x\n",bootArgs2->keyStoreDataStart));
-      DEBUG ((DEBUG_INFO, "bootArgs2->keyStoreDataSize 0x%x\n",bootArgs2->keyStoreDataSize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->bootMemStart 0x%x\n",bootArgs2->bootMemStart));
-      DEBUG ((DEBUG_INFO, "bootArgs2->bootMemSize 0x%x\n",bootArgs2->bootMemSize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->PhysicalMemorySize 0x%x\n",bootArgs2->PhysicalMemorySize));
-      DEBUG ((DEBUG_INFO, "bootArgs2->FSBFrequency 0x%x\n",bootArgs2->FSBFrequency));
-      DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceBaseAddress 0x%x\n",bootArgs2->pciConfigSpaceBaseAddress));
-      DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceStartBusNumber 0x%x\n",bootArgs2->pciConfigSpaceStartBusNumber));
-      DEBUG ((DEBUG_INFO, "bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n",bootArgs2->pciConfigSpaceEndBusNumber));
+      DBG ("%a: bootArgs2->Revision 0x%x\n",__FUNCTION__,bootArgs2->Revision);
+      DBG ("%a: bootArgs2->Version 0x%x\n",__FUNCTION__,bootArgs2->Version);
+      DBG ("%a: bootArgs2->efiMode 0x%x\n",__FUNCTION__,bootArgs2->efiMode);
+      DBG ("%a: bootArgs2->debugMode 0x%x\n",__FUNCTION__,bootArgs2->debugMode);
+      DBG ("%a: bootArgs2->flags 0x%x\n",__FUNCTION__,bootArgs2->flags);
+      DBG ("%a: bootArgs2->CommandLine %a\n",__FUNCTION__,bootArgs2->CommandLine);
+      DBG ("%a: bootArgs2->MemoryMap 0x%x\n",__FUNCTION__,bootArgs2->MemoryMap);
+      DBG ("%a: bootArgs2->MemoryMapSize 0x%x\n",__FUNCTION__,bootArgs2->MemoryMapSize);
+      DBG ("%a: bootArgs2->MemoryMapDescriptorSize 0x%x\n",__FUNCTION__,bootArgs2->MemoryMapDescriptorSize);
+      DBG ("%a: bootArgs2->MemoryMapDescriptorVersion 0x%x\n",__FUNCTION__,bootArgs2->MemoryMapDescriptorVersion);
+      DBG ("%a: bootArgs2->deviceTreeP 0x%x\n",__FUNCTION__,bootArgs2->deviceTreeP);
+      DBG ("%a: bootArgs2->deviceTreeLength 0x%x\n",__FUNCTION__,bootArgs2->deviceTreeLength);
+      DBG ("%a: bootArgs2->kaddr 0x%x\n",__FUNCTION__,bootArgs2->kaddr);
+      DBG ("%a: bootArgs2->ksize 0x%x\n",__FUNCTION__,bootArgs2->ksize);
+      DBG ("%a: bootArgs2->efiRuntimeServicesPageStart 0x%x\n",__FUNCTION__,bootArgs2->efiRuntimeServicesPageStart);
+      DBG ("%a: bootArgs2->efiRuntimeServicesPageCount 0x%x\n",__FUNCTION__,bootArgs2->efiRuntimeServicesPageCount);
+      DBG ("%a: bootArgs2->efiRuntimeServicesVirtualPageStart 0x%x\n",__FUNCTION__,bootArgs2->efiRuntimeServicesVirtualPageStart);
+      DBG ("%a: bootArgs2->efiSystemTable 0x%x\n",__FUNCTION__,bootArgs2->efiSystemTable);
+      DBG ("%a: bootArgs2->kslide 0x%x\n",__FUNCTION__,bootArgs2->kslide);
+      DBG ("%a: bootArgs2->performanceDataStart 0x%x\n",__FUNCTION__,bootArgs2->performanceDataStart);
+      DBG ("%a: bootArgs2->performanceDataSize 0x%x\n",__FUNCTION__,bootArgs2->performanceDataSize);
+      DBG ("%a: bootArgs2->keyStoreDataStart 0x%x\n",__FUNCTION__,bootArgs2->keyStoreDataStart);
+      DBG ("%a: bootArgs2->keyStoreDataSize 0x%x\n",__FUNCTION__,bootArgs2->keyStoreDataSize);
+      DBG ("%a: bootArgs2->bootMemStart 0x%x\n",__FUNCTION__,bootArgs2->bootMemStart);
+      DBG ("%a: bootArgs2->bootMemSize 0x%x\n",__FUNCTION__,bootArgs2->bootMemSize);
+      DBG ("%a: bootArgs2->PhysicalMemorySize 0x%x\n",__FUNCTION__,bootArgs2->PhysicalMemorySize);
+      DBG ("%a: bootArgs2->FSBFrequency 0x%x\n",__FUNCTION__,bootArgs2->FSBFrequency);
+      DBG ("%a: bootArgs2->pciConfigSpaceBaseAddress 0x%x\n",__FUNCTION__,bootArgs2->pciConfigSpaceBaseAddress);
+      DBG ("%a: bootArgs2->pciConfigSpaceStartBusNumber 0x%x\n",__FUNCTION__,bootArgs2->pciConfigSpaceStartBusNumber);
+      DBG ("%a: bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n",__FUNCTION__,bootArgs2->pciConfigSpaceEndBusNumber);
 #if 0
       EfiMemoryRange       *MemoryMap;
       UINT32               MCount, i;
 
-
       MemoryMap = (EfiMemoryRange *) (UINTN) bootArgs2->MemoryMap;
       MCount = DivU64x32 (bootArgs2->MemoryMapSize, bootArgs2->MemoryMapDescriptorSize);
 
-      Print (L"bootArgs2->MemoryMapDescriptorSize = %d\n", bootArgs2->MemoryMapDescriptorSize);
-      Print (L"Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+      DBG ("Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
       for (i = 0; i < MCount; i++, MemoryMap = (EfiMemoryRange *) (MemoryMap + bootArgs2->MemoryMapDescriptorSize)) {
-        Print (L"%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
+        DBG ("%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
                MemoryMap->Type,
                MemoryMap->PhysicalStart,
                MemoryMap->PhysicalStart + MemoryMap->NumberOfPages * 4096 - 1,
@@ -959,9 +988,6 @@ FindBootArgs (
                MemoryMap->VirtualStart,
                MemoryMap->Attribute);
       }
-      Pause (NULL);
-      Pause (NULL);
-      Pause (NULL);
 #endif
       // disable other pointer
       bootArgs1 = NULL;
@@ -978,25 +1004,42 @@ FindBootArgs (
         bootArgs1->efiSystemTable == 0) {
       // set vars
       dtRoot = (CHAR8 *) (UINTN) bootArgs1->deviceTreeP;
+      DBG ("%a: bootArgs1->Revision 0x%x\n",__FUNCTION__,bootArgs1->Revision);
+      DBG ("%a: bootArgs1->Version 0x%x\n",__FUNCTION__,bootArgs1->Version);
+      DBG ("%a: bootArgs1->efiMode 0x%x\n",__FUNCTION__,bootArgs1->efiMode);
+      DBG ("%a: bootArgs1->CommandLine %a\n",__FUNCTION__,bootArgs1->CommandLine);
+      DBG ("%a: bootArgs1->MemoryMap 0x%x\n",__FUNCTION__,bootArgs1->MemoryMap);
+      DBG ("%a: bootArgs1->MemoryMapSize 0x%x\n",__FUNCTION__,bootArgs1->MemoryMapSize);
+      DBG ("%a: bootArgs1->MemoryMapDescriptorSize 0x%x\n",__FUNCTION__,bootArgs1->MemoryMapDescriptorSize);
+      DBG ("%a: bootArgs1->MemoryMapDescriptorVersion 0x%x\n",__FUNCTION__,bootArgs1->MemoryMapDescriptorVersion);
+      DBG ("%a: bootArgs1->deviceTreeP 0x%x\n",__FUNCTION__,bootArgs1->deviceTreeP);
+      DBG ("%a: bootArgs1->deviceTreeLength 0x%x\n",__FUNCTION__,bootArgs1->deviceTreeLength);
+      DBG ("%a: bootArgs1->kaddr 0x%x\n",__FUNCTION__,bootArgs1->kaddr);
+      DBG ("%a: bootArgs1->ksize 0x%x\n",__FUNCTION__,bootArgs1->ksize);
+      DBG ("%a: bootArgs1->efiRuntimeServicesPageStart 0x%x\n",__FUNCTION__,bootArgs1->efiRuntimeServicesPageStart);
+      DBG ("%a: bootArgs1->efiRuntimeServicesPageCount 0x%x\n",__FUNCTION__,bootArgs1->efiRuntimeServicesPageCount);
+      DBG ("%a: bootArgs1->efiSystemTable 0x%x\n",__FUNCTION__,bootArgs1->efiSystemTable);
+      DBG ("%a: bootArgs1->performanceDataStart 0x%x\n",__FUNCTION__,bootArgs1->performanceDataStart);
+      DBG ("%a: bootArgs1->performanceDataSize 0x%x\n",__FUNCTION__,bootArgs1->performanceDataSize);
+      DBG ("%a: bootArgs1->efiRuntimeServicesVirtualPageStart 0x%x\n",__FUNCTION__,bootArgs1->efiRuntimeServicesVirtualPageStart);
+#if 0
+      EfiMemoryRange       *MemoryMap;
+      UINT32               MCount, i;
 
-      DEBUG ((DEBUG_INFO, "bootArgs1->Revision 0x%x\n",bootArgs1->Revision));
-      DEBUG ((DEBUG_INFO, "bootArgs1->Version 0x%x\n",bootArgs1->Version));
-      DEBUG ((DEBUG_INFO, "bootArgs1->CommandLine %a\n",bootArgs1->CommandLine));
-      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMap 0x%x\n",bootArgs1->MemoryMap));
-      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapSize 0x%x\n",bootArgs1->MemoryMapSize));
-      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapDescriptorSize 0x%x\n",bootArgs1->MemoryMapDescriptorSize));
-      DEBUG ((DEBUG_INFO, "bootArgs1->MemoryMapDescriptorVersion 0x%x\n",bootArgs1->MemoryMapDescriptorVersion));
-      DEBUG ((DEBUG_INFO, "bootArgs1->deviceTreeP 0x%x\n",bootArgs1->deviceTreeP));
-      DEBUG ((DEBUG_INFO, "bootArgs1->deviceTreeLength 0x%x\n",bootArgs1->deviceTreeLength));
-      DEBUG ((DEBUG_INFO, "bootArgs1->kaddr 0x%x\n",bootArgs1->kaddr));
-      DEBUG ((DEBUG_INFO, "bootArgs1->ksize 0x%x\n",bootArgs1->ksize));
-      DEBUG ((DEBUG_INFO, "bootArgs1->efiRuntimeServicesPageStart 0x%x\n",bootArgs1->efiRuntimeServicesPageStart));
-      DEBUG ((DEBUG_INFO, "bootArgs1->efiRuntimeServicesPageCount 0x%x\n",bootArgs1->efiRuntimeServicesPageCount));
-      DEBUG ((DEBUG_INFO, "bootArgs1->efiSystemTable 0x%x\n",bootArgs1->efiSystemTable));
-      DEBUG ((DEBUG_INFO, "bootArgs1->efiMode 0x%x\n",bootArgs1->efiMode));
-      DEBUG ((DEBUG_INFO, "bootArgs1->performanceDataStart 0x%x\n",bootArgs1->performanceDataStart));
-      DEBUG ((DEBUG_INFO, "bootArgs1->performanceDataSize 0x%x\n",bootArgs1->performanceDataSize));
-      DEBUG ((DEBUG_INFO, "bootArgs1->efiRuntimeServicesVirtualPageStart 0x%x\n",bootArgs1->efiRuntimeServicesVirtualPageStart));
+      MemoryMap = (EfiMemoryRange *) (UINTN) bootArgs1->MemoryMap;
+      MCount = DivU64x32 (bootArgs1->MemoryMapSize, bootArgs1->MemoryMapDescriptorSize);
+      
+      DBG ("Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+      for (i = 0; i < MCount; i++, MemoryMap = (EfiMemoryRange *) (MemoryMap + bootArgs1->MemoryMapDescriptorSize)) {
+        DBG ("%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
+             MemoryMap->Type,
+             MemoryMap->PhysicalStart,
+             MemoryMap->PhysicalStart + MemoryMap->NumberOfPages * 4096 - 1,
+             MemoryMap->NumberOfPages,
+             MemoryMap->VirtualStart,
+             MemoryMap->Attribute);
+      }
+#endif
 
       // disable other pointer
       bootArgs2 = NULL;
@@ -1087,13 +1130,11 @@ KernelAndKextsPatcherStart (
   // Kernel & Kexts patches
   //
   KernelAndKextPatcherInit ();
-#ifdef KERNEL_PATCH_DEBUG
-    Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
-#endif
 
   if (KernelData == NULL) {
+    DBG ("%a: kernel data is NULL.\n",__FUNCTION__);
 #ifdef KERNEL_PATCH_DEBUG
-    Print (L"Kernel Patcher: kernel data is NULL.\n");
+    Print (L"%a: kernel data is NULL.\n",__FUNCTION__);
 #endif
     return;
   }
@@ -1146,6 +1187,7 @@ KernelAndKextsPatcherStart (
       deviceTreeP = bootArgs2->deviceTreeP;
       deviceTreeLength = bootArgs2->deviceTreeLength;
     } else {
+      DBG ("%a: Kext Injection - bootArgs not found.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
       Print (L"Kext Injection: bootArgs not found.\n");
 #endif
@@ -1157,6 +1199,7 @@ KernelAndKextsPatcherStart (
     if (!EFI_ERROR(Status)) {
       KernelBooterExtensionsPatch (KernelData);
     } else {
+      DBG ("%a: InjectKexts error with status %r.\n",__FUNCTION__, Status);
 #ifdef KEXT_INJECT_DEBUG
       Print (L"Kext Injection: InjectKexts error with status %r.\n", Status);
 #endif
