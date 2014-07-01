@@ -981,14 +981,14 @@ fsw_hfs_cmpi_catkey (
     /* get next valid character from ckey1 */
     for (lc = 0; lc == 0 && apos < key1Len; apos++) {
       ac = be16_to_cpu (p1[apos]);
-      lc = ac ? fsw_to_lower (ac) : 0;
+      lc = fsw_to_lower (ac);
     }
     ac = (fsw_u16) lc;
 
     /* get next valid character from ckey2 */
     for (lc = 0; lc == 0 && bpos < ckey2->nodeName.length; bpos++) {
       bc = p2[bpos];
-      lc = bc ? fsw_to_lower (bc) : 0;
+      lc = fsw_to_lower (bc);
     }
     bc = (fsw_u16) lc;
 
