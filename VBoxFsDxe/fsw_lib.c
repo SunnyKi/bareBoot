@@ -317,7 +317,7 @@ static const fsw_u16 fsw_latin_case_fold[] =
 fsw_u16 fsw_to_lower(fsw_u16 ch)
 {
 #ifdef VBOX_UTF16_FOLD
-    fsw_u16 temp = temp;
+    fsw_u16 temp;
 #endif
 
     if (ch < 0x0100)
