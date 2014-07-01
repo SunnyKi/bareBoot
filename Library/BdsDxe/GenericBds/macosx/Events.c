@@ -348,8 +348,8 @@ OnExitBootServices (
   DBG ("%a: Finished.\n",__FUNCTION__);
   if (FHandle != NULL) {
     Status = SaveBooterLog (FHandle, BOOT_LOG);
+    FHandle->Close (FHandle);
   }
-  /* XXX: Shall we CloseVolume()? */
 #endif
 
 #ifdef KERNEL_PATCH_DEBUG
