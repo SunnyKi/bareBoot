@@ -347,7 +347,7 @@ OnExitBootServices (
   
   DBG ("%a: Finished.\n",__FUNCTION__);
   if (FHandle != NULL) {
-    Status = SaveBooterLog (FHandle, BOOT_LOG);
+    Status = SaveBooterLog (FHandle, L"EFI\\bareboot\\ext_boot.log");
     FHandle->Close (FHandle);
   }
 #endif
