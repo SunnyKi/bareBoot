@@ -610,7 +610,7 @@ fsw_hfs_btree_search (
 
     count = be16_to_cpu (node->numRecords);
 
-#if 1
+#if 0
     for (rec = 0; rec < count; rec++) {
       BTreeKey *currkey;
 
@@ -668,6 +668,9 @@ fsw_hfs_btree_search (
       currkey = fsw_hfs_btree_rec (btree, node, index);
 
       cmp = compare_keys (currkey, key);
+#if 1
+      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d lower/index/upper %d/%d/%d (%d) cmp=%d kind=%d\n"), currnode, lower, index, upper, count, cmp, node->kind));
+#endif
       if (cmp < 0)
         upper = index - 1;
       if (cmp > 0)
