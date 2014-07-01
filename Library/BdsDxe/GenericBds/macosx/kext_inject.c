@@ -216,6 +216,7 @@ GetListCount (
       Count++;
   }
   else {
+    DBG ("%a: Kext Inject - list is empty.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
     Print (L"Kext Inject: Get List Count - list is empty.\n");
 #endif
@@ -484,6 +485,7 @@ InjectKexts (
   _BooterKextFileInfo *drvinfo;
 
   if (GetKextCount () == 0) {
+    DBG ("%a: Kext Inject - extra kexts not found.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
     Print (L"Kext Inject: extra kexts not found.\n");
 #endif
@@ -531,6 +533,7 @@ InjectKexts (
 
   if (drvPtr == 0 || infoPtr == 0 || extraPtr == 0 || drvPtr > infoPtr ||
       drvPtr > extraPtr || infoPtr > extraPtr) {
+    DBG ("%a: Kext Inject - invalid device tree for kext injection.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
     Print (L"Kext Inject: Invalid device tree for kext injection\n");
 #endif
@@ -583,6 +586,7 @@ InjectKexts (
     }
   }
   else {
+    DBG ("%a: Kext Inject - kext list is empty.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
     Print (L"Kext Inject: kext list is empty.\n");
 #endif
@@ -662,8 +666,9 @@ KernelBooterExtensionsPatch (
   if (NumLion_X64 + NumLion_i386 + NumML + NumY > 1) {
     // more then one pattern found - we do not know what to do with it
     // and we'll skipp it
+    DBG ("%a: Kext Inject - more then one pattern found and it's no good.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
-    Print (L"Kext Inject: more then one pattern found - we do not know what to do with it.\n");
+    Print (L"Kext Inject: more then one pattern found and it's no good.\n");
 #endif
     return;
   }
@@ -690,7 +695,7 @@ KernelBooterExtensionsPatch (
       SearchAndReplace (Kernel, KERNEL_MAX_SIZE, (CHAR8 *) KBEYSearch,
                         sizeof (KBEMLSearch), (CHAR8 *) KBEYReplace, 1);
   }
-
+  DBG ("%a: Kext Inject - SearchAndReplace %d times.\n",__FUNCTION__, Num);
 #ifdef KEXT_INJECT_DEBUG
   Print (L"Kext Inject: Patch Kernel - SearchAndReplace %d times.\n", Num);
 #endif

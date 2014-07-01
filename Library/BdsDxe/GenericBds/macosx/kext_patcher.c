@@ -389,6 +389,7 @@ AnyKextPatch (
             gSettings.AnyKextPatch[N],
             -1
           );
+    DBG ("%a: binary replaces %d times:\n",__FUNCTION__, Num);
 #ifdef KEXT_PATCH_DEBUG
     Print (L"binary replaces %d times:\n", Num);
 #endif
@@ -402,6 +403,7 @@ AnyKextPatch (
             gSettings.AnyKextPatch[N],
             -1
           );
+    DBG ("%a: plist replaces %d times:\n",__FUNCTION__, Num);
 #ifdef KEXT_PATCH_DEBUG
     Print (L"plist replaces %d times:\n", Num);
 #endif
@@ -486,6 +488,8 @@ PatchKext (
     if ((gSettings.AnyKextDataLen[i] > 0) &&
         (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
       AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
+      DBG ("%a:  %d. name = %a, length = %d\n",__FUNCTION__,
+           (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
 #ifdef KEXT_PATCH_DEBUG
       Print (L"  %d. name = %a, length = %d\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
 #endif
