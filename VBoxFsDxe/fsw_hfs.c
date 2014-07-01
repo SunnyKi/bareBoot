@@ -640,7 +640,6 @@ fsw_hfs_btree_search (
         pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16) + 2);
         currnode = be32_to_cpu (*pointer);
         match = 1;
-		break;
       }
     }
 
