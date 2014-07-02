@@ -96,7 +96,7 @@ int fsw_strlen(struct fsw_string *s)
     return s->len;
 }
 
-#ifdef VBOX_UTF16_FOLD
+#ifndef VBOX_LATIN1_FOLD
 static const fsw_u16
 fsw_lower_case_table[] =
 {
@@ -316,17 +316,13 @@ static const fsw_u16 fsw_latin_case_fold[] =
 
 fsw_u16 fsw_to_lower(fsw_u16 ch)
 {
-#ifdef VBOX_UTF16_FOLD
+#ifndef VBOX_LATIN1_FOLD
     fsw_u16 temp;
 #endif
 
     if (ch < 0x0100)
         return fsw_latin_case_fold[ch];
-#ifdef VBOX_UTF16_FOLD
-    /*
-     * Uncomment this along with above huge table (fsw_lower_case_table)
-     * for full UTF-16 case insensitivity
-     */
+#ifndef VBOX_LATIN1_FOLD
     temp = fsw_lower_case_table[ch>>8];
     if (temp != 0)
         return fsw_lower_case_table[temp + (ch & 0x00FF)];
