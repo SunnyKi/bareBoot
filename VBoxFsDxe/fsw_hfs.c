@@ -610,7 +610,7 @@ fsw_hfs_btree_search (
 
     count = be16_to_cpu (node->numRecords);
 
-#if 0
+#ifdef VBOXHFS_BTREE_LINEAR
     for (rec = 0; rec < count; rec++) {
       BTreeKey *currkey;
 
