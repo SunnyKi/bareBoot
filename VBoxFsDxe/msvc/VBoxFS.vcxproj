@@ -77,7 +77,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>FSTYPE=hfs;HOST_MSWIN;VBOX_UTF16_FOLD;FSW_DEBUG_LEVEL=3;WIN32;mode_t=int;ssize_t=int;SwapBytes16=_byteswap_ushort;SwapBytes32=_byteswap_ulong;SwapBytes64=_byteswap_uint64;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSTYPE=hfs;HOST_MSWIN;FSW_DEBUG_LEVEL=3;WIN32;mode_t=int;ssize_t=int;SwapBytes16=_byteswap_ushort;SwapBytes32=_byteswap_ulong;SwapBytes64=_byteswap_uint64;_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
