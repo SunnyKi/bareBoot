@@ -975,7 +975,7 @@ FindBootArgs (
       DBG ("%a: bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n",__FUNCTION__,bootArgs2->pciConfigSpaceEndBusNumber);
 
       MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs2->MemoryMap);
-      MCount = DivU64x32 (bootArgs2->MemoryMapSize, bootArgs2->MemoryMapDescriptorSize);
+      MCount = (UINTN) DivU64x32 (bootArgs2->MemoryMapSize, bootArgs2->MemoryMapDescriptorSize);
       
       DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
       for (i = 0; i < MCount; i++) {
@@ -1024,7 +1024,7 @@ FindBootArgs (
       DBG ("%a: bootArgs1->efiRuntimeServicesVirtualPageStart 0x%x\n",__FUNCTION__,bootArgs1->efiRuntimeServicesVirtualPageStart);
 
       MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs1->MemoryMap);
-      MCount = DivU64x32 (bootArgs1->MemoryMapSize, bootArgs1->MemoryMapDescriptorSize);
+      MCount = (UINTN) DivU64x32 (bootArgs1->MemoryMapSize, bootArgs1->MemoryMapDescriptorSize);
       
       DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
       for (i = 0; i < MCount; i++) {
