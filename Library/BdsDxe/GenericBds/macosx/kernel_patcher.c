@@ -925,6 +925,8 @@ FindBootArgs (
 {
   UINT8           *ptr;
   UINT8           archMode;
+  EFI_MEMORY_DESCRIPTOR       *MemoryMap;
+  UINTN           MCount, i;
 
   archMode = sizeof (UINTN) * 8;
   // start searching from 0x200000.
@@ -971,24 +973,21 @@ FindBootArgs (
       DBG ("%a: bootArgs2->pciConfigSpaceBaseAddress 0x%x\n",__FUNCTION__,bootArgs2->pciConfigSpaceBaseAddress);
       DBG ("%a: bootArgs2->pciConfigSpaceStartBusNumber 0x%x\n",__FUNCTION__,bootArgs2->pciConfigSpaceStartBusNumber);
       DBG ("%a: bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n",__FUNCTION__,bootArgs2->pciConfigSpaceEndBusNumber);
-#if 0
-      EfiMemoryRange       *MemoryMap;
-      UINT32               MCount, i;
 
-      MemoryMap = (EfiMemoryRange *) (UINTN) bootArgs2->MemoryMap;
+      MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs2->MemoryMap);
       MCount = DivU64x32 (bootArgs2->MemoryMapSize, bootArgs2->MemoryMapDescriptorSize);
-
+      
       DBG ("Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
-      for (i = 0; i < MCount; i++, MemoryMap = (EfiMemoryRange *) (MemoryMap + bootArgs2->MemoryMapDescriptorSize)) {
+      for (i = 0; i < MCount; i++) {
         DBG ("%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
                MemoryMap->Type,
                MemoryMap->PhysicalStart,
-               MemoryMap->PhysicalStart + MemoryMap->NumberOfPages * 4096 - 1,
+               MemoryMap->PhysicalStart + (((UINTN) MemoryMap->NumberOfPages * EFI_PAGE_SIZE)) - 1,
                MemoryMap->NumberOfPages,
                MemoryMap->VirtualStart,
                MemoryMap->Attribute);
+        MemoryMap = NEXT_MEMORY_DESCRIPTOR (MemoryMap, bootArgs2->MemoryMapDescriptorSize);
       }
-#endif
       // disable other pointer
       bootArgs1 = NULL;
       break;
@@ -1022,24 +1021,21 @@ FindBootArgs (
       DBG ("%a: bootArgs1->performanceDataStart 0x%x\n",__FUNCTION__,bootArgs1->performanceDataStart);
       DBG ("%a: bootArgs1->performanceDataSize 0x%x\n",__FUNCTION__,bootArgs1->performanceDataSize);
       DBG ("%a: bootArgs1->efiRuntimeServicesVirtualPageStart 0x%x\n",__FUNCTION__,bootArgs1->efiRuntimeServicesVirtualPageStart);
-#if 0
-      EfiMemoryRange       *MemoryMap;
-      UINT32               MCount, i;
 
-      MemoryMap = (EfiMemoryRange *) (UINTN) bootArgs1->MemoryMap;
+      MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs1->MemoryMap);
       MCount = DivU64x32 (bootArgs1->MemoryMapSize, bootArgs1->MemoryMapDescriptorSize);
       
       DBG ("Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
-      for (i = 0; i < MCount; i++, MemoryMap = (EfiMemoryRange *) (MemoryMap + bootArgs1->MemoryMapDescriptorSize)) {
+      for (i = 0; i < MCount; i++) {
         DBG ("%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
              MemoryMap->Type,
              MemoryMap->PhysicalStart,
-             MemoryMap->PhysicalStart + MemoryMap->NumberOfPages * 4096 - 1,
+             MemoryMap->PhysicalStart + (((UINTN) MemoryMap->NumberOfPages * EFI_PAGE_SIZE)) - 1,
              MemoryMap->NumberOfPages,
              MemoryMap->VirtualStart,
              MemoryMap->Attribute);
+        MemoryMap = NEXT_MEMORY_DESCRIPTOR (MemoryMap, bootArgs1->MemoryMapDescriptorSize);
       }
-#endif
 
       // disable other pointer
       bootArgs2 = NULL;
