@@ -563,6 +563,17 @@ fsw_hfs_btree_rec (
   return (BTreeKey *) (cnode + offset);
 }
 
+static fsw_u32
+fsw_hfs_btree_next_node (
+  BTreeKey *currkey
+)
+{
+        fsw_u32 *pointer;
+
+        pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16) + 2);
+        return be32_to_cpu (*pointer);
+}
+
 static fsw_status_t
 fsw_hfs_btree_search (
   struct fsw_hfs_btree *btree,
@@ -573,11 +584,14 @@ fsw_hfs_btree_search (
   fsw_u32 * key_offset
 )
 {
-  BTNodeDescriptor *node;
-  fsw_u32 currnode;
-  fsw_u32 rec = 0;
   fsw_status_t status;
   fsw_u8 *buffer = NULL;
+  BTNodeDescriptor *node;
+  fsw_u32 currnode;
+  fsw_u32 recnum;
+#ifndef VBOXHFS_BTREE_LINEAR
+  fsw_u32 lower, upper;
+#endif
 
   currnode = btree->root_node;
   status = fsw_alloc (btree->node_size, &buffer);
@@ -592,6 +606,7 @@ fsw_hfs_btree_search (
     fsw_s32 cmp = 0;
     int match;
     fsw_u32 count;
+    BTreeKey *currkey;
 
     match = 0;
     /* Read a node */
@@ -611,13 +626,12 @@ fsw_hfs_btree_search (
     count = be16_to_cpu (node->numRecords);
 
 #ifdef VBOXHFS_BTREE_LINEAR
-    for (rec = 0; rec < count; rec++) {
-      BTreeKey *currkey;
+    for (recnum = 0; recnum < count; recnum++) {
 
-      currkey = fsw_hfs_btree_rec (btree, node, rec);
+      currkey = fsw_hfs_btree_rec (btree, node, recnum);
       cmp = compare_keys (currkey, key);
 #if 1
-      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d rec=%d/%d cmp=%d kind=%d\n"), currnode, rec, count, cmp, node->kind));
+      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d recnum=%d/%d cmp=%d kind=%d\n"), currnode, recnum, count, cmp, node->kind));
 #endif
 
       /* Leaf node */
@@ -625,20 +639,15 @@ fsw_hfs_btree_search (
         if (cmp == 0) {
           /* Found! */
           *result = node;
-          *key_offset = rec;
+          *key_offset = recnum;
 
-          status = FSW_SUCCESS;
-          goto done;
+          return FSW_SUCCESS;
         }
       }
       else if (node->kind == kBTIndexNode) {
-        fsw_u32 *pointer;
-
         if (cmp > 0)
           break;
-
-        pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16) + 2);
-        currnode = be32_to_cpu (*pointer);
+        currnode = fsw_hfs_btree_next_node (currkey);
         match = 1;
       }
     }
@@ -653,9 +662,9 @@ fsw_hfs_btree_search (
     }
 #else
     /* Perform binary search */
-    fsw_u32 lower = 0;
-    fsw_u32 upper = count - 1;
-    BTreeKey *currkey = NULL;
+    lower = 0;
+    upper = count - 1;
+    currkey = NULL;
 
     if (count == 0) {
       status = FSW_NOT_FOUND;
@@ -663,36 +672,32 @@ fsw_hfs_btree_search (
     }
 
     while (lower <= upper) {
-      fsw_u32 index = (lower + upper) / 2;
+      recnum = (lower + upper) / 2;
 
-      currkey = fsw_hfs_btree_rec (btree, node, index);
+      currkey = fsw_hfs_btree_rec (btree, node, recnum);
 
       cmp = compare_keys (currkey, key);
 #if 1
-      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d lower/index/upper %d/%d/%d (%d) cmp=%d kind=%d\n"), currnode, lower, index, upper, count, cmp, node->kind));
+      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d lower/recnum/upper %d/%d/%d (%d) cmp=%d kind=%d\n"), currnode, lower, recnum, upper, count, cmp, node->kind));
 #endif
       if (cmp < 0)
-        upper = index - 1;
+        upper = recnum - 1;
       if (cmp > 0)
-        lower = index + 1;
+        lower = recnum + 1;
       if (cmp == 0) {
         /* Found! */
         *result = node;
-        *key_offset = rec;
+        *key_offset = recnum;
 
-        status = FSW_SUCCESS;
-        goto done;
+        return FSW_SUCCESS;
       }
     }
 
     if (cmp < 0)
       currkey = fsw_hfs_btree_rec (btree, node, upper);
 
-    if (node->kind == kBTIndexNode && currkey) {
-      fsw_u32 *pointer;
-
-      pointer = (fsw_u32 *) ((char *) currkey + be16_to_cpu (currkey->length16) + 2);
-      currnode = be32_to_cpu (*pointer);
+    if (node->kind == kBTIndexNode && currkey != NULL) {
+      currnode = fsw_hfs_btree_next_node (currkey);
     }
     else {
       status = FSW_NOT_FOUND;
