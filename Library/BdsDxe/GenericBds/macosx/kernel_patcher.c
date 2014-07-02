@@ -977,15 +977,16 @@ FindBootArgs (
       MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs2->MemoryMap);
       MCount = DivU64x32 (bootArgs2->MemoryMapSize, bootArgs2->MemoryMapDescriptorSize);
       
-      DBG ("Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+      DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
       for (i = 0; i < MCount; i++) {
-        DBG ("%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
-               MemoryMap->Type,
-               MemoryMap->PhysicalStart,
-               MemoryMap->PhysicalStart + (((UINTN) MemoryMap->NumberOfPages * EFI_PAGE_SIZE)) - 1,
-               MemoryMap->NumberOfPages,
-               MemoryMap->VirtualStart,
-               MemoryMap->Attribute);
+        DBG ("%02d %a %016lx  %016lx  %016lx  %016lx  %016x\n",
+             i,
+             EfiMemoryTypeDesc[MemoryMap->Type],
+             MemoryMap->PhysicalStart,
+             MemoryMap->PhysicalStart + (((UINTN) MemoryMap->NumberOfPages * EFI_PAGE_SIZE)) - 1,
+             MemoryMap->NumberOfPages,
+             MemoryMap->VirtualStart,
+             MemoryMap->Attribute);
         MemoryMap = NEXT_MEMORY_DESCRIPTOR (MemoryMap, bootArgs2->MemoryMapDescriptorSize);
       }
       // disable other pointer
@@ -1025,10 +1026,11 @@ FindBootArgs (
       MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs1->MemoryMap);
       MCount = DivU64x32 (bootArgs1->MemoryMapSize, bootArgs1->MemoryMapDescriptorSize);
       
-      DBG ("Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+      DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
       for (i = 0; i < MCount; i++) {
-        DBG ("%02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
-             MemoryMap->Type,
+        DBG ("%02d %a %016lx  %016lx  %016lx  %016lx  %016x\n",
+             i,
+             EfiMemoryTypeDesc[MemoryMap->Type],
              MemoryMap->PhysicalStart,
              MemoryMap->PhysicalStart + (((UINTN) MemoryMap->NumberOfPages * EFI_PAGE_SIZE)) - 1,
              MemoryMap->NumberOfPages,

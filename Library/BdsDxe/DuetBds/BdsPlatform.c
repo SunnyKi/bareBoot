@@ -51,6 +51,23 @@ GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *mGcdMemoryTypeNames[] = {
   "Unknown  "   // EfiGcdMemoryTypeMaximum
 };
 
+GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *EfiMemoryTypeDesc[14] = {
+	"reserved  ",
+	"LoaderCode",
+	"LoaderData",
+	"BS_code   ",
+	"BS_data   ",
+	"RT_code   ",
+	"RT_data   ",
+	"available ",
+	"Unusable  ",
+	"ACPI_recl ",
+	"ACPI_NVS  ",
+	"MemMapIO  ",
+	"MemPortIO ",
+	"PAL_code  "
+};
+
 //
 // BDS Platform Functions
 //
@@ -156,7 +173,7 @@ UpdateMemoryMap (
   }
   MemoryDescHob.MemDescCount = *(UINTN *)Table;
   MemoryDescHob.MemDesc      = *(EFI_MEMORY_DESCRIPTOR **)((UINTN)Table + sizeof(UINTN));
-#if 0
+#if 1
   DumpGcdMemoryMap ();
 #endif
   gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
@@ -193,21 +210,22 @@ UpdateMemoryMap (
   }
   
   FreePool (MemorySpaceMap);
-#if 0
+  DBG ("%a: Gcd Memory Map after update.\n",__FUNCTION__);
+#if 1
   DumpGcdMemoryMap ();
 #endif
   //
   // Add ACPINVS, ACPIReclaim, and Reserved memory to MemoryMap
   //
   FirstNonConventionalAddr = 0xFFFFFFFF;
-#if 0
-  DBG ("Index  Type  Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+#if 1
+  DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
 #endif
   for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
-#if 0
-    DBG ("%02d     %02d    %016lx  %016lx  %016lx  %016lx  %016x\n",
+#if 1
+    DBG ("%02d %a %016lx  %016lx  %016lx  %016lx  %016x\n",
          Index,
-         MemoryDescHob.MemDesc[Index].Type,
+         EfiMemoryTypeDesc[MemoryDescHob.MemDesc[Index].Type],
          MemoryDescHob.MemDesc[Index].PhysicalStart,
          MemoryDescHob.MemDesc[Index].PhysicalStart + MemoryDescHob.MemDesc[Index].NumberOfPages * 4096 -1,
          MemoryDescHob.MemDesc[Index].NumberOfPages,
@@ -316,6 +334,10 @@ UpdateMemoryMap (
   *  thanks for this fix dmazar! 
   *
   **/
+#if 1
+  DBG ("%a: Efi Memory Map after update.\n",__FUNCTION__);
+  DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
+#endif
   for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
     if (MemoryDescHob.MemDesc[Index].PhysicalStart < 0x100000) {
       continue;
@@ -363,8 +385,18 @@ UpdateMemoryMap (
           &Memory
           );
 #endif
+#if 1
+    DBG ("%02d %a %016lx  %016lx  %016lx  %016lx  %016x\n",
+         Index,
+         EfiMemoryTypeDesc[MemoryDescHob.MemDesc[Index].Type],
+         MemoryDescHob.MemDesc[Index].PhysicalStart,
+         MemoryDescHob.MemDesc[Index].PhysicalStart + MemoryDescHob.MemDesc[Index].NumberOfPages * 4096 -1,
+         MemoryDescHob.MemDesc[Index].NumberOfPages,
+         MemoryDescHob.MemDesc[Index].VirtualStart,
+         MemoryDescHob.MemDesc[Index].Attribute);
+#endif
   }
-#if 0
+#if 1
   DumpGcdMemoryMap ();
 #endif
 }

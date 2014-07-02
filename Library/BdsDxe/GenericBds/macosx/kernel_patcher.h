@@ -72,8 +72,6 @@ typedef struct _DeviceTreeBuffer {
     UINT32 length;
 } _DeviceTreeBuffer;
 
-
-
 extern EFI_PHYSICAL_ADDRESS KernelRelocBase;
 extern BootArgs1    *bootArgs1;
 extern BootArgs2    *bootArgs2;
