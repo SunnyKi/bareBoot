@@ -630,7 +630,7 @@ fsw_hfs_btree_search (
 
       currkey = fsw_hfs_btree_rec (btree, node, recnum);
       cmp = compare_keys (currkey, key);
-#if 1
+#if 0
       FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d recnum=%d/%d cmp=%d kind=%d\n"),
 			      currnode, recnum, count, cmp, node->kind));
 #endif
@@ -649,7 +649,7 @@ fsw_hfs_btree_search (
         if (cmp > 0)
           break;
         currnode = fsw_hfs_btree_next_node (currkey);
-#if 1
+#if 0
       FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": candidate for the next currnode is %d\n"), currnode));
 #endif
         match = 1;
@@ -681,7 +681,7 @@ fsw_hfs_btree_search (
       currkey = fsw_hfs_btree_rec (btree, node, recnum);
 
       cmp = 0 - compare_keys (currkey, key);
-#if 1
+#if 0
       FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d lower/recnum/upper %d/%d/%d (%d) cmp=%d kind=%d\n"),
 			      currnode, lower, recnum, upper, count, cmp, node->kind));
 #endif
@@ -703,7 +703,7 @@ fsw_hfs_btree_search (
 
     if (node->kind == kBTIndexNode && currkey != NULL) {
       currnode = fsw_hfs_btree_next_node (currkey);
-#if 1
+#if 0
       FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": candidate for the next currnode is %d\n"), currnode));
 #endif
     }
