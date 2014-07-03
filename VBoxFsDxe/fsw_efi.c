@@ -609,11 +609,15 @@ fsw_efi_FileSystem_OpenVolume (
   EFI_STATUS Status;
   FSW_VOLUME_DATA *Volume = FSW_VOLUME_FROM_VOL_INTERFACE (This);
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
+#endif
 
   Status = fsw_efi_dnode_to_FileHandle (Volume->vol->root, Root);
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -634,7 +638,9 @@ fsw_efi_FileHandle_Open (
   EFI_STATUS Status;
   FSW_FILE_DATA *File;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
+#endif
   Status = EFI_UNSUPPORTED;
   File = FSW_FILE_FROM_FILE_HANDLE (This);
 
@@ -643,7 +649,9 @@ fsw_efi_FileHandle_Open (
 
   // not supported for regular files
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -761,7 +769,9 @@ fsw_efi_FileHandle_GetPosition (
   EFI_STATUS Status;
   FSW_FILE_DATA *File;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
+#endif
   Status = EFI_UNSUPPORTED;
   File = FSW_FILE_FROM_FILE_HANDLE (This);
 
@@ -769,7 +779,9 @@ fsw_efi_FileHandle_GetPosition (
     Status = fsw_efi_file_getpos (File, Position);
   // not defined for directories
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -787,7 +799,9 @@ fsw_efi_FileHandle_SetPosition (
   EFI_STATUS Status;
   FSW_FILE_DATA *File;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
+#endif
   Status = EFI_UNSUPPORTED;
   File = FSW_FILE_FROM_FILE_HANDLE (This);
 
@@ -796,7 +810,9 @@ fsw_efi_FileHandle_SetPosition (
   else if (File->Type == FSW_EFI_FILE_TYPE_DIR)
     Status = fsw_efi_dir_setpos (File, Position);
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -816,13 +832,17 @@ fsw_efi_FileHandle_GetInfo (
   EFI_STATUS Status;
   FSW_FILE_DATA *File;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter for %g\n"),
                   InformationType));
+#endif
   File = FSW_FILE_FROM_FILE_HANDLE (This);
 
   Status = fsw_efi_dnode_getinfo (File, InformationType, BufferSize, Buffer);
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -839,10 +859,9 @@ fsw_efi_FileHandle_SetInfo (
   IN VOID *Buffer
 )
 {
-  FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
   // this driver is read-only
   FSW_MSG_DEBUG ((FSW_MSGSTR
-                  (__FUNCTION__ ": leaving with Write Protected\n")));
+                  (__FUNCTION__ ": enter/leave with Write Protected\n")));
   return EFI_WRITE_PROTECTED;
 }
 
@@ -856,10 +875,9 @@ fsw_efi_FileHandle_Flush (
   IN EFI_FILE * This
 )
 {
-  FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
   // this driver is read-only
   FSW_MSG_DEBUG ((FSW_MSGSTR
-                  (__FUNCTION__ ": leaving with Write Protected\n")));
+                  (__FUNCTION__ ": enter/leave with Write Protected\n")));
   return EFI_WRITE_PROTECTED;
 }
 
@@ -878,7 +896,9 @@ fsw_efi_dnode_to_FileHandle (
   EFI_STATUS Status;
   FSW_FILE_DATA *File;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
+#endif
   // make sure the dnode has complete info
   Status =
     fsw_efi_map_status (fsw_dnode_fill (dno),
@@ -927,7 +947,9 @@ fsw_efi_dnode_to_FileHandle (
   Status = EFI_SUCCESS;
 
 Done:
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -1018,7 +1040,9 @@ fsw_efi_dir_open (
   struct fsw_dnode *target_dno;
   struct fsw_string lookup_path;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": `%s'\n"), FileName));
+#endif
 
   if (OpenMode != EFI_FILE_MODE_READ)
     return EFI_WRITE_PROTECTED;
@@ -1065,14 +1089,18 @@ fsw_efi_dir_read (
     (FSW_VOLUME_DATA *) File->shand.dnode->vol->host_data;
   struct fsw_dnode *dno;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ "...\n")));
+#endif
 
   // read the next entry
   Status = fsw_efi_map_status (fsw_dnode_dir_read (&File->shand, &dno), Volume);
   if (Status == EFI_NOT_FOUND) {
     // end of directory
     *BufferSize = 0;
+#if 0
     FSW_MSG_DEBUG ((FSW_MSGSTR ("... no more entries\n")));
+#endif
     return EFI_SUCCESS;
   }
   if (EFI_ERROR (Status))
@@ -1126,11 +1154,15 @@ fsw_efi_dnode_getinfo (
   UINTN RequiredSize;
   struct fsw_volume_stat vsb;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter for %g\n"),
                   InformationType));
+#endif
   Volume = (FSW_VOLUME_DATA *) File->shand.dnode->vol->host_data;
   if (CompareGuid (InformationType, &GUID_NAME (FileInfo))) {
+#if 0
     FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": FILE_INFO\n")));
+#endif
 
     Status =
       fsw_efi_dnode_fill_FileInfo (Volume, File->shand.dnode, BufferSize,
@@ -1138,7 +1170,9 @@ fsw_efi_dnode_getinfo (
 
   }
   else if (CompareGuid (InformationType, &GUID_NAME (FileSystemInfo))) {
+#if 0
     FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": FILE_SYSTEM_INFO\n")));
+#endif
 
     // check buffer size
     RequiredSize =
@@ -1155,8 +1189,10 @@ fsw_efi_dnode_getinfo (
     FSInfo->ReadOnly = TRUE;
     FSInfo->BlockSize = Volume->vol->log_blocksize;
     fsw_efi_strcpy (FSInfo->VolumeLabel, &Volume->vol->label);
+#if 0
     FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": Volume Label [%s]\n"),
                     FSInfo->VolumeLabel));
+#endif
 
     // get the missing info from the fs driver
     ZeroMem (&vsb, sizeof (struct fsw_volume_stat));
@@ -1175,7 +1211,9 @@ fsw_efi_dnode_getinfo (
   else
     if (CompareGuid (InformationType, &GUID_NAME (FileSystemVolumeLabelInfoId)))
   {
+#if 0
     FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": FILE_SYSTEM_VOLUME_LABEL\n")));
+#endif
 
     // check buffer size
     RequiredSize =
@@ -1201,7 +1239,9 @@ fsw_efi_dnode_getinfo (
   }
 
 Done:
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -1275,7 +1315,9 @@ fsw_efi_dnode_fill_FileInfo (
   if (*BufferSize < RequiredSize) {
     // TODO: wind back the directory in this case
 
+#if 0
     FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": ... BUFFER TOO SMALL\n")));
+#endif
     *BufferSize = RequiredSize;
     return EFI_BUFFER_TOO_SMALL;
   }
@@ -1302,8 +1344,10 @@ fsw_efi_dnode_fill_FileInfo (
 
   // prepare for return
   *BufferSize = RequiredSize;
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": ... returning `%s'\n"),
                   FileInfo->FileName));
+#endif
   return EFI_SUCCESS;
 }
 

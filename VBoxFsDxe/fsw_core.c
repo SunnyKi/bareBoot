@@ -550,14 +550,17 @@ fsw_status_t fsw_dnode_lookup_path(struct fsw_dnode *dno,
     remaining_path = *lookup_path;
     fsw_dnode_retain(dno);
 
+    FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: '%s'\n"), lookup_path->data));
     // loop over the path
     for (root_if_empty = 1; fsw_strlen(&remaining_path) > 0; root_if_empty = 0) {
         // parse next path component
         fsw_strsplit(&lookup_name, &remaining_path, separator);
 
+#if 0
         FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: split into %d '%s' and %d '%s'\n"),
                        lookup_name.len, lookup_name.data,
                        remaining_path.len, remaining_path.data));
+#endif
 
         if (fsw_strlen(&lookup_name) == 0) {        // empty path component
             if (root_if_empty)
@@ -625,7 +628,9 @@ fsw_status_t fsw_dnode_lookup_path(struct fsw_dnode *dno,
         dno = child_dno;   // is already retained
         child_dno = NULL;
 
+#if 0
         FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: now at inode %d\n"), dno->dnode_id));
+#endif
     }
 
     *child_dno_out = dno;
