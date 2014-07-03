@@ -544,8 +544,10 @@ fsw_efi_read_block (
   EFI_STATUS Status;
   FSW_VOLUME_DATA *Volume = (FSW_VOLUME_DATA *) vol->host_data;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR ("fsw_efi_read_block: %d (%d)\n"), phys_bno,
                   vol->phys_blocksize));
+#endif
 
   // read from disk
   Status =
@@ -657,13 +659,17 @@ fsw_efi_FileHandle_Close (
 {
   FSW_FILE_DATA *File;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
+#endif
 
   File = FSW_FILE_FROM_FILE_HANDLE (This);
   fsw_shandle_close (&File->shand);
   FreePool (File);
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with Success\n")));
+#endif
   return EFI_SUCCESS;
 }
 
@@ -705,7 +711,9 @@ fsw_efi_FileHandle_Read (
   EFI_STATUS Status;
   FSW_FILE_DATA *File;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter\n")));
+#endif
   Status = EFI_UNSUPPORTED;
   File = FSW_FILE_FROM_FILE_HANDLE (This);
 
@@ -714,7 +722,9 @@ fsw_efi_FileHandle_Read (
   else if (File->Type == FSW_EFI_FILE_TYPE_DIR)
     Status = fsw_efi_dir_read (File, BufferSize, Buffer);
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
@@ -935,8 +945,10 @@ fsw_efi_file_read (
   EFI_STATUS Status;
   fsw_u32 buffer_size;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": enter to read %d bytes\n"),
                   *BufferSize));
+#endif
 
   buffer_size = (fsw_u32) (*BufferSize);
   Status =
@@ -944,7 +956,9 @@ fsw_efi_file_read (
                         (FSW_VOLUME_DATA *) File->shand.dnode->vol->host_data);
   *BufferSize = buffer_size;
 
+#if 0
   FSW_MSG_DEBUG ((FSW_MSGSTR (__FUNCTION__ ": leaving with %r\n"), Status));
+#endif
   return Status;
 }
 
