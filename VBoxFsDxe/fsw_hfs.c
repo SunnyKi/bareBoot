@@ -589,7 +589,7 @@ fsw_hfs_btree_search (
   BTNodeDescriptor *node;
   fsw_u32 currnode;
   fsw_u32 recnum;
-#ifndef VBOXHFS_BTREE_LINEAR
+#ifdef VBOXHFS_BTREE_BINSEARCH
   fsw_u32 lower, upper;
 #endif
 
@@ -625,7 +625,7 @@ fsw_hfs_btree_search (
 
     count = be16_to_cpu (node->numRecords);
 
-#ifdef VBOXHFS_BTREE_LINEAR
+#ifndef VBOXHFS_BTREE_BINSEARCH
     for (recnum = 0; recnum < count; recnum++) {
 
       currkey = fsw_hfs_btree_rec (btree, node, recnum);
