@@ -305,6 +305,7 @@ OnExitBootServices (
   EFI_FILE_PROTOCOL               *FHandle;
   EFI_STATUS                      Status;
   
+  DEBUG ((DEBUG_INFO, "%a: an attempt to save ext_boot.log\n", __FUNCTION__));
   FHandle = NULL;
   gBS->LocateHandleBuffer (
          ByProtocol,
@@ -325,43 +326,36 @@ OnExitBootServices (
     // so we will write to device that contains bareboot's config file and non USB
     // most likely it will first ESP
     // temporary workaround
-    if (StrStr (ConvertDevicePathToText (DevicePath, FALSE, FALSE), L"USB") == NULL) {
-      Status = gBS->HandleProtocol (
-                      FileSystemHandles[Index],
-                      &gEfiSimpleFileSystemProtocolGuid,
-                      (VOID *) &Volume
-                      );
-      if (!EFI_ERROR (Status)) {
-        Status = Volume->OpenVolume (
-                           Volume,
-                           &FHandle
-                           );
-        if ((!EFI_ERROR (Status)) &&
-            (gPNConfigPlist != NULL) &&
-            (FileExists (FHandle, gPNConfigPlist))) {
-          break;
-        }
-      }
+ 
+    if (StrStr (ConvertDevicePathToText (DevicePath, FALSE, FALSE), L"USB") != NULL) {
+      continue;
+    }
+    Status = gBS->HandleProtocol (
+                    FileSystemHandles[Index],
+                    &gEfiSimpleFileSystemProtocolGuid,
+                    (VOID *) &Volume
+                    );
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+    Status = Volume->OpenVolume (Volume, &FHandle);
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+    if (gPNConfigPlist != NULL && FileExists (FHandle, gPNConfigPlist)) {
+      break;
     }
   }
   
-  DBG ("%a: Finished.\n",__FUNCTION__);
+  DBG ("%a: Finished.\n", __FUNCTION__);
   if (FHandle != NULL) {
     Status = SaveBooterLog (FHandle, L"EFI\\bareboot\\ext_boot.log");
     FHandle->Close (FHandle);
   }
 #endif
 
-#ifdef KERNEL_PATCH_DEBUG
+#if defined(KERNEL_PATCH_DEBUG) || defined(KEXT_INJECT_DEBUG) || defined(KEXT_PATCH_DEBUG)
     gBS->Stall (5000000);
-#else
-#ifdef KEXT_INJECT_DEBUG
-    gBS->Stall (5000000);
-#else
-#ifdef KEXT_PATCH_DEBUG
-    gBS->Stall (5000000);
-#endif
-#endif
 #endif
 }
 
