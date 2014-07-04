@@ -714,7 +714,9 @@ fsw_hfs_btree_search (
 #endif
   }
 
+#ifdef VBOXHFS_BTREE_BINSEARCH
 done:
+#endif
   if (buffer != NULL && status != FSW_SUCCESS)
     fsw_free (buffer);
 
