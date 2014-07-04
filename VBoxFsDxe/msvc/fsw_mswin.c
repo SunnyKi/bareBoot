@@ -233,9 +233,8 @@ struct dirent * fsw_mswin_readdir(struct fsw_mswin_dir *dir)
 
     // get next entry from file system
     status = fsw_dnode_dir_read(&dir->shand, &dno);
-    if (status) {
-        if (status != 4)
-            fprintf(stderr, "fsw_mswin_readdir: fsw_dnode_dir_read returned %d\n", status);
+    if (status && status != FSW_NOT_FOUND) {
+        fprintf(stderr, "fsw_mswin_readdir: fsw_dnode_dir_read returned %d\n", status);
         return NULL;
     }
     status = fsw_dnode_fill(dno);
@@ -303,7 +302,7 @@ fsw_status_t fsw_mswin_open_dno(struct fsw_mswin_volume *pvol, const char *path,
 
     lookup_path.type = FSW_STRING_TYPE_ISO88591;
     lookup_path.len  = strlen(path);
-    lookup_path.size = lookup_path.len;
+    lookup_path.size = lookup_path.len + 1;
     lookup_path.data = (void *)path;
 
     // resolve the path (symlinks along the way are automatically resolved)
