@@ -108,7 +108,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>FSTYPE=hfs;HOST_MSWIN;VBOX_UTF16_FOLD;FSW_DEBUG_LEVEL=3;WIN32;mode_t=int;ssize_t=int;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;HOST_MSWIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSTYPE=hfs;HOST_MSWIN;WIN32;mode_t=int;ssize_t=int;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -125,7 +125,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>FSTYPE=hfs;HOST_MSWIN;mode_t=int;ssize_t=int;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;HOST_MSWIN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>FSTYPE=hfs;HOST_MSWIN;mode_t=int;ssize_t=int;_CRT_SECURE_NO_WARNINGS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
