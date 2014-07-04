@@ -151,6 +151,8 @@ INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 !endif
 #INF  RuleOverride=BINARY bareBoot/XhciDxe/XhciDxe.inf
 
+INF  RuleOverride=BINARY bareBoot/ION/IONDxe.inf
+
 FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
     SECTION RAW = bareBoot/Logo/Logo.bmp
   }
