@@ -233,8 +233,10 @@ struct dirent * fsw_mswin_readdir(struct fsw_mswin_dir *dir)
 
     // get next entry from file system
     status = fsw_dnode_dir_read(&dir->shand, &dno);
-    if (status && status != FSW_NOT_FOUND) {
-        fprintf(stderr, "fsw_mswin_readdir: fsw_dnode_dir_read returned %d\n", status);
+    if (status) {
+		if (status != FSW_NOT_FOUND) {
+			fprintf(stderr, "fsw_mswin_readdir: fsw_dnode_dir_read returned %d\n", status);
+		}
         return NULL;
     }
     status = fsw_dnode_fill(dno);
