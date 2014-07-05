@@ -519,16 +519,12 @@ KernelPatcher_64 (
   UINT32      mask_family=0, mask_model=0;
   UINT32      cpuid_family_addr=0, cpuid_model_addr=0;
 
-  DBG ("%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
-#ifdef KERNEL_PATCH_DEBUG
-  Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
-#endif
-  DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n",__FUNCTION__);
-
   if (KernVersion == NULL) {
     DBG ("%a: kernel version not found.\n",__FUNCTION__);
     return;
   }
+
+  DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n",__FUNCTION__);
   // Determine location of _cpuid_set_info _panic call for refrence
   // basically looking for info_p->cpuid_model = bitfield32(reg[eax],  7,  4);
   for (i=0; i<0x1000000; i++) {
@@ -1209,9 +1205,11 @@ KernelAndKextPatcherInit (
   Get_PreLink ();
   isKernelcache = PrelinkTextSize > 0 && PrelinkInfoSize > 0;
 
+  DBG ("%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
   KernVersion = GetKernelVersion (KernelData);
   DBG ("%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
 #ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
   Print (L"%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
 #endif
 
