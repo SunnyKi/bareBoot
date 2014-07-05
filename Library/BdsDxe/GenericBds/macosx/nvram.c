@@ -57,6 +57,7 @@ LoadLatestNvramPlist (
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   EFI_STATUS                      Status;
   
+  DPString = NULL;
   FHandle = NULL;
   LastModifTimeMs = 0;
   
