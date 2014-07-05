@@ -435,15 +435,13 @@ KernelPatcher_64 (
   UINT32      cpuid_family_addr=0, cpuid_model_addr=0;
   CHAR8       *KernVersion;
 
-#ifdef KERNEL_PATCH_DEBUG
-  Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
-#endif
   DBG ("%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
   KernVersion = GetKernelVersion (kernelData);
+  DBG ("%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
 #ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
   Print (L"%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
 #endif
-  DBG ("%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
   DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n",__FUNCTION__);
 
   if (KernVersion == NULL) {
