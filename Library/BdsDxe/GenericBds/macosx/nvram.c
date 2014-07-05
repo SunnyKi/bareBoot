@@ -47,6 +47,7 @@ LoadLatestNvramPlist (
   EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
   EFI_FILE_HANDLE                 FHandle;
   EFI_FILE_HANDLE                 FileHandle;
+  EFI_FILE_HANDLE                 File;
   EFI_FILE_INFO                   *FileInfo;
   UINT64                          LastModifTimeMs;
   UINT64                          ModifTimeMs;
@@ -104,9 +105,17 @@ LoadLatestNvramPlist (
     if (EFI_ERROR (Status)) {
       continue;
     }
-    if (FileExists (FileHandle, L"nvram.plist")) {
+    Status = FileHandle->Open (
+                           FileHandle,
+                           &File,
+                           L"nvram.plist",
+                           EFI_FILE_MODE_READ,
+                           0
+                           );
+    if (!EFI_ERROR(Status)) {
       // get nvram.plist modification date
-      FileInfo = EfiLibFileInfo (FileHandle);
+      FileInfo = EfiLibFileInfo (File);
+      File->Close (File);
       if (FileInfo == NULL) {
         DBG (" - no nvram.plist file info - skipping!\n");
         FileHandle->Close (FileHandle);
