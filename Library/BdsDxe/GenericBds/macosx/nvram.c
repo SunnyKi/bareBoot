@@ -139,7 +139,7 @@ LoadLatestNvramPlist (
   // if we have nvram.plist - load it
   //
   if (FHandle != NULL) {
-    DBG ("Loading nvram.plist from Vol '%s'\n", DPString);
+    DBG (" loading nvram.plist from Vol '%s'\n", DPString);
     gNvramDict = LoadPListFile (FHandle, L"nvram.plist");
     FHandle->Close (FHandle);
     Status = EFI_SUCCESS;
