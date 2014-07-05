@@ -847,12 +847,12 @@ KernelPatcher_32 (
   bytes[patchLocation +  3] = 0x90;
   bytes[patchLocation +  4] = 0x90;
   
-  if (OSVersion) {
-    if (AsciiStrnCmp (OSVersion,"10.7",4) == 0) return;
-    if (!SSSE3 && (AsciiStrnCmp (OSVersion,"10.6",4) == 0)) {
+  if (KernVersion) {
+    if (AsciiStrnCmp (KernVersion,"11",2) == 0) return;
+    if (!SSSE3 && (AsciiStrnCmp (KernVersion,"10",2) == 0)) {
       Patcher_SSE3_6 ((VOID*) bytes);
     }
-    if (!SSSE3 && (AsciiStrnCmp (OSVersion,"10.5",4) == 0)) {
+    if (!SSSE3 && (AsciiStrnCmp (KernVersion,"9",1) == 0)) {
       Patcher_SSE3_5 ((VOID*) bytes);
     }
   }
