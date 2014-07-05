@@ -595,7 +595,7 @@ InjectKexts (
 
   return EFI_SUCCESS;
 }
-
+#if 0
 ////////////////////////////////////
 //
 // KernelBooterExtensionsPatch to load extra kexts besides kernelcache
@@ -700,3 +700,4 @@ KernelBooterExtensionsPatch (
   Print (L"Kext Inject: Patch Kernel - SearchAndReplace %d times.\n", Num);
 #endif
 }
+#endif

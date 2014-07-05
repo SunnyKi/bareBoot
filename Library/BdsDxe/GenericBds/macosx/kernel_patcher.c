@@ -22,6 +22,7 @@ EFI_PHYSICAL_ADDRESS    KernelRelocBase = 0;
 BootArgs1               *bootArgs1      = NULL;
 BootArgs2               *bootArgs2      = NULL;
 CHAR8                   *dtRoot         = NULL;
+CHAR8                   *KernVersion    = NULL;
 VOID                    *KernelData     = NULL;
 UINT32                  KernelSlide     = 0;
 BOOLEAN                 isKernelcache   = FALSE;
@@ -216,6 +217,85 @@ static UINT8 KernelPatchPmRepl1010[] = {
   0x83, 0xc4, 0x08, 0x5b, 0x41, 0x5c, 0x41, 0x5d, 0x41, 0x5e, 0x41, 0x5f,
   0x5d, 0xc3, 0x90, 0x90
 };
+
+
+UINT8 KBELionSearch_X64[] =
+{ 0xE8, 0x0C, 0xFD, 0xFF, 0xFF, 0xEB, 0x08, 0x48, 0x89, 0xDF };
+UINT8 KBELionReplace_X64[] =
+{ 0xE8, 0x0C, 0xFD, 0xFF, 0xFF, 0x90, 0x90, 0x48, 0x89, 0xDF };
+
+UINT8 KBELionSearch_i386[] =
+{ 0xE8, 0xAA, 0xFB, 0xFF, 0xFF, 0xEB, 0x08, 0x89, 0x34, 0x24 };
+UINT8 KBELionReplace_i386[] =
+{ 0xE8, 0xAA, 0xFB, 0xFF, 0xFF, 0x90, 0x90, 0x89, 0x34, 0x24 };
+
+UINT8 KBEMLSearch[] =
+{ 0xC6, 0xE8, 0x30, 0x00, 0x00, 0x00, 0xEB, 0x08, 0x48, 0x89, 0xDF };
+UINT8 KBEMLReplace[] =
+{ 0xC6, 0xE8, 0x30, 0x00, 0x00, 0x00, 0x90, 0x90, 0x48, 0x89, 0xDF };
+
+UINT8 KBEYSearch[] =
+{ 0xC6, 0xE8, 0x25, 0x00, 0x00, 0x00, 0xEB, 0x05, 0xE8, 0xCE, 0x02 };
+UINT8 KBEYReplace[] =
+{ 0xC6, 0xE8, 0x25, 0x00, 0x00, 0x00, 0x90, 0x90, 0xE8, 0xCE, 0x02 };
+
+VOID
+EFIAPI
+KernelBooterExtensionsPatch (
+  IN UINT8 *kernelData
+  )
+{
+  UINTN Num = 0;
+  if (is64BitKernel) {
+    if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
+      Num = SearchAndReplace (
+              kernelData,
+              KERNEL_MAX_SIZE,
+              (CHAR8 *) KBELionSearch_X64,
+              sizeof (KBELionSearch_X64),
+              (CHAR8 *) KBELionReplace_X64,
+              1
+              );
+    }
+    if ((AsciiStrnCmp (KernVersion, "12", 2) == 0) ||
+        (AsciiStrnCmp (KernVersion, "13", 2) == 0)) {
+      Num = SearchAndReplace (
+              kernelData,
+              KERNEL_MAX_SIZE,
+              (CHAR8 *) KBEMLSearch,
+              sizeof (KBEMLSearch),
+              (CHAR8 *) KBEMLReplace,
+              1
+              );
+    }
+    if (AsciiStrnCmp (KernVersion, "14", 2) == 0) {
+      Num = SearchAndReplace (
+              kernelData,
+              KERNEL_MAX_SIZE,
+              (CHAR8 *) KBEYSearch,
+              sizeof (KBEYSearch),
+              (CHAR8 *) KBEYReplace,
+              1
+              );
+    }
+  } else {
+    if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
+      Num = SearchAndReplace (
+              kernelData,
+              KERNEL_MAX_SIZE,
+              (CHAR8 *) KBELionSearch_i386,
+              sizeof (KBELionSearch_i386),
+              (CHAR8 *) KBELionReplace_i386,
+              1
+              );
+    }
+  }
+  
+  DBG ("%a: Kext Inject - SearchAndReplace %d times.\n",__FUNCTION__, Num);
+#ifdef KEXT_INJECT_DEBUG
+  Print (L"Kext Inject: Patch Kernel - SearchAndReplace %d times.\n", Num);
+#endif
+}
 
 VOID
 KernelPatchPm (
@@ -433,14 +513,10 @@ KernelPatcher_64 (
   UINT32      switchaddr=0;
   UINT32      mask_family=0, mask_model=0;
   UINT32      cpuid_family_addr=0, cpuid_model_addr=0;
-  CHAR8       *KernVersion;
 
   DBG ("%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
-  KernVersion = GetKernelVersion (kernelData);
-  DBG ("%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
 #ifdef KERNEL_PATCH_DEBUG
   Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
-  Print (L"%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
 #endif
   DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n",__FUNCTION__);
 
@@ -1127,6 +1203,12 @@ KernelAndKextPatcherInit (
   // find __PRELINK_TEXT and __PRELINK_INFO
   Get_PreLink ();
   isKernelcache = PrelinkTextSize > 0 && PrelinkInfoSize > 0;
+
+  KernVersion = GetKernelVersion (KernelData);
+  DBG ("%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
+#ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
+#endif
 
   PatcherInited = TRUE;
 }
