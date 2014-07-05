@@ -21,6 +21,7 @@ while [[ $# -gt 0 ]]; do
         "-s") DEF="$DEF -D SPEEDUP" ;;
 #use VBoxFsDxe instead HFSPlus
         "-vhfs") DEF="$DEF -D VBOXHFS" ;;
+        "-ohci") DEF="$DEF -D OHCI" ;;
         "-*")
          echo $"ERROR!"
         exit 1
