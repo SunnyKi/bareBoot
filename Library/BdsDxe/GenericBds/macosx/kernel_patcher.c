@@ -446,6 +446,10 @@ KernelPatcher_64 (
   DBG ("%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
   DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n",__FUNCTION__);
 
+  if (KernVersion == NULL) {
+    DBG ("%a: kernel version not found.\n",__FUNCTION__);
+    return;
+  }
   // Determine location of _cpuid_set_info _panic call for refrence
   // basically looking for info_p->cpuid_model = bitfield32(reg[eax],  7,  4);
   for (i=0; i<0x1000000; i++) {
@@ -463,10 +467,10 @@ KernelPatcher_64 (
     return;
   }
   // make sure only kernels for OSX 10.6.0 to 10.7.3 are being patched by this approach
-  if (AsciiStrnCmp (OSVersion, "10.6", 4) >= 0 && AsciiStrnCmp (OSVersion, "10.7.3", 6) <= 0) {
+  if (AsciiStrnCmp (KernVersion, "10", 2) >= 0 && AsciiStrnCmp (KernVersion, "11.3.0", 6) <= 0) {
     DBG ("%a: will patch kernel for OSX 10.6.0 to 10.7.3\n",__FUNCTION__);
     // remove tsc_init: unknown CPU family panic for kernels prior to 10.6.2 which still had Atom support
-    if (AsciiStrnCmp (OSVersion, "10.6.1", 6) <= 0) {
+    if (AsciiStrnCmp (KernVersion, "10.1", 4) <= 0) {
       for (i=0; i<0x1000000; i++) {
         // find _tsc_init panic address by byte sequence 488d3df4632a00
         if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
@@ -508,11 +512,11 @@ KernelPatcher_64 (
         if (cpuid_model_addr) {
           // Determine cpuid_model address
           // for 10.6.2 kernels it's offset by 299 bytes from cpuid_family address
-          if (AsciiStrnCmp (OSVersion, "10.6.2", 6) == 0) {
+          if (AsciiStrnCmp (KernVersion, "10.2", 4) == 0) {
             cpuid_model_addr = cpuid_family_addr - 0x12B;
           } else {
             // for 10.6.3 to 10.6.7 it's offset by 303 bytes
-            if (AsciiStrnCmp (OSVersion, "10.6.3", 6) >= 0 && AsciiStrnCmp (OSVersion, "10.6.7", 6) <= 0) {
+            if (AsciiStrnCmp (KernVersion, "10.3", 4) >= 0 && AsciiStrnCmp (KernVersion, "10.7", 4) <= 0) {
               cpuid_model_addr = cpuid_family_addr - 0x12F;
             } else {
               // for 10.6.8+ kernels - by 339 bytes
@@ -571,11 +575,11 @@ KernelPatcher_64 (
     }
     // patch ssse3
     if (!SSSE3 &&
-        (AsciiStrnCmp (OSVersion, "10.6", 4) == 0)) {
+        (AsciiStrnCmp (KernVersion, "10", 2) == 0)) {
       Patcher_SSE3_6 ((VOID*) bytes);
     }
     if (!SSSE3 &&
-        (AsciiStrnCmp (OSVersion, "10.7", 4) == 0)) {
+        (AsciiStrnCmp (KernVersion, "11", 2) == 0)) {
       Patcher_SSE3_7 ((VOID*) bytes);
     }
   } else {
