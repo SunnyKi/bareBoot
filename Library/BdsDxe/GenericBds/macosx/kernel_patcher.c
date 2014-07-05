@@ -584,7 +584,7 @@ KernelPatcher_64 (
         
         cpuid_family_addr = cpuid_family_addr + (switchaddr+10);
 
-        if (cpuid_model_addr) {
+        if (cpuid_family_addr) {
           // Determine cpuid_model address
           // for 10.6.2 kernels it's offset by 299 bytes from cpuid_family address
           if (AsciiStrnCmp (KernVersion, "10.2", 4) == 0) {
