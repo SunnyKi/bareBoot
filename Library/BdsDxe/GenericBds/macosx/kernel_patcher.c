@@ -73,26 +73,26 @@ GetKernelVersion (
   )
 {
   UINT8           *KernelPtr;
-  CHAR8           *s, *s1, *KernVersion;
-  UINTN           i, i2, i3, KernVersionBegin;
+  CHAR8           *s, *s1, *kv;
+  UINTN           i, i2, i3, kvBegin;
   
   KernelPtr = (UINT8*) kernelData;
 
   for (i=0; i<0x1000000; i++) {
     if (AsciiStrnCmp ((CHAR8 *) KernelPtr + i, "Darwin Kernel Version", 21) == 0) {
       s = (CHAR8 *) KernelPtr + i + 22;
-      KernVersionBegin = i + 22;
-      i2 = KernVersionBegin;
+      kvBegin = i + 22;
+      i2 = kvBegin;
       while (AsciiStrnCmp ((CHAR8 *) KernelPtr + i2, ":", 1) != 0) {
         i2++;
       }
-      KernVersion = (CHAR8 *) AllocateZeroPool (i2 - KernVersionBegin + 1);
-      s1 = KernVersion;
-      for (i3 = KernVersionBegin; i3 < i2; i3++) {
+      kv = (CHAR8 *) AllocateZeroPool (i2 - kvBegin + 1);
+      s1 = kv;
+      for (i3 = kvBegin; i3 < i2; i3++) {
         *s1++ = *s++;
       }
       *s1 = 0;
-      return KernVersion;
+      return kv;
     }
   }
   return NULL;
