@@ -602,4 +602,8 @@ FixRegions (
   UINT32 len
 );
 
+VOID
+PutNvramPlistToRtVars (
+  VOID
+);
 #endif
