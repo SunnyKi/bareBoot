@@ -237,6 +237,9 @@ MemLogVA (
   if (mMemLog->Callback != NULL) {
     mMemLog->Callback(DebugMode, LastMessage);
   }
+#ifdef MEMLOG2SERIAL
+  DEBUG ((DEBUG_INFO, "%a", LastMessage));
+#endif
 }
 
 /**
