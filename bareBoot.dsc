@@ -199,7 +199,7 @@
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
   bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
 #  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf
@@ -275,10 +275,10 @@
 #
 ################################################################################
 [PcdsFixedAtBuild]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Apple"
-  gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
-  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyAEnable|FALSE
-  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyBEnable|FALSE
+  gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Apple"
+  gEfiMdeModulePkgTokenSpaceGuid.PcdResetOnMemoryTypeInformationChange|FALSE
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyAEnable|FALSE
+  gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiFloppyBEnable|FALSE
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom1Enable|TRUE
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseHardwareFlowControl|TRUE
@@ -294,14 +294,14 @@
 !endif
 
 [PcdsPatchableInModule]
-  gPcAtChipsetPkgTokenSpaceGuid.Pcd8259LegacyModeMask|0xFFFC
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
-  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
+  gPcAtChipsetPkgTokenSpaceGuid.Pcd8259LegacyModeMask|0xFFFC
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
+  gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
 
 !ifdef USB_FIXUP
-[PcdsFeatureFlag]
+[PcdsFeatureFlag]
   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|FALSE
 !endif
 
@@ -327,7 +327,10 @@
 !ifdef SPEEDUP
   DEFINE DEF_SPEEDUP = -DSPEEDUP
 !endif
+!ifdef MEMLOG2SERIAL
+  DEFINE DEF_MEMLOG2SERIAL = -DMEMLOG2SERIAL
+!endif
 !ifdef NDEBUG
   DEFINE DEF_NDEBUG = -DMDEPKG_NDEBUG -Os
 !endif
-  *_*_*_CC_FLAGS   = $(DEF_NDEBUG) $(DEF_BLOCKIO) $(DEF_USB_FIXUP) $(DEF_SPEEDUP)
+  *_*_*_CC_FLAGS   = $(DEF_NDEBUG) $(DEF_BLOCKIO) $(DEF_USB_FIXUP) $(DEF_SPEEDUP) $(DEF_MEMLOG2SERIAL)
