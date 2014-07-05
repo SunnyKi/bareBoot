@@ -243,7 +243,7 @@ VOID
 EFIAPI
 KernelBooterExtensionsPatch (
   IN UINT8 *kernelData
-  )
+)
 {
   UINTN Num = 0;
   
@@ -1237,7 +1237,6 @@ AnyKernelPatch (
     }
   }
 }
-
 
 VOID
 KernelAndKextsPatcherStart (
