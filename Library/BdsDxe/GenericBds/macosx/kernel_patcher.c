@@ -246,6 +246,11 @@ KernelBooterExtensionsPatch (
   )
 {
   UINTN Num = 0;
+  
+  if (KernVersion == NULL) {
+    DBG ("%a: kernel version not found.\n",__FUNCTION__);
+    return;
+  }
   if (is64BitKernel) {
     if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
       Num = SearchAndReplace (
