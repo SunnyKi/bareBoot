@@ -84,7 +84,7 @@ INF  PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
 INF  PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF  bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
 INF  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-INF  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+INF  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 
   # IDE/AHCI Support
 #INF  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
@@ -151,15 +151,17 @@ INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 !endif
 #INF  RuleOverride=BINARY bareBoot/XhciDxe/XhciDxe.inf
 
+!if ($(ARCH) == "X64")
 INF  RuleOverride=BINARY bareBoot/ION/IONDxe.inf
+!endif
 
 FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
-    SECTION RAW = bareBoot/Logo/Logo.bmp
-  }
+    SECTION RAW = bareBoot/Logo/Logo.bmp
+  }
 
-FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdFontsFile) {
-    SECTION RAW = bareBoot/Fonts/Monaco16.png
-  }
+FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdFontsFile) {
+    SECTION RAW = bareBoot/Fonts/Monaco16.png
+  }
 
 [Rule.Common.DXE_CORE]
   FILE DXE_CORE = $(NAMED_GUID) {
