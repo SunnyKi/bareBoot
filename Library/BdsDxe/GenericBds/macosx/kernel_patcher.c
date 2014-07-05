@@ -66,6 +66,37 @@ SetKernelRelocBase (
     return;
 }
 
+CHAR8*
+GetKernelVersion (
+  VOID* kernelData
+  )
+{
+  UINT8           *KernelPtr;
+  CHAR8           *s, *s1, *KernVersion;
+  UINTN           i, i2, i3, KernVersionBegin;
+  
+  KernelPtr = (UINT8*) kernelData;
+
+  for (i=0; i<0x1000000; i++) {
+    if (AsciiStrnCmp ((CHAR8 *) KernelPtr + i, "Darwin Kernel Version", 21) == 0) {
+      s = (CHAR8 *) KernelPtr + i + 22;
+      KernVersionBegin = i + 22;
+      i2 = KernVersionBegin;
+      while (AsciiStrnCmp ((CHAR8 *) KernelPtr + i2, ":", 1) != 0) {
+        i2++;
+      }
+      KernVersion = (CHAR8 *) AllocateZeroPool (i2 - KernVersionBegin + 1);
+      s1 = KernVersion;
+      for (i3 = KernVersionBegin; i3 < i2; i3++) {
+        *s1++ = *s++;
+      }
+      *s1 = 0;
+      return KernVersion;
+    }
+  }
+  return NULL;
+}
+
 #if 1
 // Power management patch for kernel 13.0
 STATIC UINT8 KernelPatchPmSrc[] = {
@@ -402,11 +433,17 @@ KernelPatcher_64 (
   UINT32      switchaddr=0;
   UINT32      mask_family=0, mask_model=0;
   UINT32      cpuid_family_addr=0, cpuid_model_addr=0;
+  CHAR8       *KernVersion;
 
 #ifdef KERNEL_PATCH_DEBUG
   Print (L"%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
 #endif
   DBG ("%a: OSVersion = %a\n",__FUNCTION__, OSVersion);
+  KernVersion = GetKernelVersion (kernelData);
+#ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
+#endif
+  DBG ("%a: KernVersion = %a\n",__FUNCTION__, KernVersion);
   DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n",__FUNCTION__);
 
   // Determine location of _cpuid_set_info _panic call for refrence
