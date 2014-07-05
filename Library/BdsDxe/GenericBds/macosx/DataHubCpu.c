@@ -268,5 +268,9 @@ SetupDataForOSX (
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
     }
   }
+  Status = LogDataHub(&gEfiMiscSubClassGuid, L"OEMVendor",  &gSettings.OEMVendor,  (UINT32) AsciiStrSize (gSettings.OEMVendor));
+  Status = LogDataHub(&gEfiMiscSubClassGuid, L"OEMProduct", &gSettings.OEMProduct, (UINT32) AsciiStrSize (gSettings.OEMProduct));
+  Status = LogDataHub(&gEfiMiscSubClassGuid, L"OEMBoard",   &gSettings.OEMBoard,   (UINT32) AsciiStrSize (gSettings.OEMBoard));
+
   return Status;
 }

@@ -344,6 +344,7 @@ PatchTableType1 (
   // System Information
   //
   CHAR8   Buffer[100];
+  CHAR8*  s;
 
   ZeroMem (Buffer, sizeof (Buffer));
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_SYSTEM_INFORMATION, 0);
@@ -354,6 +355,8 @@ PatchTableType1 (
   }
 
   gUuid = SmbiosTable.Type1->Uuid;
+	s = GetSmbiosString(SmbiosTable, SmbiosTable.Type1->ProductName);
+	CopyMem (gSettings.OEMProduct, s, AsciiStrSize (s));
 
   AsciiSPrint (Buffer, 100, "%02x%02x%02x%02x%02x%02x",
     SmbiosTable.Type1->Uuid.Data4[2],
@@ -439,6 +442,7 @@ PatchTableType2and3 (
   VOID
 )
 {
+  CHAR8* s;
   // System Chassis Information
   //
   SmbiosTable = GetSmbiosTableFromType (EntryPoint, EFI_SMBIOS_TYPE_SYSTEM_ENCLOSURE, 0);
@@ -497,6 +501,11 @@ PatchTableType2and3 (
     return;
   }
 
+  s = GetSmbiosString (SmbiosTable, SmbiosTable.Type2->ProductName);
+  CopyMem (gSettings.OEMBoard, s, AsciiStrSize (s));
+  s = GetSmbiosString(SmbiosTable, SmbiosTable.Type2->Manufacturer);
+	CopyMem (gSettings.OEMVendor, s, AsciiStrSize (s));
+  
   Size = SmbiosTable.Type2->Hdr.Length; //old size
   TableSize = SmbiosTableLength (SmbiosTable); //including strings
   NewSize = 0x0F; //sizeof(SMBIOS_TABLE_TYPE2);
