@@ -726,6 +726,9 @@ done:
 typedef struct {
   fsw_u32 id;
   fsw_u32 type;
+  fsw_u32 creator;
+  fsw_u32 crtype;
+  fsw_u32 ilink;
   struct fsw_string *name;
   fsw_u64 size;
   fsw_u64 used;
@@ -733,6 +736,69 @@ typedef struct {
   fsw_u32 mtime;
   HFSPlusExtentRecord extents;
 } file_info_t;
+
+static void
+fill_fileinfo (
+  struct fsw_hfs_volume* vol,
+  HFSPlusCatalogKey* key,
+  file_info_t* finfo
+)
+{
+  fsw_u8* base;
+  fsw_u16 rec_type;
+
+  /* for plain HFS "-(keySize & 1)" would be needed */
+  base = (fsw_u8 *) key + be16_to_cpu (key->keyLength) + 2;
+  rec_type = be16_to_cpu (*(fsw_u16 *) base);
+
+    /** @todo: read additional info */
+  switch (rec_type) {
+  case kHFSPlusFolderRecord:
+    {
+      HFSPlusCatalogFolder *info = (HFSPlusCatalogFolder *) base;
+
+      finfo->id = be32_to_cpu (info->folderID);
+      finfo->type = FSW_DNODE_TYPE_DIR;
+      /* @todo: return number of elements, maybe use smth else */
+      finfo->size = be32_to_cpu (info->valence);
+      finfo->used = be32_to_cpu (info->valence);
+      finfo->ctime = be32_to_cpu (info->createDate);
+      finfo->mtime = be32_to_cpu (info->contentModDate);
+      break;
+    }
+  case kHFSPlusFileRecord:
+    {
+      HFSPlusCatalogFile *info = (HFSPlusCatalogFile *) base;
+
+      finfo->id = be32_to_cpu (info->fileID);
+
+      finfo->creator = be32_to_cpu (info->userInfo.fdCreator);
+      finfo->crtype = be32_to_cpu (info->userInfo.fdType);
+
+      /* Is the file any kind of link? */
+      if ((finfo->creator == kSymLinkCreator && finfo->crtype == kSymLinkFileType) ||
+          (finfo->creator == kHFSPlusCreator && finfo->crtype == kHardLinkFileType)) {
+        finfo->type = FSW_DNODE_TYPE_SYMLINK;
+        finfo->ilink = be32_to_cpu (info->bsdInfo.special.iNodeNum);
+      } else {
+        finfo->type = FSW_DNODE_TYPE_FILE;
+      }
+
+      finfo->size = be64_to_cpu (info->dataFork.logicalSize);
+      finfo->used =
+        LShiftU64 (be32_to_cpu (info->dataFork.totalBlocks),
+                   vol->block_size_shift);
+      finfo->ctime = be32_to_cpu (info->createDate);
+      finfo->mtime = be32_to_cpu (info->contentModDate);
+      fsw_memcpy (&finfo->extents, &info->dataFork.extents,
+                  sizeof finfo->extents);
+      break;
+    }
+  default:
+    finfo->type = FSW_DNODE_TYPE_UNKNOWN;
+    break;
+  }
+}
 
 typedef struct {
   fsw_u32 cur_pos;              /* current position */
@@ -765,7 +831,9 @@ fsw_hfs_btree_visit_node (
   if (vp->shandle->pos != vp->cur_pos++)
     return 0;
 
+  fill_fileinfo (vp->vol, cat_key, &vp->file_info);
   switch (rec_type) {
+#if 0
   case kHFSPlusFolderRecord:
     {
       HFSPlusCatalogFolder *folder_info = (HFSPlusCatalogFolder *) base;
@@ -794,6 +862,7 @@ fsw_hfs_btree_visit_node (
                   sizeof vp->file_info.extents);
       break;
     }
+#endif
   case kHFSPlusFolderThreadRecord:
   case kHFSPlusFileThreadRecord:
     {
@@ -801,7 +870,9 @@ fsw_hfs_btree_visit_node (
       return 0;
     }
   default:
+#if 0
     vp->file_info.type = FSW_DNODE_TYPE_UNKNOWN;
+#endif
     break;
   }
 
@@ -1105,6 +1176,13 @@ create_hfs_dnode (
     fsw_memcpy (baby->extents, &file_info->extents, sizeof file_info->extents);
   }
 
+  /* Fill-in link file info */
+  if (file_info->type == FSW_DNODE_TYPE_SYMLINK) {
+    baby->creator = file_info->creator;
+    baby->crtype = file_info->crtype;
+    baby->ilink = file_info->ilink;
+  }
+
   *child_dno_out = baby;
 
   return FSW_SUCCESS;
@@ -1168,6 +1246,9 @@ fsw_hfs_dir_lookup (
 
   file_key =
     (HFSPlusCatalogKey *) fsw_hfs_btree_rec (&vol->catalog_tree, node, ptr);
+#if 1
+  fill_fileinfo (vol, file_key, &file_info);
+#else
   /* for plain HFS "-(keySize & 1)" would be needed */
   base = (fsw_u8 *) file_key + be16_to_cpu (file_key->keyLength) + 2;
   rec_type = be16_to_cpu (*(fsw_u16 *) base);
@@ -1208,6 +1289,7 @@ fsw_hfs_dir_lookup (
 
     break;
   }
+#endif
 
   status = create_hfs_dnode (dno, &file_info, child_dno_out);
   if (status)
@@ -1288,7 +1370,7 @@ done:
 /**
  * Get the target path of a symbolic link. This function is called when a symbolic
  * link needs to be resolved. The core makes sure that the fsw_hfs_dnode_fill has been
- * called on the dnode and that it really is a symlink.
+ * called on the dnode and that it really is a link.
  *
  */
 static fsw_status_t
@@ -1298,7 +1380,27 @@ fsw_hfs_readlink (
   struct fsw_string *link_target
 )
 {
+#if 0
+        if ((SWAP_BE32(hfsPlusFile->userInfo.fdType) == kHardLinkFileType) &&
+            (SWAP_BE32(hfsPlusFile->userInfo.fdCreator) == kHFSPlusCreator)) {
+                sprintf(gLinkTemp, "%s/%s%ld", HFSPLUSMETADATAFOLDER,
+                        HFS_INODE_PREFIX, SWAP_BE32(hfsPlusFile->bsdInfo.special.iNodeNum));
+                result = ResolvePathToCatalogEntry(gLinkTemp, flags, entry,
+                                                   kHFSRootFolderID, &tmpDirIndex);
+#endif
+  if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
+    return FSW_UNSUPPORTED;
+  } else if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
+    char tmpbuf[80];
+    fsw_u32 sz;
+
+    sz = fsw_snprintf(tmpbuf, sizeof(tmpbuf), "%s/%s%d", HFSPLUSMETADATAFOLDER, HFS_INODE_PREFIX, dno->ilink);
+    link_target->type = FSW_STRING_TYPE_ISO88591;
+    link_target->size = sz + 1;
+    link_target->len = sz;
+    fsw_memdup (&link_target->data, tmpbuf, sz + 1);
+    return FSW_SUCCESS;
+  }
+  /* Unknown link type */
   return FSW_UNSUPPORTED;
 }
-
-// EOF

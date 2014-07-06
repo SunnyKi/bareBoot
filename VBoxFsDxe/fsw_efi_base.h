@@ -89,6 +89,10 @@ typedef UINT64  fsw_u64;
 #define FSW_MSGSTR(s) DEBUG_INFO, s
 #define FSW_MSGFUNC DebugPrint
 
+// text creation
+
+#define fsw_snprintf AsciiSPrint
+
 // 64-bit hooks
 
 #define FSW_U64_SHR(val,shiftbits) RShiftU64((val), (shiftbits))
