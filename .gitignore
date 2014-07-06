@@ -2,3 +2,5 @@
 Version.h
 
 *.out
+*.sdf
+*.suo
