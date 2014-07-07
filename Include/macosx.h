@@ -204,6 +204,7 @@ typedef struct {
   UINT32  ScreenMode;
   BOOLEAN CheckFakeSMC;
   BOOLEAN SaveVideoRom;
+  BOOLEAN NvRam;
   //ACPI
   UINT64  ResetAddr;
   UINT8   ResetVal;

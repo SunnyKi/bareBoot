@@ -249,8 +249,10 @@ MacOS:
   SetupDataForOSX ();
   DBG ("%a: launching EventsInitialize.\n",__FUNCTION__);
   EventsInitialize ();
-  DBG ("%a: launching PutNvramPlistToRtVars.\n",__FUNCTION__);
-  PutNvramPlistToRtVars ();
+  if (gSettings.NvRam) {
+    DBG ("%a: launching PutNvramPlistToRtVars.\n",__FUNCTION__);
+    PutNvramPlistToRtVars ();
+  }
 #if 0
   DBG ("gST->Hdr.Signature = 0x%x\n", gST->Hdr.Signature);
   DBG ("gST->Hdr.Revision = 0x%x\n", gST->Hdr.Revision);
