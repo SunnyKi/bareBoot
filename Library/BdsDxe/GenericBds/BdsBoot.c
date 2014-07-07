@@ -45,8 +45,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define ALT_WINDOWS_LOADER_PATH         L"\\EFI\\MS\\Boot\\bootmgfw.efi"
 #endif
 
-#define MAX_LOADER_PATHS  14
-
 CHAR16* mLoaderPath[] = {
   CLOVER_MEDIA_FILE_NAME,
   EFI_REMOVABLE_MEDIA_FILE_NAME,
@@ -63,6 +61,8 @@ CHAR16* mLoaderPath[] = {
   L"\\EFI\\TOOLS\\shell64.efi",
   L"\\EFI\\MS\\Boot\\bootmgfw.efi"
 };
+
+#define MAX_LOADER_PATHS  (sizeof (mLoaderPath) / sizeof (CHAR16*))
 
 VOID
 DumpEfiMemoryMap (
