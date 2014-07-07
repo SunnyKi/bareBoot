@@ -130,7 +130,7 @@ LoadKext (
     }
     Status =
       egLoadFile (gRootFHandle, TempName, &executableFatBuffer,
-                  &executableBufferLength);
+                  &executableFatBufferLength);
     if (EFI_ERROR (Status)) {
       DBG ("%a: Failed to load extra kext: %s\n", __FUNCTION__, FileName);
       FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
