@@ -540,7 +540,7 @@ ShowPngFile (
 
 Down:
   if (ImageData != NULL) {
-    FreePool (ImageData);
+    FreeAlignedPages (ImageData, EFI_SIZE_TO_PAGES (ImageSize));
   }
   if (Blt != NULL) {
     FreePool (Blt);

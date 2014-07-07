@@ -85,6 +85,7 @@ LoadKext (
 {
   EFI_STATUS Status;
   UINT8 *executableFatBuffer = NULL;
+  UINTN executableFatBufferLength = 0;
   UINT8 *executableBuffer = NULL;
   UINTN executableBufferLength = 0;
   CHAR8 *bundlePathBuffer = NULL;
@@ -106,7 +107,7 @@ LoadKext (
     plist = LoadPListFile (gRootFHandle, TempName);
 
     if (plist == NULL) {
-      DBG ("Kext Inject: Error loading kext %s plist!\r\n", FileName);
+      DBG ("%a: Error loading kext %s plist!\n", __FUNCTION__, FileName);
       return EFI_NOT_FOUND;
     }
     NoContents = TRUE;
@@ -115,7 +116,7 @@ LoadKext (
   Status =
     egLoadFile (gRootFHandle, TempName, &infoDictBuffer, &infoDictBufferLength);
   if (EFI_ERROR (Status)) {
-    DBG ("Kext Inject: Error loading kext %s plist!\r\n", FileName);
+    DBG ("%a: Error loading kext %s plist!\n", __FUNCTION__, FileName);
     return EFI_NOT_FOUND;
   }
 
@@ -131,14 +132,16 @@ LoadKext (
       egLoadFile (gRootFHandle, TempName, &executableFatBuffer,
                   &executableBufferLength);
     if (EFI_ERROR (Status)) {
-      DBG ("Kext Inject: Failed to load extra kext: %s\n", FileName);
+      DBG ("%a: Failed to load extra kext: %s\n", __FUNCTION__, FileName);
+      FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
       return EFI_NOT_FOUND;
     }
     executableBuffer = executableFatBuffer;
+    executableBufferLength = executableFatBufferLength;
     if (ThinFatFile (&executableBuffer, &executableBufferLength, archCpuType)) {
-      FreePool (infoDictBuffer);
-      FreePool (executableBuffer);
-      DBG ("Kext Inject: Thinning failed %s\n", FileName);
+      FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
+      FreeAlignedPages (executableFatBuffer, EFI_SIZE_TO_PAGES (executableFatBufferLength));
+      DBG ("%a: Thinning failed %s\n", __FUNCTION__, FileName);
       return EFI_NOT_FOUND;
     }
   }
@@ -171,8 +174,8 @@ LoadKext (
            infoDictBufferLength + executableBufferLength, bundlePathBuffer,
            bundlePathBufferLength);
 
-  FreePool (infoDictBuffer);
-  FreePool (executableFatBuffer);
+  FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
+  FreeAlignedPages (executableFatBuffer, EFI_SIZE_TO_PAGES (executableFatBufferLength));
   FreePool (bundlePathBuffer);
 
   return EFI_SUCCESS;
@@ -192,11 +195,11 @@ AddKext (
   KextEntry->Signature = KEXT_SIGNATURE;
   Status = LoadKext (FileName, archCpuType, &KextEntry->kext);
   if (EFI_ERROR (Status)) {
-    DBG ("Kext Inject: load kext %s failed\n", FileName);
+    DBG ("%a: load kext %s failed\n", __FUNCTION__, FileName);
     FreePool (KextEntry);
   }
   else {
-    DBG ("Kext Inject: load kext %s successful\n", FileName);
+    DBG ("%a: load kext %s successful\n", __FUNCTION__, FileName);
     InsertTailList (&gKextList, &KextEntry->Link);
   }
 
@@ -218,7 +221,7 @@ GetListCount (
   else {
     DBG ("%a: Kext Inject - list is empty.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
-    Print (L"Kext Inject: Get List Count - list is empty.\n");
+    Print (L"%a: Get List Count - list is empty.\n", __FUNCTION__);
 #endif
   }
   return Count;
@@ -308,7 +311,7 @@ GetExtraKextsDir (
     StrCat (KextsDir, OSTypeStr);
   }
 
-  DBG ("Kext Inject: expected extra kexts dir is %s\n", KextsDir);
+  DBG ("%a: expected extra kexts dir is %s\n", __FUNCTION__, KextsDir);
 
   if (!FileExists (gRootFHandle, KextsDir)) {
     FreePool (KextsDir);
@@ -376,25 +379,25 @@ LoadKexts (
     FreePool (KextsDir);
     CommonKextsDir = FALSE;
 
-    DBG ("Kext Inject: No common extra kexts.\n");
+    DBG ("%a: No common extra kexts.\n", __FUNCTION__);
 
     KextsDir = GetExtraKextsDir ();
     if (KextsDir == NULL) {
-      DBG ("Kext Inject: No extra kexts.\n");
+      DBG ("%a: No extra kexts.\n", __FUNCTION__);
       return FALSE;
     }
   }
 
   while (KextsDir != NULL) {
     // look through contents of the directory
-    DBG ("Kext Inject: extra kexts dir is %s\n", KextsDir);
+    DBG ("%a: extra kexts dir is %s\n", __FUNCTION__, KextsDir);
 
     DirIterOpen (gRootFHandle, KextsDir, &KextIter);
     while (DirIterNext (&KextIter, 1, L"*.kext", &KextFile)) {
       if (KextFile->FileName[0] == '.' ||
           StrStr (KextFile->FileName, L".kext") == NULL)
         continue; // skip this
-      DBG ("Kext Inject: KextFile->FileName = %s\n", KextFile->FileName);
+      DBG ("%a: KextFile->FileName = %s\n", __FUNCTION__, KextFile->FileName);
 
       UnicodeSPrint (FileName, sizeof (FileName), L"%s\\%s", KextsDir, KextFile->FileName);
       AddKext (FileName, archCpuType);
@@ -405,7 +408,7 @@ LoadKexts (
         if (PlugInFile->FileName[0] == '.' ||
             StrStr (PlugInFile->FileName, L".kext") == NULL)
           continue; // skip this
-        DBG ("Kext Inject:  PlugInFile->FileName = %s\n", PlugInFile->FileName);
+        DBG ("%a:  PlugInFile->FileName = %s\n", __FUNCTION__, PlugInFile->FileName);
 
         UnicodeSPrint (FileName, sizeof (FileName), L"%s\\%s", PlugIns, PlugInFile->FileName);
         AddKext (FileName, archCpuType);
@@ -426,7 +429,7 @@ LoadKexts (
   }
 
   KextCount = GetKextCount ();
-  DBG ("Kext Inject:  KextCount = %d\n", KextCount);
+  DBG ("%a:  KextCount = %d\n", __FUNCTION__, KextCount);
   if (KextCount > 0) {
     mm_extra_size =
       KextCount * (sizeof (DeviceTreeNodeProperty) +
@@ -486,7 +489,7 @@ InjectKexts (
   if (GetKextCount () == 0) {
     DBG ("%a: Kext Inject - extra kexts not found.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
-    Print (L"Kext Inject: extra kexts not found.\n");
+    Print (L"%a: extra kexts not found.\n", __FUNCTION__);
 #endif
     return EFI_NOT_FOUND;
   }
@@ -534,7 +537,7 @@ InjectKexts (
       drvPtr > extraPtr || infoPtr > extraPtr) {
     DBG ("%a: Kext Inject - invalid device tree for kext injection.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
-    Print (L"Kext Inject: Invalid device tree for kext injection\n");
+    Print (L"%a: Invalid device tree for kext injection\n", __FUNCTION__);
 #endif
     return EFI_INVALID_PARAMETER;
   }
@@ -587,7 +590,7 @@ InjectKexts (
   else {
     DBG ("%a: Kext Inject - kext list is empty.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
-    Print (L"Kext Inject: kext list is empty.\n");
+    Print (L"%a: kext list is empty.\n", __FUNCTION__);
 #endif
     return EFI_INVALID_PARAMETER;
   }
@@ -667,7 +670,7 @@ KernelBooterExtensionsPatch (
     // and we'll skipp it
     DBG ("%a: Kext Inject - more then one pattern found and it's no good.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
-    Print (L"Kext Inject: more then one pattern found and it's no good.\n");
+    Print (L"%a: more then one pattern found and it's no good.\n", __FUNCTION__);
 #endif
     return;
   }
@@ -696,7 +699,7 @@ KernelBooterExtensionsPatch (
   }
   DBG ("%a: Kext Inject - SearchAndReplace %d times.\n",__FUNCTION__, Num);
 #ifdef KEXT_INJECT_DEBUG
-  Print (L"Kext Inject: Patch Kernel - SearchAndReplace %d times.\n", Num);
+  Print (L"%a: Patch Kernel - SearchAndReplace %d times.\n", __FUNCTION__, Num);
 #endif
 }
 #endif

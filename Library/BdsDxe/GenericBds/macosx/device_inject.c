@@ -1029,15 +1029,25 @@ setup_nvidia_devprop (
                      L"\\EFI\\bareboot\\rom\\%04x_%04x.rom",
                      nvda_dev->vendor_id, nvda_dev->device_id);
     }
+    Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
 
-    if (FileExists (gRootFHandle, FileName)) {
-      Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
+    if (EFI_ERROR (Status)) {
+      goto nofile;
+    }
 
-      if ((!EFI_ERROR (Status)) && (bufferLen > 0)) {
-        rom = buffer;
-      }
+    if (bufferLen == 0) {
+      FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
+      goto nofile;
+    }
+
+    rom = AllocateCopyPool (bufferLen, buffer);
+
+    if (rom == NULL) {
+      FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
     }
   }
+
+nofile:
 
   if (rom == NULL) {
     rom = AllocateZeroPool (NVIDIA_ROM_SIZE + 1);
@@ -1623,6 +1633,9 @@ load_vbios_file (
   UINT8 *buffer;
 
   buffer = NULL;
+  card->rom_size = 0;
+  card->rom = NULL;
+
   if (gPNDirExists) {
     UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
                    gProductNameDir, vendor_id, device_id);
@@ -1633,37 +1646,36 @@ load_vbios_file (
                    device_id);
   }
 
-  if (!FileExists (gRootFHandle, FileName)) {
-    return FALSE;
-  }
-
   Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
 
-  if (EFI_ERROR (Status) || (bufferLen == 0)) {
-    card->rom_size = 0;
-    card->rom = 0;
+  if (EFI_ERROR (Status)) {
     return FALSE;
   }
 
-  card->rom_size = (UINT32) bufferLen;
-  card->rom = AllocateZeroPool (bufferLen);
+  if (bufferLen == 0) {
+    FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
+    return FALSE;
+  }
+
+  card->rom = AllocateCopyPool (bufferLen, buffer);
 
   if (!card->rom) {
+    FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
     return FALSE;
   }
+  card->rom_size = (UINT32) bufferLen;
 
-  CopyMem (card->rom, buffer, bufferLen);
+  FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
 
   if (!validate_rom ((option_rom_header_t *) card->rom, card->pci_dev)) {
+    FreePool (card->rom);
     card->rom_size = 0;
-    card->rom = 0;
+    card->rom = NULL;
     return FALSE;
   }
 
-  bufferLen = ((option_rom_header_t *) card->rom)->rom_size;
   card->rom_size = ((option_rom_header_t *) card->rom)->rom_size * 512;
 
-  FreePool (buffer);
   return TRUE;
 }
 

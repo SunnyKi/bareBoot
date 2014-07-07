@@ -339,15 +339,15 @@ PatchACPI (
     if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi20TableGuid)) {
       RsdPointer = (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
 #if 0
-      Print (L"ACPI 2.0\n");
-      Print (L"RSDT = 0x%x\n", (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress);
-      Print (L"XSDT = 0x%x\n", (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress);
+      DBG ("ACPI 2.0\n");
+      DBG ("RSDT = 0x%x\n", (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress);
+      DBG ("XSDT = 0x%x\n", (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress);
 #endif
       break;
     } else if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi10TableGuid)) {
       RsdPointer = (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
 #if 0
-      Print (L"ACPI 1.0\n");
+      DBG ("ACPI 1.0\n");
 #endif
       continue;
     }
@@ -360,12 +360,12 @@ PatchACPI (
   Rsdt = (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress;
 
 #if 0
-  Print (L"FADT = 0x%x\n", FadtPointer);
+  DBG ("FADT = 0x%x\n", FadtPointer);
   Xsdt = (XSDT_TABLE*) (UINTN) RsdPointer->XsdtAddress;
-  Print (L"XSDT = 0x%x\n", Xsdt);
+  DBG ("XSDT = 0x%x\n", Xsdt);
   eCntR = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
   eCntX = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-  Print (L"eCntR=0x%x  eCntX=0x%x\n", eCntR, eCntX);
+  DBG ("eCntR=0x%x  eCntX=0x%x\n", eCntR, eCntX);
 #endif
 
   BufferPtr = EFI_SYSTEM_TABLE_MAX_ADDRESS;
@@ -387,7 +387,7 @@ PatchACPI (
 
     for (Index = 0; Index < eCntR; Index ++) {
 #if 0
-      Print (L"RSDT entry = 0x%x\n", *pEntryR);
+      DBG ("RSDT entry = 0x%x\n", *pEntryR);
 #endif
 
       if (*pEntryR != 0) {
@@ -397,7 +397,7 @@ PatchACPI (
         pEntryX++;
       } else {
 #if 0
-        Print (L"entry addr = 0x%x, skip it", *pEntryR);
+        DBG ("entry addr = 0x%x, skip it", *pEntryR);
 #endif
         Xsdt->Header.Length -= sizeof (UINT64);
         pEntryR++;
@@ -412,7 +412,7 @@ PatchACPI (
     RsdPointer->ExtendedChecksum = (UINT8) (256 - CalculateSum8 ((UINT8*) RsdPointer, RsdPointer->Length));
 #endif
   } else {
-    Print (L"no allocate page for new xsdt\n");
+    DBG ("no allocate page for new xsdt\n");
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -420,7 +420,7 @@ PatchACPI (
     *(ScanXSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE));
 
   if (FadtPointer == NULL) {
-    Print (L"no FADT entry in RSDT\n");
+    DBG ("no FADT entry in RSDT\n");
     return EFI_NOT_FOUND;
   }
 #if 0
@@ -434,11 +434,11 @@ PatchACPI (
       Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
       if (!EFI_ERROR (Status)) {
         NewApicTable = (EFI_ACPI_DESCRIPTION_HEADER *) (UINTN) BufferPtr;
-        Print (L"ApicTable = 0x%x, ApicTable->Length = 0x%x\r\n", ApicTable, ApicTable->Length );
+        DBG ("ApicTable = 0x%x, ApicTable->Length = 0x%x\n", ApicTable, ApicTable->Length );
         CopyMem ((UINT8*) NewApicTable, (UINT8*) ApicTable, ApicTable->Length);
         NewApicTable->Length = (ApicTable->Length + 6);
-        Print (L"NewApicTable = 0x%x, NewApicTable->Length = 0x%x\r\n", NewApicTable, NewApicTable->Length);
-        Print (L"NewApicTable->Signature = 0x%x\r\n", NewApicTable->Signature);
+        DBG ("NewApicTable = 0x%x, NewApicTable->Length = 0x%x\n", NewApicTable, NewApicTable->Length);
+        DBG ("NewApicTable->Signature = 0x%x\n", NewApicTable->Signature);
         AddrApic = (UINTN) NewApicTable;
         LocalApicNMI = (EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE *) (UINTN) (AddrApic + ApicTable->Length);
         LocalApicNMI->Type = 4;
@@ -449,9 +449,9 @@ PatchACPI (
         NewApicTable->Checksum = 0;
         NewApicTable->Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) NewApicTable, NewApicTable->Length));
         *xf = (UINTN) NewApicTable;
-        Print (L"xf = 0x%x,\r\n", *xf);
+        DBG ("xf = 0x%x,\n", *xf);
       } else {
-        Print (L"error AllocatePages \r\n");
+        DBG ("error AllocatePages \n");
       }
       
       xf = ScanXSDT (APIC_SIGN);
@@ -468,44 +468,44 @@ PatchACPI (
                        sizeof (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE));
         AddrApic = (UINTN) ProcLocalApic;
         Type = ProcLocalApic->Type;
-        DBG (" TableLength = 0x%x, ApicTable = 0x%x, ApicHeader = 0x%x\r\n", TableLength, ApicTable, ApicHeader);
-        DBG ("AddrApic = 0x%x\r\n", AddrApic);
-        DBG ("Next Type = %d\r\n", Type);
+        DBG (" TableLength = 0x%x, ApicTable = 0x%x, ApicHeader = 0x%x\n", TableLength, ApicTable, ApicHeader);
+        DBG ("AddrApic = 0x%x\n", AddrApic);
+        DBG ("Next Type = %d\n", Type);
         while (ApicLength <= TableLength) {
           switch (Type) {
             case EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC:
               ProcLocalApic = (EFI_ACPI_2_0_PROCESSOR_LOCAL_APIC_STRUCTURE *) (UINTN) (AddrApic);
-              DBG (" ProcId = %d, ApicId = %d, Flags = %d\r\n", ProcLocalApic->AcpiProcessorId, ProcLocalApic->ApicId, ProcLocalApic->Flags);
+              DBG (" ProcId = %d, ApicId = %d, Flags = %d\n", ProcLocalApic->AcpiProcessorId, ProcLocalApic->ApicId, ProcLocalApic->Flags);
               ProcCount++;
 
               ProcLocalApic++;
               AddrApic = (UINTN) ProcLocalApic;
               Type = ProcLocalApic->Type;
               ApicLength += ProcLocalApic->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_IO_APIC:
               IoAPIC = (EFI_ACPI_2_0_IO_APIC_STRUCTURE *) (UINTN) (AddrApic);
-              DBG ("IoApicId = %d, Address = 0x%x, Interrupt = %d, Length = 0x%x\r\n",  IoAPIC->IoApicId, IoAPIC->IoApicAddress, IoAPIC->GlobalSystemInterruptBase, IoAPIC->Length);
+              DBG ("IoApicId = %d, Address = 0x%x, Interrupt = %d, Length = 0x%x\n",  IoAPIC->IoApicId, IoAPIC->IoApicAddress, IoAPIC->GlobalSystemInterruptBase, IoAPIC->Length);
               IoAPIC++;
               AddrApic = (UINTN) IoAPIC;
               Type = IoAPIC->Type;
               ApicLength += IoAPIC->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_INTERRUPT_SOURCE_OVERRIDE:
               ISOverride = (EFI_ACPI_2_0_INTERRUPT_SOURCE_OVERRIDE_STRUCTURE *) (UINTN) (AddrApic);
-              DBG (" Source = 0x%x, Interrupt = %d, Flags = 0x%x, Length = %d\r\n", ISOverride->Source, ISOverride->GlobalSystemInterrupt, ISOverride->Flags, ISOverride->Length);
+              DBG (" Source = 0x%x, Interrupt = %d, Flags = 0x%x, Length = %d\n", ISOverride->Source, ISOverride->GlobalSystemInterrupt, ISOverride->Flags, ISOverride->Length);
               ISOverride++;
               AddrApic = (UINTN) ISOverride;
               Type = ISOverride->Type;
               ApicLength += ISOverride->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_NON_MASKABLE_INTERRUPT_SOURCE:
@@ -515,19 +515,19 @@ PatchACPI (
               AddrApic = (UINTN) NMISource;
               Type = NMISource->Type;
               ApicLength += NMISource->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_LOCAL_APIC_NMI:
               LocalApicNMI = (EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE *) (UINTN) (AddrApic);
-              DBG (" AcpiProcessorId = 0x%x, Flags = 0x%x, Length = %d\r\n", LocalApicNMI->AcpiProcessorId, LocalApicNMI->Flags, LocalApicNMI->Length);
+              DBG (" AcpiProcessorId = 0x%x, Flags = 0x%x, Length = %d\n", LocalApicNMI->AcpiProcessorId, LocalApicNMI->Flags, LocalApicNMI->Length);
               LocalApicNMI++;
               AddrApic = (UINTN) LocalApicNMI;
               Type = LocalApicNMI->Type;
               ApicLength += sizeof (EFI_ACPI_2_0_LOCAL_APIC_NMI_STRUCTURE);
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_LOCAL_APIC_ADDRESS_OVERRIDE:
@@ -537,8 +537,8 @@ PatchACPI (
               AddrApic = (UINTN) LocalApicAdrrOverride;
               Type = LocalApicAdrrOverride->Type;
               ApicLength += LocalApicAdrrOverride->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_IO_SAPIC:
@@ -548,8 +548,8 @@ PatchACPI (
               AddrApic = (UINTN) &IoSapic;
               Type = IoSapic->Type;
               ApicLength += IoSapic->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_PROCESSOR_LOCAL_SAPIC:
@@ -559,8 +559,8 @@ PatchACPI (
               AddrApic = (UINTN) &ProcessorLocalSapic;
               Type = ProcessorLocalSapic->Type;
               ApicLength += ProcessorLocalSapic->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
 
             case EFI_ACPI_2_0_PLATFORM_INTERRUPT_SOURCES:
@@ -570,12 +570,12 @@ PatchACPI (
               AddrApic = (UINTN) &PlatformIntSource;
               Type = PlatformIntSource->Type;
               ApicLength += PlatformIntSource->Length;
-              DBG ("AddrApic = 0x%x\r\n", AddrApic);
-              DBG ("Next Type = %d\r\n", Type);
+              DBG ("AddrApic = 0x%x\n", AddrApic);
+              DBG ("Next Type = %d\n", Type);
               break;
               
             default:
-              DBG ("subtable type error\r\n");
+              DBG ("subtable type error\n");
               break;
           }
         }
@@ -583,9 +583,9 @@ PatchACPI (
 
       *(UINT32 *)(UINTN) (0xfee00000 + 0x360) = 0x400;
       
-      DBG (" Checksum = 0x%x\r\n", ApicTable->Checksum);
+      DBG (" Checksum = 0x%x\n", ApicTable->Checksum);
     } else {
-      DBG ("No APIC table Found or parse error !!!\r\n");
+      DBG ("No APIC table Found or parse error !!!\n");
     }  
   }
 #endif
@@ -701,40 +701,39 @@ PatchACPI (
         UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, PathDsdt);
       }
 
-      if (FileExists (FHandle, PathToACPITables)) {
-        Status = egLoadFile (FHandle, PathToACPITables , &buffer, &bufferLen);
+      Status = egLoadFile (FHandle, PathToACPITables, &buffer, &bufferLen);
+
+      if (!EFI_ERROR (Status)) {
+        Status = gBS->AllocatePages (
+                   AllocateMaxAddress,
+                   EfiACPIReclaimMemory,
+                   EFI_SIZE_TO_PAGES (bufferLen),
+                   &dsdt
+                 );
 
         if (!EFI_ERROR (Status)) {
-          Status = gBS->AllocatePages (
-                     AllocateMaxAddress,
-                     EfiACPIReclaimMemory,
-                     EFI_SIZE_TO_PAGES (bufferLen),
-                     &dsdt
-                   );
-
-          if (!EFI_ERROR (Status)) {
-            CopyMem ((UINT8*) (UINTN) dsdt, buffer, bufferLen);
-            if (gSettings.FixRegions && (BiosDsdt != 0)) {
-              DBG ("PatchACPI: fix regions start\n");
-              GetBiosRegions ((UINT8*) (UINTN) BiosDsdt);
-              FixRegions ((UINT8*) (UINTN) dsdt, (UINT32) bufferLen);
-              while (gRegions) {
-                tmpRegion = gRegions->next;
-                FreePool(gRegions);
-                gRegions = tmpRegion;
-              }
-              DBG ("PatchACPI: fix regions finish\n");
-              ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum = 0;
-              ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum =
-                (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) dsdt, bufferLen));
-
+          CopyMem ((UINT8*) (UINTN) dsdt, buffer, bufferLen);
+          if (gSettings.FixRegions && (BiosDsdt != 0)) {
+            DBG ("PatchACPI: fix regions start\n");
+            GetBiosRegions ((UINT8*) (UINTN) BiosDsdt);
+            FixRegions ((UINT8*) (UINTN) dsdt, (UINT32) bufferLen);
+            while (gRegions) {
+              tmpRegion = gRegions->next;
+              FreePool(gRegions);
+              gRegions = tmpRegion;
             }
-            newFadt->XDsdt = dsdt;
-            newFadt->Dsdt  = (UINT32) dsdt;
-            PatchedBios = TRUE;
-            DBG ("PatchACPI: custom dsdt table loaded\n");
+            DBG ("PatchACPI: fix regions finish\n");
+            ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum = 0;
+            ((EFI_ACPI_DESCRIPTION_HEADER*) (UINTN) dsdt)->Checksum =
+              (UINT8) (256 - CalculateSum8 ((UINT8*) (UINTN) dsdt, bufferLen));
+
           }
+          newFadt->XDsdt = dsdt;
+          newFadt->Dsdt  = (UINT32) dsdt;
+          PatchedBios = TRUE;
+          DBG ("PatchACPI: custom dsdt table loaded\n");
         }
+	FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
       }
     } else {
       if (BiosDsdt != 0) {
@@ -777,7 +776,7 @@ PatchACPI (
           newFadt->Dsdt = (UINT32) dsdt;
         }
       } else {
-        Print (L"Bios DSDT not found!\n");
+        DBG ("Bios DSDT not found!\n");
         return EFI_UNSUPPORTED;
       }
     }
@@ -848,15 +847,11 @@ PatchACPI (
     } else {
       UnicodeSPrint (PathToACPITables, PATHTOACPITABLESSIZE, L"%s%s", PathACPI, ACPInames[Index]);
     }
-    if (FileExists (FHandle, PathToACPITables)) {
-      Status = egLoadFile (FHandle, PathToACPITables, &buffer, &bufferLen);
+    Status = egLoadFile (FHandle, PathToACPITables, &buffer, &bufferLen);
 
-      if (!EFI_ERROR (Status)) {
-        Status = InsertTable ((VOID*) buffer, bufferLen);
-      }
-#if 0
-      Print (L"    load table %s with status %d", PathToACPITables, Status);
-#endif
+    if (!EFI_ERROR (Status)) {
+      Status = InsertTable ((VOID*) buffer, bufferLen);
+      FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
     }
   }
 
