@@ -98,11 +98,11 @@ LoadKext (
   UINT8 *infoDictBuffer = NULL;
   UINTN infoDictBufferLength = 0;
 
-  UnicodeSPrint (TempName, 512, L"%s\\%s", FileName, L"Contents\\Info.plist");
+  UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, L"Contents\\Info.plist");
   plist = LoadPListFile (gRootFHandle, TempName);
 
   if (plist == NULL) {
-    UnicodeSPrint (TempName, 512, L"%s\\%s", FileName, L"Info.plist");
+    UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, L"Info.plist");
     plist = LoadPListFile (gRootFHandle, TempName);
 
     if (plist == NULL) {
@@ -121,10 +121,10 @@ LoadKext (
 
   if (GetUnicodeProperty (plist, "CFBundleExecutable", Executable)) {
     if (NoContents) {
-      UnicodeSPrint (TempName, 512, L"%s\\%s", FileName, Executable);
+      UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, Executable);
     }
     else {
-      UnicodeSPrint (TempName, 512, L"%s\\%s\\%s", FileName, L"Contents\\MacOS",
+      UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s\\%s", FileName, L"Contents\\MacOS",
                      Executable);
     }
     Status =
@@ -396,10 +396,10 @@ LoadKexts (
         continue; // skip this
       DBG ("Kext Inject: KextFile->FileName = %s\n", KextFile->FileName);
 
-      UnicodeSPrint (FileName, 512, L"%s\\%s", KextsDir, KextFile->FileName);
+      UnicodeSPrint (FileName, sizeof (FileName), L"%s\\%s", KextsDir, KextFile->FileName);
       AddKext (FileName, archCpuType);
 
-      UnicodeSPrint (PlugIns, 512, L"%s\\%s", FileName, L"Contents\\PlugIns");
+      UnicodeSPrint (PlugIns, sizeof (PlugIns), L"%s\\%s", FileName, L"Contents\\PlugIns");
       DirIterOpen (gRootFHandle, PlugIns, &PlugInIter);
       while (DirIterNext (&PlugInIter, 1, L"*.kext", &PlugInFile)) {
         if (PlugInFile->FileName[0] == '.' ||
@@ -407,7 +407,7 @@ LoadKexts (
           continue; // skip this
         DBG ("Kext Inject:  PlugInFile->FileName = %s\n", PlugInFile->FileName);
 
-        UnicodeSPrint (FileName, 512, L"%s\\%s", PlugIns, PlugInFile->FileName);
+        UnicodeSPrint (FileName, sizeof (FileName), L"%s\\%s", PlugIns, PlugInFile->FileName);
         AddKext (FileName, archCpuType);
       }
       DirIterClose (&PlugInIter);
@@ -577,7 +577,7 @@ InjectKexts (
                                sizeof (DeviceTreeNodeProperty));
       mm->paddr = (UINT32) KextBase;
       mm->length = KextEntry->kext.length;
-      AsciiSPrint (prop->name, 31, "Driver-%x", KextBase);
+      AsciiSPrint (prop->name, sizeof (prop->name) - 1, "Driver-%x", KextBase);
 
       drvPtr += sizeof (DeviceTreeNodeProperty) + sizeof (_DeviceTreeBuffer);
       KextBase = RoundPage (KextBase + KextEntry->kext.length);
