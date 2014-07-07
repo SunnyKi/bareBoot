@@ -264,30 +264,29 @@ GetExtraKextsDir (
 
   OSTypeStr = NULL;
   KextsDir = NULL;
-
-  // get os version as string
-  if (AsciiStrnCmp (OSVersion, "10.4", 4) == 0) {
-    OSTypeStr = L"10.4";
-  }
-  else if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
-    OSTypeStr = L"10.5";
-  }
-  else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
-    OSTypeStr = L"10.6";
-  }
-  else if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
-    OSTypeStr = L"10.7";
-  }
-  else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0) {
-    OSTypeStr = L"10.8";
-  }
-  else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
-    OSTypeStr = L"10.9";
-  }
-  else if ((AsciiStrLen (OSVersion) >= 5) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
-    OSTypeStr = L"10.10";
-  }
-  else {
+  if (OSVersion != NULL) {
+    if (AsciiStrnCmp (OSVersion, "10.4", 4) == 0) {
+      OSTypeStr = L"10.4";
+    }
+    else if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
+      OSTypeStr = L"10.5";
+    }
+    else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
+      OSTypeStr = L"10.6";
+    }
+    else if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
+      OSTypeStr = L"10.7";
+    }
+    else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0) {
+      OSTypeStr = L"10.8";
+    }
+    else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
+      OSTypeStr = L"10.9";
+    }
+    else if ((AsciiStrLen (OSVersion) >= 5) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
+      OSTypeStr = L"10.10";
+    }
+  } else {
     OSTypeStr = L"other";
   }
   // find source injection folder with kexts
