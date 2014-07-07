@@ -197,6 +197,9 @@ PutNvramPlistToRtVars (
     len = plNodeGetSize(prop);
     akey = plNodeGetBytes (prop);
     
+    if (akey == NULL) {
+      continue;
+    }
     if (AsciiStrCmp (akey, "OsxAptioFixDrv-RelocBase") == 0) {
       DBG (" skipping %a\n", akey);
       continue;
