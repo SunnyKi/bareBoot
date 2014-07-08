@@ -513,6 +513,11 @@ GetOptionalStringByIndex (
   OUT     CHAR16                  **String
 );
 
+VOID
+plist2dbg (
+  IN VOID *plist
+);
+
 VOID*
 LoadPListFile (
   IN EFI_FILE *RootFileHandle,
