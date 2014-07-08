@@ -1380,25 +1380,23 @@ fsw_hfs_readlink (
   struct fsw_string *link_target
 )
 {
-#if 0
-        if ((SWAP_BE32(hfsPlusFile->userInfo.fdType) == kHardLinkFileType) &&
-            (SWAP_BE32(hfsPlusFile->userInfo.fdCreator) == kHFSPlusCreator)) {
-                sprintf(gLinkTemp, "%s/%s%ld", HFSPLUSMETADATAFOLDER,
-                        HFS_INODE_PREFIX, SWAP_BE32(hfsPlusFile->bsdInfo.special.iNodeNum));
-                result = ResolvePathToCatalogEntry(gLinkTemp, flags, entry,
-                                                   kHFSRootFolderID, &tmpDirIndex);
-#endif
   if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
     return FSW_UNSUPPORTED;
   } else if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
-    char tmpbuf[80];
+    static fsw_u16* metaprefix = L"/\u0000\u0000\u0000\u0000HFS+ Private Data/iNode";
+#define mprfsize (sizeof (metaprefix) - 2)
+    char tmpbuf[32];
     fsw_u32 sz;
 
-    sz = fsw_snprintf(tmpbuf, sizeof(tmpbuf), "%s/%s%d", HFSPLUSMETADATAFOLDER, HFS_INODE_PREFIX, dno->ilink);
-    link_target->type = FSW_STRING_TYPE_ISO88591;
-    link_target->size = sz + 1;
-    link_target->len = sz;
-    fsw_memdup (&link_target->data, tmpbuf, sz + 1);
+    sz = fsw_uprintf(tmpbuf, sizeof(tmpbuf), L"%d", dno->ilink);
+
+    link_target->type = FSW_STRING_TYPE_UTF16;
+    link_target->len = mprfsize + sz;
+    link_target->size = mprfsize + sz + sz + 2;
+    fsw_alloc (link_target->size, &link_target->data);
+    fsw_memcpy (link_target->data, metaprefix, mprfsize);
+    fsw_memcpy (((fsw_u8*)link_target->data) + mprfprefix, tmpbuf, sz + sz + 2);
+#undef mprfsize
     return FSW_SUCCESS;
   }
   /* Unknown link type */

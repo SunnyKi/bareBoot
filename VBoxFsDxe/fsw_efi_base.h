@@ -60,7 +60,6 @@
 
 #define FSW_LITTLE_ENDIAN (1)
 
-
 // types, reuse EFI types
 
 typedef INT8    fsw_s8;
@@ -71,7 +70,6 @@ typedef INT32   fsw_s32;
 typedef UINT32  fsw_u32;
 typedef INT64   fsw_s64;
 typedef UINT64  fsw_u64;
-
 
 // allocation functions
 
@@ -91,13 +89,12 @@ typedef UINT64  fsw_u64;
 
 // text creation
 
-#define fsw_snprintf AsciiSPrint
+#define fsw_uprintf UnicodeSPrint
 
 // 64-bit hooks
 
 #define FSW_U64_SHR(val,shiftbits) RShiftU64((val), (shiftbits))
 #define FSW_U64_SHL(val,shiftbits) LShiftU64((val), (shiftbits))
 #define FSW_U64_DIV(val,divisor) DivU64x32((val), (divisor), NULL)
-
 
 #endif
