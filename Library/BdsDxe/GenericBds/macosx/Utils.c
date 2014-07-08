@@ -1167,6 +1167,43 @@ GetStringProperty (
   return tbuf;
 }
 
+VOID
+plist2dbg (
+VOID* plist
+)
+{
+#define XMLBUFSIZE 4096
+  plbuf_t xbuf;
+  char* lst;
+  char* lbyte;
+
+  xbuf.dat = AllocatePool(XMLBUFSIZE + 1);
+  if (xbuf.dat == NULL) {
+    return;
+  }
+  xbuf.dat[XMLBUFSIZE] = '\0';
+  xbuf.len = XMLBUFSIZE;
+  xbuf.pos = 0;
+
+  plNodeToXml (plist, &xbuf);
+
+  lbyte = &xbuf.dat[xbuf.pos];
+  for (lst = xbuf.dat; lst < lbyte;) {
+    char* eol;
+
+    eol = ScanMem8(lst, lbyte - lst, '\n');
+    if (eol == NULL) {
+      break;
+    } else {
+      *eol = '\0';
+      DBG ("%a\n", lst);
+      lst = eol  + 1;
+    }
+  }
+  FreePool (xbuf.dat);
+#undef XMLBUFSIZE
+}
+
 VOID *
 LoadPListFile (
   IN EFI_FILE * RootFileHandle,
