@@ -120,6 +120,7 @@ Returns:
   return;
 }
 
+#ifdef MEMMAP_DEBUG
 VOID
 DumpGcdMemoryMap (
   VOID
@@ -145,6 +146,7 @@ DumpGcdMemoryMap (
   DBG ("\n");
   FreePool (MemorySpaceMap);
 }
+#endif
 
 VOID
 UpdateMemoryMap (
@@ -173,7 +175,7 @@ UpdateMemoryMap (
   }
   MemoryDescHob.MemDescCount = *(UINTN *)Table;
   MemoryDescHob.MemDesc      = *(EFI_MEMORY_DESCRIPTOR **)((UINTN)Table + sizeof(UINTN));
-#if 1
+#ifdef MEMMAP_DEBUG
   DumpGcdMemoryMap ();
 #endif
   gDS->GetMemorySpaceMap (&NumberOfDescriptors, &MemorySpaceMap);
@@ -210,19 +212,19 @@ UpdateMemoryMap (
   }
   
   FreePool (MemorySpaceMap);
+#ifdef MEMMAP_DEBUG
   DBG ("%a: Gcd Memory Map after update.\n",__FUNCTION__);
-#if 1
   DumpGcdMemoryMap ();
 #endif
   //
   // Add ACPINVS, ACPIReclaim, and Reserved memory to MemoryMap
   //
   FirstNonConventionalAddr = 0xFFFFFFFF;
-#if 1
+#ifdef MEMMAP_DEBUG
   DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
 #endif
   for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
-#if 1
+#ifdef MEMMAP_DEBUG
     DBG ("%02d %a %016lx  %016lx  %016lx  %016lx  %016x\n",
          Index,
          EfiMemoryTypeDesc[MemoryDescHob.MemDesc[Index].Type],
@@ -326,16 +328,13 @@ UpdateMemoryMap (
       }
     }
   }
-#if 0
-  DBG ("\n");
-#endif
   /**
   *
   *  thanks for this fix dmazar! 
   *
   **/
-#if 1
-  DBG ("%a: Efi Memory Map after update.\n",__FUNCTION__);
+#ifdef MEMMAP_DEBUG
+  DBG ("%a: Efi Memory Map updated descriptors.\n",__FUNCTION__);
   DBG ("   Type       Physical Start    Physical End      Number of Pages   Virtual Start     Attribute\n");
 #endif
   for (Index = 0; Index < MemoryDescHob.MemDescCount; Index++) {
@@ -385,7 +384,7 @@ UpdateMemoryMap (
           &Memory
           );
 #endif
-#if 1
+#ifdef MEMMAP_DEBUG
     DBG ("%02d %a %016lx  %016lx  %016lx  %016lx  %016x\n",
          Index,
          EfiMemoryTypeDesc[MemoryDescHob.MemDesc[Index].Type],
@@ -396,7 +395,7 @@ UpdateMemoryMap (
          MemoryDescHob.MemDesc[Index].Attribute);
 #endif
   }
-#if 1
+#ifdef MEMMAP_DEBUG
   DumpGcdMemoryMap ();
 #endif
 }

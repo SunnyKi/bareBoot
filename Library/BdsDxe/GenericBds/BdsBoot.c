@@ -289,6 +289,8 @@ MacOS:
     DBG ("gST->ConfigurationTable[Index].VendorGuid = %s\n", &Buffer1);
     DBG ("gST->ConfigurationTable[Index].VendorTable = 0x%x size = 0x%x\n", gST->ConfigurationTable[Index].VendorTable, sizeof( gST->ConfigurationTable[Index].VendorTable));
   }
+#endif
+#ifdef MEMMAP_DEBUG
   DumpGcdMemoryMap ();
   DumpEfiMemoryMap ();
 #endif

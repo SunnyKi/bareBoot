@@ -1041,8 +1041,6 @@ FindBootArgs (
 {
   UINT8           *ptr;
   UINT8           archMode;
-  EFI_MEMORY_DESCRIPTOR       *MemoryMap;
-  UINTN           MCount, i;
 
   archMode = sizeof (UINTN) * 8;
   // start searching from 0x200000.
@@ -1089,6 +1087,9 @@ FindBootArgs (
       DBG ("%a: bootArgs2->pciConfigSpaceBaseAddress 0x%x\n", __FUNCTION__, bootArgs2->pciConfigSpaceBaseAddress);
       DBG ("%a: bootArgs2->pciConfigSpaceStartBusNumber 0x%x\n", __FUNCTION__, bootArgs2->pciConfigSpaceStartBusNumber);
       DBG ("%a: bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n", __FUNCTION__, bootArgs2->pciConfigSpaceEndBusNumber);
+#ifdef MEMMAP_DEBUG
+      EFI_MEMORY_DESCRIPTOR       *MemoryMap;
+      UINTN           MCount, i;
 
       MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs2->MemoryMap);
       MCount = (UINTN) DivU64x32 (bootArgs2->MemoryMapSize, bootArgs2->MemoryMapDescriptorSize);
@@ -1105,6 +1106,7 @@ FindBootArgs (
              MemoryMap->Attribute);
         MemoryMap = NEXT_MEMORY_DESCRIPTOR (MemoryMap, bootArgs2->MemoryMapDescriptorSize);
       }
+#endif
       // disable other pointer
       bootArgs1 = NULL;
       break;
@@ -1139,6 +1141,10 @@ FindBootArgs (
       DBG ("%a: bootArgs1->performanceDataSize 0x%x\n", __FUNCTION__, bootArgs1->performanceDataSize);
       DBG ("%a: bootArgs1->efiRuntimeServicesVirtualPageStart 0x%x\n", __FUNCTION__, bootArgs1->efiRuntimeServicesVirtualPageStart);
 
+#ifdef MEMMAP_DEBUG
+      EFI_MEMORY_DESCRIPTOR       *MemoryMap;
+      UINTN           MCount, i;
+
       MemoryMap = ((EFI_MEMORY_DESCRIPTOR *) (UINTN) bootArgs1->MemoryMap);
       MCount = (UINTN) DivU64x32 (bootArgs1->MemoryMapSize, bootArgs1->MemoryMapDescriptorSize);
       
@@ -1154,7 +1160,7 @@ FindBootArgs (
              MemoryMap->Attribute);
         MemoryMap = NEXT_MEMORY_DESCRIPTOR (MemoryMap, bootArgs1->MemoryMapDescriptorSize);
       }
-
+#endif
       // disable other pointer
       bootArgs2 = NULL;
       break;

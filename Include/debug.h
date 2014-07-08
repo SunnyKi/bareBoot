@@ -16,6 +16,9 @@
 #if 0
 #define KERNEL_PATCH_DEBUG
 #endif
+#if 0
+#define MEMMAP_DEBUG
+#endif
 
 #if 1
 #define BOOT_DEBUG
