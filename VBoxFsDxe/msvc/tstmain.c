@@ -154,7 +154,7 @@ main(int argc, char **argv)
     for (i = 0; fstypes[i] != NULL; i++) {
         vol = fsw_mswin_mount(argv[1], fstypes[i]);
         if (vol != NULL) {
-            fprintf(stdout, "Mounted as '%s'.\n", fstypes[i]->name.data);
+            fprintf(stdout, "Mounted as '%s'.\n", (char*)(fstypes[i]->name.data));
             break;
         }
     }

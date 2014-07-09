@@ -181,7 +181,7 @@ off_t fsw_mswin_lseek(struct fsw_mswin_file *file, off_t offset, int whence)
     else
         file->shand.pos = base_offset + offset;
 
-    return file->shand.pos;
+	return (off_t)(file->shand.pos);
 }
 
 /**
@@ -248,7 +248,7 @@ struct dirent * fsw_mswin_readdir(struct fsw_mswin_dir *dir)
 
     // fill dirent structure
     dent.d_fileno = dno->dnode_id;
-    dent.d_reclen = 8 + dno->name.size + 1;
+    dent.d_reclen = (unsigned short) (8 + dno->name.size + 1);
     switch (dno->type) {
         case FSW_DNODE_TYPE_FILE:
             dent.d_type = DT_REG;
@@ -378,7 +378,7 @@ fsw_status_t fsw_mswin_read_block(struct fsw_volume *vol, fsw_u32 phys_bno, void
     if (seek_result != block_offset)
         return FSW_IO_ERROR;
     read_result = _read(pvol->fd, buffer, vol->phys_blocksize);
-    if (read_result != vol->phys_blocksize)
+    if (read_result != (int)(vol->phys_blocksize))
         return FSW_IO_ERROR;
 
     return FSW_SUCCESS;

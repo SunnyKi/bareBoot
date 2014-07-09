@@ -508,16 +508,25 @@ fsw_u16      fsw_to_lower(fsw_u16 ch);
 #define  S_IWOTH  0000002      /* W for other */
 #define  S_IXOTH  0000001      /* X for other */
 
-#define  S_IFMT   0170000    /* type of file mask */
 #define  S_IFIFO   0010000    /* named pipe (fifo) */
-#define  S_IFCHR   0020000    /* character special */
-#define  S_IFDIR   0040000    /* directory */
 #define  S_IFBLK   0060000    /* block special */
-#define  S_IFREG   0100000    /* regular */
 #define  S_IFLNK   0120000    /* symbolic link */
 #define  S_IFSOCK 0140000    /* socket */
 #define  S_ISVTX   0001000    /* save swapped text even after use */
 #define  S_IFWHT  0160000    /* whiteout */
+
+#ifndef  S_IFMT
+#define  S_IFMT   0170000    /* type of file mask */
+#endif
+#ifndef  S_IFCHR
+#define  S_IFCHR   0020000    /* character special */
+#endif
+#ifndef  S_IFDIR
+#define  S_IFDIR   0040000    /* directory */
+#endif
+#ifndef  S_IFREG
+#define  S_IFREG   0100000    /* regular */
+#endif
 
 #define  S_ISDIR(m)  (((m) & 0170000) == 0040000)  /* directory */
 #define  S_ISCHR(m)  (((m) & 0170000) == 0020000)  /* char special */
