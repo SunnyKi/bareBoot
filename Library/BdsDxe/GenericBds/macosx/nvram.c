@@ -193,7 +193,7 @@ PutNvramPlistToRtVars (
   // iterate over dict elements
   DictSize = plNodeGetSize (gNvramDict);
   for (i = 0; i < DictSize; i++) {
-    prop = plNodeGetItem (gNvramDict, i);
+    prop = plNodeGetItem (gNvramDict, (unsigned int) i);
     len = plNodeGetSize(prop);
     akey = plNodeGetBytes (prop);
     
