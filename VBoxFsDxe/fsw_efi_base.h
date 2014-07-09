@@ -89,7 +89,7 @@ typedef UINT64  fsw_u64;
 
 // text creation
 
-#define fsw_uprintf UnicodeSPrint
+#define fsw_snrintf AsciiSPrint
 
 // 64-bit hooks
 
