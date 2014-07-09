@@ -550,7 +550,7 @@ fsw_status_t fsw_dnode_lookup_path(struct fsw_dnode *dno,
     remaining_path = *lookup_path;
     fsw_dnode_retain(dno);
 
-    FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: '%s'\n"), lookup_path->data));
+    FSW_MSG_DEBUG((FSW_MSGSTR("fsw_dnode_lookup_path: '%s'\n"), (char*)(lookup_path->data)));
     // loop over the path
     for (root_if_empty = 1; fsw_strlen(&remaining_path) > 0; root_if_empty = 0) {
         // parse next path component
