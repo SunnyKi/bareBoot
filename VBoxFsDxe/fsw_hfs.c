@@ -1383,19 +1383,17 @@ fsw_hfs_readlink (
   if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
     return FSW_UNSUPPORTED;
   } else if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
-    static fsw_u16* metaprefix = L"/\u0000\u0000\u0000\u0000HFS+ Private Data/iNode";
-#define mprfsize (sizeof (metaprefix) - 2)
-    char tmpbuf[32];
-    fsw_u32 sz;
-
-    sz = fsw_uprintf(tmpbuf, sizeof(tmpbuf), L"%d", dno->ilink);
+    static fsw_u16* metaprefix = L"/\u0000\u0000\u0000\u0000HFS+ Private Data/iNode2147483647";
+#define mprfsize (sizeof (metaprefix))
+    fsw_u32 sz = 0;
 
     link_target->type = FSW_STRING_TYPE_UTF16;
-    link_target->len = mprfsize + sz;
-    link_target->size = mprfsize + sz + sz + 2;
-    fsw_alloc (link_target->size, &link_target->data);
-    fsw_memcpy (link_target->data, metaprefix, mprfsize);
-    fsw_memcpy (((fsw_u8*)link_target->data) + mprfprefix, tmpbuf, sz + sz + 2);
+    link_target->size = mprfsize;
+    fsw_memdup (&link_target->data, metaprefix, link_target->size);
+#if 0
+    sz = fsw_uprintf(tmpbuf, sizeof(tmpbuf), L"%d", dno->ilink);
+#endif
+    link_target->len = (mprfsize >> 2) - 2 + sz;
 #undef mprfsize
     return FSW_SUCCESS;
   }
