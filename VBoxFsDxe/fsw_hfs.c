@@ -832,37 +832,8 @@ fsw_hfs_btree_visit_node (
     return 0;
 
   fill_fileinfo (vp->vol, cat_key, &vp->file_info);
+
   switch (rec_type) {
-#if 0
-  case kHFSPlusFolderRecord:
-    {
-      HFSPlusCatalogFolder *folder_info = (HFSPlusCatalogFolder *) base;
-
-      vp->file_info.id = be32_to_cpu (folder_info->folderID);
-      vp->file_info.type = FSW_DNODE_TYPE_DIR;
-      vp->file_info.size = be32_to_cpu (folder_info->valence);
-      vp->file_info.used = be32_to_cpu (folder_info->valence);
-      vp->file_info.ctime = be32_to_cpu (folder_info->createDate);
-      vp->file_info.mtime = be32_to_cpu (folder_info->contentModDate);
-      break;
-    }
-  case kHFSPlusFileRecord:
-    {
-      HFSPlusCatalogFile *file_info = (HFSPlusCatalogFile *) base;
-
-      vp->file_info.id = be32_to_cpu (file_info->fileID);
-      vp->file_info.type = FSW_DNODE_TYPE_FILE;
-      vp->file_info.size = be64_to_cpu (file_info->dataFork.logicalSize);
-      vp->file_info.used =
-        LShiftU64 (be32_to_cpu (file_info->dataFork.totalBlocks),
-                   vp->vol->block_size_shift);
-      vp->file_info.ctime = be32_to_cpu (file_info->createDate);
-      vp->file_info.mtime = be32_to_cpu (file_info->contentModDate);
-      fsw_memcpy (&vp->file_info.extents, &file_info->dataFork.extents,
-                  sizeof vp->file_info.extents);
-      break;
-    }
-#endif
   case kHFSPlusFolderThreadRecord:
   case kHFSPlusFileThreadRecord:
     {
@@ -870,9 +841,6 @@ fsw_hfs_btree_visit_node (
       return 0;
     }
   default:
-#if 0
-    vp->file_info.type = FSW_DNODE_TYPE_UNKNOWN;
-#endif
     break;
   }
 
@@ -1206,13 +1174,11 @@ fsw_hfs_dir_lookup (
   fsw_status_t status;
   struct HFSPlusCatalogKey catkey;
   fsw_u32 ptr;
-  fsw_u16 rec_type;
   BTNodeDescriptor *node = NULL;
   struct fsw_string rec_name;
   int free_data = 0;
   HFSPlusCatalogKey *file_key;
   file_info_t file_info;
-  fsw_u8 *base;
 
   fsw_memzero (&file_info, sizeof file_info);
   file_info.name = &rec_name;
@@ -1246,50 +1212,8 @@ fsw_hfs_dir_lookup (
 
   file_key =
     (HFSPlusCatalogKey *) fsw_hfs_btree_rec (&vol->catalog_tree, node, ptr);
-#if 1
+
   fill_fileinfo (vol, file_key, &file_info);
-#else
-  /* for plain HFS "-(keySize & 1)" would be needed */
-  base = (fsw_u8 *) file_key + be16_to_cpu (file_key->keyLength) + 2;
-  rec_type = be16_to_cpu (*(fsw_u16 *) base);
-
-    /** @todo: read additional info */
-  switch (rec_type) {
-  case kHFSPlusFolderRecord:
-    {
-      HFSPlusCatalogFolder *info = (HFSPlusCatalogFolder *) base;
-
-      file_info.id = be32_to_cpu (info->folderID);
-      file_info.type = FSW_DNODE_TYPE_DIR;
-      /* @todo: return number of elements, maybe use smth else */
-      file_info.size = be32_to_cpu (info->valence);
-      file_info.used = be32_to_cpu (info->valence);
-      file_info.ctime = be32_to_cpu (info->createDate);
-      file_info.mtime = be32_to_cpu (info->contentModDate);
-      break;
-    }
-  case kHFSPlusFileRecord:
-    {
-      HFSPlusCatalogFile *info = (HFSPlusCatalogFile *) base;
-
-      file_info.id = be32_to_cpu (info->fileID);
-      file_info.type = FSW_DNODE_TYPE_FILE;
-      file_info.size = be64_to_cpu (info->dataFork.logicalSize);
-      file_info.used =
-        LShiftU64 (be32_to_cpu (info->dataFork.totalBlocks),
-                   vol->block_size_shift);
-      file_info.ctime = be32_to_cpu (info->createDate);
-      file_info.mtime = be32_to_cpu (info->contentModDate);
-      fsw_memcpy (&file_info.extents, &info->dataFork.extents,
-                  sizeof file_info.extents);
-      break;
-    }
-  default:
-    file_info.type = FSW_DNODE_TYPE_UNKNOWN;
-
-    break;
-  }
-#endif
 
   status = create_hfs_dnode (dno, &file_info, child_dno_out);
   if (status)
