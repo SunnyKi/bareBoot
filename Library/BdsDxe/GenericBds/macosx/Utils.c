@@ -1258,6 +1258,10 @@ GetBootDefault (
     return EFI_NOT_FOUND;
   }
 
+  DBG ("%a: config.plist begin\n", __FUNCTION__);
+  plist2dbg (gConfigPlist);
+  DBG ("%a: config.plist end\n", __FUNCTION__);
+
   spdict = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
 
   gSettings.SaveVideoRom = GetBoolProperty (spdict, "SaveVideoRom", FALSE);
