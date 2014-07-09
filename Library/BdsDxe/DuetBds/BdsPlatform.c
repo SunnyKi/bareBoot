@@ -1274,7 +1274,7 @@ Returns:
   // very long function:
   DBG ("BdsPlatorm: Starting PlatformBdsConnectConsole\n"); // 5.2 sec
   PlatformBdsConnectConsole (gPlatformConsole);
-  ClearScreen (0xBFBFBF);
+  ClearScreen (0xBFBFBF, NULL);
 #if 0
   EnableSmbus ();
 #endif
@@ -1333,7 +1333,7 @@ Returns:
 
   if (gSettings.ScreenMode != 0xffff) {
     SetModeScreen (gSettings.ScreenMode);
-    ClearScreen (0xBFBFBF);
+    ClearScreen (0xBFBFBF, NULL);
   }
 
   AddBootArgs = "\0 23456789012345678901234567890123456789";

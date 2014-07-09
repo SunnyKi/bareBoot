@@ -155,7 +155,15 @@ INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 INF  RuleOverride=BINARY bareBoot/ION/IONDxe.inf
 !endif
 
-FILE FREEFORM = PCD(gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile) {
+FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdAppleGrayLogoFile) {
+    SECTION RAW = bareBoot/Logo/appleLogo_apple_gray.png
+  }
+
+FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdAppleWhiteLogoFile) {
+    SECTION RAW = bareBoot/Logo/appleLogo_apple_white.png
+  }
+
+FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdBBLogoFile) {
     SECTION RAW = bareBoot/Logo/Logo.bmp
   }
 

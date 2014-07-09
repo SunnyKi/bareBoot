@@ -1323,6 +1323,7 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
   gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
   gSettings.NvRam = GetBoolProperty (dictPointer, "NvRam", FALSE);
+  gSettings.YoBlack = GetBoolProperty (dictPointer, "YoBlack", FALSE);
 
   if (AsciiStrLen (AddBootArgs) != 0) {
     AsciiStrCat (gSettings.BootArgs, AddBootArgs);

@@ -44,6 +44,7 @@
 #include <Library/UefiLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/DxeServicesLib.h>
 
 #include <debug.h>
 
@@ -205,6 +206,7 @@ typedef struct {
   BOOLEAN CheckFakeSMC;
   BOOLEAN SaveVideoRom;
   BOOLEAN NvRam;
+  BOOLEAN YoBlack;
   //ACPI
   UINT64  ResetAddr;
   UINT8   ResetVal;

@@ -87,7 +87,8 @@ ConvertBmpToGopBlt (
 
 VOID
 ClearScreen (
-  UINT32     HexColor
+  UINT32 HexColor,
+  EFI_GUID *NameGuid
   );
 
 VOID

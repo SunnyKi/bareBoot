@@ -3,7 +3,6 @@
 **/
 
 #include <macosx.h>
-#include <Library/DxeServicesLib.h>
 
 #include "Graphics.h"
 #include "picopng.h"
@@ -316,16 +315,29 @@ ConvertBmpToGopBlt (
 
 VOID
 ClearScreen (
-  UINT32 HexColor
+  UINT32 HexColor,
+  EFI_GUID *NameGuid
 )
 {
   EFI_STATUS Status;
-  EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput;
+  EFI_GRAPHICS_OUTPUT_PROTOCOL  *GraphicsOutput;
   EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Pixel;
+  EFI_GRAPHICS_OUTPUT_BLT_PIXEL *Blt;
+  UINT8                         *ImageData;
+  UINTN                         ImageSize;
+  UINTN                         BltSize;
+  UINTN                         Height;
+  UINTN                         Width;
+  INTN                          DestX;
+  INTN                          DestY;
+  
 
   Status = EFI_SUCCESS;
   GraphicsOutput = NULL;
   Pixel = NULL;
+  Blt = NULL;
+  ImageData = NULL;
+  ImageSize = 0;
 
   Status =
     gBS->HandleProtocol (gST->ConsoleOutHandle, &gEfiGraphicsOutputProtocolGuid,
@@ -347,8 +359,53 @@ ClearScreen (
   GraphicsOutput->Blt (GraphicsOutput, Pixel, EfiBltVideoFill, 0, 0, 0, 0,
                        GraphicsOutput->Mode->Info->HorizontalResolution,
                        GraphicsOutput->Mode->Info->VerticalResolution, 0);
-  if (Pixel != NULL) {
-    FreePool (Pixel);
+
+  if (NameGuid != NULL) {
+    Status = GetSectionFromAnyFv (
+               NameGuid,
+               EFI_SECTION_RAW,
+               0,
+               (VOID **) &ImageData,
+               &ImageSize
+               );
+    
+    if (EFI_ERROR (Status)) {
+      DBG ("%a: GetSectionFromAnyFv  fail with status: %r", __FUNCTION__, Status);
+      goto Down;
+    }
+    
+    Status =
+    ConvertPngToGopBlt (ImageData, ImageSize, (VOID **) &Blt, &BltSize, &Height,
+                        &Width);
+    
+    if (EFI_ERROR (Status)) {
+      DBG ("%a: ConvertPngToGopBlt  fail with status: %r", __FUNCTION__, Status);
+      goto Down;
+    }
+
+    DestX = (GraphicsOutput->Mode->Info->HorizontalResolution - Width) / 2;
+    DestY = (GraphicsOutput->Mode->Info->VerticalResolution - Height) / 2;
+
+    if ((DestX >= 0) && (DestY >= 0)) {
+      Status =
+      BltWithAlpha (GraphicsOutput, Blt, EfiBltBufferToVideo, 0, 0,
+                    (UINTN) DestX, (UINTN) DestY, Width, Height,
+                    Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL), TRUE);
+      if (EFI_ERROR (Status)) {
+        DBG ("%a: BltWithAlpha  fail with status: %r", __FUNCTION__, Status);
+      }
+    }
+
+  Down:
+    if (Pixel != NULL) {
+      FreePool (Pixel);
+    }
+    if (ImageData != NULL) {
+      FreePool (ImageData);
+    }
+    if (Blt != NULL) {
+      FreePool (Blt);
+    }
   }
 }
 

@@ -211,7 +211,7 @@ BdsLibBootViaBootOption (
 
 MacOS:
   if (gFronPage) {
-    ClearScreen (0xBFBFBF);
+    ClearScreen (0xBFBFBF, NULL);
   }
   DBG ("%a: launching InitializeConsoleSim.\n",__FUNCTION__);
   InitializeConsoleSim (gImageHandle);
@@ -233,6 +233,13 @@ MacOS:
   GetCpuProps ();
   DBG ("%a: launching GetUserSettings.\n",__FUNCTION__);
   GetUserSettings ();
+  if ((OSVersion != NULL) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
+    if (gSettings.YoBlack) {
+      ClearScreen (0x00, PcdGetPtr (PcdAppleWhiteLogoFile));
+    } else {
+      ClearScreen (0xBFBFBF, PcdGetPtr (PcdAppleGrayLogoFile));
+    }
+  }
   if (cDevProp == NULL) {
     DBG ("%a: launching SetDevices (no cDevProp).\n",__FUNCTION__);
     SetDevices ();
@@ -308,7 +315,7 @@ MacOS:
   if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
     gST->ConOut = NULL; 
   } else {
-    ClearScreen (0x00);
+    ClearScreen (0x00, NULL);
   }
 
   WithKexts = LoadKexts ();

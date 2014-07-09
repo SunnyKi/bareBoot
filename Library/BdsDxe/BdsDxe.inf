@@ -271,8 +271,10 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderLoad
   gEfiMdeModulePkgTokenSpaceGuid.PcdProgressCodeOsLoaderStart
   gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdPlatformBootTimeOut  
-  gEfiIntelFrameworkModulePkgTokenSpaceGuid.PcdLogoFile  
   gEfiBareBootPkgGuid.PcdFontsFile
+  gEfiBareBootPkgGuid.PcdBBLogoFile
+  gEfiBareBootPkgGuid.PcdAppleGrayLogoFile
+  gEfiBareBootPkgGuid.PcdAppleWhiteLogoFile
 
 [Depex]
   TRUE

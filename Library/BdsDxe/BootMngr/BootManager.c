@@ -877,7 +877,7 @@ ShowProgress (
     // Get the specified image from FV.
     //
     Status = GetSectionFromAnyFv (
-               PcdGetPtr(PcdLogoFile),
+               PcdGetPtr(PcdBBLogoFile),
                EFI_SECTION_RAW,
                0,
                (VOID **) &ImageData,
@@ -1040,7 +1040,7 @@ PlatformBdsEnterFrontPage (
   
   Status = EFI_SUCCESS;
   gFronPage = TRUE;
-  ClearScreen (0x00);
+  ClearScreen (0x00, NULL);
   do {
     
     gCallbackKey = 0;
