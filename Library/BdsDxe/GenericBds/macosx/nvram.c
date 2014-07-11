@@ -198,6 +198,11 @@ PutNvramPlistToRtVars (
     akey = plNodeGetBytes (prop);
     
     if (akey == NULL) {
+      DBG (" ERROR: key is NULL\n");
+      continue;
+    }
+    if (len > (sizeof (KeyBuf) / 2 - 2)) {
+      DBG (" ERROR: skipping too large key %a\n", akey);
       continue;
     }
     if (AsciiStrCmp (akey, "OsxAptioFixDrv-RelocBase") == 0) {
@@ -218,10 +223,6 @@ PutNvramPlistToRtVars (
     }
     if (AsciiStrCmp (akey, "prev-lang:kbd") == 0) {
       DBG (" skipping %a\n", akey);
-      continue;
-    }
-    if (len > (sizeof (KeyBuf) / 2 - 2)) {
-      DBG (" ERROR: skipping too large key %a\n", akey);
       continue;
     }
     AsciiStrToUnicodeStr(akey, KeyBuf);
