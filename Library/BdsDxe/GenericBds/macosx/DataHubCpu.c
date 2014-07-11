@@ -111,17 +111,17 @@ SetVariablesForOSX (
   EFI_STATUS  Status;
   UINT32      FwFeatures;
   UINT32      FwFeaturesMask;
+  UINT32      BackgroundClear;
 #if 0
   UINT16      *BootNext;
-  UINT32      BackgroundClear;
   CHAR8       *None;
 #endif
 
   FwFeatures      = 0xc0007417;
   FwFeaturesMask  = 0xc0007fff;
+  BackgroundClear = 0x00000000;
 #if 0
   BootNext = NULL; //it already presents in EFI FW. First GetVariable ?
-  BackgroundClear = 0x00000000;
   None = "none";
 
   Status = gRS->SetVariable(L"ROM", &gEfiAppleNvramGuid, 0, 0, NULL);
@@ -196,15 +196,18 @@ SetVariablesForOSX (
                   AsciiStrLen (gSettings.BootArgs),
                   &gSettings.BootArgs
                 );
-#if 0
-  Status = gRS->SetVariable (
-                  L"BackgroundClear",
-                  &gEfiAppleNvramGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  sizeof (BackgroundClear),
-                  &BackgroundClear
-                );
 
+  if (gSettings.YoBlack) {
+    Status = gRS->SetVariable (
+                    L"BackgroundClear",
+                    &gEfiAppleNvramGuid,
+                    EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                    sizeof (BackgroundClear),
+                    &BackgroundClear
+                  );
+  }
+
+#if 0
   Status = gRS->SetVariable (
                   L"security-mode",
                   &gEfiAppleBootGuid,

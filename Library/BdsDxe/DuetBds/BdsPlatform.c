@@ -1274,7 +1274,7 @@ Returns:
   // very long function:
   DBG ("BdsPlatorm: Starting PlatformBdsConnectConsole\n"); // 5.2 sec
   PlatformBdsConnectConsole (gPlatformConsole);
-  ClearScreen (0xBFBFBF, NULL);
+  ClearScreen (0x030000, NULL);
 #if 0
   EnableSmbus ();
 #endif
@@ -1333,6 +1333,11 @@ Returns:
 
   if (gSettings.ScreenMode != 0xffff) {
     SetModeScreen (gSettings.ScreenMode);
+  }
+
+  if (gSettings.YoBlack) {
+    ClearScreen (0x030000, NULL);
+  } else {
     ClearScreen (0xBFBFBF, NULL);
   }
 

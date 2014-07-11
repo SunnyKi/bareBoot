@@ -1267,6 +1267,8 @@ GetBootDefault (
   gSettings.SaveVideoRom = GetBoolProperty (spdict, "SaveVideoRom", FALSE);
   gSettings.ScreenMode = (UINT32) GetNumProperty (spdict, "ScreenMode", 0xffff);
   gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
+  gSettings.YoBlack = GetBoolProperty (spdict, "YoBlack", FALSE);
+
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
     gSettings.BootTimeout = 0xFFFF;
   }
@@ -1327,7 +1329,6 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
   gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
   gSettings.NvRam = GetBoolProperty (dictPointer, "NvRam", FALSE);
-  gSettings.YoBlack = GetBoolProperty (dictPointer, "YoBlack", FALSE);
 
   if (AsciiStrLen (AddBootArgs) != 0) {
     AsciiStrCat (gSettings.BootArgs, AddBootArgs);

@@ -211,7 +211,11 @@ BdsLibBootViaBootOption (
 
 MacOS:
   if (gFronPage) {
-    ClearScreen (0xBFBFBF, NULL);
+    if (gSettings.YoBlack) {
+      ClearScreen (0x030000, NULL);
+    } else {
+      ClearScreen (0xBFBFBF, NULL);
+    }
   }
   DBG ("%a: launching InitializeConsoleSim.\n",__FUNCTION__);
   InitializeConsoleSim (gImageHandle);
@@ -235,7 +239,7 @@ MacOS:
   GetUserSettings ();
   if ((OSVersion != NULL) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
     if (gSettings.YoBlack) {
-      ClearScreen (0x00, PcdGetPtr (PcdAppleWhiteLogoFile));
+      ClearScreen (0x030000, PcdGetPtr (PcdAppleWhiteLogoFile));
     } else {
       ClearScreen (0xBFBFBF, PcdGetPtr (PcdAppleGrayLogoFile));
     }
