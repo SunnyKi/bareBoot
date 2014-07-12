@@ -40,39 +40,16 @@
 #
 
 [Sources]
-#  Language.h
-#  Language.c
-#  Hotkey.h
-#  Hotkey.c
-#  HwErrRecSupport.c
-#  HwErrRecSupport.h
-#  MemoryTest.c
   Bds.h
   Strings.uni
   String.c
   BdsEntry.c
   String.h
   BmLib.c
-
   BootMngr/BootManagerVfr.Vfr
   BootMngr/BootManagerStrings.uni
   BootMngr/BootManager.c
   BootMngr/BootManager.h
-#  BootMaint/FormGuid.h
-#  BootMaint/BBSsupport.h
-#  BootMaint/BootMaint.h
-#  BootMaint/FE.vfr
-#  BootMaint/FileExplorer.c
-#  BootMaint/BootMaint.c
-#  BootMaint/BBSsupport.c
-#  BootMaint/UpdatePage.c
-#  BootMaint/Variable.c
-#  BootMaint/Data.c
-#  BootMaint/ConsoleOption.c
-#  BootMaint/BootOption.c
-#  BootMaint/BmLib.c
-#  BootMaint/Bm.vfr
-#  BootMaint/Bmstring.uni
   GenericBds/macosx/Console.c
   GenericBds/macosx/Utils.c
   GenericBds/macosx/cpu.c
@@ -89,14 +66,6 @@
   GenericBds/macosx/device_tree.c
   GenericBds/macosx/fixSDT.c
   GenericBds/macosx/nvram.c
-#  GenericBds/macosx/guid.c
-#  GenericBds/macosx/Devices.c
-#  GenericBds/macosx/nvidia.c
-#  GenericBds/macosx/StateGenerator.c
-#  GenericBds/macosx/ati.c
-#  GenericBds/macosx/gma.c
-#  GenericBds/macosx/AmlGenerator.c
-#  GenericBds/DevicePath.c
   GenericBds/BdsBoot.c
   GenericBds/BdsConnect.c
   GenericBds/BdsConsole.c
