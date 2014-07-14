@@ -735,7 +735,7 @@ fsw_status_t fsw_dnode_readlink_data(struct fsw_dnode *dno, struct fsw_string *l
     if ((int)buffer_size < s.size)
         return FSW_VOLUME_CORRUPTED;
 
-    if (dno == NULL || dno->vol == NULL)
+    if (dno->vol == NULL)
         return FSW_VOLUME_CORRUPTED;
     status = fsw_strdup_coerce(link_target, dno->vol->host_string_type, &s);
     return status;
