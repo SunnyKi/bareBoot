@@ -1455,6 +1455,8 @@ main (
   }
   else if (fread (inbuf, 1, insize, infp) != insize) {
     perror ("fread");
+    fclose (infp);
+    FreePool (inbuf);
     return 1;
   }
   fclose (infp);
