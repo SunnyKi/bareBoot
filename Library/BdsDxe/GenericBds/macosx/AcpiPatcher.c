@@ -787,7 +787,9 @@ PatchACPI (
     // facs + xfacs
     XFirmwareCtrl = newFadt->XFirmwareCtrl;
 
-    newFadt->FirmwareCtrl = (UINT32) (UINTN) Facs; /* XXX: Should we check for NULL in Facs? */
+    if (Facs) {
+      newFadt->FirmwareCtrl = (UINT32) (UINTN) Facs;
+    }
 
     if (newFadt->FirmwareCtrl) {
       newFadt->XFirmwareCtrl = (UINT64) (newFadt->FirmwareCtrl);
