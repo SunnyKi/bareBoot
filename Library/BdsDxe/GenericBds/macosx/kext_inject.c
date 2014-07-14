@@ -177,6 +177,7 @@ LoadKext (
   FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
   FreeAlignedPages (executableFatBuffer, EFI_SIZE_TO_PAGES (executableFatBufferLength));
   FreePool (bundlePathBuffer);
+  FreePool (infoAddr);
 
   return EFI_SUCCESS;
 }
