@@ -1447,16 +1447,17 @@ main (
     return 1;
   }
   insize = (UINT32) statbuf.st_size;
-  inbuf = AllocateZeroPool (insize);
+  inbuf = png_alloc_malloc (insize);
   infp = fopen (fname, "rb");
   if (!infp) {
     perror ("fopen");
+    png_alloc_free (inbuf);
     return 1;
   }
   else if (fread (inbuf, 1, insize, infp) != insize) {
     perror ("fread");
     fclose (infp);
-    FreePool (inbuf);
+    png_alloc_free (inbuf);
     return 1;
   }
   fclose (infp);
@@ -1464,7 +1465,7 @@ main (
   printf ("input file: %s (size: %d)\n", fname, insize);
 
   info = PNG_decode (inbuf, insize);
-  FreePool (inbuf);
+  png_alloc_free (inbuf);
   printf ("PNG_error: %d\n", PNG_error);
   if (PNG_error != 0)
     return 1;
