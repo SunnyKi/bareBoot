@@ -207,7 +207,12 @@ PartitionDriverBindingStart (
   BOOLEAN                   MediaPresent;
   EFI_TPL                   OldTpl;
 
+  BlockIo = NULL;
   BlockIo2 = NULL;
+
+  DiskIo = NULL;
+  DiskIo2 = NULL;
+
   OldTpl = gBS->RaiseTPL (TPL_CALLBACK); 
   //
   // Check RemainingDevicePath validation
