@@ -241,6 +241,8 @@ SetupDataForOSX (
   Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &mDataHub);
 
   if (EFI_ERROR (Status)) {
+    FreePool (productName);
+    FreePool (serialNumber);
     return EFI_NOT_FOUND;
   }
 
