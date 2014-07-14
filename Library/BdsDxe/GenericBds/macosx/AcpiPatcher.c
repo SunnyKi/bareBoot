@@ -414,6 +414,7 @@ PatchACPI (
 #endif
   } else {
     DBG ("no allocate page for new xsdt\n");
+    FreePool (PathToACPITables);
     return EFI_OUT_OF_RESOURCES;
   }
 
@@ -422,6 +423,7 @@ PatchACPI (
 
   if (FadtPointer == NULL) {
     DBG ("no FADT entry in RSDT\n");
+    FreePool (PathToACPITables);
     return EFI_NOT_FOUND;
   }
 #if 0
