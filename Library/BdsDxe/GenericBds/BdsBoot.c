@@ -237,13 +237,6 @@ MacOS:
   GetCpuProps ();
   DBG ("%a: launching GetUserSettings.\n",__FUNCTION__);
   GetUserSettings ();
-  if ((OSVersion != NULL) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
-    if (gSettings.YoBlack) {
-      ClearScreen (0x030000, PcdGetPtr (PcdAppleWhiteLogoFile));
-    } else {
-      ClearScreen (0xBFBFBF, PcdGetPtr (PcdAppleGrayLogoFile));
-    }
-  }
   if (cDevProp == NULL) {
     DBG ("%a: launching SetDevices (no cDevProp).\n",__FUNCTION__);
     SetDevices ();
@@ -317,7 +310,14 @@ MacOS:
   }
 
   if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
-    gST->ConOut = NULL; 
+    gST->ConOut = NULL;
+    if ((OSVersion != NULL) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
+      if (gSettings.YoBlack) {
+        ClearScreen (0x030000, PcdGetPtr (PcdAppleWhiteLogoFile));
+      } else {
+        ClearScreen (0xBFBFBF, PcdGetPtr (PcdAppleGrayLogoFile));
+      }
+    }
   } else {
     ClearScreen (0x00, NULL);
   }
