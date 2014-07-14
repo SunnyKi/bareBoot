@@ -244,7 +244,7 @@ write_size (
     offset = -2;
   }
 
-  len = move_data (adr, buffer, len, offset);
+  (void) move_data (adr, buffer, len, offset);
 
   size += offset;
   aml_write_size (size, (CHAR8 *) buffer, adr); //reuse existing codes
