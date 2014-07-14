@@ -147,6 +147,8 @@ devprop_add_device_pci (
     device->acpi_dev_path._UID = gSettings.PCIRootUID;
   }
   else {
+    FreePool (DevicePath);
+    FreePool (Device);
     return NULL;
   }
 
