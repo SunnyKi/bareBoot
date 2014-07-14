@@ -148,7 +148,7 @@ devprop_add_device_pci (
   }
   else {
     FreePool (DevicePath);
-    FreePool (Device);
+    FreePool (device);
     return NULL;
   }
 
@@ -356,7 +356,6 @@ devprop_free_string (
 
   FreePool (pstring->entries);
   FreePool (pstring);
-  pstring = NULL;
 }
 
 CHAR8 *
