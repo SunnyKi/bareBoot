@@ -354,6 +354,7 @@ PatchACPI (
   }
 
   if (RsdPointer == NULL) {
+    FreePool (PathToACPITables);
     return EFI_UNSUPPORTED;
   }
 
