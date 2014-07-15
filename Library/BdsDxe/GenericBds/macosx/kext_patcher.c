@@ -67,6 +67,9 @@ SearchAndReplace (
 
   while (Source < End && (NoReplacesRestriction || MaxReplaces > 0)) {   
     if (CompareMem (Source, Search, SearchSize) == 0) {
+#ifdef KERNEL_PATCH_DEBUG
+      Print (L"%a: found at 0x%x.\n", __FUNCTION__, Source);
+#endif
       CopyMem (Source, Replace, SearchSize);
       NumReplaces++;
       MaxReplaces--;

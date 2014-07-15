@@ -572,12 +572,6 @@ LoadKexts (
   VOID
 );
 
-VOID
-EFIAPI
-KernelBooterExtensionsPatch (
-  IN UINT8 *Kernel
-);
-
 EFI_STATUS
 InjectKexts (
   IN UINT32 deviceTreeP,
