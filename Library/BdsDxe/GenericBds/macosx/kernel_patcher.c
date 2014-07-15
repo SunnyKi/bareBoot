@@ -65,7 +65,6 @@ SetKernelRelocBase (
     return;
 }
 
-#if 1
 VOID
 GetSegment (
   IN CHAR8    *Segment,
@@ -101,9 +100,14 @@ GetSegment (
       case LC_SEGMENT_64: 
         segCmd64 = (struct segment_command_64 *) loadCommand;
 #ifdef KERNEL_PATCH_DEBUG
-    Print (L"%a: segment %a, address 0x%x, size 0x%x\n", __FUNCTION__, segCmd64->segname, segCmd64->vmaddr, segCmd64->vmsize);
+        Print (
+          L"%a: segment %a, address 0x%x, size 0x%x\n",
+          __FUNCTION__,
+          segCmd64->segname,
+          segCmd64->vmaddr,
+          segCmd64->vmsize
+        );
 #endif
-
         if (AsciiStrCmp (segCmd64->segname, Segment) == 0) {
           if (segCmd64->vmsize > 0) {
             *Addr = (UINT32) (segCmd64->vmaddr ? segCmd64->vmaddr + KernelRelocBase : 0);
@@ -130,7 +134,6 @@ GetSegment (
   
   return;
 }
-#endif
 
 VOID
 GetSection (
@@ -669,7 +672,7 @@ KernelPatcher_64 (
   VOID* kernelData
 )
 {
-  UINT8       *bytes = (UINT8*)kernelData;
+  UINT8       *bytes;
   UINT32      patchLocation=0, patchLocation1=0;
   UINT32      i;
   UINT32      switchaddr=0;
@@ -681,6 +684,8 @@ KernelPatcher_64 (
     return;
   }
 
+  bytes = (UINT8 *) kernelData;
+  
   DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n", __FUNCTION__);
   // Determine location of _cpuid_set_info _panic call for refrence
   // basically looking for info_p->cpuid_model = bitfield32(reg[eax],  7,  4);
@@ -918,11 +923,12 @@ KernelPatcher_32 (
   VOID* kernelData
 )
 {
-  UINT8* bytes = (UINT8*)kernelData;
-  UINT32 patchLocation=0, patchLocation1=0;
-  UINT32 i;
-  UINT32 jumpaddr;
+  UINT8   *bytes;
+  UINT32  patchLocation=0, patchLocation1=0;
+  UINT32  i;
+  UINT32  jumpaddr;
   
+  bytes = (UINT8*)kernelData;
   // _cpuid_set_info _panic address
   for (i=0; i<0x1000000; i++) {
     if (bytes[i] == 0xC7 && bytes[i+1] == 0x05 && bytes[i+6] == 0x07 && bytes[i+7] == 0x00 &&
