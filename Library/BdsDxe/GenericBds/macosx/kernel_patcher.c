@@ -213,17 +213,19 @@ GetSection (
 
 CHAR8*
 GetKernelVersion (
-  VOID* kernelData
+  VOID
   )
 {
-//  UINT8           *KernelPtr;
   CHAR8           *s, *s1, *kv;
   UINT32           addr, size;
   UINTN           i, i2, i3, kvBegin;
   
-//  KernelPtr = (UINT8*) kernelData;
-
   GetSection ("__TEXT", "__const", &addr, &size);
+
+  if (addr == 0) {
+    addr = (UINT32) *(UINT8 *) KernelData;
+    size = 0x1000000;
+  }
 
   for (i = addr; i < addr + size; i++) {
     if (AsciiStrnCmp ((CHAR8 *) i, "Darwin Kernel Version", 21) == 0) {
@@ -1267,7 +1269,7 @@ KernelAndKextPatcherInit (
   isKernelcache = PrelinkTextSize > 0 && PrelinkInfoSize > 0;
 
   DBG ("%a: OSVersion = %a\n", __FUNCTION__, OSVersion);
-  KernVersion = GetKernelVersion (KernelData);
+  KernVersion = GetKernelVersion ();
   DBG ("%a: KernVersion = %a\n", __FUNCTION__, KernVersion);
 #ifdef KERNEL_PATCH_DEBUG
   Print (L"%a: OSVersion = %a\n", __FUNCTION__, OSVersion);
