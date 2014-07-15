@@ -34,7 +34,6 @@ BOOLEAN                 SSSE3;
 // - 64bit segCmd64->vmaddr is 0xffffff80xxxxxxxx and we are taking
 //   only lower 32bit part into PrelinkTextAddr
 // - PrelinkTextAddr is segCmd64->vmaddr + KernelRelocBase
-UINT32     PrelinkTextLoadCmdAddr = 0;
 UINT32     PrelinkTextAddr = 0;
 UINT32     PrelinkTextSize = 0;
 
@@ -42,7 +41,6 @@ UINT32     PrelinkTextSize = 0;
 // - 64bit sect->addr is 0xffffff80xxxxxxxx and we are taking
 //   only lower 32bit part into PrelinkInfoAddr
 // - PrelinkInfoAddr is sect->addr + KernelRelocBase
-UINT32     PrelinkInfoLoadCmdAddr = 0;
 UINT32     PrelinkInfoAddr = 0;
 UINT32     PrelinkInfoSize = 0;
 
@@ -67,23 +65,172 @@ SetKernelRelocBase (
     return;
 }
 
+#if 0
+VOID
+GetSegment (
+  IN CHAR8    *Segment,
+  OUT UINT32  *Addr,
+  OUT UINT32  *Size
+)
+{
+  UINT32  ncmds;
+  UINT32  cmdsize;
+  UINT32  binaryIndex;
+  UINTN   cnt;
+  UINT8   *binary;
+
+  struct load_command         *loadCommand;
+  struct segment_command      *segCmd;
+  struct segment_command_64   *segCmd64;
+
+  binary = (UINT8 *) KernelData;
+
+  if (is64BitKernel) {
+    binaryIndex = sizeof (struct mach_header_64);
+  } else {
+    binaryIndex = sizeof (struct mach_header);
+  }
+  
+  ncmds = MACH_GET_NCMDS (binary);
+  
+  for (cnt = 0; cnt < ncmds; cnt++) {
+    loadCommand = (struct load_command *) (binary + binaryIndex);
+    cmdsize = loadCommand->cmdsize;
+    
+    switch (loadCommand->cmd) {
+      case LC_SEGMENT_64: 
+        segCmd64 = (struct segment_command_64 *) loadCommand;
+        if (AsciiStrCmp (segCmd64->segname, Segment) == 0) {
+          if (segCmd64->vmsize > 0) {
+            *Addr = (UINT32) (segCmd64->vmaddr ? segCmd64->vmaddr + KernelRelocBase : 0);
+            *Size = (UINT32) segCmd64->vmsize;
+          }
+        }
+        break;
+
+      case LC_SEGMENT:
+        segCmd = (struct segment_command *) loadCommand;
+        if (AsciiStrCmp (segCmd->segname, Segment) == 0) {
+          if (segCmd->vmsize > 0) {
+            *Addr = (UINT32) (segCmd->vmaddr ? segCmd->vmaddr + KernelRelocBase : 0);
+            *Size = (UINT32) segCmd->vmsize;
+          }
+        }
+        break;
+        
+      default:
+        break;
+    }
+    binaryIndex += cmdsize;
+  }
+  
+  return;
+}
+#endif
+
+VOID
+GetSection (
+  IN CHAR8    *Segment,
+  IN CHAR8    *Section,
+  OUT UINT32  *Addr,
+  OUT UINT32  *Size
+)
+{
+  UINT32  ncmds;
+  UINT32  cmdsize;
+  UINT32  binaryIndex;
+  UINTN   cnt;
+  UINT8   *binary;
+  UINT32  sectionIndex;
+
+  struct load_command         *loadCommand;
+  struct segment_command      *segCmd;
+  struct segment_command_64   *segCmd64;
+  struct section              *sect;
+  struct section_64           *sect64;
+
+  binary = (UINT8 *) KernelData;
+
+  if (is64BitKernel) {
+    binaryIndex = sizeof (struct mach_header_64);
+  } else {
+    binaryIndex = sizeof (struct mach_header);
+  }
+  
+  ncmds = MACH_GET_NCMDS (binary);
+  
+  for (cnt = 0; cnt < ncmds; cnt++) {
+    loadCommand = (struct load_command *) (binary + binaryIndex);
+    cmdsize = loadCommand->cmdsize;
+    
+    switch (loadCommand->cmd) {
+      case LC_SEGMENT_64: 
+        segCmd64 = (struct segment_command_64 *) loadCommand;
+        if (AsciiStrCmp (segCmd64->segname, Segment) == 0) {
+          sectionIndex = sizeof (struct segment_command_64);
+          while(sectionIndex < segCmd64->cmdsize) {
+            sect64 = (struct section_64 *) ((UINT8 *) segCmd64 + sectionIndex);
+            sectionIndex += sizeof (struct section_64);
+            if(AsciiStrCmp (sect64->sectname, Section) == 0 &&
+               AsciiStrCmp (sect64->segname, Segment) == 0) {
+              if (sect64->size > 0) {
+                *Addr = (UINT32) (sect64->addr ? sect64->addr + KernelRelocBase : 0);
+                *Size = (UINT32) sect64->size;
+              }
+              break;
+            }
+          }
+        }
+        break;
+
+      case LC_SEGMENT:
+        segCmd = (struct segment_command *) loadCommand;
+        if (AsciiStrCmp (segCmd->segname, Segment) == 0) {
+          sectionIndex = sizeof (struct segment_command);
+          while(sectionIndex < segCmd->cmdsize) {
+            sect = (struct section *) ((UINT8*)segCmd + sectionIndex);
+            sectionIndex += sizeof (struct section);
+            if(AsciiStrCmp (sect->sectname, Section) == 0 &&
+               AsciiStrCmp (sect->segname, Segment) == 0) {
+              if (sect->size > 0) { 
+                *Addr = (UINT32) (sect->addr ? sect->addr + KernelRelocBase : 0);
+                *Size = (UINT32) sect->size;
+              }
+              break;
+            }
+          }
+        }
+        break;
+        
+      default:
+        break;
+    }
+    binaryIndex += cmdsize;
+  }
+  
+  return;
+}
+
 CHAR8*
 GetKernelVersion (
   VOID* kernelData
   )
 {
-  UINT8           *KernelPtr;
+//  UINT8           *KernelPtr;
   CHAR8           *s, *s1, *kv;
+  UINT32           addr, size;
   UINTN           i, i2, i3, kvBegin;
   
-  KernelPtr = (UINT8*) kernelData;
+//  KernelPtr = (UINT8*) kernelData;
 
-  for (i=0; i<0x1000000; i++) {
-    if (AsciiStrnCmp ((CHAR8 *) KernelPtr + i, "Darwin Kernel Version", 21) == 0) {
-      s = (CHAR8 *) KernelPtr + i + 22;
+  GetSection ("__TEXT", "__const", &addr, &size);
+
+  for (i = addr; i < addr + size; i++) {
+    if (AsciiStrnCmp ((CHAR8 *) i, "Darwin Kernel Version", 21) == 0) {
       kvBegin = i + 22;
       i2 = kvBegin;
-      while (AsciiStrnCmp ((CHAR8 *) KernelPtr + i2, ":", 1) != 0) {
+      s = (CHAR8 *) kvBegin;
+      while (AsciiStrnCmp ((CHAR8 *) i2, ":", 1) != 0) {
         i2++;
       }
       kv = (CHAR8 *) AllocateZeroPool (i2 - kvBegin + 1);
@@ -937,104 +1084,6 @@ KernelLapicPatch_32 (
 #endif
 
 VOID
-Get_PreLink (
-  VOID
-)
-{
-  UINT32  ncmds;
-  UINT32  cmdsize;
-  UINT32  binaryIndex;
-  UINTN   cnt;
-  UINT8   *binary;
-  UINT32  sectionIndex;
-
-  struct load_command         *loadCommand;
-  struct segment_command      *segCmd;
-  struct segment_command_64   *segCmd64;
-  struct section              *sect;
-  struct section_64           *sect64;
-
-  binary = (UINT8 *) KernelData;
-
-  if (is64BitKernel) {
-    binaryIndex = sizeof (struct mach_header_64);
-  } else {
-    binaryIndex = sizeof (struct mach_header);
-  }
-  
-  ncmds = MACH_GET_NCMDS(binary);
-  
-  for (cnt = 0; cnt < ncmds; cnt++) {
-    loadCommand = (struct load_command *) (binary + binaryIndex);
-    cmdsize = loadCommand->cmdsize;
-    
-    switch (loadCommand->cmd) {
-      case LC_SEGMENT_64: 
-        segCmd64 = (struct segment_command_64 *) loadCommand;
-        if (AsciiStrCmp (segCmd64->segname, kPrelinkTextSegment) == 0) {
-          if (segCmd64->vmsize > 0) {
-            PrelinkTextAddr = (UINT32) (segCmd64->vmaddr ? segCmd64->vmaddr + KernelRelocBase : 0);
-            PrelinkTextSize = (UINT32) segCmd64->vmsize;
-            PrelinkTextLoadCmdAddr = (UINT32) (UINTN) segCmd64;
-          }
-        }
-        if (AsciiStrCmp (segCmd64->segname, kPrelinkInfoSegment) == 0) {
-          sectionIndex = sizeof (struct segment_command_64);
-          
-          while(sectionIndex < segCmd64->cmdsize) {
-            sect64 = (struct section_64 *) ((UINT8 *) segCmd64 + sectionIndex);
-            sectionIndex += sizeof (struct section_64);
-            
-            if(AsciiStrCmp (sect64->sectname, kPrelinkInfoSection) == 0 &&
-               AsciiStrCmp (sect64->segname, kPrelinkInfoSegment) == 0) {
-              if (sect64->size > 0) {
-                PrelinkInfoLoadCmdAddr = (UINT32) (UINTN) sect64;
-                PrelinkInfoAddr = (UINT32) (sect64->addr ? sect64->addr + KernelRelocBase : 0);
-                PrelinkInfoSize = (UINT32) sect64->size;
-              }
-            }
-          }
-        }
-        break;
-
-      case LC_SEGMENT:
-        segCmd = (struct segment_command *) loadCommand;
-        if (AsciiStrCmp (segCmd->segname, kPrelinkTextSegment) == 0) {
-          if (segCmd->vmsize > 0) {
-            PrelinkTextAddr = (UINT32) (segCmd->vmaddr ? segCmd->vmaddr + KernelRelocBase : 0);
-            PrelinkTextSize = (UINT32) segCmd->vmsize;
-            PrelinkTextLoadCmdAddr = (UINT32) (UINTN) segCmd;
-          }
-        }
-        if (AsciiStrCmp (segCmd->segname, kPrelinkInfoSegment) == 0) {
-          sectionIndex = sizeof (struct segment_command);
-          
-          while(sectionIndex < segCmd->cmdsize) {
-            sect = (struct section *) ((UINT8*)segCmd + sectionIndex);
-            sectionIndex += sizeof (struct section);
-            
-            if(AsciiStrCmp (sect->sectname, kPrelinkInfoSection) == 0 &&
-               AsciiStrCmp (sect->segname, kPrelinkInfoSegment) == 0) {
-              if (sect->size > 0) { 
-                PrelinkInfoLoadCmdAddr = (UINT32) (UINTN) sect;
-                PrelinkInfoAddr = (UINT32) (sect->addr ? sect->addr + KernelRelocBase : 0);
-                PrelinkInfoSize = (UINT32) sect->size;
-              }
-            }
-          }
-        }
-        break;
-        
-      default:
-        break;
-    }
-    binaryIndex += cmdsize;
-  }
-  
-  return;
-}
-
-VOID
 FindBootArgs (
   VOID
 )
@@ -1208,7 +1257,13 @@ KernelAndKextPatcherInit (
   }
 
   // find __PRELINK_TEXT and __PRELINK_INFO
-  Get_PreLink ();
+  GetSection (kPrelinkTextSegment, kPrelinkTextSection, &PrelinkTextAddr, &PrelinkTextSize);
+  GetSection (kPrelinkInfoSegment, kPrelinkInfoSection, &PrelinkInfoAddr, &PrelinkInfoSize);
+#ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: PrelinkTextAddr = 0x%x, PrelinkTextSize = 0x%x\n", __FUNCTION__, PrelinkTextAddr, PrelinkTextSize);
+  Print (L"%a: PrelinkInfoAddr = 0x%x, PrelinkInfoSize = 0x%x\n", __FUNCTION__, PrelinkInfoAddr, PrelinkInfoSize);
+#endif
+
   isKernelcache = PrelinkTextSize > 0 && PrelinkInfoSize > 0;
 
   DBG ("%a: OSVersion = %a\n", __FUNCTION__, OSVersion);
