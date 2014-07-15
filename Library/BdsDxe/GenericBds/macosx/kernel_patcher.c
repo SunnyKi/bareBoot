@@ -65,7 +65,7 @@ SetKernelRelocBase (
     return;
 }
 
-#if 0
+#if 1
 VOID
 GetSegment (
   IN CHAR8    *Segment,
@@ -100,6 +100,10 @@ GetSegment (
     switch (loadCommand->cmd) {
       case LC_SEGMENT_64: 
         segCmd64 = (struct segment_command_64 *) loadCommand;
+#ifdef KERNEL_PATCH_DEBUG
+    Print (L"%a: segment %a, address 0x%x, size 0x%x\n", __FUNCTION__, segCmd64->segname, segCmd64->vmaddr, segCmd64->vmsize);
+#endif
+
         if (AsciiStrCmp (segCmd64->segname, Segment) == 0) {
           if (segCmd64->vmsize > 0) {
             *Addr = (UINT32) (segCmd64->vmaddr ? segCmd64->vmaddr + KernelRelocBase : 0);
@@ -220,7 +224,7 @@ GetKernelVersion (
   UINT32           addr, size;
   UINTN           i, i2, i3, kvBegin;
   
-  GetSection ("__TEXT", "__const", &addr, &size);
+  GetSegment ("__TEXT", &addr, &size);
 
   if (addr == 0) {
     addr = (UINT32) *(UINT8 *) KernelData;
@@ -391,20 +395,24 @@ UINT8 KBEYReplace[] =
 VOID
 EFIAPI
 KernelBooterExtensionsPatch (
-  IN UINT8 *kernelData
+  VOID
 )
 {
-  UINTN Num = 0;
-  
+  UINTN     Num = 0;
+  UINT32    addr, size;
+
   if (KernVersion == NULL) {
     DBG ("%a: kernel version not found.\n", __FUNCTION__);
     return;
   }
+
+  GetSection ("__KLD", "__text", &addr, &size);
+
   if (is64BitKernel) {
     if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
       Num = SearchAndReplace (
-              kernelData,
-              KERNEL_MAX_SIZE,
+              (UINT8 *) (UINTN) addr,
+              size,
               (CHAR8 *) KBELionSearch_X64,
               sizeof (KBELionSearch_X64),
               (CHAR8 *) KBELionReplace_X64,
@@ -414,8 +422,8 @@ KernelBooterExtensionsPatch (
     if ((AsciiStrnCmp (KernVersion, "12", 2) == 0) ||
         (AsciiStrnCmp (KernVersion, "13", 2) == 0)) {
       Num = SearchAndReplace (
-              kernelData,
-              KERNEL_MAX_SIZE,
+              (UINT8 *) (UINTN) addr,
+              size,
               (CHAR8 *) KBEMLSearch,
               sizeof (KBEMLSearch),
               (CHAR8 *) KBEMLReplace,
@@ -424,8 +432,8 @@ KernelBooterExtensionsPatch (
     }
     if (AsciiStrnCmp (KernVersion, "14", 2) == 0) {
       Num = SearchAndReplace (
-              kernelData,
-              KERNEL_MAX_SIZE,
+              (UINT8 *) (UINTN) addr,
+              size,
               (CHAR8 *) KBEYSearch,
               sizeof (KBEYSearch),
               (CHAR8 *) KBEYReplace,
@@ -435,8 +443,8 @@ KernelBooterExtensionsPatch (
   } else {
     if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
       Num = SearchAndReplace (
-              kernelData,
-              KERNEL_MAX_SIZE,
+              (UINT8 *) (UINTN) addr,
+              size,
               (CHAR8 *) KBELionSearch_i386,
               sizeof (KBELionSearch_i386),
               (CHAR8 *) KBELionReplace_i386,
@@ -445,9 +453,9 @@ KernelBooterExtensionsPatch (
     }
   }
   
-  DBG ("%a: Kext Inject - SearchAndReplace %d times.\n", __FUNCTION__, Num);
-#ifdef KEXT_INJECT_DEBUG
-  Print (L"Kext Inject: Patch Kernel - SearchAndReplace %d times.\n", Num);
+  DBG ("%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
+#ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
 #endif
 }
 
@@ -1381,7 +1389,7 @@ KernelAndKextsPatcherStart (
     Status = InjectKexts (deviceTreeP, &deviceTreeLength);
 
     if (!EFI_ERROR(Status)) {
-      KernelBooterExtensionsPatch (KernelData);
+      KernelBooterExtensionsPatch ();
     } else {
       DBG ("%a: InjectKexts error with status %r.\n", __FUNCTION__, Status);
 #ifdef KEXT_INJECT_DEBUG
