@@ -445,9 +445,9 @@ KernelBooterExtensionsPatch (
     }
   }
   
-  DBG ("%a: Kext Inject - SearchAndReplace %d times.\n", __FUNCTION__, Num);
-#ifdef KEXT_INJECT_DEBUG
-  Print (L"Kext Inject: Patch Kernel - SearchAndReplace %d times.\n", Num);
+  DBG ("%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
+#ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
 #endif
 }
 
