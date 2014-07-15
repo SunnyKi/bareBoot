@@ -65,7 +65,7 @@ SetKernelRelocBase (
     return;
 }
 
-#if 0
+#if 1
 VOID
 GetSegment (
   IN CHAR8    *Segment,
@@ -220,7 +220,7 @@ GetKernelVersion (
   UINT32           addr, size;
   UINTN           i, i2, i3, kvBegin;
   
-  GetSection ("__TEXT", "__const", &addr, &size);
+  GetSegment ("__TEXT", &addr, &size);
 
   if (addr == 0) {
     addr = (UINT32) *(UINT8 *) KernelData;
