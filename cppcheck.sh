@@ -4,6 +4,7 @@ EDK2HOME=../edk2; export EDK2HOME
 
 exec cppcheck \
 	--library=$EDK2HOME/cppcheck/edk2.cfg \
+	--library=bareBoot.cfg \
 	--inconclusive \
 	\
 	-D HOST_EFI \
