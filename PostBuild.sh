@@ -17,6 +17,8 @@
 #
 ##
 
+export PROJECTNAME=bareBoot
+
 if [ -z "$EDK_TOOLS_PATH" ]
 then
 export BASETOOLS_DIR=$WORKSPACE/Conf/BaseToolsSource/Source/C/bin
@@ -24,7 +26,7 @@ else
 export BASETOOLS_DIR=$EDK_TOOLS_PATH/Source/C/bin
 fi
 
-export BOOTSECTOR_BIN_DIR=$WORKSPACE/Duet/BootSector/bin
+export BOOTSECTOR_BIN_DIR=$WORKSPACE/$PROJECTNAME/BootSector/bin
 export PROCESSOR=""
 if [ \
      -z "$1" -o \
@@ -34,7 +36,7 @@ if [ \
    ]
 then
   echo Error! Please specific the architecture.
-  echo Usage: "./PostBuild.sh [IA32|X64] [UNIXGCC|GCC44]"
+  echo Usage: "./PostBuild.sh [IA32|X64] [UNIXCLANG|UNIXGCC|GCC44]"
 fi
 
 case "$1" in
@@ -50,6 +52,9 @@ case "$1" in
 esac
 
 case "$2" in
+   UNIXCLANG)
+     export TOOLTAG=UNIXCLANG
+     ;;
    UNIXGCC)
      export TOOLTAG=UNIXGCC
      ;;
@@ -57,11 +62,11 @@ case "$2" in
      export TOOLTAG=GCC44
      ;;
    *)
-     echo Invalid tool tag, should be only UNIXGCC or GCC44
+     echo Invalid tool tag, should be only UNIXCLANG, UNIXGCC or GCC44
      return 1
 esac
 
-export BUILD_DIR=$WORKSPACE/Build/Duet$PROCESSOR/DEBUG_$TOOLTAG
+export BUILD_DIR=$WORKSPACE/Build/$PROJECTNAME/$PROCESSOR/DEBUG_$TOOLTAG
 
 
 #
