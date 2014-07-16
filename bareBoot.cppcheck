@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+    <root name="c:/Tiano/bareBoot"/>
+    <includedir>
+        <dir name="Include/"/>
+        <dir name="DxeIpl/"/>
+        <dir name="EfiLdr/"/>
+        <dir name="Include/"/>
+        <dir name="Library/BdsDxe/"/>
+        <dir name="Library/BdsDxe/Graphics/"/>
+        <dir name="Library/BdsDxe/GenericBds/"/>
+        <dir name="Library/PListLib/"/>
+        <dir name="Library/PListLib/b64/"/>
+        <dir name="VBoxFsDxe/"/>
+        <dir name="../edk2/MdePkg/Include/"/>
+        <dir name="../edk2/MdePkg/Include/Ia32/"/>
+        <dir name="../edk2/MdeModulePkg/Include/"/>
+        <dir name="../edk2/IntelFrameworkPkg/Include/"/>
+        <dir name="../edk2/IntelFrameworkModulePkg/Include/"/>
+        <dir name="../edk2/UefiCpuPkg/Include/"/>
+    </includedir>
+    <defines>
+        <define name="HOST_EFI"/>
+        <define name="VBOX"/>
+        <define name="FSTYPE=hfs"/>
+        <define name="FSW_DEBUG_LEVEL=3"/>
+    </defines>
+    <exclude>
+        <path name="Library/PListLib/main.c"/>
+        <path name="Library/PListLib/plist_helpers_os.c"/>
+        <path name="VBoxFsDxe/msvc/"/>
+        <path name="VBoxFsDxe/posix/"/>
+    </exclude>
+    <libraries>
+        <library>bareBoot</library>
+        <library>edk2</library>
+    </libraries>
+</project>
