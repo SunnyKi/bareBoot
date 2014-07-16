@@ -260,7 +260,7 @@ typedef struct {
 } SETTINGS_DATA;
 
 typedef enum {
-  Unknown,
+  UnknownVendor,
   Ati,
   Intel,
   Nvidia
