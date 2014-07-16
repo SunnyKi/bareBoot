@@ -249,11 +249,11 @@ Returns:
           // Get the I/O range that the PPB is decoding
           //
           Value = PciConfigurationHeader.Bridge.IoBase & 0x0f;
-          Base  = ((UINT32)PciConfigurationHeader.Bridge.IoBase & 0xf0) << 8;
+          Base  = LShiftU64((UINT64)(PciConfigurationHeader.Bridge.IoBase & 0xf0), 8);
           Limit = (((UINT32)PciConfigurationHeader.Bridge.IoLimit & 0xf0) << 8) | 0x0fff;
           if (Value == 0x01) {
-            Base  |= ((UINT32)PciConfigurationHeader.Bridge.IoBaseUpper16 << 16);
-            Limit |= ((UINT32)PciConfigurationHeader.Bridge.IoLimitUpper16 << 16);
+            Base  |= LShiftU64((UINT64)PciConfigurationHeader.Bridge.IoBaseUpper16, 16);
+            Limit |= LShiftU64((UINT64)PciConfigurationHeader.Bridge.IoLimitUpper16, 16);
           }
           if (Base < Limit) {
             if (PrivateData->IoBase > Base) {
@@ -267,7 +267,7 @@ Returns:
           //
           // Get the Memory range that the PPB is decoding
           //
-          Base  = ((UINT32)PciConfigurationHeader.Bridge.MemoryBase & 0xfff0) << 16;
+          Base  = LShiftU64((UINT64)(PciConfigurationHeader.Bridge.MemoryBase & 0xfff0), 16);
           Limit = (((UINT32)PciConfigurationHeader.Bridge.MemoryLimit & 0xfff0) << 16) | 0xfffff;
           if (Base < Limit) {
             if (PrivateData->MemBase > Base) {
@@ -288,7 +288,7 @@ Returns:
           // Get the Prefetchable Memory range that the PPB is decoding
           //
           Value = PciConfigurationHeader.Bridge.PrefetchableMemoryBase & 0x0f;
-          Base  = ((UINT32)PciConfigurationHeader.Bridge.PrefetchableMemoryBase & 0xfff0) << 16;
+          Base  = LShiftU64((UINT64)(PciConfigurationHeader.Bridge.PrefetchableMemoryBase & 0xfff0), 16);
           Limit = (((UINT32)PciConfigurationHeader.Bridge.PrefetchableMemoryLimit & 0xfff0) << 16) | 0xffffff;
           if (Value == 0x01) {
             Base  |= LShiftU64((UINT64)PciConfigurationHeader.Bridge.PrefetchableBaseUpper32,32);
@@ -483,7 +483,7 @@ Returns:
       //
       // Scan this PCI Root Bridge for PCI Option ROMs and add them to the PCI Option ROM Table
       //
-#if 0
+#if 1
       Status = ScanPciRootBridgeForRoms(&PrivateData->Io);
 #endif
 
