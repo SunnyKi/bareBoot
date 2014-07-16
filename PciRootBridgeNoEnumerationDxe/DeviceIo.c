@@ -837,7 +837,7 @@ Returns:
 
 --*/
 {
-  if (((HostAddress & EFI_PAGE_MASK) != 0) || (Pages <= 0)) {
+  if (((HostAddress & EFI_PAGE_MASK) != 0) || (Pages < 1)) {
     return EFI_INVALID_PARAMETER;
   }
 
