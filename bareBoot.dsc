@@ -197,15 +197,21 @@
 
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
+  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+!ifdef FULLPCI
+  PcAtChipsetPkg/PciHostBridgeDxe/PciHostBridgeDxe.inf
+  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+!else
   bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+!endif
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
 #  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf
 
   # IDE/AHCI Support
 #  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
+
 !ifdef BLOCKIO
   bareBoot/BlockIoDxe/BlockIoDxe.inf
 !else

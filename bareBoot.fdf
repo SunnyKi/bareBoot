@@ -82,9 +82,14 @@ INF  MdeModulePkg/Universal/Metronome/Metronome.inf
 INF  PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
 INF  PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
 INF  PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
+INF  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+!ifdef FULLPCI
+INF  PcAtChipsetPkg/PciHostBridgeDxe/PciHostBridgeDxe.inf
+INF  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+!else
 INF  bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
 INF  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-INF  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+!endif
 
   # IDE/AHCI Support
 #INF  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
