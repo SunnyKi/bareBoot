@@ -483,7 +483,7 @@ Returns:
       //
       // Scan this PCI Root Bridge for PCI Option ROMs and add them to the PCI Option ROM Table
       //
-#if 1
+#if 0
       Status = ScanPciRootBridgeForRoms(&PrivateData->Io);
 #endif
 
