@@ -234,7 +234,7 @@ GetKernelVersion (
     "__cstring"
   };
 
-  for (sec=0; sec < 2; sec++) {
+  for (sec = 0; sec < sizeof (secName) / sizeof (CHAR8 *); sec++) {
     GetSection ("__TEXT", secName[sec], &addr, &size);
     for (i = addr; i < addr + size; i++) {
       if (AsciiStrnCmp ((CHAR8 *) i, "Darwin Kernel Version", 21) == 0) {
