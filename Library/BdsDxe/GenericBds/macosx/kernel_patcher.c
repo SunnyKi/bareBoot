@@ -65,6 +65,7 @@ SetKernelRelocBase (
     return;
 }
 
+#if 0
 VOID
 GetSegment (
   IN CHAR8    *Segment,
@@ -134,6 +135,7 @@ GetSegment (
   
   return;
 }
+#endif
 
 VOID
 GetSection (
@@ -224,31 +226,32 @@ GetKernelVersion (
   )
 {
   CHAR8           *s, *s1, *kv;
-  UINT32           addr, size;
-  UINTN           i, i2, i3, kvBegin;
+  UINT32          addr, size;
+  UINTN           sec, i, i2, i3, kvBegin;
   
-  GetSegment ("__TEXT", &addr, &size);
+  CHAR8           *secName[] = {
+    "__const",
+    "__cstring"
+  };
 
-  if (addr == 0) {
-    addr = (UINT32) *(UINT8 *) KernelData;
-    size = 0x1000000;
-  }
-
-  for (i = addr; i < addr + size; i++) {
-    if (AsciiStrnCmp ((CHAR8 *) i, "Darwin Kernel Version", 21) == 0) {
-      kvBegin = i + 22;
-      i2 = kvBegin;
-      s = (CHAR8 *) kvBegin;
-      while (AsciiStrnCmp ((CHAR8 *) i2, ":", 1) != 0) {
-        i2++;
+  for (sec=0; sec < 2; sec++) {
+    GetSection ("__TEXT", secName[sec], &addr, &size);
+    for (i = addr; i < addr + size; i++) {
+      if (AsciiStrnCmp ((CHAR8 *) i, "Darwin Kernel Version", 21) == 0) {
+        kvBegin = i + 22;
+        i2 = kvBegin;
+        s = (CHAR8 *) kvBegin;
+        while (AsciiStrnCmp ((CHAR8 *) i2, ":", 1) != 0) {
+          i2++;
+        }
+        kv = (CHAR8 *) AllocateZeroPool (i2 - kvBegin + 1);
+        s1 = kv;
+        for (i3 = kvBegin; i3 < i2; i3++) {
+          *s1++ = *s++;
+        }
+        *s1 = 0;
+        return kv;
       }
-      kv = (CHAR8 *) AllocateZeroPool (i2 - kvBegin + 1);
-      s1 = kv;
-      for (i3 = kvBegin; i3 < i2; i3++) {
-        *s1++ = *s++;
-      }
-      *s1 = 0;
-      return kv;
     }
   }
   return NULL;
