@@ -392,7 +392,7 @@ ICpuProps (
     }
     break;
 
-  case 0x0F:  /* Family */
+  case 0x0F:  /* NetBurst Family */
     if (gCPUStructure.Model >= 0x03) {
       msr = AsmReadMsr64(MSR_IA32_PLATFORM_ID);
       if ((msr & BIT31) == 0) {
