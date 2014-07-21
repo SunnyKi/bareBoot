@@ -393,20 +393,18 @@ ICpuProps (
     break;
 
   case 0x0F:  /* NetBurst Family */
-    if (gCPUStructure.Model >= 0x03) {
-      msr = AsmReadMsr64(MSR_IA32_PLATFORM_ID);
-      if ((msr & BIT31) == 0) {
+    msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
+#if 1
+#else
+    gCPUStructure.MaxRatio = (UINT8) MultU64x32 ((RShiftU64 (msr, 8) & 0x1f), 10);
+    if (gCPUStructure.MaxRatio == 0) {
 	break;
-      }
-      gCPUStructure.MaxRatio = (UINT8) MultU64x32 ((RShiftU64 (msr, 8) & 0x1f), 10);
-      if (gCPUStructure.MaxRatio == 0) {
-	break;
-      }
-      gCPUStructure.FSBFrequency = DivU64x32 (
-                                     MultU64x32 (gCPUStructure.CPUFrequency, 10),
-                                     gCPUStructure.MaxRatio
-                                   );
     }
+    gCPUStructure.FSBFrequency = DivU64x32 (
+                                   MultU64x32 (gCPUStructure.CPUFrequency, 10),
+                                   gCPUStructure.MaxRatio
+                                 );
+#endif
     break;
 
   default:  /* Family */
