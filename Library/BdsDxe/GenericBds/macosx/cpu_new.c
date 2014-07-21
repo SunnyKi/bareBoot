@@ -393,9 +393,16 @@ ICpuProps (
     break;
 
   case 0x0F:  /* NetBurst Family */
-    msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
-#if 1
-#else
+    switch (gCPUStructure.Model) {
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+      msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
+      break;
+    default:  /* Ignore models 0 & 1 */
+      break;
+#if 0
     gCPUStructure.MaxRatio = (UINT8) MultU64x32 ((RShiftU64 (msr, 8) & 0x1f), 10);
     if (gCPUStructure.MaxRatio == 0) {
 	break;
