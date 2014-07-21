@@ -198,7 +198,7 @@ ICpuNehalemProps (
       for (ProtocolIndex = 0; ProtocolIndex < ArrayCount; ProtocolIndex++) {
         if (!CompareGuid (&gEfiPciIoProtocolGuid, ProtocolGuidArray[ProtocolIndex])) {
           continue;
-	}
+  }
         Status = gBS->OpenProtocol (
                         HandleBuffer[HandleIndex],
                         &gEfiPciIoProtocolGuid,
@@ -210,7 +210,7 @@ ICpuNehalemProps (
 
         if (EFI_ERROR (Status)) {
           continue;
-	}
+  }
         Status = PciIo->GetLocation (PciIo, &Segment, &Bus, &Device, &Function);
 
         if ((Bus & 0x3F) != 0x3F) {
@@ -277,7 +277,7 @@ ICpuProps (
 
   if ((gCPUStructure.Family == 0x0f) ||
       (gCPUStructure.Family == 0x06)) {
-    gCPUStructure.Model       += (gCPUStructure.Extmodel << 4);
+    gCPUStructure.Model += (gCPUStructure.Extmodel << 4);
   }
 
   DoCpuidEx (0x00000004, 0, gCPUStructure.CPUID[CPUID_4]);
@@ -322,14 +322,14 @@ ICpuProps (
   case 0x06:  /* Family */
     if (gCPUStructure.Model >= 0x0C) {
       switch (gCPUStructure.Model) {
-      case CPU_MODEL_SANDY_BRIDGE:
-      case CPU_MODEL_JAKETOWN:
-      case CPU_MODEL_IVY_BRIDGE:
-      case CPU_MODEL_IVY_BRIDGE_E5:
       case CPU_MODEL_HASWELL:
       case CPU_MODEL_HASWELL_MB:
       case CPU_MODEL_HASWELL_ULT:
       case CPU_MODEL_HASWELL_ULX:
+      case CPU_MODEL_IVY_BRIDGE:
+      case CPU_MODEL_IVY_BRIDGE_E5:
+      case CPU_MODEL_JAKETOWN:
+      case CPU_MODEL_SANDY_BRIDGE:
         msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
         gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
         if (gCPUStructure.MaxRatio != 0) {
@@ -347,12 +347,12 @@ ICpuProps (
         }
         break;
       
-      case CPU_MODEL_NEHALEM:     // Core i7 LGA1366, Xeon 5500, "Bloomfield", "Gainstown", 45nm
-      case CPU_MODEL_FIELDS:      // Core i7, i5 LGA1156, "Clarksfield", "Lynnfield", "Jasper", 45nm
-      case CPU_MODEL_DALES:       // Core i7, i5, Nehalem
       case CPU_MODEL_CLARKDALE:   // Core i7, i5, i3 LGA1156, "Westmere", "Clarkdale", , 32nm
-      case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
+      case CPU_MODEL_DALES:       // Core i7, i5, Nehalem
+      case CPU_MODEL_FIELDS:      // Core i7, i5 LGA1156, "Clarksfield", "Lynnfield", "Jasper", 45nm
+      case CPU_MODEL_NEHALEM:     // Core i7 LGA1366, Xeon 5500, "Bloomfield", "Gainstown", 45nm
       case CPU_MODEL_NEHALEM_EX:  // Core i7, Nehalem-Ex Xeon, "Beckton"
+      case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
       case CPU_MODEL_WESTMERE_EX: // Core i7, Nehalem-Ex Xeon, "Eagleton"
         msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
         gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
@@ -364,9 +364,9 @@ ICpuProps (
 
       case CPU_MODEL_ATOM:        // Core i7 & Atom
       case CPU_MODEL_DOTHAN:      // Pentium M, Dothan, 90nm
-      case CPU_MODEL_YONAH:       // Core Duo/Solo, Pentium M DC
       case CPU_MODEL_MEROM:       // Core Xeon, Core 2 DC, 65nm
       case CPU_MODEL_PENRYN:      // Core 2 Duo/Extreme, Xeon, 45nm
+      case CPU_MODEL_YONAH:       // Core Duo/Solo, Pentium M DC
         msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
         gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
         gCPUStructure.TurboMsr = ((UINT32) RShiftU64(msr, 40)) & 0x1F;
@@ -393,28 +393,20 @@ ICpuProps (
     break;
 
   case 0x0F:  /* NetBurst Family */
-    switch (gCPUStructure.Model) {
-    case 2:
-    case 3:
-    case 4:
-    case 6:
-      msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
+    if (gCPUStructure.Model < 2) {
       break;
-    default:  /* Ignore models 0 & 1 */
-      break;
+    }
+    msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
+    break;
 #if 0
     gCPUStructure.MaxRatio = (UINT8) MultU64x32 ((RShiftU64 (msr, 8) & 0x1f), 10);
     if (gCPUStructure.MaxRatio == 0) {
-	break;
+      break;
     }
-    gCPUStructure.FSBFrequency = DivU64x32 (
-                                   MultU64x32 (gCPUStructure.CPUFrequency, 10),
-                                   gCPUStructure.MaxRatio
-                                 );
+    gCPUStructure.FSBFrequency = DivU64x32 ( MultU64x32 (gCPUStructure.CPUFrequency, 10), gCPUStructure.MaxRatio);
 #endif
-    break;
 
-  default:  /* Family */
+  default:  /* Unknown Family */
     break;
   }
 
