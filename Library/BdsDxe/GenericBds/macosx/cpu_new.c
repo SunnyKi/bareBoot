@@ -443,15 +443,6 @@ GetCpuProps (
   gCPUStructure.Extfamily   = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 27, 20);
   gCPUStructure.Features    = quad (gCPUStructure.CPUID[CPUID_1][ECX], gCPUStructure.CPUID[CPUID_1][EDX]);
 
-  if (gCPUStructure.Family == 0x0f) {
-    gCPUStructure.Family += gCPUStructure.Extfamily;
-  }
-
-  if ((gCPUStructure.Family == 0x0f) ||
-      (gCPUStructure.Family == 0x06)) {
-    gCPUStructure.Model += (gCPUStructure.Extmodel << 4);
-  }
-
   if (gCPUStructure.CPUID[CPUID_80][EAX] >= 0x80000001) {
     DoCpuid (0x80000001, gCPUStructure.CPUID[CPUID_81]);
     gCPUStructure.ExtFeatures = quad (gCPUStructure.CPUID[CPUID_81][ECX], gCPUStructure.CPUID[CPUID_81][EDX]);
