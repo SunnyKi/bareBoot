@@ -41,9 +41,9 @@
 #define CPU_MODEL_IVY_BRIDGE    0x3A
 #define CPU_MODEL_IVY_BRIDGE_E5 0x3E
 #define CPU_MODEL_HASWELL       0x3C  /* Haswell DT */
-#define CPU_MODEL_HASWELL_MB		0x3F	/* Haswell MB */
-#define CPU_MODEL_HASWELL_ULT		0x45	/* Haswell ULT */
-#define CPU_MODEL_HASWELL_ULX		0x46	/* Haswell ULX */
+#define CPU_MODEL_HASWELL_MB    0x3F  /* Haswell MB */
+#define CPU_MODEL_HASWELL_ULT    0x45  /* Haswell ULT */
+#define CPU_MODEL_HASWELL_ULX    0x46  /* Haswell ULX */
 
 #define CPU_VENDOR_INTEL  0x756E6547
 #define CPU_VENDOR_AMD    0x68747541

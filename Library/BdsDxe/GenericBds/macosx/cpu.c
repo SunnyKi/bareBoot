@@ -387,7 +387,7 @@ GetCpuProps (
         gCPUStructure.Mobile = TRUE;
       }
 #endif
-		}	else {
+    }  else {
         msr = AsmReadMsr64(MSR_IA32_PLATFORM_ID);
         if ((RShiftU64(msr, 31) & 0x01) != 0) {
           gCPUStructure.MaxRatio = (UINT8) MultU64x32 ((RShiftU64 (msr, 8) & 0x1f), 10);
