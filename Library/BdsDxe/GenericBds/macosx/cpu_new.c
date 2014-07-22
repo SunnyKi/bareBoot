@@ -357,30 +357,46 @@ ICpuFamily0F (
 {
   UINT64 msr;
   UINT8  sbspeed;  /* Scalable Bus Speed */
-  UINT8  cbratio;
+
+  gCPUStructure.FSBFrequency = 100000000ULL;
+
+  if (gCPUStructure.Model < 2) {
+    return;
+  }
 
   msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
-  switch (gCPUStructure.Model) {
+
+  gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 24, 31);
+  sbspeed = (UINT8) BitFieldRead64 (msr, 16, 18);
+
+  switch (sbspeed) {
   case 0:
+    if (gCPUStructure.Model == 3 || gCPUStructure.Model == 4) {
+      gCPUStructure.FSBFrequency = 266670000ULL;
+    }
+    break;
+
   case 1:
-    cbratio = 0;
-    sbspeed = (UINT8) BitFieldRead64 (msr, 21, 23);
+    gCPUStructure.FSBFrequency = 133330000ULL;
     break;
 
   case 2:
+    gCPUStructure.FSBFrequency = 200000000ULL;
+    break;
+
   case 3:
+    gCPUStructure.FSBFrequency = 166670000ULL;
+    break;
+
   case 4:
-  case 6:
-    cbratio = (UINT8) BitFieldRead64 (msr, 24, 31);
-    sbspeed = (UINT8) BitFieldRead64 (msr, 16, 18);
+    if (gCPUStructure.Model == 6) {
+      gCPUStructure.FSBFrequency = 333330000ULL;
+    }
     break;
 
   default:
-    cbratio = 0;
-    sbspeed = 0;
     break;
   }
-  DBG ("%a: cbratio 0x%02x, sbspeed 0x%02x\n", __FUNCTION__, cbratio, sbspeed);
 }
 
 VOID
