@@ -381,7 +381,7 @@ ICpuProps (
   }
 
   DoCpuidEx (0x00000004, 0, gCPUStructure.CPUID[CPUID_4]);
-  gCPUStructure.CoresPerPackage =  BitFielsRead32 (gCPUStructure.CPUID[CPUID_4][EAX], 26, 31) + 1;
+  gCPUStructure.CoresPerPackage =  BitFieldRead32 (gCPUStructure.CPUID[CPUID_4][EAX], 26, 31) + 1;
 
   switch (gCPUStructure.Model) {
   case CPU_MODEL_CLARKDALE:
@@ -405,7 +405,7 @@ ICpuProps (
   case CPU_MODEL_WESTMERE:
   case CPU_MODEL_WESTMERE_EX:
     msr = AsmReadMsr64 (MSR_CORE_THREAD_COUNT);
-    gCPUStructure.Cores   = (UINT8) BitFielsRead64 (msr, 16, 19);
+    gCPUStructure.Cores   = (UINT8) BitFieldRead64 (msr, 16, 19);
     gCPUStructure.Threads = (UINT8) BitFieldRead64 (msr, 0,  15);
     break;
 
@@ -486,7 +486,7 @@ GetCpuProps (
   //
   // Number of logical processors per physical processor package
 
-  gCPUStructure.LogicalPerPackage = BitFielsRead32 (gCPUStructure.CPUID[CPUID_1][EBX], 16, 23);
+  gCPUStructure.LogicalPerPackage = BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EBX], 16, 23);
 
 #if 0
   // Total number of threads serviced by this cache
