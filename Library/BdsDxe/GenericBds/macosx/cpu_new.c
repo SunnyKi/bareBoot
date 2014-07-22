@@ -33,6 +33,8 @@
  * @APPLE_OSREFERENCE_LICENSE_HEADER_END@
  */
 
+/* nms was here */
+
 #include <macosx.h>
 #include <Library/IoLib.h>
 
@@ -79,7 +81,7 @@ MeasureTSCFrequency (
   UINT64 retval;
   UINTN i;
 
-  tscDelta = 0xffffffffffffffffULL;
+  tscDelta = ~((UINT64) 0);
   retval = 0;
 
   for (i = 0; i < 3; ++i) {
@@ -140,7 +142,8 @@ ACpuProps (
   UINT64                msr;
 
   DoCpuid(0x80000008, gCPUStructure.CPUID[CPUID_88]);
-  gCPUStructure.CoresPerPackage =  (gCPUStructure.CPUID[CPUID_88][ECX] & 0xFF) + 1;
+
+  gCPUStructure.CoresPerPackage =  ((UINT8) gCPUStructure.CPUID[CPUID_88][ECX]) + 1;
 
   if (gCPUStructure.Extfamily == 0x00) {
     msr = AsmReadMsr64 (K8_FIDVID_STATUS);
@@ -156,7 +159,6 @@ ACpuProps (
   gCPUStructure.FSBFrequency = DivU64x32 (LShiftU64 (gCPUStructure.TSCFrequency, 1),
                                           gCPUStructure.MaxRatio);
   gCPUStructure.MaxRatio *= 5;
-
 }
 
 VOID
@@ -196,7 +198,7 @@ ICpuNehalemProps (
       for (ProtocolIndex = 0; ProtocolIndex < ArrayCount; ProtocolIndex++) {
         if (!CompareGuid (&gEfiPciIoProtocolGuid, ProtocolGuidArray[ProtocolIndex])) {
           continue;
-  }
+        }
         Status = gBS->OpenProtocol (
                         HandleBuffer[HandleIndex],
                         &gEfiPciIoProtocolGuid,
@@ -208,7 +210,7 @@ ICpuNehalemProps (
 
         if (EFI_ERROR (Status)) {
           continue;
-  }
+        }
         Status = PciIo->GetLocation (PciIo, &Segment, &Bus, &Device, &Function);
 
         if ((Bus & 0x3F) != 0x3F) {
@@ -281,16 +283,17 @@ ICpuFamily06 (
   case CPU_MODEL_JAKETOWN:
   case CPU_MODEL_SANDY_BRIDGE:
     msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
-    gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
+    gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 0, 7);
     if (gCPUStructure.MaxRatio != 0) {
       gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
     }
     msr = AsmReadMsr64 (MSR_FLEX_RATIO);
-    if ((msr & 0x10000) != 0) {
-      flex_ratio = (UINT8) (((UINT16) msr) >> 8);
+    if ((msr & BIT16) != 0) {
+      flex_ratio = (UINT8) BitFieldRead64 (msr, 8, 15);
 
       if (flex_ratio == 0) {
-        AsmWriteMsr64 (MSR_FLEX_RATIO, (msr & 0xFFFFFFFFFFFEFFFFULL));
+        /* XXX: What is done here? */
+        AsmWriteMsr64 (MSR_FLEX_RATIO, (msr & ~((UINT64) BIT16)));
         gBS->Stall (10);
         msr = AsmReadMsr64 (MSR_FLEX_RATIO);
       }
@@ -305,8 +308,8 @@ ICpuFamily06 (
   case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
   case CPU_MODEL_WESTMERE_EX: // Core i7, Nehalem-Ex Xeon, "Eagleton"
     msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
-    gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
-    gCPUStructure.TurboMsr = msr + 1;
+    gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 0, 7);
+    gCPUStructure.TurboMsr = msr + 1;  /* XXX: suspicious action! */
     if (gCPUStructure.MaxRatio != 0) {
       gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
     }
@@ -318,9 +321,15 @@ ICpuFamily06 (
   case CPU_MODEL_PENRYN:      // Core 2 Duo/Extreme, Xeon, 45nm
   case CPU_MODEL_YONAH:       // Core Duo/Solo, Pentium M DC
     msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
+#if 0
     gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
     gCPUStructure.TurboMsr = ((UINT32) RShiftU64(msr, 40)) & 0x1F;
     gCPUStructure.SubDivider = ((UINT32) RShiftU64 (msr, 14)) & 0x1;
+#else
+    gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 8, 12);
+    gCPUStructure.TurboMsr = (UINT32) BitFieldRead64(msr, 40, 44);
+    gCPUStructure.SubDivider = (UINT32) BitFieldRead64 (msr, 14, 14);
+#endif
     gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
     if (gCPUStructure.MaxRatio != 0) {
       gCPUStructure.FSBFrequency = DivU64x32 (
@@ -363,8 +372,8 @@ ICpuProps (
   flex_ratio = 0;
   
   AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
-  gCPUStructure.MicroCode = RShiftU64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32);
-  gCPUStructure.ProcessorFlag = RShiftU64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50) & 3;
+  gCPUStructure.MicroCode = BitFieldRead64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32, 63);
+  gCPUStructure.ProcessorFlag = BitFieldRead64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50, 52);
 
   if ((gCPUStructure.Family == 0x0f) ||
       (gCPUStructure.Family == 0x06)) {
@@ -372,39 +381,38 @@ ICpuProps (
   }
 
   DoCpuidEx (0x00000004, 0, gCPUStructure.CPUID[CPUID_4]);
-  gCPUStructure.CoresPerPackage =  bitfield (gCPUStructure.CPUID[CPUID_4][EAX], 31, 26) + 1;
+  gCPUStructure.CoresPerPackage =  BitFielsRead32 (gCPUStructure.CPUID[CPUID_4][EAX], 26, 31) + 1;
 
   switch (gCPUStructure.Model) {
+  case CPU_MODEL_CLARKDALE:
+  case CPU_MODEL_FIELDS:
+  case CPU_MODEL_HASWELL:
+  case CPU_MODEL_HASWELL_MB:
+  case CPU_MODEL_HASWELL_ULT:
+  case CPU_MODEL_HASWELL_ULX:
+  case CPU_MODEL_IVY_BRIDGE:
+  case CPU_MODEL_IVY_BRIDGE_E5:
+  case CPU_MODEL_JAKETOWN:
+  case CPU_MODEL_NEHALEM:
+  case CPU_MODEL_NEHALEM_EX:
+  case CPU_MODEL_SANDY_BRIDGE:
+    msr = AsmReadMsr64 (MSR_CORE_THREAD_COUNT);
+    gCPUStructure.Cores   = (UINT8) BitFieldRead64 (msr, 16, 31);
+    gCPUStructure.Threads = (UINT8) BitFieldRead64 (msr, 0,  15);
+    break;
 
-    case CPU_MODEL_NEHALEM:
-    case CPU_MODEL_FIELDS:
-    case CPU_MODEL_CLARKDALE:
-    case CPU_MODEL_NEHALEM_EX:
-    case CPU_MODEL_JAKETOWN:
-    case CPU_MODEL_SANDY_BRIDGE:
-    case CPU_MODEL_IVY_BRIDGE:
-    case CPU_MODEL_IVY_BRIDGE_E5:
-    case CPU_MODEL_HASWELL:
-    case CPU_MODEL_HASWELL_MB:
-    case CPU_MODEL_HASWELL_ULT:
-    case CPU_MODEL_HASWELL_ULX:
-      msr = AsmReadMsr64 (MSR_CORE_THREAD_COUNT);
-      gCPUStructure.Cores   = (UINT8) bitfield ((UINT32) msr, 31, 16);
-      gCPUStructure.Threads = (UINT8) bitfield ((UINT32) msr, 15,  0);
-      break;
+  case CPU_MODEL_DALES:
+  case CPU_MODEL_WESTMERE:
+  case CPU_MODEL_WESTMERE_EX:
+    msr = AsmReadMsr64 (MSR_CORE_THREAD_COUNT);
+    gCPUStructure.Cores   = (UINT8) BitFielsRead64 (msr, 16, 19);
+    gCPUStructure.Threads = (UINT8) BitFieldRead64 (msr, 0,  15);
+    break;
 
-    case CPU_MODEL_DALES:
-    case CPU_MODEL_WESTMERE:
-    case CPU_MODEL_WESTMERE_EX:
-      msr = AsmReadMsr64 (MSR_CORE_THREAD_COUNT);
-      gCPUStructure.Cores   = (UINT8) bitfield ((UINT32) msr, 19, 16);
-      gCPUStructure.Threads = (UINT8) bitfield ((UINT32) msr, 15,  0);
-      break;
-
-    default:
-      gCPUStructure.Cores   = (UINT8) (gCPUStructure.CoresPerPackage & 0xff);
-      gCPUStructure.Threads = (UINT8) (gCPUStructure.LogicalPerPackage & 0xff);
-      break;
+  default:
+    gCPUStructure.Cores   = (UINT8) gCPUStructure.CoresPerPackage;
+    gCPUStructure.Threads = (UINT8) gCPUStructure.LogicalPerPackage;
+    break;
   }
 
   /* MaxRatio & FSBFrequency */
@@ -447,12 +455,21 @@ GetCpuProps (
 
   gCPUStructure.Vendor      = gCPUStructure.CPUID[CPUID_0][EBX];
   gCPUStructure.Signature   = gCPUStructure.CPUID[CPUID_1][EAX];
+#if 0
   gCPUStructure.Stepping    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 3, 0);
   gCPUStructure.Model       = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 7, 4);
   gCPUStructure.Family      = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 11, 8);
   gCPUStructure.Type        = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 13, 12);
   gCPUStructure.Extmodel    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 19, 16);
   gCPUStructure.Extfamily   = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 27, 20);
+#else
+  gCPUStructure.Stepping    = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 0, 3);
+  gCPUStructure.Model       = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 4, 7);
+  gCPUStructure.Family      = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 8, 11);
+  gCPUStructure.Type        = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 12, 13);
+  gCPUStructure.Extmodel    = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 16, 19);
+  gCPUStructure.Extfamily   = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 20, 27);
+#endif
   gCPUStructure.Features    = quad (gCPUStructure.CPUID[CPUID_1][ECX], gCPUStructure.CPUID[CPUID_1][EDX]);
 
   if (gCPUStructure.CPUID[CPUID_80][EAX] >= 0x80000001) {
@@ -464,12 +481,12 @@ GetCpuProps (
     DoCpuid (0x80000007, gCPUStructure.CPUID[CPUID_87]);
     gCPUStructure.ExtFeatures |= gCPUStructure.CPUID[CPUID_87][EDX] & (UINT32) CPUID_EXTFEATURE_TSCI;
   }  
-  //
+
   // Cores & Threads count
   //
   // Number of logical processors per physical processor package
 
-  gCPUStructure.LogicalPerPackage = bitfield (gCPUStructure.CPUID[CPUID_1][EBX], 23, 16);
+  gCPUStructure.LogicalPerPackage = BitFielsRead32 (gCPUStructure.CPUID[CPUID_1][EBX], 16, 23);
 
 #if 0
   // Total number of threads serviced by this cache
