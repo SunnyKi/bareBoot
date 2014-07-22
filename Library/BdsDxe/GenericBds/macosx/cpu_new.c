@@ -139,8 +139,6 @@ ACpuProps (
 {
   UINT64                msr;
 
-  msr = 0;
-  
   DoCpuid(0x80000008, gCPUStructure.CPUID[CPUID_88]);
   gCPUStructure.CoresPerPackage =  (gCPUStructure.CPUID[CPUID_88][ECX] & 0xFF) + 1;
 
@@ -261,6 +259,99 @@ ICpuNehalemProps (
 }
 
 VOID
+ICpuFamily06 (
+  VOID
+)
+{
+  UINT64                msr;
+  UINT64                flex_ratio;
+
+  msr = 0;
+  flex_ratio = 0;
+  
+  /* MaxRatio & FSBFrequency */
+
+  switch (gCPUStructure.Model) {
+  case CPU_MODEL_HASWELL:
+  case CPU_MODEL_HASWELL_MB:
+  case CPU_MODEL_HASWELL_ULT:
+  case CPU_MODEL_HASWELL_ULX:
+  case CPU_MODEL_IVY_BRIDGE:
+  case CPU_MODEL_IVY_BRIDGE_E5:
+  case CPU_MODEL_JAKETOWN:
+  case CPU_MODEL_SANDY_BRIDGE:
+    msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
+    gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
+    if (gCPUStructure.MaxRatio != 0) {
+      gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
+    }
+    msr = AsmReadMsr64 (MSR_FLEX_RATIO);
+    if ((msr & 0x10000) != 0) {
+      flex_ratio = (UINT8) (((UINT16) msr) >> 8);
+
+      if (flex_ratio == 0) {
+        AsmWriteMsr64 (MSR_FLEX_RATIO, (msr & 0xFFFFFFFFFFFEFFFFULL));
+        gBS->Stall (10);
+        msr = AsmReadMsr64 (MSR_FLEX_RATIO);
+      }
+    }
+    break;
+  
+  case CPU_MODEL_CLARKDALE:   // Core i7, i5, i3 LGA1156, "Westmere", "Clarkdale", , 32nm
+  case CPU_MODEL_DALES:       // Core i7, i5, Nehalem
+  case CPU_MODEL_FIELDS:      // Core i7, i5 LGA1156, "Clarksfield", "Lynnfield", "Jasper", 45nm
+  case CPU_MODEL_NEHALEM:     // Core i7 LGA1366, Xeon 5500, "Bloomfield", "Gainstown", 45nm
+  case CPU_MODEL_NEHALEM_EX:  // Core i7, Nehalem-Ex Xeon, "Beckton"
+  case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
+  case CPU_MODEL_WESTMERE_EX: // Core i7, Nehalem-Ex Xeon, "Eagleton"
+    msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
+    gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
+    gCPUStructure.TurboMsr = msr + 1;
+    if (gCPUStructure.MaxRatio != 0) {
+      gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
+    }
+    break;
+
+  case CPU_MODEL_ATOM:        // Core i7 & Atom
+  case CPU_MODEL_DOTHAN:      // Pentium M, Dothan, 90nm
+  case CPU_MODEL_MEROM:       // Core Xeon, Core 2 DC, 65nm
+  case CPU_MODEL_PENRYN:      // Core 2 Duo/Extreme, Xeon, 45nm
+  case CPU_MODEL_YONAH:       // Core Duo/Solo, Pentium M DC
+    msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
+    gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
+    gCPUStructure.TurboMsr = ((UINT32) RShiftU64(msr, 40)) & 0x1F;
+    gCPUStructure.SubDivider = ((UINT32) RShiftU64 (msr, 14)) & 0x1;
+    gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
+    if (gCPUStructure.MaxRatio != 0) {
+      gCPUStructure.FSBFrequency = DivU64x32 (
+                                     MultU64x32 (gCPUStructure.CPUFrequency, 10),
+                                     gCPUStructure.MaxRatio
+                                   );
+    }
+    break;
+
+  default:
+    gCPUStructure.FSBFrequency = 100000000ull;
+    break;
+  }
+#if 0
+  if (AsmReadMsr64 (MSR_IA32_PLATFORM_ID) & (1 << 28)) {
+    gCPUStructure.Mobile = TRUE;
+  }
+#endif
+}
+
+VOID
+ICpuFamily0F (
+  VOID
+)
+{
+  UINT64                msr;
+
+  msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
+}
+
+VOID
 ICpuProps (
   VOID
 )
@@ -320,91 +411,12 @@ ICpuProps (
 
   switch (gCPUStructure.Family) {
   case 0x06:  /* Family */
-    if (gCPUStructure.Model >= 0x0C) {
-      switch (gCPUStructure.Model) {
-      case CPU_MODEL_HASWELL:
-      case CPU_MODEL_HASWELL_MB:
-      case CPU_MODEL_HASWELL_ULT:
-      case CPU_MODEL_HASWELL_ULX:
-      case CPU_MODEL_IVY_BRIDGE:
-      case CPU_MODEL_IVY_BRIDGE_E5:
-      case CPU_MODEL_JAKETOWN:
-      case CPU_MODEL_SANDY_BRIDGE:
-        msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
-        gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
-        if (gCPUStructure.MaxRatio != 0) {
-          gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
-        }
-        msr = AsmReadMsr64 (MSR_FLEX_RATIO);
-        if ((msr & 0x10000) != 0) {
-          flex_ratio = (UINT8) (((UINT16) msr) >> 8);
-
-          if (flex_ratio == 0) {
-            AsmWriteMsr64 (MSR_FLEX_RATIO, (msr & 0xFFFFFFFFFFFEFFFFULL));
-            gBS->Stall (10);
-            msr = AsmReadMsr64 (MSR_FLEX_RATIO);
-          }
-        }
-        break;
-      
-      case CPU_MODEL_CLARKDALE:   // Core i7, i5, i3 LGA1156, "Westmere", "Clarkdale", , 32nm
-      case CPU_MODEL_DALES:       // Core i7, i5, Nehalem
-      case CPU_MODEL_FIELDS:      // Core i7, i5 LGA1156, "Clarksfield", "Lynnfield", "Jasper", 45nm
-      case CPU_MODEL_NEHALEM:     // Core i7 LGA1366, Xeon 5500, "Bloomfield", "Gainstown", 45nm
-      case CPU_MODEL_NEHALEM_EX:  // Core i7, Nehalem-Ex Xeon, "Beckton"
-      case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
-      case CPU_MODEL_WESTMERE_EX: // Core i7, Nehalem-Ex Xeon, "Eagleton"
-        msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
-        gCPUStructure.MaxRatio = (UINT8) (((UINT16) msr) >> 8);
-        gCPUStructure.TurboMsr = msr + 1;
-        if (gCPUStructure.MaxRatio != 0) {
-          gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
-        }
-        break;
-
-      case CPU_MODEL_ATOM:        // Core i7 & Atom
-      case CPU_MODEL_DOTHAN:      // Pentium M, Dothan, 90nm
-      case CPU_MODEL_MEROM:       // Core Xeon, Core 2 DC, 65nm
-      case CPU_MODEL_PENRYN:      // Core 2 Duo/Extreme, Xeon, 45nm
-      case CPU_MODEL_YONAH:       // Core Duo/Solo, Pentium M DC
-        msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-        gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
-        gCPUStructure.TurboMsr = ((UINT32) RShiftU64(msr, 40)) & 0x1F;
-        gCPUStructure.SubDivider = ((UINT32) RShiftU64 (msr, 14)) & 0x1;
-        gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
-        if (gCPUStructure.MaxRatio != 0) {
-          gCPUStructure.FSBFrequency = DivU64x32 (
-                                         MultU64x32 (gCPUStructure.CPUFrequency, 10),
-                                         gCPUStructure.MaxRatio
-                                       );
-        }
-        break;
-
-      default:
-        gCPUStructure.FSBFrequency = 100000000ull;
-        break;
-      }
-#if 0
-      if (AsmReadMsr64 (MSR_IA32_PLATFORM_ID) & (1 << 28)) {
-        gCPUStructure.Mobile = TRUE;
-      }
-#endif
-    }
+    ICpuFamily06 ();
     break;
 
   case 0x0F:  /* NetBurst Family */
-    if (gCPUStructure.Model < 2) {
-      break;
-    }
-    msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
+    ICpuFamily0F ();
     break;
-#if 0
-    gCPUStructure.MaxRatio = (UINT8) MultU64x32 ((RShiftU64 (msr, 8) & 0x1f), 10);
-    if (gCPUStructure.MaxRatio == 0) {
-      break;
-    }
-    gCPUStructure.FSBFrequency = DivU64x32 ( MultU64x32 (gCPUStructure.CPUFrequency, 10), gCPUStructure.MaxRatio);
-#endif
 
   default:  /* Unknown Family */
     break;
