@@ -375,10 +375,7 @@ ICpuProps (
   gCPUStructure.MicroCode = BitFieldRead64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32, 63);
   gCPUStructure.ProcessorFlag = BitFieldRead64 (AsmReadMsr64 (MSR_IA32_PLATFORM_ID), 50, 52);
 
-  if ((gCPUStructure.Family == 0x0f) ||
-      (gCPUStructure.Family == 0x06)) {
-    gCPUStructure.Model += (gCPUStructure.Extmodel << 4);
-  }
+  gCPUStructure.Model += (gCPUStructure.Extmodel << 4);
 
   DoCpuidEx (0x00000004, 0, gCPUStructure.CPUID[CPUID_4]);
   gCPUStructure.CoresPerPackage =  BitFieldRead32 (gCPUStructure.CPUID[CPUID_4][EAX], 26, 31) + 1;
