@@ -356,6 +356,7 @@ ICpuFamily0F (
 )
 {
   UINT64 msr;
+  UINT64 cfreq;
   UINT8  sbspeed;  /* Scalable Bus Speed */
 
   gCPUStructure.FSBFrequency = 100000000ULL;
@@ -396,6 +397,10 @@ ICpuFamily0F (
 
   default:
     break;
+  }
+  if (gCPUStructure.MaxRatio > 0) {
+    cfreq = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
+    DBG ("%a: Calculated fsb frequency %ld\n", __FUNCTION__, cfreq);
   }
 }
 
