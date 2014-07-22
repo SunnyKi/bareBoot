@@ -355,9 +355,32 @@ ICpuFamily0F (
   VOID
 )
 {
-  UINT64                msr;
+  UINT64 msr;
+  UINT8  sbspeed;  /* Scalable Bus Speed */
+  UINT8  cbratio;
 
   msr = AsmReadMsr64(MSR_EBC_FREQUENCY_ID);
+  switch (gCPUStructure.Model) {
+  case 0:
+  case 1:
+    cbratio = 0;
+    sbspeed = (UINT8) BitFieldRead64 (msr, 21, 23);
+    break;
+
+  case 2:
+  case 3:
+  case 4:
+  case 6:
+    cbratio = (UINT8) BitFieldRead64 (msr, 24, 31);
+    sbspeed = (UINT8) BitFieldRead64 (msr, 16, 18);
+    break;
+
+  default:
+    cbratio = 0;
+    sbspeed = 0;
+    break;
+  }
+  DBG ("%a: cbratio 0x%02x, sbspeed 0x%02x\n", __FUNCTION__, cbratio, sbspeed);
 }
 
 VOID
@@ -544,24 +567,24 @@ GetCpuProps (
     break;
   }
 
-  DBG ("GetCpuProps: BrandString - %a\n", gCPUStructure.BrandString);
-  DBG ("GetCpuProps: Vendor/Model/ExtModel: 0x%x/0x%x/0x%x\n", gCPUStructure.Vendor, gCPUStructure.Model, gCPUStructure.Extmodel);
-  DBG ("GetCpuProps: Signature: 0x%x\n", gCPUStructure.Signature);
-  DBG ("GetCpuProps: Family/ExtFamily:      0x%x/0x%x\n", gCPUStructure.Family,  gCPUStructure.Extfamily);
-  DBG ("GetCpuProps: Features: 0x%08x\n", gCPUStructure.Features);
-  DBG ("GetCpuProps: Cores: %d\n", gCPUStructure.Cores);
-  DBG ("GetCpuProps: Threads: %d\n", gCPUStructure.Threads);
+  DBG ("%a: BrandString - %a\n", __FUNCTION__, gCPUStructure.BrandString);
+  DBG ("%a: Vendor/Model/ExtModel: 0x%x/0x%x/0x%x\n", __FUNCTION__, gCPUStructure.Vendor, gCPUStructure.Model, gCPUStructure.Extmodel);
+  DBG ("%a: Signature: 0x%x\n", __FUNCTION__, gCPUStructure.Signature);
+  DBG ("%a: Family/ExtFamily:      0x%x/0x%x\n", __FUNCTION__, gCPUStructure.Family,  gCPUStructure.Extfamily);
+  DBG ("%a: Features: 0x%08x\n", __FUNCTION__, gCPUStructure.Features);
+  DBG ("%a: Cores: %d\n", __FUNCTION__, gCPUStructure.Cores);
+  DBG ("%a: Threads: %d\n", __FUNCTION__, gCPUStructure.Threads);
 #if 0
   if (gCPUStructure.HTTEnabled) {
-    DBG ("GetCpuProps: HTT enabled\n");
+    DBG ("%a: HTT enabled\n", __FUNCTION__);
   } else {
-    DBG ("GetCpuProps: HTT disabled\n");
+    DBG ("%a: HTT disabled\n", __FUNCTION__);
   }
 #endif
-  DBG ("GetCpuProps: Number of logical processors per physical processor package: %d\n", gCPUStructure.LogicalPerPackage);
-  DBG ("GetCpuProps: Number of APIC IDs reserved per package: %d\n", gCPUStructure.CoresPerPackage);
-  DBG ("GetCpuProps: FSB: %lld Hz\n", gCPUStructure.FSBFrequency);
-  DBG ("GetCpuProps: TSC: %lld Hz\n", gCPUStructure.TSCFrequency);
-  DBG ("GetCpuProps: CPU: %lld Hz\n", gCPUStructure.CPUFrequency);
-  DBG ("GetCpuProps: ProcessorInterconnectSpeed: %d MHz\n", gCPUStructure.ProcessorInterconnectSpeed);
+  DBG ("%a: Number of logical processors per physical processor package: %d\n", __FUNCTION__, gCPUStructure.LogicalPerPackage);
+  DBG ("%a: Number of APIC IDs reserved per package: %d\n", __FUNCTION__, gCPUStructure.CoresPerPackage);
+  DBG ("%a: FSB: %lld Hz\n", __FUNCTION__, gCPUStructure.FSBFrequency);
+  DBG ("%a: TSC: %lld Hz\n", __FUNCTION__, gCPUStructure.TSCFrequency);
+  DBG ("%a: CPU: %lld Hz\n", __FUNCTION__, gCPUStructure.CPUFrequency);
+  DBG ("%a: ProcessorInterconnectSpeed: %d MHz\n", __FUNCTION__, gCPUStructure.ProcessorInterconnectSpeed);
 }
