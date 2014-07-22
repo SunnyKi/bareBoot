@@ -136,7 +136,7 @@
 
 /* Known MSR registers */
 #define MSR_IA32_PLATFORM_ID        0x0017
-#define MSR_EBC_FREQUENCY_ID        0x002c
+#define MSR_EBC_FREQUENCY_ID        0x002C   /* Used for Netburst (0x0F family) */
 #define MSR_CORE_THREAD_COUNT       0x0035   /* limited use - not for Penryn or older */
 #define MSR_IA32_BIOS_SIGN_ID       0x008B   /* microcode version */
 #define MSR_FSB_FREQ                0x00CD   /* limited use - not for i7            */
