@@ -283,7 +283,7 @@ ICpuFamily06 (
   case CPU_MODEL_JAKETOWN:
   case CPU_MODEL_SANDY_BRIDGE:
     msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
-    gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 0, 7);
+    gCPUStructure.MaxRatio = (UINT8) msr;
     if (gCPUStructure.MaxRatio != 0) {
       gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
     }
@@ -292,7 +292,7 @@ ICpuFamily06 (
       flex_ratio = (UINT8) BitFieldRead64 (msr, 8, 15);
 
       if (flex_ratio == 0) {
-        /* XXX: What is done here? */
+        /* XXX: No flex info avail, no need to bother */
         AsmWriteMsr64 (MSR_FLEX_RATIO, (msr & ~((UINT64) BIT16)));
         gBS->Stall (10);
         msr = AsmReadMsr64 (MSR_FLEX_RATIO);
@@ -321,15 +321,9 @@ ICpuFamily06 (
   case CPU_MODEL_PENRYN:      // Core 2 Duo/Extreme, Xeon, 45nm
   case CPU_MODEL_YONAH:       // Core Duo/Solo, Pentium M DC
     msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
-#if 0
-    gCPUStructure.MaxRatio = ((UINT8) RShiftU64 (msr, 8)) & 0x1F;
-    gCPUStructure.TurboMsr = ((UINT32) RShiftU64(msr, 40)) & 0x1F;
-    gCPUStructure.SubDivider = ((UINT32) RShiftU64 (msr, 14)) & 0x1;
-#else
     gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 8, 12);
     gCPUStructure.TurboMsr = (UINT32) BitFieldRead64(msr, 40, 44);
     gCPUStructure.SubDivider = (UINT32) BitFieldRead64 (msr, 14, 14);
-#endif
     gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
     if (gCPUStructure.MaxRatio != 0) {
       gCPUStructure.FSBFrequency = DivU64x32 (
@@ -340,7 +334,7 @@ ICpuFamily06 (
     break;
 
   default:
-    gCPUStructure.FSBFrequency = 100000000ull;
+    gCPUStructure.FSBFrequency = 100000000ULL;
     break;
   }
 #if 0
@@ -349,6 +343,10 @@ ICpuFamily06 (
   }
 #endif
 }
+
+/*
+ * NetBurst family
+ */
 
 VOID
 ICpuFamily0F (
@@ -361,6 +359,7 @@ ICpuFamily0F (
   gCPUStructure.FSBFrequency = 100000000ULL;
 
   if (gCPUStructure.Model < 2) {
+    /* No documented ratio info */
     return;
   }
 
@@ -399,7 +398,6 @@ ICpuFamily0F (
   }
   if (gCPUStructure.MaxRatio > 0) {
     gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
-    DBG ("%a: Calculated fsb frequency %ld\n", __FUNCTION__, gCPUStructure.FSBFrequency);
   }
 }
 
@@ -499,21 +497,14 @@ GetCpuProps (
 
   gCPUStructure.Vendor      = gCPUStructure.CPUID[CPUID_0][EBX];
   gCPUStructure.Signature   = gCPUStructure.CPUID[CPUID_1][EAX];
-#if 0
-  gCPUStructure.Stepping    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 3, 0);
-  gCPUStructure.Model       = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 7, 4);
-  gCPUStructure.Family      = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 11, 8);
-  gCPUStructure.Type        = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 13, 12);
-  gCPUStructure.Extmodel    = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 19, 16);
-  gCPUStructure.Extfamily   = (UINT8) bitfield (gCPUStructure.CPUID[CPUID_1][EAX], 27, 20);
-#else
+
   gCPUStructure.Stepping    = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 0, 3);
   gCPUStructure.Model       = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 4, 7);
   gCPUStructure.Family      = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 8, 11);
   gCPUStructure.Type        = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 12, 13);
   gCPUStructure.Extmodel    = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 16, 19);
   gCPUStructure.Extfamily   = (UINT8) BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EAX], 20, 27);
-#endif
+
   gCPUStructure.Features    = quad (gCPUStructure.CPUID[CPUID_1][ECX], gCPUStructure.CPUID[CPUID_1][EDX]);
 
   if (gCPUStructure.CPUID[CPUID_80][EAX] >= 0x80000001) {
@@ -527,9 +518,7 @@ GetCpuProps (
   }  
 
   // Cores & Threads count
-  //
-  // Number of logical processors per physical processor package
-
+ 
   gCPUStructure.LogicalPerPackage = BitFieldRead32 (gCPUStructure.CPUID[CPUID_1][EBX], 16, 23);
 
 #if 0
@@ -547,9 +536,7 @@ GetCpuProps (
     SSSE3 = TRUE;
   }
 
-  //
   // Brand String
-  //
 
   gCPUStructure.BrandString[0] = '\0';
 
@@ -574,9 +561,6 @@ GetCpuProps (
     }
   }
 
-  //
-  // TSC calibration
-  //
   gCPUStructure.TSCFrequency = MeasureTSCFrequency ();
   gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
@@ -599,11 +583,7 @@ GetCpuProps (
   DBG ("%a: Cores: %d\n", __FUNCTION__, gCPUStructure.Cores);
   DBG ("%a: Threads: %d\n", __FUNCTION__, gCPUStructure.Threads);
 #if 0
-  if (gCPUStructure.HTTEnabled) {
-    DBG ("%a: HTT enabled\n", __FUNCTION__);
-  } else {
-    DBG ("%a: HTT disabled\n", __FUNCTION__);
-  }
+  DBG ("%a: HTT %a\n", __FUNCTION__, gCPUStructure.HTTEnabled ? "enabled" : "disabled");
 #endif
   DBG ("%a: Number of logical processors per physical processor package: %d\n", __FUNCTION__, gCPUStructure.LogicalPerPackage);
   DBG ("%a: Number of APIC IDs reserved per package: %d\n", __FUNCTION__, gCPUStructure.CoresPerPackage);
