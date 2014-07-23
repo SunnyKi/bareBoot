@@ -356,7 +356,6 @@ ICpuFamily0F (
 )
 {
   UINT64 msr;
-  UINT64 cfreq;
   UINT8  sbspeed;  /* Scalable Bus Speed */
 
   gCPUStructure.FSBFrequency = 100000000ULL;
