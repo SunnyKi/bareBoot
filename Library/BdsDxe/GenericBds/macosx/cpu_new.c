@@ -399,8 +399,8 @@ ICpuFamily0F (
     break;
   }
   if (gCPUStructure.MaxRatio > 0) {
-    cfreq = DivU64x32 (gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
-    DBG ("%a: Calculated fsb frequency %ld\n", __FUNCTION__, cfreq);
+    gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
+    DBG ("%a: Calculated fsb frequency %ld\n", __FUNCTION__, gCPUStructure.FSBFrequency);
   }
 }
 
