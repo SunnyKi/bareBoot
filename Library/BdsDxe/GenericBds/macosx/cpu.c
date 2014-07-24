@@ -323,7 +323,7 @@ ICpuFamily06 (
     msr = AsmReadMsr64 (MSR_IA32_PERF_STATUS);
     gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 8, 12);
     gCPUStructure.TurboMsr = (UINT32) BitFieldRead64(msr, 40, 44);
-    gCPUStructure.SubDivider = (UINT32) BitFieldRead64 (msr, 14, 14);
+    gCPUStructure.SubDivider = (UINT32) BitFieldRead64 (msr, 46, 46);
     gCPUStructure.MaxRatio = gCPUStructure.MaxRatio * 10 + gCPUStructure.SubDivider * 5;
     if (gCPUStructure.MaxRatio != 0) {
       gCPUStructure.FSBFrequency = DivU64x32 (
