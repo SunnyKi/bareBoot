@@ -1487,7 +1487,7 @@ GraphicsConsoleConOutSetAttribute (
 {
   EFI_TPL               OldTpl;
 
-  if ((Attribute | 0xFF) != 0xFF) {
+  if ((Attribute | 0x7F) != 0x7F) {
     return EFI_UNSUPPORTED;
   }
 
