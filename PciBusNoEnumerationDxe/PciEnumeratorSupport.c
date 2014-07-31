@@ -236,9 +236,9 @@ Returns:
         if (!EFI_ERROR (Status)) {
           if ((StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
 
-             //
-             // if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
-             //
+            //
+            // if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
+            //
             PciIo   = &(PciIoDevice->PciIo);
 
             Status = PciIo->Pci.Read (
@@ -262,8 +262,6 @@ Returns:
           //
           // Recursively scan PCI busses on the other side of PCI-PCI bridges
           //
-          //
-
           if (IS_PCI_BRIDGE (&Pci) || IS_CARDBUS_BRIDGE (&Pci)) {
 
             //
