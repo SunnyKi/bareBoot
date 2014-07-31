@@ -197,6 +197,7 @@ Returns:
   EFI_PCI_IO_PROTOCOL *PciIo;
   UINT32                rcba;
   UINT32                *fdr;
+  UINT32                *hptcr;
 
   PciIoDevice = NULL;
   Status  = EFI_SUCCESS;
@@ -247,9 +248,15 @@ Returns:
                                 1,
                                 &rcba
                               );
-          rcba &= ~1;
-          fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
-          *fdr &= ~0x8;
+          if (rcba != 0) {
+            rcba &= ~1;
+            fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
+            *fdr &= ~0x8;
+            hptcr = ((UINT32 *) (UINTN) (rcba + 0x3404));
+            if ((*hptcr & 0x80) ==  0) {
+              *hptcr |= 0x80;
+            }
+          }
         }
 
         //
