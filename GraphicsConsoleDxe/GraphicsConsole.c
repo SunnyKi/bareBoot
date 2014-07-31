@@ -1491,13 +1491,6 @@ GraphicsConsoleConOutSetAttribute (
     return EFI_UNSUPPORTED;
   }
 
-  if (This->Mode->Mode == -1) {
-    //
-    // If current mode is not valid, return error.
-    //
-    return EFI_UNSUPPORTED;
-  }
-
   if ((INT32) Attribute == This->Mode->Attribute) {
     return EFI_SUCCESS;
   }
