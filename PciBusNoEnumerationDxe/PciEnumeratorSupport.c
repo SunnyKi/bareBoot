@@ -235,7 +235,7 @@ Returns:
 
         PciIo   = &(PciIoDevice->PciIo);
 
-        if ((StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
+        if (!EFI_ERROR (Status) && (StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
           /**
            *
            * if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
