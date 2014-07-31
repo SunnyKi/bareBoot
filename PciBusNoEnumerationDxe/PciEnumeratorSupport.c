@@ -233,58 +233,59 @@ Returns:
                   &PciIoDevice
                   );
 
-        PciIo   = &(PciIoDevice->PciIo);
+        if (!EFI_ERROR (Status)) {
+          if ((StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
 
-        if (!EFI_ERROR (Status) && (StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
-          /**
-           *
-           * if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
-           *
-           **/
-          Status = PciIo->Pci.Read (
-                                PciIo,
-                                EfiPciIoWidthUint32,
-                                (UINT64) (0xF0 & ~3),
-                                1,
-                                &rcba
-                              );
-          if (rcba != 0) {
-            rcba &= ~1;
-            fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
-            *fdr &= ~0x8;
-            hptcr = ((UINT32 *) (UINTN) (rcba + 0x3404));
-            if ((*hptcr & 0x80) ==  0) {
-              *hptcr |= 0x80;
+             //
+             // if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
+             //
+            PciIo   = &(PciIoDevice->PciIo);
+
+            Status = PciIo->Pci.Read (
+                                  PciIo,
+                                  EfiPciIoWidthUint32,
+                                  (UINT64) (0xF0 & ~3),
+                                  1,
+                                  &rcba
+                                );
+            if (rcba != 0) {
+              rcba &= ~1;
+              fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
+              *fdr &= ~0x8;
+              hptcr = ((UINT32 *) (UINTN) (rcba + 0x3404));
+              if ((*hptcr & 0x80) ==  0) {
+                *hptcr |= 0x80;
+              }
             }
           }
-        }
-
-        //
-        // Recursively scan PCI busses on the other side of PCI-PCI bridges
-        //
-        //
-
-        if (!EFI_ERROR (Status) && (IS_PCI_BRIDGE (&Pci) || IS_CARDBUS_BRIDGE (&Pci))) {
 
           //
-          // If it is PPB, we need to get the secondary bus to continue the enumeration
+          // Recursively scan PCI busses on the other side of PCI-PCI bridges
           //
-          PciIo   = &(PciIoDevice->PciIo);
+          //
 
-          Status  = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x19, 1, &SecBus);
+          if (IS_PCI_BRIDGE (&Pci) || IS_CARDBUS_BRIDGE (&Pci)) {
 
-          if (EFI_ERROR (Status)) {
-            return Status;
+            //
+            // If it is PPB, we need to get the secondary bus to continue the enumeration
+            //
+            PciIo   = &(PciIoDevice->PciIo);
+
+            Status  = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x19, 1, &SecBus);
+
+            if (EFI_ERROR (Status)) {
+              return Status;
+            }
+                
+            //
+            // Deep enumerate the next level bus
+            //
+            Status = PciPciDeviceInfoCollector (
+                      PciIoDevice,
+                      (UINT8) (SecBus)
+                      );
+
           }
-              
-          //
-          // Deep enumerate the next level bus
-          //
-          Status = PciPciDeviceInfoCollector (
-                    PciIoDevice,
-                    (UINT8) (SecBus)
-                    );
-
         }
 
         if (Func == 0 && !IS_PCI_MULTI_FUNC (&Pci)) {
