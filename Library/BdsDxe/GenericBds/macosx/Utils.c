@@ -1380,7 +1380,7 @@ GetUserSettings (
 
   dictPointer = plDictFind (gConfigPlist, "PCI", 3, plKindDict);
 
-  gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0);
+  gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0xFFFF);
   gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
   gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
   gSettings.HDALayoutId =

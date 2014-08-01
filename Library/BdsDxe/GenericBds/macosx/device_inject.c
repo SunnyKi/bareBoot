@@ -144,7 +144,11 @@ devprop_add_device_pci (
     device->acpi_dev_path.type = 0x02;
     device->acpi_dev_path.subtype = 0x01;
     device->acpi_dev_path._HID = 0xd041030a;
-    device->acpi_dev_path._UID = ((ACPI_HID_DEVICE_PATH*)DevicePath)->UID;
+    if (gSettings.PCIRootUID == 0xFFFF) {
+      device->acpi_dev_path._UID = ((ACPI_HID_DEVICE_PATH*)DevicePath)->UID;
+    } else {
+      device->acpi_dev_path._UID = gSettings.PCIRootUID;
+    }
   }
   else {
     FreePool (DevicePath);
