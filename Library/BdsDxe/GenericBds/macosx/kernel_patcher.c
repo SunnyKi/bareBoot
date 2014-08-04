@@ -1155,6 +1155,14 @@ FindBootArgs (
       DBG ("%a: bootArgs2->pciConfigSpaceBaseAddress 0x%x\n", __FUNCTION__, bootArgs2->pciConfigSpaceBaseAddress);
       DBG ("%a: bootArgs2->pciConfigSpaceStartBusNumber 0x%x\n", __FUNCTION__, bootArgs2->pciConfigSpaceStartBusNumber);
       DBG ("%a: bootArgs2->pciConfigSpaceEndBusNumber 0x%x\n", __FUNCTION__, bootArgs2->pciConfigSpaceEndBusNumber);
+
+      DBG ("%a: bootArgs2->Video.v_baseAddr = 0x%x\n", __FUNCTION__, bootArgs2->Video.v_baseAddr);
+      DBG ("%a: bootArgs2->Video.v_display  = 0x%x\n", __FUNCTION__, bootArgs2->Video.v_display);
+      DBG ("%a: bootArgs2->Video.v_rowBytes = 0x%x\n", __FUNCTION__, bootArgs2->Video.v_rowBytes);
+      DBG ("%a: bootArgs2->Video.v_width    = 0x%x\n", __FUNCTION__, bootArgs2->Video.v_width);
+      DBG ("%a: bootArgs2->Video.v_height   = 0x%x\n", __FUNCTION__, bootArgs2->Video.v_height);
+      DBG ("%a: bootArgs2->Video.v_depth    = 0x%x\n", __FUNCTION__, bootArgs2->Video.v_depth);
+
 #ifdef MEMMAP_DEBUG
       EFI_MEMORY_DESCRIPTOR       *MemoryMap;
       UINTN           MCount, i;
