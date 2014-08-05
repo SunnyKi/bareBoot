@@ -789,6 +789,7 @@ PatchMemoryTables (
   TotalEnd  = 0;
   PartWidth = 1;
   Handle16  = 0xFFFE;
+  ZeroMem (Memory17, sizeof (Memory17));
   gRAM      = AllocateZeroPool (sizeof (MEM_STRUCTURE));
 
   // Physical Memory Array
