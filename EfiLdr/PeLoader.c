@@ -528,7 +528,7 @@ PrintHeader ('Q');
   // Because only NoPages or ImageBasePage will be used in EfiLoader(), we update these 2 fields.
   //
   Image->NoPages += NoFixupPages;
-  Image->ImageBasePage -= (NoFixupPages << EFI_PAGE_SHIFT);
+  Image->ImageBasePage -= LShiftU64 (NoFixupPages, EFI_PAGE_SHIFT);
 
   return EFI_SUCCESS;
 }
