@@ -378,6 +378,16 @@ static UINT8 KernelPatchPmRepl1010[] = {
 };
 
 
+UINT8 KBESLSearch_X64[] =
+{ 0xDF, 0xE8, 0x50, 0xFB, 0xFF, 0xFF, 0xEB, 0x08, 0x48, 0x89, 0xDF, 0xE8, 0x52 };
+UINT8 KBESLReplace_X64[] =
+{ 0xDF, 0xE8, 0x50, 0xFB, 0xFF, 0xFF, 0x90, 0x90, 0x48, 0x89, 0xDF, 0xE8, 0x52 };
+
+UINT8 KBESLSearch_i386[] =
+{ 0xE8, 0xED, 0xF9, 0xFF, 0xFF, 0xEB, 0x08, 0x89, 0x1C };
+UINT8 KBESLReplace_i386[] =
+{ 0xE8, 0xED, 0xF9, 0xFF, 0xFF, 0x90, 0x90, 0x89, 0x1C };
+
 UINT8 KBELionSearch_X64[] =
 { 0xE8, 0x0C, 0xFD, 0xFF, 0xFF, 0xEB, 0x08, 0x48, 0x89, 0xDF };
 UINT8 KBELionReplace_X64[] =
@@ -415,6 +425,16 @@ KernelBooterExtensionsPatch (
   GetSection ("__KLD", "__text", &addr, &size);
 
   if (is64BitKernel) {
+    if (AsciiStrnCmp (KernVersion, "10", 2) == 0) {
+      Num = SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBESLSearch_X64,
+              sizeof (KBESLSearch_X64),
+              (CHAR8 *) KBESLReplace_X64,
+              1
+              );
+    }
     if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
       Num = SearchAndReplace (
               (UINT8 *) (UINTN) addr,
@@ -447,6 +467,16 @@ KernelBooterExtensionsPatch (
               );
     }
   } else {
+      if (AsciiStrnCmp (KernVersion, "10", 2) == 0) {
+      Num = SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBESLSearch_i386,
+              sizeof (KBESLSearch_i386),
+              (CHAR8 *) KBESLReplace_i386,
+              1
+              );
+    }
     if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
       Num = SearchAndReplace (
               (UINT8 *) (UINTN) addr,
