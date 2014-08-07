@@ -22,6 +22,8 @@ while [[ $# -gt 0 ]]; do
 #use VBoxFsDxe instead HFSPlus
         "-vhfs") DEF="$DEF -D VBOXHFS" ;;
         "-ohci") DEF="$DEF -D OHCI" ;;
+        "-ps2") DEF="$DEF -D PS2" ;;
+        "-m2s") DEF="$DEF -D MEMLOG2SERIAL" ;;
         "-*")
          echo $"ERROR!"
         exit 1
