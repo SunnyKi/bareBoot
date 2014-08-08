@@ -35,8 +35,6 @@
 #include "plist.h"
 #include "plist_xml_parser.h"
 #include "plist_helpers.h"
-#include <Library/BaseLib.h>
-
 
 #define kXMLTagPList      "plist"
 #define kXMLTagDict       "dict"
