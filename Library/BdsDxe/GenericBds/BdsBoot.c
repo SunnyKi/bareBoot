@@ -318,8 +318,6 @@ MacOS:
         ClearScreen (0xBFBFBF, PcdGetPtr (PcdAppleGrayLogoFile));
       }
     }
-  } else {
-    ClearScreen (0x00, NULL);
   }
 
   WithKexts = LoadKexts ();
