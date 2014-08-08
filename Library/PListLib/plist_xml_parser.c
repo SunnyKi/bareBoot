@@ -752,7 +752,7 @@ PListXMLFixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr) {
 //==========================================================================
 // PListXMLNewTag
 
-#define TAGS_CACHE_SIZE 0x1000
+#define TAGS_CACHE_SIZE 0x2000
 
 TagPtr
 PListXMLNewTag (void) {

@@ -29,8 +29,10 @@
 #include "plist.h"
 #include "plist_xml_parser.h"
 
-char ibig[32768];
-char obig[32768];
+#define PLBUFSIZE 500000
+
+char ibig[PLBUFSIZE];
+char obig[PLBUFSIZE];
 
 plbuf_t ibuf = {ibig, 0, 0 };
 plbuf_t obuf = {obig, sizeof(obig), 0 };
