@@ -89,6 +89,9 @@ OhciFreeInterruptContextEntry (
   )
 {
   TD_DESCRIPTOR           *Td;
+
+  DEBUG ((EFI_D_INFO, "%a: enter for %p & %p\n", __FUNCTION__, Ohc, Entry));
+
   if (Entry == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -104,6 +107,7 @@ OhciFreeInterruptContextEntry (
     UsbHcFreeMem(Ohc->MemPool, Td, sizeof(TD_DESCRIPTOR));
   }  
   FreePool(Entry);
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
   return EFI_SUCCESS;
 }
 

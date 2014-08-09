@@ -135,11 +135,13 @@ OhciFreeED (
   IN ED_DESCRIPTOR        *Ed
   )
 {
+  DEBUG ((EFI_D_INFO, "%a: enter for %p & %p\n", __FUNCTION__, Ohc, Ed));
   if (Ed == NULL) {
     return EFI_SUCCESS;
   }  
   UsbHcFreeMem(Ohc->MemPool, Ed, sizeof(ED_DESCRIPTOR));
 
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
   return EFI_SUCCESS;
 }
 
@@ -453,8 +455,11 @@ OhciFreeInterruptEdByEd (
   ED_DESCRIPTOR           *TempEd;
   UINTN                   Index;
   
-  if (IntEd == NULL)
+  DEBUG ((EFI_D_INFO, "%a: enter for %p & %p\n", __FUNCTION__, Ohc, IntEd));
+  if (IntEd == NULL) {
+    DEBUG ((EFI_D_INFO, "%a: leave due to NULL\n", __FUNCTION__));
     return EFI_SUCCESS;
+  }
   
   for (Index = 0; Index < 32; Index++) {
     Ed = (ED_DESCRIPTOR *)(UINTN)(Ohc->HccaMemoryBlock->HccaInterruptTable[Index]);
@@ -462,8 +467,8 @@ OhciFreeInterruptEdByEd (
       continue;
     }
     while (Ed->NextED != 0) {
-      if (Ed->NextED == (UINT32)(UINTN)IntEd ) {
-        TempEd = (ED_DESCRIPTOR *)(UINTN)(Ed->NextED);
+      if (Ed->NextED == (UINT32)(UINTN) IntEd) {
+        TempEd = (ED_DESCRIPTOR *)(UINTN) (Ed->NextED);
         Ed->NextED = ((ED_DESCRIPTOR *)(UINTN)(Ed->NextED))->NextED;
         OhciFreeED (Ohc, TempEd);
       } else {
@@ -471,6 +476,7 @@ OhciFreeInterruptEdByEd (
       }
     }
   }
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
   return EFI_SUCCESS;
 }
 
@@ -850,6 +856,9 @@ OhciFreeDynamicIntMemory (
   ) 
 {
   INTERRUPT_CONTEXT_ENTRY *Entry;
+
+  DEBUG ((EFI_D_INFO, "%a: enter for %p\n", __FUNCTION__, Ohc));
+
   if (Ohc != NULL) {
     while (Ohc->InterruptContextList != NULL) {	  
       Entry = Ohc->InterruptContextList;
@@ -858,6 +867,7 @@ OhciFreeDynamicIntMemory (
       Ohc->InterruptContextList = Ohc->InterruptContextList->NextEntry;
     }
   }	
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
 }
 
 /**
@@ -878,6 +888,7 @@ OhciFreeFixedIntMemory (
   UINTN                   Index;
   UINTN                   Level;
 
+  DEBUG ((EFI_D_INFO, "%a: enter for %p\n", __FUNCTION__, Ohc));
   for (Level = 0; Level < 6; Level++) {	
     for (Index = 0; Index < Leaf[Index]; Index++) {
       if (Ohc->IntervalList[Level][Index] != NULL) {
@@ -885,6 +896,7 @@ OhciFreeFixedIntMemory (
       }
     } 
   }
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
 }
 
 /**
@@ -902,6 +914,8 @@ OhciFreeIntTransferMemory (
   IN USB_OHCI_HC_DEV           *Ohc
   )
 { 
+  DEBUG ((EFI_D_INFO, "%a: enter for %p\n", __FUNCTION__, Ohc));
+
   // Free the Ed,Td,buffer that were created during transferring
 
   OhciFreeDynamicIntMemory (Ohc);
@@ -909,5 +923,6 @@ OhciFreeIntTransferMemory (
   // Free the Ed that were initilized during driver was starting
 
   OhciFreeFixedIntMemory (Ohc);
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
   return EFI_SUCCESS;
 }

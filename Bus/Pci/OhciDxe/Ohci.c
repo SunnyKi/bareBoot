@@ -62,6 +62,7 @@ OhciReset (
   UINT32                  Data32;
   BOOLEAN                 Flag = FALSE;
 
+  DEBUG ((EFI_D_INFO, "%a: enter\n", __FUNCTION__));
   if ((Attributes & ~(EFI_USB_HC_RESET_GLOBAL | EFI_USB_HC_RESET_HOST_CONTROLLER)) != 0) {
     return EFI_INVALID_PARAMETER;
   }
@@ -73,12 +74,13 @@ OhciReset (
     gBS->Stall (50 * 1000);
     Status = OhciSetHcCommandStatus (Ohc, HC_RESET, HC_RESET);
     if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_INFO, "%a: leave with (%r)\n", __FUNCTION__, Status));
       return EFI_DEVICE_ERROR;
     }
     gBS->Stall (50 * 1000);	
-    //
+
     // Wait for host controller reset. 
-    //
+
     PowerOnGoodTime = 50;
     do {
       gBS->Stall (1 * 1000);
@@ -92,6 +94,7 @@ OhciReset (
       }
     }while(PowerOnGoodTime--);
     if (!Flag){
+      DEBUG ((EFI_D_INFO, "%a: leave with timeout on reset\n", __FUNCTION__));
       return EFI_DEVICE_ERROR;
     }
   }
@@ -101,13 +104,14 @@ OhciReset (
   if ((Attributes &  EFI_USB_HC_RESET_GLOBAL) != 0) {
     Status = OhciSetHcControl (Ohc, HC_FUNCTIONAL_STATE, HC_STATE_RESET);
     if (EFI_ERROR (Status)) {
+      DEBUG ((EFI_D_INFO, "%a: leave with (%r)\n", __FUNCTION__, Status));
       return EFI_DEVICE_ERROR;
     }
     gBS->Stall (50 * 1000);
   }
-  //
+
   // Initialize host controller operational registers
-  //
+
   OhciSetFrameInterval (Ohc, FS_LARGEST_DATA_PACKET, 0x2778);
   OhciSetFrameInterval (Ohc, FRAME_INTERVAL, 0x2edf);
   OhciSetPeriodicStart (Ohc, 0x2a2f); 
@@ -115,8 +119,11 @@ OhciReset (
   OhciSetHcCommandStatus (Ohc, CONTROL_LIST_FILLED | BULK_LIST_FILLED, 0); 
   OhciSetRootHubDescriptor (Ohc, RH_PSWITCH_MODE, 0);
   OhciSetRootHubDescriptor (Ohc, RH_NO_PSWITCH | RH_NOC_PROT, 1);
-  //OhciSetRootHubDescriptor (Hc, RH_PSWITCH_MODE | RH_NO_PSWITCH, 0);
-  //OhciSetRootHubDescriptor (Hc, RH_PSWITCH_MODE | RH_NOC_PROT, 1);
+
+#if 0
+  OhciSetRootHubDescriptor (Hc, RH_PSWITCH_MODE | RH_NO_PSWITCH, 0);
+  OhciSetRootHubDescriptor (Hc, RH_PSWITCH_MODE | RH_NOC_PROT, 1);
+#endif
   
   OhciSetRootHubDescriptor (Ohc, RH_DEV_REMOVABLE, 0);
   OhciSetRootHubDescriptor (Ohc, RH_PORT_PWR_CTRL_MASK, 0xffff); 
@@ -138,13 +145,15 @@ OhciReset (
   OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | BULK_ENABLE, 1); /*ISOCHRONOUS_ENABLE*/
   OhciSetHcControl (Ohc, HC_FUNCTIONAL_STATE, HC_STATE_OPERATIONAL);  
   gBS->Stall (50*1000);
-  //
+
   // Wait till first SOF occurs, and then clear it
-  //
-  while (OhciGetHcInterruptStatus (Ohc, START_OF_FRAME) == 0);
+
+  while (OhciGetHcInterruptStatus (Ohc, START_OF_FRAME) == 0)
+    ;
   OhciClearInterruptStatus (Ohc, START_OF_FRAME);
   gBS->Stall (1000);  
   
+  DEBUG ((EFI_D_INFO, "%a: leave with (%r)\n", __FUNCTION__, Status));
   return Status;
 }
 
@@ -2136,6 +2145,7 @@ OhciFreeDev (
   IN USB_OHCI_HC_DEV      *Ohc
   )
 {
+  DEBUG ((EFI_D_INFO, "%a: enter\n", __FUNCTION__));
   OhciFreeFixedIntMemory (Ohc);
 
   if (Ohc->ExitBootServiceEvent != NULL) {
@@ -2159,6 +2169,7 @@ OhciFreeDev (
   }
   
   FreePool (Ohc);
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
 }
 
 /**
@@ -2179,6 +2190,8 @@ OhciCleanDevUp (
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
 
+  DEBUG ((EFI_D_INFO, "%a: enter\n", __FUNCTION__));
+
   // Uninstall the USB_HC and USB_HC2 protocol, then disable the controller
 
   Ohc = USB_OHCI_HC_DEV_FROM_THIS (This);
@@ -2190,6 +2203,7 @@ OhciCleanDevUp (
          );
 
   if (EFI_ERROR (Status)) {
+    DEBUG ((EFI_D_INFO, "%a: leave due to (%r)\n", __FUNCTION__, Status));
     return;
   }
 
@@ -2210,6 +2224,7 @@ OhciCleanDevUp (
 
   OhciFreeDev (Ohc);
 
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
   return;
 }
 
@@ -2230,6 +2245,9 @@ OhcExitBootService (
 {
   USB_OHCI_HC_DEV           *Ohc;
   EFI_USB_HC_PROTOCOL       *UsbHc;
+
+  DEBUG ((EFI_D_INFO, "%a: enter for %p\n", __FUNCTION__, Context));
+
   Ohc = (USB_OHCI_HC_DEV *) Context;
 
   UsbHc = &Ohc->UsbHc;
@@ -2240,10 +2258,14 @@ OhcExitBootService (
   OhciStopHc (Ohc, OHC_GENERIC_TIMEOUT);
 #endif
 
+  DEBUG ((EFI_D_INFO, "%a: setcontrol\n", __FUNCTION__));
   OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | ISOCHRONOUS_ENABLE | BULK_ENABLE, 0);
+  DEBUG ((EFI_D_INFO, "%a: reset\n", __FUNCTION__));
   UsbHc->Reset (UsbHc, EFI_USB_HC_RESET_GLOBAL);
+  DEBUG ((EFI_D_INFO, "%a: setstate\n", __FUNCTION__));
   UsbHc->SetState (UsbHc, EfiUsbHcStateHalt);
   
+  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
   return;
 }
 
@@ -2507,6 +2529,7 @@ OHCIDriverBindingStop (
   EFI_STATUS           Status;
   EFI_USB_HC_PROTOCOL  *UsbHc;
 
+  DEBUG ((EFI_D_INFO, "%a: enter\n", __FUNCTION__));
   Status = gBS->OpenProtocol (
                   Controller, 
                   &gEfiUsbHcProtocolGuid, 
@@ -2515,17 +2538,16 @@ OHCIDriverBindingStop (
                   Controller, 
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }         
-
-  OhciCleanDevUp(Controller, UsbHc);
+  if (!EFI_ERROR (Status)) {
+    OhciCleanDevUp(Controller, UsbHc);
   
-  gBS->CloseProtocol (
+    Status = gBS->CloseProtocol (
          Controller, 
          &gEfiPciIoProtocolGuid,
          This->DriverBindingHandle,
          Controller
          );
-  return EFI_SUCCESS;
+  }
+  DEBUG ((EFI_D_INFO, "%a: leave with (%r)\n", __FUNCTION__, Status));
+  return Status;
 }
