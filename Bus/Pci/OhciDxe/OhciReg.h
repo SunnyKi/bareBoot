@@ -32,8 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
-
 #ifndef   _OHCI_REG_H
 #define   _OHCI_REG_H
 
@@ -42,11 +40,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define   HC_STATE_OPERATIONAL   0x2
 #define   HC_STATE_SUSPEND       0x3
 
-#define   PERIODIC_ENABLE               0x01
-#define   ISOCHRONOUS_ENABLE            0x02
-#define   CONTROL_ENABLE                0x04
-#define   BULK_ENABLE                   0x08
-#define   CONTROL_BULK_RATIO            0x10
+#define   PERIODIC_ENABLE        0x01
+#define   ISOCHRONOUS_ENABLE     0x02
+#define   CONTROL_ENABLE         0x04
+#define   BULK_ENABLE            0x08
+#define   CONTROL_BULK_RATIO     0x10
 
 #define   HC_FUNCTIONAL_STATE    0x20
 #define   INTERRUPT_ROUTING      0x40
@@ -144,14 +142,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MAX_RETRY_TIMES                 100
 #define PORT_NUMBER_ON_MAINSTONE2       1
 
-
-//
 // Operational Register Offsets
-//
 
-//
 // Command & Status Registers Offsets 
-//
+
 #define HC_REVISION             0x00
 #define HC_CONTROL              0x04
 #define HC_COMMAND_STATUS       0x08
@@ -159,9 +153,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HC_INTERRUPT_ENABLE     0x10
 #define HC_INTERRUPT_DISABLE    0x14
 
-//
 // Memory Pointer Offsets         
-//
+
 #define HC_HCCA                 0x18
 #define HC_PERIODIC_CURRENT     0x1C
 #define HC_CONTROL_HEAD         0x20
@@ -170,34 +163,31 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HC_BULK_CURRENT_PTR     0x2C
 #define HC_DONE_HEAD            0x30
 
-//
 // Frame Register Offsets         
-//
+
 #define HC_FRM_INTERVAL         0x34
 #define HC_FRM_REMAINING        0x38
 #define HC_FRM_NUMBER           0x3C
 #define HC_PERIODIC_START       0x40
 #define HC_LS_THREASHOLD        0x44
 
-//
 // Root Hub Register Offsets      
-//
+
 #define HC_RH_DESC_A            0x48
 #define HC_RH_DESC_B            0x4C
 #define HC_RH_STATUS            0x50
 #define HC_RH_PORT_STATUS       0x54
 
-#define USBHOST_OFFSET_UHCHR         0x64         // Usb Host reset register
+#define USBHOST_OFFSET_UHCHR    0x64         // Usb Host reset register
 
-#define OHC_BAR_INDEX               0  
+#define OHC_BAR_INDEX           0  
 
-//
 // Usb Host controller register offset
-//
-#define USBHOST_OFFSET_UHCREV        0x0          // Usb Host revision register
-#define USBHOST_OFFSET_UHCHCON       0x4          // Usb Host control register
-#define USBHOST_OFFSET_UHCCOMS       0x8          // Usb Host Command Status register
-#define USBHOST_OFFSET_UHCINTS       0xC          // Usb Host Interrupt Status register
+
+#define USBHOST_OFFSET_UHCREV        0x00         // Usb Host revision register
+#define USBHOST_OFFSET_UHCHCON       0x04         // Usb Host control register
+#define USBHOST_OFFSET_UHCCOMS       0x08         // Usb Host Command Status register
+#define USBHOST_OFFSET_UHCINTS       0x0C         // Usb Host Interrupt Status register
 #define USBHOST_OFFSET_UHCINTE       0x10         // Usb Host Interrupt Enable register
 #define USBHOST_OFFSET_UHCINTD       0x14         // Usb Host Interrupt Disable register
 #define USBHOST_OFFSET_UHCHCCA       0x18         // Usb Host Controller Communication Area
@@ -217,9 +207,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define USBHOST_OFFSET_UHCRHS        0x50         // Usb Host Root Hub Status register
 #define USBHOST_OFFSET_UHCRHPS1      0x54         // Usb Host Root Hub Port Status 1 register
 
-//
 // Usb Host controller register bit fields
-//
+
 #pragma pack(1)
 
 typedef struct {
@@ -381,13 +370,9 @@ typedef struct {
     UINT32 Reserved1:20;
 } HcRESET;
 
-
 #pragma pack()
 
-//
 // Func List
-//
-
 
 /**
 
@@ -399,6 +384,7 @@ typedef struct {
   @retval                       Value of the register
 
 **/
+
 UINT32
 OhciGetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
@@ -417,14 +403,12 @@ OhciGetOperationalReg (
 
 **/
 
-
 EFI_STATUS
 OhciSetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN UINT32               Offset,
   IN VOID                 *Value
   );
-
 
 /**
 
@@ -435,7 +419,6 @@ OhciSetOperationalReg (
   @retval                       Value of the register
 
 **/
-
 
 UINT32
 OhciGetHcRevision (
@@ -460,6 +443,7 @@ OhciSetHcReset (
   IN UINT32                     Field,
   IN UINT32                     Value
   );
+
 /**
 
   Get specific field of HcReset reg value
@@ -476,6 +460,7 @@ OhciGetHcReset (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Field
   );
+
 /**
 
   Set HcControl reg value
@@ -495,7 +480,6 @@ OhciSetHcControl (
   IN UINT32               Value
   );
 
-
 /**
 
   Get specific field of HcControl reg value
@@ -507,13 +491,11 @@ OhciSetHcControl (
 
 **/
 
-
 UINT32
 OhciGetHcControl (
   IN USB_OHCI_HC_DEV   *Ohc,
   IN UINTN             Field
   );
-
 
 /**
 
@@ -623,7 +605,6 @@ OhciGetHcInterruptControl (
   IN UINTN                Field
   );
 
-
 /**
 
   Set memory pointer of specific type
@@ -637,7 +618,7 @@ OhciGetHcInterruptControl (
 **/
 
 EFI_STATUS
-OhciSetMemoryPointer(
+OhciSetMemoryPointer (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                PointerType,
   IN VOID                 *Value
@@ -679,7 +660,6 @@ OhciSetFrameInterval (
   IN UINT32               Value
   );
 
-
 /**
 
   Get field of frame interval reg value
@@ -696,7 +676,6 @@ OhciGetFrameInterval (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
   );
-
 
 /**
 
@@ -725,6 +704,7 @@ OhciSetFrameRemaining (
   @retval                       Value of frame remaining reg
 
 **/
+
 UINT32
 OhciGetFrameRemaining (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -743,7 +723,7 @@ OhciGetFrameRemaining (
 **/
 
 EFI_STATUS
-OhciSetFrameNumber(
+OhciSetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
   );
@@ -763,7 +743,6 @@ OhciGetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc
   );
 
-
 /**
 
   Set period start reg value
@@ -781,7 +760,6 @@ OhciSetPeriodicStart (
   IN UINT32               Value
   );
 
-
 /**
 
   Get periodic start reg value
@@ -796,7 +774,6 @@ UINT32
 OhciGetPeriodicStart (
   IN USB_OHCI_HC_DEV      *Ohc
   );
-
 
 /**
 
@@ -841,13 +818,13 @@ OhciGetLsThreshold (
   @retval  EFI_SUCCESS          Value set
 
 **/
+
 EFI_STATUS
 OhciSetRootHubDescriptor (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
   );
-
 
 /**
 
@@ -883,7 +860,6 @@ OhciSetRootHubStatus (
   IN UINTN                Field
   );
 
-
 /**
 
   Get Root Hub Status reg value
@@ -900,7 +876,6 @@ OhciGetRootHubStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
   );
-
 
 /**
 
@@ -920,7 +895,6 @@ OhciSetRootHubPortStatus (
   IN UINT32               Index,
   IN UINTN                Field
   );
-
 
 /**
 

@@ -341,7 +341,7 @@ OhciControlTransfer (
   }
   
   if (*DataLength > MAX_BYTES_PER_TD) {
-    DEBUG ((EFI_D_ERROR, "OhciControlTransfer: Request data size is too large\r\n"));
+    DEBUG ((EFI_D_ERROR, "%a: Request data size is too large\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -357,13 +357,13 @@ OhciControlTransfer (
 
   Status = OhciSetHcControl (Ohc, CONTROL_ENABLE, 0);
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: fail to disable CONTROL_ENABLE\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: fail to disable CONTROL_ENABLE\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     return EFI_DEVICE_ERROR;
   }
   Status = OhciSetHcCommandStatus (Ohc, CONTROL_LIST_FILLED, 0);
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: fail to disable CONTROL_LIST_FILLED\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: fail to disable CONTROL_LIST_FILLED\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     return EFI_DEVICE_ERROR;
   }
@@ -373,7 +373,7 @@ OhciControlTransfer (
   Ed = OhciCreateED (Ohc);
   if (Ed == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail to allocate ED buffer\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: Fail to allocate ED buffer\n", __FUNCTION__));
     goto CTRL_EXIT;
   }  
   OhciSetEDField (Ed, ED_SKIP, 1);
@@ -397,14 +397,14 @@ OhciControlTransfer (
     MapOp = EfiPciIoOperationBusMasterRead;
     Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Request, &ReqMapLength, &ReqMapPhyAddr, &ReqMapping);
     if (EFI_ERROR(Status)) {
-      DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail to Map Request Buffer\r\n"));		
+      DEBUG ((EFI_D_INFO, "%a: Fail to Map Request Buffer\n", __FUNCTION__));		
       goto FREE_ED_BUFF;
     }	
   }
   SetupTd = OhciCreateTD (Ohc);
   if (SetupTd == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail to allocate Setup TD buffer\r\n"));	
+    DEBUG ((EFI_D_INFO, "%A: Fail to allocate Setup TD buffer\n", __FUNCTION__));	
     goto UNMAP_SETUP_BUFF;
   }
   HeadTd = SetupTd;
@@ -431,12 +431,12 @@ OhciControlTransfer (
   if ((Data != NULL) && (DataMapLength != 0)) {
     Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, Data, &DataMapLength, &DataMapPhyAddr, &DataMapping);
     if (EFI_ERROR(Status)) {
-      DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail To Map Data Buffer\r\n"));	
+      DEBUG ((EFI_D_INFO, "%a: Fail To Map Data Buffer\n", __FUNCTION__));	
       goto FREE_TD_BUFF;
     }
   }
   //
-  //Data Stage
+  // Data Stage
   //
   LeftLength = DataMapLength;
   ActualSendLength = DataMapLength;
@@ -448,7 +448,7 @@ OhciControlTransfer (
     } 
     DataTd = OhciCreateTD (Ohc);
     if (DataTd == NULL) {
-      DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail to allocate buffer for Data Stage TD\r\n"));
+      DEBUG ((EFI_D_INFO, "%a: Fail to allocate buffer for Data Stage TD\n", __FUNCTION__));
       Status = EFI_OUT_OF_RESOURCES;  
       goto UNMAP_DATA_BUFF;
     }
@@ -475,7 +475,7 @@ OhciControlTransfer (
   //
   StatusTd = OhciCreateTD (Ohc);
   if (StatusTd == NULL) {
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail to allocate buffer for Status Stage TD\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: Fail to allocate buffer for Status Stage TD\n", __FUNCTION__));
     Status = EFI_OUT_OF_RESOURCES;
     goto UNMAP_DATA_BUFF;
   }
@@ -527,14 +527,14 @@ OhciControlTransfer (
   OhciSetEDField (Ed, ED_SKIP, 0);
   Status = OhciSetHcControl (Ohc, CONTROL_ENABLE, 1);  
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: fail to enable CONTROL_ENABLE\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: fail to enable CONTROL_ENABLE\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     Status = EFI_DEVICE_ERROR;
     goto UNMAP_DATA_BUFF;
   }
   Status = OhciSetHcCommandStatus (Ohc, CONTROL_LIST_FILLED, 1);
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: fail to enable CONTROL_LIST_FILLED\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: fail to enable CONTROL_LIST_FILLED\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     Status = EFI_DEVICE_ERROR;
     goto UNMAP_DATA_BUFF;
@@ -553,19 +553,19 @@ OhciControlTransfer (
   //
   // For debugging, dump ED & TD buffer after transferring
   //
-  //OhciDumpEdTdInfo (Ohc, Ed, HeadTd, FALSE);
+  // OhciDumpEdTdInfo (Ohc, Ed, HeadTd, FALSE);
   //
   *TransferResult = ConvertErrorCode (EdResult.ErrorCode);
 
   if (EdResult.ErrorCode != TD_NO_ERROR) {
     if (EdResult.ErrorCode == TD_TOBE_PROCESSED) {
-      DEBUG ((EFI_D_INFO, "Control pipe timeout, > %d mS\r\n", TimeOut));
+      DEBUG ((EFI_D_INFO, "%a: Control pipe timeout, > %d mS\n", __FUNCTION__, TimeOut));
     } else {
-      DEBUG ((EFI_D_INFO, "Control pipe broken\r\n"));
+      DEBUG ((EFI_D_INFO, "%a: Control pipe broken\n", __FUNCTION__));
     }
     *DataLength = 0;
   } else {
-    DEBUG ((EFI_D_INFO, "Control transfer successed\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: Control transfer successed\n", __FUNCTION__));
   }
 
 UNMAP_DATA_BUFF:
@@ -706,13 +706,13 @@ OhciBulkTransfer(
 
   Status = OhciSetHcControl (Ohc, BULK_ENABLE, 0);
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: fail to disable BULK_ENABLE\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: fail to disable BULK_ENABLE\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     return EFI_DEVICE_ERROR;
   }
   Status = OhciSetHcCommandStatus (Ohc, BULK_LIST_FILLED, 0);
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: fail to disable BULK_LIST_FILLED\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: fail to disable BULK_LIST_FILLED\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     return EFI_DEVICE_ERROR;
   }
@@ -742,7 +742,7 @@ OhciBulkTransfer(
     MapLength = *DataLength;
     Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Data, &MapLength, &MapPyhAddr, &Mapping);
     if (EFI_ERROR(Status)) {
-      DEBUG ((EFI_D_INFO, "OhciBulkTransfer: Fail to Map Data Buffer for Bulk\r\n"));		
+      DEBUG ((EFI_D_INFO, "%a: Fail to Map Data Buffer for Bulk\n", __FUNCTION__));		
       goto FREE_ED_BUFF;
     }
   }
@@ -760,7 +760,7 @@ OhciBulkTransfer(
     }
     DataTd = OhciCreateTD (Ohc);	
     if (DataTd == NULL) {
-      DEBUG ((EFI_D_INFO, "OhciBulkTransfer: Fail to allocate buffer for Data Stage TD\r\n"));
+      DEBUG ((EFI_D_INFO, "%a: Fail to allocate buffer for Data Stage TD\n", __FUNCTION__));
       Status = EFI_OUT_OF_RESOURCES;  
       goto FREE_OHCI_TDBUFF;
     }
@@ -793,14 +793,16 @@ OhciBulkTransfer(
   EmptyTd = OhciCreateTD (Ohc);
   if (EmptyTd == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
-    DEBUG ((EFI_D_INFO, "OhciBulkTransfer: Fail to allocate buffer for Empty TD\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: Fail to allocate buffer for Empty TD\n", __FUNCTION__));
     goto FREE_OHCI_TDBUFF;
   }
   OhciSetTDField (EmptyTd, TD_PDATA, 0);
   OhciSetTDField (EmptyTd, TD_BUFFER_ROUND, 0);
   OhciSetTDField (EmptyTd, TD_DIR_PID, 0);
   OhciSetTDField (EmptyTd, TD_DELAY_INT, 0);
-  //OhciSetTDField (EmptyTd, TD_DT_TOGGLE, CurrentToggle);  
+#if 0
+  OhciSetTDField (EmptyTd, TD_DT_TOGGLE, CurrentToggle);  
+#endif
   EmptyTd->Word0.DataToggle = 0;
   OhciSetTDField (EmptyTd, TD_ERROR_CNT, 0);
   OhciSetTDField (EmptyTd, TD_COND_CODE, 0);
@@ -819,14 +821,14 @@ OhciBulkTransfer(
   if (EFI_ERROR(Status)) {
     *TransferResult = EFI_USB_ERR_SYSTEM;
     Status = EFI_DEVICE_ERROR;
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail to enable BULK_LIST_FILLED\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: Fail to enable BULK_LIST_FILLED\n", __FUNCTION__));
     goto FREE_OHCI_TDBUFF;
   }
   Status = OhciSetHcControl (Ohc, BULK_ENABLE, 1);
   if (EFI_ERROR(Status)) {
     *TransferResult = EFI_USB_ERR_SYSTEM;
     Status = EFI_DEVICE_ERROR;
-    DEBUG ((EFI_D_INFO, "OhciControlTransfer: Fail to enable BULK_ENABLE\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: Fail to enable BULK_ENABLE\n", __FUNCTION__));
     goto FREE_OHCI_TDBUFF;
   }
   gBS->Stall(20 * 1000);
@@ -843,16 +845,18 @@ OhciBulkTransfer(
 
   if (EdResult.ErrorCode != TD_NO_ERROR) {
     if (EdResult.ErrorCode == TD_TOBE_PROCESSED) {
-      DEBUG ((EFI_D_INFO, "Bulk pipe timeout, > %d mS\r\n", TimeOut));
+      DEBUG ((EFI_D_INFO, "%a: Bulk pipe timeout, > %d mS\n", __FUNCTION__, TimeOut));
     } else {
-      DEBUG ((EFI_D_INFO, "Bulk pipe broken\r\n"));
+      DEBUG ((EFI_D_INFO, "%a: Bulk pipe broken\n", __FUNCTION__));
       *DataToggle = EdResult.NextToggle;
     }
     *DataLength = 0;
   } else {
-    DEBUG ((EFI_D_INFO, "Bulk transfer successed\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: Bulk transfer successed\n", __FUNCTION__));
   }
-  //*DataToggle = (UINT8) OhciGetEDField (Ed, ED_DTTOGGLE);
+#if 0
+  *DataToggle = (UINT8) OhciGetEDField (Ed, ED_DTTOGGLE);
+#endif
  
 FREE_OHCI_TDBUFF:
   OhciSetEDField (Ed, ED_SKIP, 1);
@@ -972,7 +976,7 @@ OhciInterruptTransfer (
 
 
   if (DataLength > MAX_BYTES_PER_TD) {
-    DEBUG ((EFI_D_ERROR, "OhciInterruptTransfer: Error param\r\n"));
+    DEBUG ((EFI_D_ERROR, "%a: Error param\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -998,7 +1002,7 @@ OhciInterruptTransfer (
     return Status;
   }
   MapLength = DataLength;
-  Status = Ohc->PciIo->Map(
+  Status = Ohc->PciIo->Map (
                          Ohc->PciIo,
                          EfiPciIoOperationBusMasterWrite,
                          UCBuffer,
@@ -1007,7 +1011,7 @@ OhciInterruptTransfer (
                          &Mapping
                          );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_ERROR, "OhciInterruptTransfer: Failt to PciIo->Map buffer \r\n"));
+    DEBUG ((EFI_D_ERROR, "%a: Fault to PciIo->Map buffer (%r)\n", __FUNCTION__, Status));
     goto EXIT;
   }
   Depth = 5;
@@ -1016,9 +1020,9 @@ OhciInterruptTransfer (
     Index *= 2;
     Depth--;
   }
-  //
-  //ED Stage
-  //
+
+  // ED Stage
+
   HeadEd = OhciFindMinInterruptEDList (Ohc, (UINT32)Depth);
   if ((Ed = OhciFindWorkingEd (HeadEd, DeviceAddress, EndPointNum, EdDir)) != NULL) {
     OhciSetEDField (Ed, ED_SKIP, 1);
@@ -1026,7 +1030,7 @@ OhciInterruptTransfer (
     Ed = OhciCreateED (Ohc);
     if (Ed == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
-      DEBUG ((EFI_D_ERROR, "OhciInterruptTransfer: Fail to allocate buffer for ED\r\n"));
+      DEBUG ((EFI_D_ERROR, "%a: Fail to allocate buffer for ED\n", __FUNCTION__));
       goto UNMAP_OHCI_XBUFF;
     }
     OhciSetEDField (Ed, ED_SKIP, 1);
@@ -1042,9 +1046,9 @@ OhciInterruptTransfer (
     OhciSetEDField (Ed, ED_NEXT_EDPTR, 0);
     OhciAttachEDToList (Ohc, INTERRUPT_LIST, Ed, HeadEd);
   }
-  //
-  //Data Stage
-  //
+
+  // Data Stage
+
   LeftLength = MapLength;
   ActualSendLength = MapLength;
   HeadTd = NULL;
@@ -1057,7 +1061,7 @@ OhciInterruptTransfer (
     DataTd = OhciCreateTD (Ohc);
     if (DataTd == NULL) {
       Status = EFI_OUT_OF_RESOURCES;  
-      DEBUG ((EFI_D_ERROR, "OhciInterruptTransfer: Fail to allocate buffer for Data Stage TD\r\n"));
+      DEBUG ((EFI_D_ERROR, "%a: Fail to allocate buffer for Data Stage TD\n", __FUNCTION__));
       goto FREE_OHCI_TDBUFF;
     }
     OhciSetTDField (DataTd, TD_PDATA, 0);
@@ -1068,10 +1072,10 @@ OhciInterruptTransfer (
     OhciSetTDField (DataTd, TD_ERROR_CNT, 0);
     OhciSetTDField (DataTd, TD_COND_CODE, TD_TOBE_PROCESSED);
     OhciSetTDField (DataTd, TD_CURR_BUFFER_PTR, (UINT32) MapPyhAddr);
-    OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32)(MapPyhAddr + ActualSendLength - 1));
+    OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32) (MapPyhAddr + ActualSendLength - 1));
     OhciSetTDField (DataTd, TD_NEXT_PTR, 0);
-    DataTd->ActualSendLength = (UINT32)ActualSendLength;
-    DataTd->DataBuffer = (UINT32)(UINTN)MapPyhAddr;
+    DataTd->ActualSendLength = (UINT32) ActualSendLength;
+    DataTd->DataBuffer = (UINT32) (UINTN) MapPyhAddr;
     DataTd->NextTDPointer = 0;
     if (FirstTD) {
       HeadTd = DataTd;
@@ -1087,14 +1091,16 @@ OhciInterruptTransfer (
   EmptTd = OhciCreateTD (Ohc);
   if (EmptTd == NULL) {
     Status = EFI_OUT_OF_RESOURCES;  
-    DEBUG ((EFI_D_ERROR, "OhciInterruptTransfer: Fail to allocate buffer for Empty Stage TD\r\n"));
+    DEBUG ((EFI_D_ERROR, "%a: Fail to allocate buffer for Empty Stage TD\n", __FUNCTION__));
     goto FREE_OHCI_TDBUFF;
   }
   OhciSetTDField (EmptTd, TD_PDATA, 0);
   OhciSetTDField (EmptTd, TD_BUFFER_ROUND, 0);
   OhciSetTDField (EmptTd, TD_DIR_PID, 0);
   OhciSetTDField (EmptTd, TD_DELAY_INT, 0);
-  //OhciSetTDField (EmptTd, TD_DT_TOGGLE, CurrentToggle);  
+#if 0
+  OhciSetTDField (EmptTd, TD_DT_TOGGLE, CurrentToggle);  
+#endif
   EmptTd->Word0.DataToggle = 0;
   OhciSetTDField (EmptTd, TD_ERROR_CNT, 0);
   OhciSetTDField (EmptTd, TD_COND_CODE, 0);
@@ -1154,7 +1160,9 @@ FREE_OHCI_TDBUFF:
     UsbHcFreeMem(Ohc->MemPool, DataTd, sizeof(TD_DESCRIPTOR));
   }
 
-//FREE_OHCI_EDBUFF:
+#if 0
+FREE_OHCI_EDBUFF:
+#endif
   if ((HeadEd != Ed) && HeadEd && Ed) {
     while(HeadEd->NextED != (UINT32)(UINTN)Ed) {
       HeadEd = (ED_DESCRIPTOR *)(UINTN)(HeadEd->NextED);
@@ -1279,7 +1287,6 @@ OhciAsyncInterruptTransfer (
   return Status;
 }
 
-
 /**
 
   Submits synchronous interrupt transfer to an interrupt endpoint
@@ -1317,7 +1324,6 @@ OhciAsyncInterruptTransfer (
   @retval EFI_INVALID_PARAMETER Parameters not follow spec
     
 **/
-
 
 EFI_STATUS
 EFIAPI
@@ -1495,6 +1501,7 @@ OhciAsyncIsochronousTransfer (
 
   @retval EFI_SUCCESS           The port number was retrieved successfully.
 **/
+
 EFI_STATUS
 EFIAPI
 OhciGetRootHubNumOfPorts (
@@ -1513,6 +1520,7 @@ OhciGetRootHubNumOfPorts (
   
   return EFI_SUCCESS;
 }
+
 /**
 
   Retrieves the current status of a USB root hub port.
@@ -1529,7 +1537,6 @@ OhciGetRootHubNumOfPorts (
                                 was returned in PortStatus.
   @retval EFI_INVALID_PARAMETER Port number not valid
 **/
-
 
 EFI_STATUS
 EFIAPI
@@ -1590,6 +1597,7 @@ OhciGetRootHubPortStatus (
 
   return EFI_SUCCESS;
 }
+
 /**
 
   Sets a feature for the specified root hub port.
@@ -1605,6 +1613,7 @@ OhciGetRootHubPortStatus (
   @retval EFI_DEVICE_ERROR      Set feature failed because of hardware issue
   @retval EFI_INVALID_PARAMETER PortNumber is invalid or PortFeature is invalid.
 **/
+
 EFI_STATUS
 EFIAPI
 OhciSetRootHubPortFeature (
@@ -1627,14 +1636,12 @@ OhciSetRootHubPortFeature (
 
   Status = EFI_SUCCESS;
   
-  
   switch (PortFeature) {
     case EfiUsbPortPower:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_SET_PORT_POWER);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1650,9 +1657,8 @@ OhciSetRootHubPortFeature (
     case EfiUsbPortReset: 
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_SET_PORT_RESET);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1671,9 +1677,8 @@ OhciSetRootHubPortFeature (
     case EfiUsbPortEnable:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_SET_PORT_ENABLE);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1690,9 +1695,8 @@ OhciSetRootHubPortFeature (
     case EfiUsbPortSuspend:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_SET_PORT_SUSPEND);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1727,6 +1731,7 @@ OhciSetRootHubPortFeature (
   @retval EFI_INVALID_PARAMETER PortNumber is invalid or PortFeature is invalid.
   @retval EFI_DEVICE_ERROR      Some error happened when clearing feature
 **/
+
 EFI_STATUS
 EFIAPI
 OhciClearRootHubPortFeature (
@@ -1754,9 +1759,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortEnable:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_CLEAR_PORT_ENABLE);
   
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1772,9 +1776,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortSuspend:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_CLEAR_SUSPEND_STATUS);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1793,9 +1796,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortPower:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_CLEAR_PORT_POWER);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1811,9 +1813,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortConnectChange:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_CONNECT_STATUS_CHANGE);
   
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1829,9 +1830,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortResetChange:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_PORT_RESET_STAT_CHANGE);
   
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1848,9 +1848,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortEnableChange:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_PORT_ENABLE_STAT_CHANGE);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1866,9 +1865,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortSuspendChange:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_PORT_SUSPEND_STAT_CHANGE);
   
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1884,9 +1882,8 @@ OhciClearRootHubPortFeature (
     case EfiUsbPortOverCurrentChange:
       Status = OhciSetRootHubPortStatus (Ohc, PortNumber, RH_OC_INDICATOR_CHANGE);
 
-      //
       // Verify the state
-      //
+
       RetryTimes = 0;
       do {
         gBS->Stall (1000);
@@ -1915,7 +1912,6 @@ EFI_DRIVER_BINDING_PROTOCOL gOhciDriverBinding = {
   NULL
 };
 
-
 /**
   Entry point for EFI drivers.
 
@@ -1926,6 +1922,7 @@ EFI_DRIVER_BINDING_PROTOCOL gOhciDriverBinding = {
   @return Others                Failed.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OHCIDriverEntryPoint (
@@ -1943,7 +1940,6 @@ OHCIDriverEntryPoint (
            );
 }
 
-
 /**
   Test to see if this driver supports ControllerHandle. Any
   ControllerHandle that has UsbHcProtocol installed will be supported.
@@ -1956,6 +1952,7 @@ OHCIDriverEntryPoint (
   @return EFI_UNSUPPORTED      This driver does not support this device.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OHCIDriverBindingSupported (
@@ -1967,9 +1964,9 @@ OHCIDriverBindingSupported (
   EFI_STATUS              Status;
   EFI_PCI_IO_PROTOCOL     *PciIo;
   USB_CLASSC              UsbClassCReg;
-  //
+
   // Test whether there is PCI IO Protocol attached on the controller handle.
-  //
+
   Status = gBS->OpenProtocol (
                   Controller,
                   &gEfiPciIoProtocolGuid,
@@ -1995,9 +1992,9 @@ OHCIDriverBindingSupported (
     Status = EFI_UNSUPPORTED;   
     goto ON_EXIT;
   }
-  //
+
   // Test whether the controller belongs to OHCI type
-  //
+
   if ((UsbClassCReg.BaseCode != PCI_CLASS_SERIAL) ||
       (UsbClassCReg.SubClassCode != PCI_CLASS_SERIAL_USB) ||
       (UsbClassCReg.ProgInterface != PCI_IF_OHCI)
@@ -2014,7 +2011,6 @@ ON_EXIT:
          );
 
   return Status;
-
 }
 
 /**
@@ -2126,6 +2122,7 @@ FREE_DEV_BUFFER:
 
   return NULL;
 }
+
 /**
 
   Free the OHCI device and release its associated resources.
@@ -2133,6 +2130,7 @@ FREE_DEV_BUFFER:
   @param  Ohc                   The OHCI device to release.
 
 **/
+
 VOID
 OhciFreeDev (
   IN USB_OHCI_HC_DEV      *Ohc
@@ -2162,6 +2160,7 @@ OhciFreeDev (
   
   FreePool (Ohc);
 }
+
 /**
 
   Uninstall all Ohci Interface.
@@ -2170,6 +2169,7 @@ OhciFreeDev (
   @param  This                  Protocol instance pointer.
 
 **/
+
 VOID
 OhciCleanDevUp (
   IN  EFI_HANDLE           Controller,
@@ -2179,9 +2179,8 @@ OhciCleanDevUp (
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
 
-  //
   // Uninstall the USB_HC and USB_HC2 protocol, then disable the controller
-  //
+
   Ohc = USB_OHCI_HC_DEV_FROM_THIS (This);
   
   Status = gBS->UninstallProtocolInterface (
@@ -2193,14 +2192,15 @@ OhciCleanDevUp (
   if (EFI_ERROR (Status)) {
     return;
   }
+
   OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | ISOCHRONOUS_ENABLE | BULK_ENABLE, 0);
   This->Reset (This, EFI_USB_HC_RESET_GLOBAL);
   This->SetState (This, EfiUsbHcStateHalt);
 
   OhciFreeDynamicIntMemory(Ohc); 
-  //
+
   // Restore original PCI attributes
-  //
+
   Ohc->PciIo->Attributes (
                 Ohc->PciIo,
                 EfiPciIoAttributeOperationSet,
@@ -2220,6 +2220,7 @@ OhciCleanDevUp (
   @param  Event                 Pointer to this event
   @param  Context               Event handler private data
 **/
+
 VOID
 EFIAPI
 OhcExitBootService (
@@ -2232,17 +2233,19 @@ OhcExitBootService (
   Ohc = (USB_OHCI_HC_DEV *) Context;
 
   UsbHc = &Ohc->UsbHc;
-  //
+
   // Stop the Host Controller
-  //
-  //OhciStopHc (Ohc, OHC_GENERIC_TIMEOUT);
+
+#if 0
+  OhciStopHc (Ohc, OHC_GENERIC_TIMEOUT);
+#endif
+
   OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | ISOCHRONOUS_ENABLE | BULK_ENABLE, 0);
   UsbHc->Reset (UsbHc, EFI_USB_HC_RESET_GLOBAL);
   UsbHc->SetState (UsbHc, EfiUsbHcStateHalt);
   
   return;
 }
-
 
 /**
   Starting the Usb OHCI Driver.
@@ -2255,8 +2258,8 @@ OhcExitBootService (
   @retval EFI_UNSUPPORTED       This driver does not support this device.
   @retval EFI_DEVICE_ERROR      This driver cannot be started due to device Error.
                                 EFI_OUT_OF_RESOURCES- Failed due to resource shortage.
-
 **/
+
 EFI_STATUS
 EFIAPI
 OHCIDriverBindingStart (
@@ -2278,9 +2281,8 @@ OHCIDriverBindingStart (
   UINTN                   NumberOfControllers;
   UINTN                   Index;
 
-  //
   // Open PCIIO, then enable the HC device and turn off emulation
-  //
+
   Ohc = NULL;
   Status = gBS->OpenProtocol (
                   Controller,
@@ -2296,9 +2298,9 @@ OHCIDriverBindingStart (
   }
 
   PciAttributesSaved = FALSE;
-  //
+
   // Save original PCI attributes
-  //
+
   Status = PciIo->Attributes (
                     PciIo,
                     EfiPciIoAttributeOperationGet,
@@ -2311,13 +2313,14 @@ OHCIDriverBindingStart (
   }
   PciAttributesSaved = TRUE;
 
-  //
   // Robustnesss improvement such as for UoL
   // Default is not required.
-  //
-  //if (FeaturePcdGet (PcdTurnOffUsbLegacySupport)) {
-  //  OhciTurnOffUsbEmulation (PciIo);
-  //}
+
+#if 0
+  if (FeaturePcdGet (PcdTurnOffUsbLegacySupport)) {
+    OhciTurnOffUsbEmulation (PciIo);
+  }
+#endif
 
   Status = PciIo->Attributes (
                     PciIo,
@@ -2325,36 +2328,36 @@ OHCIDriverBindingStart (
                     0,
                     &Supports
                     );
-  if (!EFI_ERROR (Status)) {
-    Supports &= (UINT64) EFI_PCI_DEVICE_ENABLE;
-    Status = PciIo->Attributes (
-                      PciIo,
-                      EfiPciIoAttributeOperationEnable,
-                      Supports,
-                      NULL
-                      );
-  }
 
   if (EFI_ERROR (Status)) {
     goto CLOSE_PCIIO;
   }
-  //
-  //Allocate memory for OHC private data structure 
-  //
-  Ohc = OhciAllocateDev(PciIo, OriginalPciAttributes);
-  if (Ohc == NULL){
+
+  Supports &= (UINT64) EFI_PCI_DEVICE_ENABLE;
+  Status = PciIo->Attributes (
+                    PciIo,
+                    EfiPciIoAttributeOperationEnable,
+                    Supports,
+                    NULL
+                    );
+
+  // Allocate memory for OHC private data structure 
+
+  Ohc = OhciAllocateDev (PciIo, OriginalPciAttributes);
+  if (Ohc == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto CLOSE_PCIIO;
   }  
   	
-  //Status = OhciInitializeInterruptList ( Uhc );
-  //if (EFI_ERROR (Status)) {
-  //  goto FREE_OHC;
-  //}  
-   
-  //
+#if 0
+  Status = OhciInitializeInterruptList (Uhc);
+  if (EFI_ERROR (Status)) {
+    goto FREE_OHC;
+  }  
+#endif
+
   // Set 0.1 s timer
-  //
+
   Status = gBS->CreateEvent (
                   EVT_TIMER | EVT_NOTIFY_SIGNAL, 
                   TPL_NOTIFY,
@@ -2367,16 +2370,20 @@ OHCIDriverBindingStart (
   }
   
   // Polling at every 0.1s is too slow, use 0.05s like with UhciDxe
-  //Status = gBS->SetTimer (Ohc->HouseKeeperTimer, TimerPeriodic, 100 * 1000 * 10);
+
+#if 0
+  Status = gBS->SetTimer (Ohc->HouseKeeperTimer, TimerPeriodic, 100 * 1000 * 10);
+#else
   Status = gBS->SetTimer (Ohc->HouseKeeperTimer, TimerPeriodic, 50 * 1000 * 10);
+#endif
  
   if (EFI_ERROR (Status)) {
     goto FREE_OHC;
   }
-  //
+
   // Before initialization on the ohci, for QuarkSCSocId, all the companion controllers 
-  // should have bus master , memory space and io space bits enabled
-  //
+  // should have bus master, memory space and io space bits enabled
+
   NumberOfControllers = 4;
   
   PciIo->GetLocation (
@@ -2393,9 +2400,9 @@ OHCIDriverBindingStart (
       (EFI_PCI_COMMAND_IO_SPACE + EFI_PCI_COMMAND_MEMORY_SPACE + EFI_PCI_COMMAND_BUS_MASTER)
     );	  	  	
   }
-  //
-  //Install Host Controller Protocol
-  //
+
+  // Install Host Controller Protocol
+
   Status = gBS->InstallProtocolInterface (
                   &Controller, 
                   &gEfiUsbHcProtocolGuid, 
@@ -2403,12 +2410,12 @@ OHCIDriverBindingStart (
                   &Ohc->UsbHc
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_INFO, "Install protocol error"));
+    DEBUG ((EFI_D_INFO, "%a: Install protocol error\n", __FUNCTION__));
     goto FREE_OHC;
   }
-  //
+
   // Create event to stop the HC when exit boot service.
-  //
+
   Status = gBS->CreateEventEx (
                   EVT_NOTIFY_SIGNAL,
                   TPL_NOTIFY,
@@ -2418,9 +2425,10 @@ OHCIDriverBindingStart (
                   &Ohc->ExitBootServiceEvent
                   );
   if (EFI_ERROR (Status)) {
-    DEBUG ((EFI_D_INFO, "Create exit boot event error"));	
+    DEBUG ((EFI_D_INFO, "%a: Create exit boot event error\n", __FUNCTION__));	
     goto UNINSTALL_USBHC;
   }
+
   AddUnicodeString2 (
     "eng",
     gOhciComponentName.SupportedLanguages,
@@ -2428,6 +2436,7 @@ OHCIDriverBindingStart (
     L"Usb Universal Host Controller",
     TRUE
     );
+
   AddUnicodeString2 (
     "en",
     gOhciComponentName2.SupportedLanguages,
@@ -2451,9 +2460,9 @@ FREE_OHC:
 
 CLOSE_PCIIO:
   if (PciAttributesSaved) {
-  //
+
   // Restore original PCI attributes
-  //
+
     PciIo->Attributes (
              PciIo,
              EfiPciIoAttributeOperationSet,
@@ -2468,6 +2477,7 @@ CLOSE_PCIIO:
          This->DriverBindingHandle,
          Controller
          );
+
   return Status;
 }
 
@@ -2484,6 +2494,7 @@ CLOSE_PCIIO:
   @return others
 
 **/
+
 EFI_STATUS
 EFIAPI
 OHCIDriverBindingStop (
@@ -2518,5 +2529,3 @@ OHCIDriverBindingStop (
          );
   return EFI_SUCCESS;
 }
-
-

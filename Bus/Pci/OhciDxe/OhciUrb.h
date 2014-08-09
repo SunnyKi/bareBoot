@@ -31,17 +31,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
 #ifndef _OHCI_URB_H
 #define _OHCI_URB_H
 
 #include "Descriptor.h" 
 
-
-//
 // Func List
-//
-
 
 /**
 
@@ -52,6 +47,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   @retval                       TD structure pointer
 
 **/
+
 TD_DESCRIPTOR *
 OhciCreateTD (
   IN USB_OHCI_HC_DEV      *Ohc
@@ -67,6 +63,7 @@ OhciCreateTD (
   @retval  EFI_SUCCESS          TD freed
 
 **/
+
 EFI_STATUS
 OhciFreeTD (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -82,11 +79,11 @@ OhciFreeTD (
   @retval  ED                   descriptor pointer
 
 **/
+
 ED_DESCRIPTOR *
 OhciCreateED (
   USB_OHCI_HC_DEV          *Ohc
   ); 
-
 
 /**
 
@@ -115,6 +112,7 @@ OhciFreeED (
   @retval  EFI_SUCCESS           ED freed
 
 **/
+
 EFI_STATUS
 OhciFreeAllTDFromED (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -142,7 +140,6 @@ OhciFindWorkingEd (
   IN UINT8               EdDir
   ); 
 
-
 /**
 
   Initialize interrupt list.
@@ -152,6 +149,7 @@ OhciFindWorkingEd (
   @retval  EFI_SUCCESS          Initialization done
 
 **/
+
 EFI_STATUS
 OhciInitializeInterruptList (
   USB_OHCI_HC_DEV          *Ohc
@@ -168,6 +166,7 @@ OhciInitializeInterruptList (
   @retval EFI_INVALID_PARAMETER Ed is NULL
 
 **/
+
 EFI_STATUS
 OhciAttachED (
   IN ED_DESCRIPTOR        *Ed,
@@ -218,6 +217,7 @@ OhciFindMinInterruptEDList (
   @retval  EFI_SUCCESS          ED attached to ED list
 
 **/
+
 ED_DESCRIPTOR *
 OhciAttachEDToList (
   IN USB_OHCI_HC_DEV       *Ohc,
@@ -254,13 +254,13 @@ OhciFreeInterruptEdByEd (
   @retval  EFI_SUCCESS          EDs match requirement removed
 
 **/
+
 EFI_STATUS
 OhciFreeInterruptEdByAddr (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT8                FunctionAddress,
   IN UINT8                EndPointNum
   ); 
-
 
 /**
 
@@ -273,12 +273,12 @@ OhciFreeInterruptEdByAddr (
   @retval EFI_INVALID_PARAMETER Td1 is NULL
 
 **/
+
 EFI_STATUS
 OhciLinkTD (
   IN TD_DESCRIPTOR        *Td1,
   IN TD_DESCRIPTOR        *Td2
   ); 
-
 
 /**
 
@@ -290,12 +290,12 @@ OhciLinkTD (
   @retval  EFI_SUCCESS          TD list attached on the ED
 
 **/
+
 EFI_STATUS
 OhciAttachTDListToED (
   IN ED_DESCRIPTOR        *Ed,
   IN TD_DESCRIPTOR        *HeadTd
   ); 
-
 
 /**
 
@@ -308,13 +308,13 @@ OhciAttachTDListToED (
   @retval  EFI_SUCCESS          Value set
 
 **/
+
 EFI_STATUS
 OhciSetEDField (
   IN ED_DESCRIPTOR        *Ed,
   IN UINT32               Field,
   IN UINT32               Value
   ); 
-
 
 /**
 
@@ -326,12 +326,12 @@ OhciSetEDField (
   @retval                       Value of the field
 
 **/
+
 UINT32
 OhciGetEDField (
   IN ED_DESCRIPTOR        *Ed,
   IN UINT32               Field
   ); 
-
 
 /**
 
@@ -344,13 +344,13 @@ OhciGetEDField (
   @retval  EFI_SUCCESS          Value set
 
 **/
+
 EFI_STATUS
 OhciSetTDField (
   IN TD_DESCRIPTOR        *Td,
   IN UINT32               Field,
   IN UINT32               Value
   ); 
-
 
 /**
 
@@ -368,6 +368,7 @@ OhciGetTDField (
   IN TD_DESCRIPTOR      *Td,
   IN UINT32             Field
   ); 
+
 /**
 
   Free the Ed,Td,buffer that were created during transferring
@@ -376,7 +377,7 @@ OhciGetTDField (
 **/
 
 VOID
-OhciFreeDynamicIntMemory( 
+OhciFreeDynamicIntMemory ( 
   IN USB_OHCI_HC_DEV      *Ohc
   ); 
 
@@ -389,10 +390,12 @@ OhciFreeDynamicIntMemory(
 
 
 **/
+
 VOID 
 OhciFreeFixedIntMemory (
   IN USB_OHCI_HC_DEV      *Ohc
   ); 
+
 /**
 
   Release all OHCI used memory when OHCI going to quit

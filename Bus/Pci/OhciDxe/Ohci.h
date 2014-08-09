@@ -32,11 +32,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
-
 #ifndef _OHCI_H
 #define _OHCI_H
-
 
 #include <Uefi.h>
 
@@ -62,7 +59,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <IndustryStandard/Pci.h>
 
-
 typedef struct _USB_OHCI_HC_DEV USB_OHCI_HC_DEV;
 
 #include "UsbHcMem.h"
@@ -77,14 +73,18 @@ extern EFI_DRIVER_BINDING_PROTOCOL   gOhciDriverBinding;
 extern EFI_COMPONENT_NAME_PROTOCOL   gOhciComponentName;
 extern EFI_COMPONENT_NAME2_PROTOCOL  gOhciComponentName2;
 
-#define USB_OHCI_HC_DEV_SIGNATURE     SIGNATURE_32('o','h','c','i')
+#define USB_OHCI_HC_DEV_SIGNATURE     SIGNATURE_32 ('o','h','c','i')
 
-typedef struct _HCCA_MEMORY_BLOCK{
-  //ED_DESCRIPTOR             *HccaInterruptTable[32];
+typedef struct _HCCA_MEMORY_BLOCK {
+#if 0
+  ED_DESCRIPTOR             *HccaInterruptTable[32];
+#endif
   UINT32                    HccaInterruptTable[32];
   UINT16                    HccaFrameNumber;
   UINT16                    HccaPad;
-  //TD_DESCRIPTOR             *HccaDoneHead;
+#if 0
+  TD_DESCRIPTOR             *HccaDoneHead;
+#endif
   UINT32                    HccaDoneHead;
   UINT8                     Reserved[116];
 } HCCA_MEMORY_BLOCK;
@@ -109,10 +109,10 @@ struct _USB_OHCI_HC_DEV {
   UINT32                    ToggleFlag;
  
   EFI_EVENT                 HouseKeeperTimer;
-  //
+
   // ExitBootServicesEvent is used to stop the OHC DMA operation 
   // after exit boot service.
-  //
+
   EFI_EVENT                  ExitBootServiceEvent;
 
   EFI_UNICODE_STRING_TABLE  *ControllerNameTable;  
@@ -121,9 +121,7 @@ struct _USB_OHCI_HC_DEV {
 #define USB_OHCI_HC_DEV_FROM_THIS(a)    CR(a, USB_OHCI_HC_DEV, UsbHc, USB_OHCI_HC_DEV_SIGNATURE)
 #define USB2_OHCI_HC_DEV_FROM_THIS(a)    CR(a, USB_OHCI_HC_DEV, Usb2Hc, USB_OHCI_HC_DEV_SIGNATURE)
 
-//
 // Func List
-//
 
 /**
   Provides software reset for the USB host controller.
@@ -138,12 +136,14 @@ struct _USB_OHCI_HC_DEV {
   @retval EFI_DEVICE_ERROR      Host controller isn't halted to reset.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OhciReset (
   IN EFI_USB_HC_PROTOCOL  *This,
   IN UINT16               Attributes
   );
+
 /**
   Retrieve the current state of the USB host controller.
 
@@ -164,6 +164,7 @@ OhciGetState (
   IN  EFI_USB_HC_PROTOCOL  *This,
   OUT EFI_USB_HC_STATE     *State
   );
+
 /**
   Sets the USB host controller to a specific state.
 
@@ -179,12 +180,12 @@ OhciGetState (
 
 EFI_STATUS
 EFIAPI
-OhciSetState(
+OhciSetState (
   IN EFI_USB_HC_PROTOCOL  *This,
   IN EFI_USB_HC_STATE     State
   );
-/**
 
+/**
   Submits control transfer to a target USB device.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL instance.
@@ -215,9 +216,7 @@ OhciSetState(
   @retval EFI_TIMEOUT           The control transfer failed due to timeout.
   @retval EFI_DEVICE_ERROR      The control transfer failed due to host controller or device error.
                                 Caller should check TranferResult for detailed error information.
-
---*/
-
+**/
 
 EFI_STATUS
 EFIAPI
@@ -233,8 +232,8 @@ OhciControlTransfer (
   IN     UINTN                   TimeOut,
   OUT    UINT32                  *TransferResult
   );
-/**
 
+/**
   Submits bulk transfer to a bulk endpoint of a USB device.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL instance.
@@ -269,13 +268,11 @@ OhciControlTransfer (
   @retval EFI_TIMEOUT           The bulk transfer failed due to timeout.
   @retval EFI_DEVICE_ERROR      The bulk transfer failed due to host controller or device error.
                                 Caller should check TranferResult for detailed error information.
-
 **/
-
 
 EFI_STATUS
 EFIAPI
-OhciBulkTransfer(
+OhciBulkTransfer (
   IN     EFI_USB_HC_PROTOCOL  *This,
   IN     UINT8                DeviceAddress,
   IN     UINT8                EndPointAddress,
@@ -286,6 +283,7 @@ OhciBulkTransfer(
   IN     UINTN                TimeOut,
   OUT    UINT32               *TransferResult
   );
+
 /**
 
   Submits an interrupt transfer to an interrupt endpoint of a USB device.
@@ -336,7 +334,6 @@ OhciBulkTransfer(
                                 submitted or canceled.
   @retval EFI_INVALID_PARAMETER Some parameters are invalid.
   @retval EFI_OUT_OF_RESOURCES  The request could not be completed due to a lack of resources.
-    
 **/
 
 EFI_STATUS
@@ -357,6 +354,7 @@ OhciInterruptTransfer (
   OUT    ED_DESCRIPTOR                    **OutputED         OPTIONAL,
   OUT    TD_DESCRIPTOR                    **OutputTD         OPTIONAL
   );
+
 /**
 
   Submits an asynchronous interrupt transfer to an interrupt endpoint of a USB device.
@@ -405,7 +403,6 @@ OhciInterruptTransfer (
     
 **/
 
-
 EFI_STATUS
 EFIAPI
 OhciAsyncInterruptTransfer (
@@ -421,6 +418,7 @@ OhciAsyncInterruptTransfer (
   IN     EFI_ASYNC_USB_TRANSFER_CALLBACK  CallBackFunction   OPTIONAL,
   IN     VOID                             *Context           OPTIONAL
   );
+
 /**
 
   Submits synchronous interrupt transfer to an interrupt endpoint
@@ -459,7 +457,6 @@ OhciAsyncInterruptTransfer (
     
 **/
 
-
 EFI_STATUS
 EFIAPI
 OhciSyncInterruptTransfer (
@@ -474,6 +471,7 @@ OhciSyncInterruptTransfer (
   IN     UINTN                TimeOut,
   OUT    UINT32               *TransferResult
   );
+
 /**
 
   Submits isochronous transfer to a target USB device.
@@ -497,7 +495,6 @@ OhciSyncInterruptTransfer (
 
 **/
 
-
 EFI_STATUS
 EFIAPI
 OhciIsochronousTransfer (
@@ -509,6 +506,7 @@ OhciIsochronousTransfer (
   IN OUT UINTN                DataLength,
   OUT    UINT32               *TransferResult
   );
+
 /**
 
   Submits Async isochronous transfer to a target USB device.
@@ -552,12 +550,14 @@ OhciAsyncIsochronousTransfer (
 
   @retval EFI_SUCCESS           The port number was retrieved successfully.
 **/
+
 EFI_STATUS
 EFIAPI
 OhciGetRootHubNumOfPorts (
   IN  EFI_USB_HC_PROTOCOL  *This,
   OUT UINT8                *NumOfPorts
   );
+
 /**
 
   Retrieves the current status of a USB root hub port.
@@ -574,7 +574,6 @@ OhciGetRootHubNumOfPorts (
                                 was returned in PortStatus.
   @retval EFI_INVALID_PARAMETER Port number not valid
 **/
-
 
 EFI_STATUS
 EFIAPI
@@ -599,6 +598,7 @@ OhciGetRootHubPortStatus (
   @retval EFI_DEVICE_ERROR      Set feature failed because of hardware issue
   @retval EFI_INVALID_PARAMETER PortNumber is invalid or PortFeature is invalid.
 **/
+
 EFI_STATUS
 EFIAPI
 OhciSetRootHubPortFeature (
@@ -606,6 +606,7 @@ OhciSetRootHubPortFeature (
   IN UINT8                 PortNumber,
   IN EFI_USB_PORT_FEATURE  PortFeature
   );
+
 /**
 
   Clears a feature for the specified root hub port.
@@ -621,6 +622,7 @@ OhciSetRootHubPortFeature (
   @retval EFI_INVALID_PARAMETER PortNumber is invalid or PortFeature is invalid.
   @retval EFI_DEVICE_ERROR      Some error happened when clearing feature
 **/
+
 EFI_STATUS
 EFIAPI
 OhciClearRootHubPortFeature (
@@ -628,7 +630,6 @@ OhciClearRootHubPortFeature (
   IN UINT8                 PortNumber,
   IN EFI_USB_PORT_FEATURE  PortFeature
   );
-
 
 /**
   Test to see if this driver supports ControllerHandle. Any
@@ -642,9 +643,9 @@ OhciClearRootHubPortFeature (
   @return EFI_UNSUPPORTED      This driver does not support this device.
 
 **/
+
 EFI_STATUS
 EFIAPI
-
 OHCIDriverBindingSupported (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
@@ -664,6 +665,7 @@ OHCIDriverBindingSupported (
                                 EFI_OUT_OF_RESOURCES- Failed due to resource shortage.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OHCIDriverBindingStart (
@@ -685,6 +687,7 @@ OHCIDriverBindingStart (
   @return others
 
 **/
+
 EFI_STATUS
 EFIAPI
 OHCIDriverBindingStop (

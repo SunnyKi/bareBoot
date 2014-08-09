@@ -32,10 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
-
 #include "Ohci.h"
-
 
 /**
 
@@ -46,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   @retval                       TD structure pointer
 
 **/
+
 TD_DESCRIPTOR *
 OhciCreateTD (
   IN USB_OHCI_HC_DEV      *Ohc
@@ -55,7 +53,7 @@ OhciCreateTD (
 
   Td = UsbHcAllocateMem(Ohc->MemPool, sizeof(TD_DESCRIPTOR));
   if (Td == NULL) {
-    DEBUG ((EFI_D_INFO, "STV allocate TD fail !\r\n"));
+    DEBUG ((EFI_D_INFO, "%a: STV allocate TD fail!\n", __FUNCTION__));
     return NULL;
   }
   Td->CurrBufferPointer = 0;
@@ -65,7 +63,6 @@ OhciCreateTD (
   	
   return Td;
 }
-
 
 /**
 
@@ -77,6 +74,7 @@ OhciCreateTD (
   @retval  EFI_SUCCESS          TD freed
 
 **/
+
 EFI_STATUS
 OhciFreeTD (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -91,7 +89,6 @@ OhciFreeTD (
   return EFI_SUCCESS;
 }
 
-
 /**
 
   Create a ED
@@ -101,6 +98,7 @@ OhciFreeTD (
   @retval  ED                   descriptor pointer
 
 **/
+
 ED_DESCRIPTOR *
 OhciCreateED (
   USB_OHCI_HC_DEV          *Ohc
@@ -109,7 +107,7 @@ OhciCreateED (
   ED_DESCRIPTOR   *Ed;
   Ed = UsbHcAllocateMem(Ohc->MemPool, sizeof (ED_DESCRIPTOR));
   if (Ed == NULL) {
-    DEBUG ((EFI_D_INFO, "STV allocate ED fail !\r\n"));	
+    DEBUG ((EFI_D_INFO, "%a: STV allocate ED fail!\n", __FUNCTION__));	
     return NULL;
   }
   Ed->Word0.Skip = 1;
@@ -155,6 +153,7 @@ OhciFreeED (
   @retval  EFI_SUCCESS           ED freed
 
 **/
+
 EFI_STATUS
 OhciFreeAllTDFromED (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -217,7 +216,6 @@ OhciFindWorkingEd (
   return Ed;
 }
 
-
 /**
 
   Initialize interrupt list.
@@ -227,6 +225,7 @@ OhciFindWorkingEd (
   @retval  EFI_SUCCESS          Initialization done
 
 **/
+
 EFI_STATUS
 OhciInitializeInterruptList (
   USB_OHCI_HC_DEV          *Ohc
@@ -234,7 +233,6 @@ OhciInitializeInterruptList (
 {
   static UINT32     Leaf[32] = {0, 16, 8, 24, 4, 20, 12, 28, 2, 18, 10, 26, 6, 22, 14, 30, 1, 17,
                                 9, 25, 5, 21, 13, 29, 3, 19, 11, 27, 7, 23, 15, 31};
-  //ED_DESCRIPTOR     **HccaInterruptTable;
   UINT32            *HccaInterruptTable;
   UINTN             Index;
   UINTN             Level;
@@ -243,16 +241,13 @@ OhciInitializeInterruptList (
   HccaInterruptTable = Ohc->HccaMemoryBlock->HccaInterruptTable;
 
   for (Index = 0; Index < 32; Index++) {
-    //HccaInterruptTable[Index] = OhciCreateED (Ohc);
     HccaInterruptTable[Index] = (UINT32)(UINTN)(OhciCreateED (Ohc));
-    //if (HccaInterruptTable[Index] == NULL) {
     if (HccaInterruptTable[Index] == 0) {
       return EFI_OUT_OF_RESOURCES; 
     }
   }
 
   for (Index = 0; Index < 32; Index++) {
-    //Ohc->IntervalList[0][Index] = HccaInterruptTable[Leaf[Index]];
     Ohc->IntervalList[0][Index] = (ED_DESCRIPTOR *)(UINTN)(HccaInterruptTable[Leaf[Index]]);
   }
 
@@ -262,7 +257,6 @@ OhciInitializeInterruptList (
 
     for (Index = 0; Index < Count; Index++) {
       Ohc->IntervalList[Level][Index] = OhciCreateED (Ohc);
-      //if (HccaInterruptTable[Index] == NULL) {
       if (HccaInterruptTable[Index] == 0) {
         return EFI_OUT_OF_RESOURCES; 
       }
@@ -287,6 +281,7 @@ OhciInitializeInterruptList (
   @retval EFI_INVALID_PARAMETER Ed is NULL
 
 **/
+
 EFI_STATUS
 OhciAttachED (
   IN ED_DESCRIPTOR        *Ed,
@@ -381,7 +376,6 @@ OhciFindMinInterruptEDList (
   return TempEd;
 }
 
-
 /**
 
   Attach an ED to an ED list
@@ -394,6 +388,7 @@ OhciFindMinInterruptEDList (
   @retval  EFI_SUCCESS          ED attached to ED list
 
 **/
+
 ED_DESCRIPTOR *
 OhciAttachEDToList (
   IN USB_OHCI_HC_DEV       *Ohc,
@@ -462,7 +457,6 @@ OhciFreeInterruptEdByEd (
     return EFI_SUCCESS;
   
   for (Index = 0; Index < 32; Index++) {
-    //Ed = Ohc->HccaMemoryBlock->HccaInterruptTable[Index];
     Ed = (ED_DESCRIPTOR *)(UINTN)(Ohc->HccaMemoryBlock->HccaInterruptTable[Index]);
     if (Ed == NULL) {
       continue;
@@ -491,6 +485,7 @@ OhciFreeInterruptEdByEd (
   @retval  EFI_SUCCESS          EDs match requirement removed
 
 **/
+
 EFI_STATUS
 OhciFreeInterruptEdByAddr (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -503,7 +498,6 @@ OhciFreeInterruptEdByAddr (
   UINTN                   Index;
   
   for (Index = 0; Index < 32; Index++) {
-    //Ed = Ohc->HccaMemoryBlock->HccaInterruptTable[Index];
     Ed = (ED_DESCRIPTOR *)(UINTN)(Ohc->HccaMemoryBlock->HccaInterruptTable[Index]);
     if (Ed == NULL) {
       continue;
@@ -524,7 +518,6 @@ OhciFreeInterruptEdByAddr (
   return EFI_SUCCESS;
 }
 
-
 /**
 
   Link Td2 to the end of Td1
@@ -536,6 +529,7 @@ OhciFreeInterruptEdByAddr (
   @retval EFI_INVALID_PARAMETER Td1 is NULL
 
 **/
+
 EFI_STATUS
 OhciLinkTD (
   IN TD_DESCRIPTOR        *Td1,
@@ -563,7 +557,6 @@ OhciLinkTD (
   return EFI_SUCCESS;
 }
 
-
 /**
 
   Attach TD list to ED
@@ -574,6 +567,7 @@ OhciLinkTD (
   @retval  EFI_SUCCESS          TD list attached on the ED
 
 **/
+
 EFI_STATUS
 OhciAttachTDListToED (
   IN ED_DESCRIPTOR        *Ed,
@@ -609,6 +603,7 @@ OhciAttachTDListToED (
   @retval  EFI_SUCCESS          Value set
 
 **/
+
 EFI_STATUS
 OhciSetEDField (
   IN ED_DESCRIPTOR        *Ed,
@@ -674,6 +669,7 @@ OhciSetEDField (
   @retval                       Value of the field
 
 **/
+
 UINT32
 OhciGetEDField (
   IN ED_DESCRIPTOR        *Ed,
@@ -730,7 +726,6 @@ OhciGetEDField (
   return 0;
 }
 
-
 /**
 
   Set value to TD specific field
@@ -742,6 +737,7 @@ OhciGetEDField (
   @retval  EFI_SUCCESS          Value set
 
 **/
+
 EFI_STATUS
 OhciSetTDField (
   IN TD_DESCRIPTOR        *Td,
@@ -775,7 +771,6 @@ OhciSetTDField (
     Td->CurrBufferPointer = (UINT32)(UINTN) Value;
   }
 
-
   if (Field & TD_NEXT_PTR) {
     Td->NextTD = (UINT32)(UINTN) Value;
   }
@@ -786,7 +781,6 @@ OhciSetTDField (
 
   return EFI_SUCCESS;
 }
-
 
 /**
 
@@ -851,7 +845,7 @@ OhciGetTDField (
 **/
 
 VOID
-OhciFreeDynamicIntMemory( 
+OhciFreeDynamicIntMemory ( 
   IN USB_OHCI_HC_DEV      *Ohc
   ) 
 {
@@ -865,6 +859,7 @@ OhciFreeDynamicIntMemory(
     }
   }	
 }
+
 /**
 
   Free the Ed that were initilized during driver was starting,
@@ -872,14 +867,14 @@ OhciFreeDynamicIntMemory(
 
   @Param  Ohc                   Device private data
 
-
 **/
+
 VOID 
 OhciFreeFixedIntMemory (
   IN USB_OHCI_HC_DEV      *Ohc
   ) 
 {       
-  static UINT32           Leaf[] = {32,16,8,4,2,1};
+  static UINT32           Leaf[] = {32, 16, 8, 4, 2, 1};
   UINTN                   Index;
   UINTN                   Level;
 
@@ -891,6 +886,7 @@ OhciFreeFixedIntMemory (
     } 
   }
 }
+
 /**
 
   Release all OHCI used memory when OHCI going to quit
@@ -906,15 +902,12 @@ OhciFreeIntTransferMemory (
   IN USB_OHCI_HC_DEV           *Ohc
   )
 { 
-  //
   // Free the Ed,Td,buffer that were created during transferring
-  //
+
   OhciFreeDynamicIntMemory (Ohc);
-  //
+
   // Free the Ed that were initilized during driver was starting
-  //
+
   OhciFreeFixedIntMemory (Ohc);
   return EFI_SUCCESS;
 }
-
-

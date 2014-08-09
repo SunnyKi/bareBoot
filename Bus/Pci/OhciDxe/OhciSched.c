@@ -31,7 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
 #include "Ohci.h"
 
 /**
@@ -44,6 +43,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   @retval EFI_SUCCESS           Item successfully added
 
 **/
+
 EFI_STATUS
 OhciAddInterruptContextEntry (
   IN  USB_OHCI_HC_DEV          *Ohc,
@@ -70,7 +70,6 @@ OhciAddInterruptContextEntry (
   return EFI_SUCCESS;
 }
 
-
 /**
 
   Free a interrupt context entry
@@ -82,6 +81,7 @@ OhciAddInterruptContextEntry (
   @retval EFI_INVALID_PARAMETER Entry is NULL
 
 **/
+
 EFI_STATUS
 OhciFreeInterruptContextEntry (
   IN USB_OHCI_HC_DEV          *Ohc,
@@ -107,7 +107,6 @@ OhciFreeInterruptContextEntry (
   return EFI_SUCCESS;
 }
 
-
 /**
 
   Free entries match the device address and endpoint address
@@ -120,8 +119,9 @@ OhciFreeInterruptContextEntry (
   @retval  EFI_SUCCESS          Items match the requirement removed
 
 **/
+
 EFI_STATUS
-OhciFreeInterruptContext(
+OhciFreeInterruptContext (
   IN  USB_OHCI_HC_DEV     *Ohc,
   IN  UINT8               DeviceAddress,
   IN  UINT8               EndPointAddress,
@@ -131,7 +131,6 @@ OhciFreeInterruptContext(
   INTERRUPT_CONTEXT_ENTRY  *Entry;
   INTERRUPT_CONTEXT_ENTRY  *TempEntry;
   EFI_TPL                  OriginalTPL;
-  
   
   OriginalTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
@@ -170,7 +169,6 @@ OhciFreeInterruptContext(
   return EFI_SUCCESS;
 }
 
-
 /**
 
   Convert Error code from OHCI format to EFI format
@@ -180,6 +178,7 @@ OhciFreeInterruptContext(
   @retval                       ErrorCode in EFI format
 
 **/
+
 UINT32
 ConvertErrorCode (
   IN  UINT32              ErrorCode
@@ -225,7 +224,6 @@ ConvertErrorCode (
   return TransferResult;
 }
 
-
 /**
 
   Check TDs Results
@@ -238,6 +236,7 @@ ConvertErrorCode (
   @retval FLASE                 means Error or Short packet
 
 **/
+
 BOOLEAN
 OhciCheckTDsResults (
   IN  USB_OHCI_HC_DEV     *Ohc,
@@ -253,9 +252,9 @@ OhciCheckTDsResults (
     TdCompletionCode = Td->Word0.ConditionCode;
 
     *Result |= ConvertErrorCode(TdCompletionCode);
-    //
+
     // if any error encountered, stop processing the left TDs.
-    //
+
     if (*Result) {
       return FALSE;
     }
@@ -263,9 +262,7 @@ OhciCheckTDsResults (
     Td = (TD_DESCRIPTOR *)(UINTN)(Td->NextTDPointer);
   }
   return TRUE;
- 
 }
-
 
 /**
 
@@ -316,6 +313,7 @@ CheckEDStatus (
   @retval  EFI_DEVICE_ERROR     Some error occured
 
 **/
+
 EFI_STATUS
 CheckIfDone (
   IN  USB_OHCI_HC_DEV       *Ohc,
@@ -352,7 +350,6 @@ CheckIfDone (
     return EFI_DEVICE_ERROR;
   }
 }
-
 
 /**
 
@@ -392,14 +389,15 @@ OhciTDConditionCodeToStatus (
 **/
 
 VOID
-OhciInvokeInterruptCallBack(
+OhciInvokeInterruptCallBack (
   IN  INTERRUPT_CONTEXT_ENTRY  *Entry,
   IN  UINT32                   Result
 )
 {
-  //Generally speaking, Keyboard driver should not 
-  //check the Keyboard buffer if an error happens, it will be robust 
-  //if we NULLed the buffer once error happens
+  // Generally speaking, Keyboard driver should not 
+  // check the Keyboard buffer if an error happens, it will be robust 
+  // if we NULLed the buffer once error happens
+
   if (Result) {	
     Entry->CallBackFunction (
              NULL,
@@ -407,7 +405,7 @@ OhciInvokeInterruptCallBack(
              Entry->Context,
              Result
              );
-  }else{
+  } else {
     Entry->CallBackFunction (
              (UINT8 *)(UINTN)(Entry->DataTd->DataBuffer), 
              Entry->DataTd->ActualSendLength, 
@@ -416,7 +414,6 @@ OhciInvokeInterruptCallBack(
              );
   }
 }
-
 
 /**
 
@@ -453,12 +450,13 @@ OhciHouseKeeper (
   PreEntry = NULL;
   
   while(Entry != NULL) {
-
     OhciCheckTDsResults(Ohc, Entry->DataTd, &Result );
     if (((Result & EFI_USB_ERR_STALL) == EFI_USB_ERR_STALL) ||
       ((Result & EFI_USB_ERR_NOTEXECUTE) == EFI_USB_ERR_NOTEXECUTE)) {
       // Why return? We should continue to next entry in this case.
-      //return ;
+#if 0
+      return;
+#endif
       PreEntry = Entry;
       Entry = Entry->NextEntry;
       continue;
@@ -474,22 +472,21 @@ OhciHouseKeeper (
       DataTd = HeadTd;
       Toggle = 0;
       if (Result == EFI_USB_NOERROR) {
-        //
+
         // Update toggle if there is no error, and re-submit the interrupt Ed&Tds
-        //
+
         if ((Ed != NULL) && (DataTd != NULL)) {
           Ed->Word0.Skip = 1;
         }
-        //
+
         // From hcir1_0a.pdf 4.2.2 
         // ToggleCarry:This bit is the data toggle carry bit,
         // Whenever a TD is retired, this bit is written to 
         // contain the last data toggle value(LSb of data Toggel
         // file) from the retired TD.
         // This field is not used for Isochronous Endpoints
-        //
-        if (Ed == NULL)
-        {
+
+        if (Ed == NULL) {
           return;
         }
         Toggle = (UINT8) OhciGetEDField (Ed, ED_DTTOGGLE);
@@ -503,11 +500,11 @@ OhciHouseKeeper (
           DataTd = (TD_DESCRIPTOR *)(UINTN)(DataTd->NextTDPointer);
           Toggle ^= 1;
         }
-        //
+
         // HC will only update DataToggle, ErrorCount, ConditionCode
         // CurrentBufferPointer & NextTD, so we only need to update
         // them once we want to active them again
-        //
+
         DataTd = HeadTd;
         while (DataTd != NULL) {
           if (DataTd->NextTDPointer == 0) {  
@@ -520,12 +517,12 @@ OhciHouseKeeper (
           DataTd->CurrBufferPointer = DataTd->DataBuffer;
           DataTd = (TD_DESCRIPTOR *)(UINTN)(DataTd->NextTDPointer);
         }
-        //
+
         // Active current Ed,Td 
         //
         // HC will only update Halted, ToggleCarry & TDQueueHeadPointer,
         // So we only need to update them once we want to active them again.
-        //        
+
         if ((Ed != NULL) && (DataTd != NULL)) {
           Ed->Word2.TdHeadPointer = (UINT32)((UINTN)HeadTd>>4);
           OhciSetEDField (Ed, ED_HALTED | ED_DTTOGGLE, 0);
@@ -535,7 +532,7 @@ OhciHouseKeeper (
     } else {            
       if (PreEntry == NULL) {
         Ohc->InterruptContextList = Entry->NextEntry;
-      }else{
+      } else {
         PreEntry = Entry;
         PreEntry->NextEntry = Entry->NextEntry;
       }
@@ -549,4 +546,3 @@ OhciHouseKeeper (
   gBS->RestoreTPL (OriginalTPL);
   return;
 }
-

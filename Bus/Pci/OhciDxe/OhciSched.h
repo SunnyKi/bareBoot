@@ -31,8 +31,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
-
 #ifndef _OHCI_SCHED_H
 #define _OHCI_SCHED_H
 
@@ -76,6 +74,7 @@ typedef struct {
   @retval EFI_SUCCESS           Item successfully added
 
 **/
+
 EFI_STATUS
 OhciAddInterruptContextEntry (
   IN  USB_OHCI_HC_DEV          *Ohc,
@@ -93,6 +92,7 @@ OhciAddInterruptContextEntry (
   @retval EFI_INVALID_PARAMETER Entry is NULL
 
 **/
+
 EFI_STATUS
 OhciFreeInterruptContextEntry (
   IN USB_OHCI_HC_DEV          *Ohc,
@@ -111,14 +111,14 @@ OhciFreeInterruptContextEntry (
   @retval  EFI_SUCCESS          Items match the requirement removed
 
 **/
+
 EFI_STATUS
-OhciFreeInterruptContext(
+OhciFreeInterruptContext (
   IN  USB_OHCI_HC_DEV     *Ohc,
   IN  UINT8               DeviceAddress,
   IN  UINT8               EndPointAddress,
   OUT UINT8               *DataToggle
   );
-
 
 /**
 
@@ -129,11 +129,11 @@ OhciFreeInterruptContext(
   @retval                       ErrorCode in EFI format
 
 **/
+
 UINT32
 ConvertErrorCode (
-  IN  UINT32              ErrorCode
+  IN  UINT32 ErrorCode
   );
-
 
 /**
 
@@ -147,12 +147,14 @@ ConvertErrorCode (
   @retval FLASE                 means Error or Short packet
 
 **/
+
 BOOLEAN
 OhciCheckTDsResults (
   IN  USB_OHCI_HC_DEV     *Ohc,
   IN  TD_DESCRIPTOR       *Td,
   OUT UINT32              *Result
   );
+
 /**
 
   Check the task status on an ED
@@ -170,6 +172,7 @@ CheckEDStatus (
   IN  TD_DESCRIPTOR       *HeadTd,
   OUT OHCI_ED_RESULT      *EdResult
   );
+
 /**
 
   Check the task status
@@ -185,6 +188,7 @@ CheckEDStatus (
   @retval  EFI_DEVICE_ERROR     Some error occured
 
 **/
+
 EFI_STATUS
 CheckIfDone (
   IN  USB_OHCI_HC_DEV       *Ohc,
@@ -221,11 +225,10 @@ OhciTDConditionCodeToStatus (
 **/
 
 VOID
-OhciInvokeInterruptCallBack(
+OhciInvokeInterruptCallBack (
   IN  INTERRUPT_CONTEXT_ENTRY  *Entry,
   IN  UINT32                   Result
 );
-
 
 /**
 

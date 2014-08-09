@@ -31,22 +31,18 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
 #include "Ohci.h"
 
-
-//
 // EFI Component Name Protocol
-//
+
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL  gOhciComponentName = {
   OhciComponentNameGetDriverName,
   OhciComponentNameGetControllerName,
   "eng"
 };
 
-//
 // EFI Component Name 2 Protocol
-//
+
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gOhciComponentName2 = {
   (EFI_COMPONENT_NAME2_GET_DRIVER_NAME) OhciComponentNameGetDriverName,
   (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) OhciComponentNameGetControllerName,
@@ -58,7 +54,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mOhciDriverNameTable[] = 
   { "eng;en", L"Usb Ohci Driver" },
   { NULL, NULL }
 };
-
 
 /**
   Retrieves a Unicode string that is the user readable name of the driver.
@@ -99,6 +94,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mOhciDriverNameTable[] = 
                                 the language specified by Language.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetDriverName (
@@ -112,7 +108,7 @@ OhciComponentNameGetDriverName (
            This->SupportedLanguages,
            mOhciDriverNameTable,
            DriverName,
-           (BOOLEAN)(This == &gOhciComponentName)
+           (BOOLEAN) (This == &gOhciComponentName)
            );
 }
 
@@ -184,6 +180,7 @@ OhciComponentNameGetDriverName (
                                 the language specified by Language.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetControllerName (
@@ -198,15 +195,14 @@ OhciComponentNameGetControllerName (
   USB_OHCI_HC_DEV      *OhciDev;
   EFI_USB_HC_PROTOCOL  *UsbHc;
 
-  //
   // This is a device driver, so ChildHandle must be NULL.
-  //
+
   if (ChildHandle != NULL) {
     return EFI_UNSUPPORTED;
   }
-  //
+
   // Make sure this driver is currently managing ControllerHandle
-  //
+
   Status = EfiTestManagedDevice (
              ControllerHandle,
              gOhciDriverBinding.DriverBindingHandle,
@@ -215,9 +211,9 @@ OhciComponentNameGetControllerName (
   if (EFI_ERROR (Status)) {
     return Status;
   }
-  //
+
   // Get the device context
-  //
+
   Status = gBS->OpenProtocol (
                   ControllerHandle,
                   &gEfiUsbHcProtocolGuid,
@@ -239,5 +235,4 @@ OhciComponentNameGetControllerName (
            ControllerName,
            (BOOLEAN)(This == &gOhciComponentName)
            );
-
 }

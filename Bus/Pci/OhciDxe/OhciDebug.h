@@ -32,8 +32,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
-
 /*++
 
 Routine Description:
@@ -47,20 +45,11 @@ Routine Description:
   @retval EFI_SUCCESS           ED 
 
 **/
+
 EFI_STATUS
 OhciDumpEdTdInfo (
-  IN USB_OHCI_HC_DEV          *Uhc,
+  IN USB_OHCI_HC_DEV   *Uhc,
   IN ED_DESCRIPTOR     *Ed,
   IN TD_DESCRIPTOR     *Td,
   BOOLEAN Stage
   );
-
-
-
-
-
-
-
-
-
-

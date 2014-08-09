@@ -32,7 +32,6 @@
 #
 ##
 
-
 [Defines]
   INF_VERSION                    = 0x00010005
   BASE_NAME                      = OhciDxe
@@ -49,28 +48,27 @@
 #  DRIVER_BINDING                =  gOhciDriverBinding                        
 #  COMPONENT_NAME                =  gOhciComponentName
 #  COMPONENT_NAME2               =  gOhciComponentName2
-#
+
 [Sources]
+  ComponentName.c
+  ComponentName.h
   Descriptor.h
   Ohci.c
   Ohci.h
-  OhciSched.c
-  OhciSched.h
-  OhciReg.c
-  OhciReg.h
-  OhciUrb.c
-  OhciUrb.h
   OhciDebug.c
   OhciDebug.h   
-  ComponentName.c
-  ComponentName.h
+  OhciReg.c
+  OhciReg.h
+  OhciSched.c
+  OhciSched.h
+  OhciUrb.c
+  OhciUrb.h
   UsbHcMem.c
   UsbHcMem.h
 
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -89,12 +87,3 @@
 [Protocols]
   gEfiPciIoProtocolGuid                         ## TO_START
   gEfiUsbHcProtocolGuid                         ## BY_START
-
-
-# [Event]
-#   ##
-#   # Periodic timer event for checking the result of interrupt transfer execution.
-#   #
-#   EVENT_TYPE_PERIODIC_TIMER                   ## PRODUCES
-#
-

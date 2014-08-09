@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _COMPONENT_NAME_H_
 #define _COMPONENT_NAME_H_
 
-
 /**
   Retrieves a Unicode string that is the user readable name of the driver.
 
@@ -74,6 +73,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                                 the language specified by Language.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetDriverName (
@@ -81,7 +81,6 @@ OhciComponentNameGetDriverName (
   IN  CHAR8                        *Language,
   OUT CHAR16                       **DriverName
   );
-
 
 /**
   Retrieves a Unicode string that is the user readable name of the controller
@@ -151,6 +150,7 @@ OhciComponentNameGetDriverName (
                                 the language specified by Language.
 
 **/
+
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetControllerName (
@@ -162,4 +162,3 @@ OhciComponentNameGetControllerName (
   );
 
 #endif
-

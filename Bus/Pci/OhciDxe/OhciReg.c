@@ -31,11 +31,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-
 #include "Ohci.h"
 
 /**
-
   Get OHCI operational reg value
 
   @param  PciIo                 PciIo protocol instance
@@ -44,6 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   @retval                       Value of the register
 
 **/
+
 UINT32
 OhciGetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
@@ -57,6 +56,7 @@ OhciGetOperationalReg (
 
   return Value;
 }
+
 /**
 
   Set OHCI operational reg value
@@ -69,7 +69,6 @@ OhciGetOperationalReg (
 
 **/
 
-
 EFI_STATUS
 OhciSetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
@@ -77,12 +76,9 @@ OhciSetOperationalReg (
   IN VOID                 *Value
   )
 {
-  EFI_STATUS Status;
-
-  Status = PciIo->Mem.Write(PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, Value);
-
-  return Status;
+  return PciIo->Mem.Write(PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, Value);
 }
+
 /**
 
   Get HcRevision reg value
@@ -93,7 +89,6 @@ OhciSetOperationalReg (
 
 **/
 
-
 UINT32
 OhciGetHcRevision (
   IN EFI_PCI_IO_PROTOCOL  *PciIo
@@ -101,6 +96,7 @@ OhciGetHcRevision (
 {
   return OhciGetOperationalReg (PciIo, HC_REVISION);
 }
+
 /**
 
   Set HcReset reg value
@@ -187,7 +183,6 @@ OhciGetHcReset (
   HcRESET                 Reset;
   UINT32                  Value;
 
-
   *(UINT32 *) &Reset = OhciGetOperationalReg (Ohc->PciIo, USBHOST_OFFSET_UHCHR);
   Value = 0;
 
@@ -258,8 +253,6 @@ OhciSetHcControl (
   EFI_STATUS              Status;
   HcCONTROL               Control;
 
-
-
   *(UINT32 *) &Control = OhciGetOperationalReg (Ohc->PciIo, HC_CONTROL);
 
   if (Field & CONTROL_BULK_RATIO) {
@@ -295,7 +288,6 @@ OhciSetHcControl (
   return Status;
 }
 
-
 /**
 
   Get specific field of HcControl reg value
@@ -306,7 +298,6 @@ OhciSetHcControl (
   @retval                       Value of the field
 
 **/
-
 
 UINT32
 OhciGetHcControl (
@@ -583,7 +574,6 @@ OhciSetInterruptControl (
   EFI_STATUS              Status;
   HcINTERRUPT_CONTROL     InterruptState;
 
-
   ZeroMem (&InterruptState, sizeof (HcINTERRUPT_CONTROL));
 
   if(Field & SCHEDULE_OVERRUN) {
@@ -708,7 +698,7 @@ OhciGetHcInterruptControl (
 **/
 
 EFI_STATUS
-OhciSetMemoryPointer(
+OhciSetMemoryPointer (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                PointerType,
   IN VOID                 *Value
@@ -730,7 +720,6 @@ OhciSetMemoryPointer(
     Verify = OhciGetOperationalReg (Ohc->PciIo, (UINT32)PointerType);
   };
 
-
   return Status;
 }
 
@@ -751,10 +740,8 @@ OhciGetMemoryPointer (
   IN UINTN                PointerType
   )
 {
-  
   return (VOID *)(UINTN)OhciGetOperationalReg (Ohc->PciIo, (UINT32)PointerType);
 }
-
 
 /**
 
@@ -777,7 +764,6 @@ OhciSetFrameInterval (
 {
   EFI_STATUS              Status;
   HcFRM_INTERVAL          FrameInterval;
-
 
   *(UINT32 *) &FrameInterval = OhciGetOperationalReg(Ohc->PciIo, HC_FRM_INTERVAL);
 
@@ -802,7 +788,6 @@ OhciSetFrameInterval (
 
   return Status;
 }
-
 
 /**
 
@@ -865,7 +850,6 @@ OhciSetFrameRemaining (
   EFI_STATUS              Status;
   HcFRAME_REMAINING       FrameRemaining;
 
-
   *(UINT32 *) &FrameRemaining = OhciGetOperationalReg (Ohc->PciIo, HC_FRM_REMAINING);
 
   FrameRemaining.FrameRemaining = Value;
@@ -875,6 +859,7 @@ OhciSetFrameRemaining (
 
   return Status;
 }
+
 /**
 
   Get value of frame remaining reg
@@ -885,15 +870,14 @@ OhciSetFrameRemaining (
   @retval                       Value of frame remaining reg
 
 **/
+
 UINT32
 OhciGetFrameRemaining (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
   )
-
 {
   HcFRAME_REMAINING       FrameRemaining;
-
 
   *(UINT32 *) &FrameRemaining = OhciGetOperationalReg (Ohc->PciIo, HC_FRM_REMAINING);
 
@@ -930,11 +914,7 @@ OhciSetFrameNumber(
   IN UINT32               Value
   )
 {
-  EFI_STATUS              Status;
-
-  Status = OhciSetOperationalReg (Ohc->PciIo, HC_FRM_NUMBER, &Value);
-
-  return Status;
+  return OhciSetOperationalReg (Ohc->PciIo, HC_FRM_NUMBER, &Value);
 }
 
 /**
@@ -972,14 +952,8 @@ OhciSetPeriodicStart (
   IN UINT32               Value
   )
 {
-  EFI_STATUS              Status;
-
-
-  Status = OhciSetOperationalReg (Ohc->PciIo, HC_PERIODIC_START, &Value);
-
-  return Status;
+  return OhciSetOperationalReg (Ohc->PciIo, HC_PERIODIC_START, &Value);
 }
-
 
 /**
 
@@ -998,7 +972,6 @@ OhciGetPeriodicStart (
 {
   return OhciGetOperationalReg(Ohc->PciIo, HC_PERIODIC_START);
 }
-
 
 /**
 
@@ -1019,12 +992,10 @@ OhciSetLsThreshold (
 {
   EFI_STATUS              Status;
 
-
   Status = OhciSetOperationalReg (Ohc->PciIo, HC_PERIODIC_START, &Value);
 
   return Status;
 }
-
 
 /**
 
@@ -1055,6 +1026,7 @@ OhciGetLsThreshold (
   @retval  EFI_SUCCESS          Value set
 
 **/
+
 EFI_STATUS
 OhciSetRootHubDescriptor (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -1065,7 +1037,6 @@ OhciSetRootHubDescriptor (
   EFI_STATUS              Status;
   HcRH_DESC_A             DescriptorA;
   HcRH_DESC_B             DescriptorB;
-
 
   if (Field & (RH_DEV_REMOVABLE | RH_PORT_PWR_CTRL_MASK)) {
     *(UINT32 *) &DescriptorB = OhciGetOperationalReg (Ohc->PciIo, HC_RH_DESC_B);
@@ -1132,7 +1103,6 @@ OhciGetRootHubDescriptor (
   HcRH_DESC_A             DescriptorA;
   HcRH_DESC_B             DescriptorB;
 
-
   *(UINT32 *) &DescriptorA = OhciGetOperationalReg (Ohc->PciIo, HC_RH_DESC_A);
   *(UINT32 *) &DescriptorB = OhciGetOperationalReg (Ohc->PciIo, HC_RH_DESC_B);
 
@@ -1180,7 +1150,6 @@ OhciGetRootHubDescriptor (
   return 0;
 }
 
-
 /**
 
   Set Root Hub Status reg value
@@ -1200,7 +1169,6 @@ OhciSetRootHubStatus (
 {
   EFI_STATUS              Status;
   HcRH_STATUS             RootHubStatus;
-
 
   ZeroMem (&RootHubStatus, sizeof(HcRH_STATUS));
 
@@ -1228,7 +1196,6 @@ OhciSetRootHubStatus (
   return Status;
 }
 
-
 /**
 
   Get Root Hub Status reg value
@@ -1247,7 +1214,6 @@ OhciGetRootHubStatus (
   )
 {
   HcRH_STATUS             RootHubStatus;
-
 
   *(UINT32 *) &RootHubStatus = OhciGetOperationalReg (Ohc->PciIo, HC_RH_STATUS);
 
@@ -1277,7 +1243,6 @@ OhciGetRootHubStatus (
   return 0;
 }
 
-
 /**
 
   Set Root Hub Port Status reg value
@@ -1299,7 +1264,6 @@ OhciSetRootHubPortStatus (
 {
   EFI_STATUS              Status;
   HcRHPORT_STATUS         PortStatus;
-
 
   ZeroMem (&PortStatus, sizeof(HcRHPORT_STATUS));
 
@@ -1344,7 +1308,6 @@ OhciSetRootHubPortStatus (
 
   return Status;
 }
-
 
 /**
 
