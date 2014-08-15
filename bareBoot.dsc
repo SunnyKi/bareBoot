@@ -120,8 +120,11 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   PlatformHookLib|MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf
+!if $(TARGET) == "DEBUG"
   SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
-#  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+!else
+  SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+!endif
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
   LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
   EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
@@ -332,7 +335,9 @@
 !ifdef MEMLOG2SERIAL
   DEFINE DEF_MEMLOG2SERIAL = -DMEMLOG2SERIAL
 !endif
-!ifdef NDEBUG
+!if $(TARGET) == "DEBUG"
+  DEFINE DEF_NDEBUG = -Os
+!else
   DEFINE DEF_NDEBUG = -DMDEPKG_NDEBUG -Os
 !endif
   *_*_*_CC_FLAGS   = $(DEF_NDEBUG) $(DEF_BLOCKIO) $(DEF_USB_FIXUP) $(DEF_SPEEDUP) $(DEF_MEMLOG2SERIAL)

@@ -5,7 +5,7 @@
 export TARGET_TOOLS=GCC49
 export PROCESSOR=X64
 export TARGET=RELEASE
-export DEF="-D NDEBUG"
+export DEF=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
