@@ -24,6 +24,7 @@ while [[ $# -gt 0 ]]; do
         "-ohci") DEF="$DEF -D OHCI" ;;
         "-ps2") DEF="$DEF -D PS2" ;;
         "-m2s") DEF="$DEF -D MEMLOG2SERIAL" ;;
+        "-ion") DEF="$DEF -D ION" ;;
         "-*")
          echo $"ERROR!"
         exit 1

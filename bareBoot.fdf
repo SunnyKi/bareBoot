@@ -156,7 +156,8 @@ INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 !endif
 #INF  RuleOverride=BINARY bareBoot/XhciDxe/XhciDxe.inf
 
-!if ($(ARCH) == "X64")
+!ifdef ION
+  # Binary INF file to support toggle among different CPU architectures.
 INF  RuleOverride=BINARY bareBoot/ION/IONDxe.inf
 !endif
 
