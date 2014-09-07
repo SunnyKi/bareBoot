@@ -1330,6 +1330,8 @@ OhciSyncInterruptTransfer (
     return EFI_INVALID_PARAMETER;
   }
   
+  HeadTd = NULL;
+
   Ohc = USB_OHCI_HC_DEV_FROM_THIS (This);
   UCBuffer = AllocatePool (*DataLength); 
   if (UCBuffer == NULL) {
