@@ -107,7 +107,7 @@ typedef struct {
 typedef struct _TD_DESCRIPTOR {
   TD_DESCRIPTOR_WORD0     Word0;
   UINT32                  CurrBufferPointer;
-  UINT32                  NextTD;
+  volatile UINT32         NextTD;
   UINT32                  BufferEndPointer;
   UINT32                  NextTDPointer;
   UINT32                  DataBuffer;
@@ -134,10 +134,10 @@ typedef struct {
 } ED_DESCRIPTOR_WORD2;
 
 typedef struct _ED_DESCRIPTOR {
-  ED_DESCRIPTOR_WORD0     Word0;
-  UINT32                  TdTailPointer;
-  ED_DESCRIPTOR_WORD2     Word2;
-  UINT32                  NextED;
+  ED_DESCRIPTOR_WORD0          Word0;
+  volatile UINT32              TdTailPointer;
+  volatile ED_DESCRIPTOR_WORD2 Word2;
+  volatile UINT32              NextED;
 } ED_DESCRIPTOR;
 
 #define TD_PTR(p)            ((TD_DESCRIPTOR *)(UINTN)((p) << 4))
