@@ -364,7 +364,7 @@ BdsLibGetVolumeName (
 
   fsi = EfiLibFileSystemInfo (FHandle);
   if (fsi != NULL) {
-    if ((fsi->VolumeLabel != NULL) && (StrLen(fsi->VolumeLabel) > 0)) {
+    if (StrLen(fsi->VolumeLabel) > 0) {
       UnicodeSPrint (wbuff, sizeof (wbuff), L"%s", fsi->VolumeLabel);
     } else {
       UnicodeSPrint (wbuff, sizeof (wbuff), L"%s %d", L"Unnamed Volume", Index);
