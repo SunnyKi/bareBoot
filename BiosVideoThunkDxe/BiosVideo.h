@@ -497,9 +497,10 @@ InitializeInterruptRedirection (
 BOOLEAN
 EFIAPI
 LegacyBiosInt86 (
-  IN  BIOS_VIDEO_DEV                 *BiosDev,
-  IN  UINT8                           BiosInt,
-  IN  IA32_REGISTER_SET           *Regs
+  IN  EFI_LEGACY_8259_PROTOCOL      *Legacy8259,
+  IN  THUNK_CONTEXT                 *ThunkContext,
+  IN  UINT8                         BiosInt,
+  IN  IA32_REGISTER_SET             *Regs
   );    
   
 #endif

@@ -136,6 +136,99 @@ InitializeInterruptRedirection (
 BOOLEAN
 EFIAPI
 LegacyBiosInt86 (
+  IN  EFI_LEGACY_8259_PROTOCOL       *Legacy8259,
+  IN  THUNK_CONTEXT                  *ThunkContext,
+  IN  UINT8                          BiosInt,
+  IN  IA32_REGISTER_SET              *Regs
+  )
+{
+  UINTN                 Status;
+  UINTN                 Eflags;
+  IA32_REGISTER_SET     ThunkRegSet;
+  BOOLEAN               Ret;
+  UINT16                *Stack16;
+
+  ZeroMem (&ThunkRegSet, sizeof (ThunkRegSet));
+  ThunkRegSet.E.EFLAGS.Bits.Reserved_0 = 1;
+  ThunkRegSet.E.EFLAGS.Bits.Reserved_1 = 0;
+  ThunkRegSet.E.EFLAGS.Bits.Reserved_2 = 0;
+  ThunkRegSet.E.EFLAGS.Bits.Reserved_3 = 0;
+  ThunkRegSet.E.EFLAGS.Bits.IOPL       = 3;
+  ThunkRegSet.E.EFLAGS.Bits.NT         = 0;
+  ThunkRegSet.E.EFLAGS.Bits.IF         = 1;
+  ThunkRegSet.E.EFLAGS.Bits.TF         = 0;
+  ThunkRegSet.E.EFLAGS.Bits.CF         = 0;
+
+  ThunkRegSet.E.EDI  = Regs->E.EDI;
+  ThunkRegSet.E.ESI  = Regs->E.ESI;
+  ThunkRegSet.E.EBP  = Regs->E.EBP;
+  ThunkRegSet.E.EBX  = Regs->E.EBX;
+  ThunkRegSet.E.EDX  = Regs->E.EDX;
+  ThunkRegSet.E.ECX  = Regs->E.ECX;
+  ThunkRegSet.E.EAX  = Regs->E.EAX;
+  ThunkRegSet.E.DS   = Regs->E.DS;
+  ThunkRegSet.E.ES   = Regs->E.ES;
+
+  //
+  // The call to Legacy16 is a critical section to EFI
+  //
+  Eflags = AsmReadEflags ();
+  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
+    DisableInterrupts ();
+  }
+
+  //
+  // Set Legacy16 state. 0x08, 0x70 is legacy 8259 vector bases.
+  //
+  Status = Legacy8259->SetMode (Legacy8259, Efi8259LegacyMode, NULL, NULL);
+  ASSERT_EFI_ERROR (Status);
+
+  Stack16 = (UINT16 *)((UINT8 *) ThunkContext->RealModeBuffer + ThunkContext->RealModeBufferSize - sizeof (UINT16));
+
+  ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
+  ThunkRegSet.E.ESP  = (UINT16) (UINTN) Stack16;
+
+  ThunkRegSet.E.Eip  = (UINT16)((UINT32 *)NULL)[BiosInt];
+  ThunkRegSet.E.CS   = (UINT16)(((UINT32 *)NULL)[BiosInt] >> 16);
+  ThunkContext->RealModeState = &ThunkRegSet;
+  AsmThunk16 (ThunkContext);
+
+  //
+  // Restore protected mode interrupt state
+  //
+  Status = Legacy8259->SetMode (Legacy8259, Efi8259ProtectedMode, NULL, NULL);
+  ASSERT_EFI_ERROR (Status);
+
+  //
+  // End critical section
+  //
+  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
+    EnableInterrupts ();
+  }
+
+  Regs->E.EDI      = ThunkRegSet.E.EDI;
+  Regs->E.ESI      = ThunkRegSet.E.ESI;
+  Regs->E.EBP      = ThunkRegSet.E.EBP;
+  Regs->E.EBX      = ThunkRegSet.E.EBX;
+  Regs->E.EDX      = ThunkRegSet.E.EDX;
+  Regs->E.ECX      = ThunkRegSet.E.ECX;
+  Regs->E.EAX      = ThunkRegSet.E.EAX;
+  Regs->E.SS       = ThunkRegSet.E.SS;
+  Regs->E.CS       = ThunkRegSet.E.CS;
+  Regs->E.DS       = ThunkRegSet.E.DS;
+  Regs->E.ES       = ThunkRegSet.E.ES;
+
+  CopyMem (&(Regs->E.EFLAGS), &(ThunkRegSet.E.EFLAGS), sizeof (UINT32));
+
+  Ret = (BOOLEAN) (Regs->E.EFLAGS.Bits.CF == 1);
+
+  return Ret;
+}
+
+#if 0
+BOOLEAN
+EFIAPI
+LegacyBiosInt86 (
   IN  BIOS_BLOCK_IO_DEV               *BiosDev,
   IN  UINT8                           BiosInt,
   IN  IA32_REGISTER_SET               *Regs
@@ -223,5 +316,5 @@ LegacyBiosInt86 (
 
   return Ret;
 }
-
+#endif
 

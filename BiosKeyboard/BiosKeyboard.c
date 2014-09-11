@@ -462,7 +462,7 @@ BiosKeyboardDriverBindingStart (
                                                  &Regs
                                                  );
 #endif
-  CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate, 0x15, &Regs);
+  CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x15, &Regs);
   if (!CarryFlag) {
     //
     // Check bit 6 of Feature Byte 2.
@@ -480,7 +480,7 @@ BiosKeyboardDriverBindingStart (
                                                      &Regs
                                                      );
 #endif
-  CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate, 0x16, &Regs);
+  CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
 
       if (!CarryFlag) {
         //
@@ -1851,7 +1851,7 @@ BiosKeyboardTimerHandler (
                                      &Regs
                                      );
 #endif
-  LegacyBiosInt86 (BiosKeyboardPrivate, 0x16, &Regs);
+  LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
   if (Regs.E.EFLAGS.Bits.ZF != 0) {
     gBS->RestoreTPL (OldTpl);
     return;
@@ -1873,7 +1873,7 @@ BiosKeyboardTimerHandler (
                                      &Regs
                                      );
 #endif
-  LegacyBiosInt86 (BiosKeyboardPrivate, 0x16, &Regs);
+  LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
   KeyData.Key.ScanCode            = (UINT16) Regs.H.AH;
   KeyData.Key.UnicodeChar         = (UINT16) Regs.H.AL;
 
