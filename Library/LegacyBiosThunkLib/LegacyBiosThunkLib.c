@@ -11,6 +11,7 @@ THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
 
 **/
+
 #include <Guid/StatusCodeDataTypeId.h>
 
 #include <Library/DebugLib.h>
@@ -20,13 +21,12 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Library/LegacyBiosThunkLib.h>
 
-#define EFI_CPU_EFLAGS_IF 0x200
-
 /**
   Initialize legacy environment for BIOS INI caller.
   
   @param ThunkContext   the instance pointer of THUNK_CONTEXT
 **/
+
 VOID
 InitializeBiosIntCaller (
   THUNK_CONTEXT     *ThunkContext
@@ -65,8 +65,8 @@ InitializeBiosIntCaller (
    interrupt lost.
    
    @param Legacy8259  Instance pointer for EFI_LEGACY_8259_PROTOCOL.
-   
 **/
+
 CONST   UINT32   InterruptRedirectionCode[8] = {
   0x90CF08CD, // INT8; IRET; NOP
   0x90CF09CD, // INT9; IRET; NOP
@@ -77,7 +77,6 @@ CONST   UINT32   InterruptRedirectionCode[8] = {
   0x90CF0ECD, // INTE; IRET; NOP
   0x90CF0FCD  // INTF; IRET; NOP
 };
-
 
 VOID
 InitializeInterruptRedirection (
@@ -139,6 +138,7 @@ InitializeInterruptRedirection (
                  See Regs for status.
   @retval FALSE  There was a BIOS erro in the target code.  
 **/
+
 BOOLEAN
 EFIAPI
 LegacyBiosInt86 (
@@ -149,11 +149,11 @@ LegacyBiosInt86 (
   )
 {
   UINTN                 Status;
-  UINTN                 Eflags;
   IA32_REGISTER_SET     ThunkRegSet;
   BOOLEAN               Ret;
   UINT16                *Stack16;
   volatile UINT32       *IVTPtr;
+  BOOLEAN               Enabled;
   
   IVTPtr = NULL;
 
@@ -181,11 +181,7 @@ LegacyBiosInt86 (
   //
   // The call to Legacy16 is a critical section to EFI
   //
-  Eflags = AsmReadEflags ();
-  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
-    DisableInterrupts ();
-  }
-
+  Enabled = SaveAndDisableInterrupts();
   //
   // Set Legacy16 state. 0x08, 0x70 is legacy 8259 vector bases.
   //
@@ -211,9 +207,7 @@ LegacyBiosInt86 (
   //
   // End critical section
   //
-  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
-    EnableInterrupts ();
-  }
+  SetInterruptState (Enabled);
 
   Regs->E.EDI      = ThunkRegSet.E.EDI;
   Regs->E.ESI      = ThunkRegSet.E.ESI;
