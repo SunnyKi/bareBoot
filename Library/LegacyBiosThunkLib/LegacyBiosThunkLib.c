@@ -1,5 +1,5 @@
 /** @file
-  Provide legacy thunk interface for accessing Bios Video Rom.
+  Provide legacy thunk interface for accessing Bios Functions.
   
 Copyright (c) 2006 - 2007, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials                          
@@ -11,8 +11,14 @@ THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
 
 **/
+#include <Guid/StatusCodeDataTypeId.h>
 
-#include "BiosVideo.h"
+#include <Library/DebugLib.h>
+#include <Library/BaseLib.h>
+#include <Library/BaseMemoryLib.h>
+#include <Library/UefiBootServicesTableLib.h>
+
+#include <Library/LegacyBiosThunkLib.h>
 
 #define EFI_CPU_EFLAGS_IF 0x200
 
@@ -36,7 +42,7 @@ InitializeBiosIntCaller (
   //
   AsmGetThunk16Properties (&RealModeBufferSize, &ExtraStackSize);
   LegacyRegionSize = (((RealModeBufferSize + ExtraStackSize) / EFI_PAGE_SIZE) + 1) * EFI_PAGE_SIZE;
-  LegacyRegionBase = 0x100000;
+  LegacyRegionBase = 0x0C0000;
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
                   EfiACPIMemoryNVS,
@@ -61,6 +67,18 @@ InitializeBiosIntCaller (
    @param Legacy8259  Instance pointer for EFI_LEGACY_8259_PROTOCOL.
    
 **/
+CONST   UINT32   InterruptRedirectionCode[8] = {
+  0x90CF08CD, // INT8; IRET; NOP
+  0x90CF09CD, // INT9; IRET; NOP
+  0x90CF0ACD, // INTA; IRET; NOP
+  0x90CF0BCD, // INTB; IRET; NOP
+  0x90CF0CCD, // INTC; IRET; NOP
+  0x90CF0DCD, // INTD; IRET; NOP
+  0x90CF0ECD, // INTE; IRET; NOP
+  0x90CF0FCD  // INTF; IRET; NOP
+};
+
+
 VOID
 InitializeInterruptRedirection (
   IN  EFI_LEGACY_8259_PROTOCOL  *Legacy8259
@@ -72,22 +90,12 @@ InitializeInterruptRedirection (
   UINT32                *IdtArray;
   UINTN                 Index;
   UINT8                 ProtectedModeBaseVector;
-  UINT32                InterruptRedirectionCode[] = {
-    0x90CF08CD, // INT8; IRET; NOP
-    0x90CF09CD, // INT9; IRET; NOP
-    0x90CF0ACD, // INTA; IRET; NOP
-    0x90CF0BCD, // INTB; IRET; NOP
-    0x90CF0CCD, // INTC; IRET; NOP
-    0x90CF0DCD, // INTD; IRET; NOP
-    0x90CF0ECD, // INTE; IRET; NOP
-    0x90CF0FCD  // INTF; IRET; NOP
-  };
 
   //
   // Get LegacyRegion
   //
   LegacyRegionLength = sizeof(InterruptRedirectionCode);
-  LegacyRegionBase = 0x100000;
+  LegacyRegionBase = 0x0C0000;
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
                   EfiACPIMemoryNVS,
@@ -227,20 +235,17 @@ LegacyBiosInt86 (
 BOOLEAN
 EFIAPI
 LegacyBiosInt86 (
-  IN  BIOS_VIDEO_DEV                 *BiosDev,
+  IN  BIOS_BLOCK_IO_DEV               *BiosDev,
   IN  UINT8                           BiosInt,
-  IN  IA32_REGISTER_SET              *Regs
+  IN  IA32_REGISTER_SET               *Regs
   )
 {
   UINTN                 Status;
+  UINTN                 Eflags;
   IA32_REGISTER_SET     ThunkRegSet;
   BOOLEAN               Ret;
   UINT16                *Stack16;
-  BOOLEAN               Enabled;
-  volatile UINT32       *IVTPtr;
   
-  IVTPtr = NULL;
-
   ZeroMem (&ThunkRegSet, sizeof (ThunkRegSet));
   ThunkRegSet.E.EFLAGS.Bits.Reserved_0 = 1;
   ThunkRegSet.E.EFLAGS.Bits.Reserved_1 = 0;
@@ -265,8 +270,10 @@ LegacyBiosInt86 (
   //
   // The call to Legacy16 is a critical section to EFI
   //
-
-  Enabled = SaveAndDisableInterrupts();
+  Eflags = AsmReadEflags ();
+  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
+    DisableInterrupts ();
+  }
 
   //
   // Set Legacy16 state. 0x08, 0x70 is legacy 8259 vector bases.
@@ -276,20 +283,11 @@ LegacyBiosInt86 (
   
   Stack16 = (UINT16 *)((UINT8 *) BiosDev->ThunkContext->RealModeBuffer + BiosDev->ThunkContext->RealModeBufferSize - sizeof (UINT16));
 
-  // Clear the eflags value that will be popped when the legacy BIOS code
-  // executes IRET to return control to the caller. It is important that
-  // trap flag is not set in this value because the resulting INT1 will
-  // stop execution.
-
-  Stack16 [0] = 0;
-
   ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
   ThunkRegSet.E.ESP  = (UINT16) (UINTN) Stack16;
 
-
-  ThunkRegSet.E.Eip  = (UINT16) IVTPtr[BiosInt];
-  ThunkRegSet.E.CS   = (UINT16) (IVTPtr[BiosInt] >> 16);
-
+  ThunkRegSet.E.Eip  = (UINT16)((UINT32 *)NULL)[BiosInt];
+  ThunkRegSet.E.CS   = (UINT16)(((UINT32 *)NULL)[BiosInt] >> 16);
   BiosDev->ThunkContext->RealModeState = &ThunkRegSet;
   AsmThunk16 (BiosDev->ThunkContext);
   
@@ -302,8 +300,9 @@ LegacyBiosInt86 (
   //
   // End critical section
   //
-
-  SetInterruptState (Enabled);
+  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
+    EnableInterrupts ();
+  }
 
   Regs->E.EDI      = ThunkRegSet.E.EDI;      
   Regs->E.ESI      = ThunkRegSet.E.ESI;  
@@ -324,3 +323,4 @@ LegacyBiosInt86 (
   return Ret;
 }
 #endif
+

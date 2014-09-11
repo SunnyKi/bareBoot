@@ -35,19 +35,18 @@
   UefiDriverEntryPoint
   DevicePathLib
   MemLogLib
-  
+  LegacyBiosThunkLib
+
 [Sources]
   BiosVideo.h
   BiosVideo.c
   ComponentName.c
   VesaBiosExtensions.h
-  LegacyBiosThunk.c
   915resolution.c
 
 [Protocols]
   gEfiPciIoProtocolGuid
   gEfiVgaMiniPortProtocolGuid
-  gEfiLegacy8259ProtocolGuid
   gEfiEdidDiscoveredProtocolGuid
   gEfiEdidActiveProtocolGuid
   gEfiLegacyRegion2ProtocolGuid

@@ -40,14 +40,12 @@
   ComponentName.h
   BiosKeyboard.c
   BiosKeyboard.h
-    LegacyBiosThunk.c
-
 
 [Packages]
   MdePkg/MdePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
-
+  bareBoot/bareBoot.dec
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -58,14 +56,12 @@
   UefiLib
   DebugLib
   BaseLib
-  PcdLib
+  LegacyBiosThunkLib
 
 [Protocols]
   gEfiIsaIoProtocolGuid                         # PROTOCOL TO_START
   gEfiSimpleTextInProtocolGuid                  # PROTOCOL BY_START
   gEfiSimpleTextInputExProtocolGuid             # PROTOCOL BY_START
-#  gEfiLegacyBiosProtocolGuid                    # PROTOCOL TO_START
-   gEfiLegacy8259ProtocolGuid                   # PROTOCOL TO_START
   gEfiPs2PolicyProtocolGuid                     # PROTOCOL ALWAYS_CONSUMED
   gEfiDevicePathProtocolGuid                    # PROTOCOL ALWAYS_CONSUMED
 

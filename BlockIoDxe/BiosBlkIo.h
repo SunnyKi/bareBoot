@@ -20,8 +20,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 #include <Protocol/BlockIo.h>
 #include <Protocol/PciIo.h>
-#include <Protocol/LegacyBios.h>
-#include <Protocol/Legacy8259.h>
 #include <Protocol/DevicePath.h>
 #include <Guid/LegacyBios.h>
 #include <Guid/BlockIoVendor.h>
@@ -35,6 +33,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/MemoryAllocationLib.h>
 
 #include <Library/PrintLib.h>
+#include <Library/LegacyBiosThunkLib.h>
 
 #include <IndustryStandard/Pci.h>
 

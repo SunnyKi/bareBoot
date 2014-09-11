@@ -29,7 +29,6 @@
   BiosBlkIo.c
   BiosInt13.c
   ComponentName.c
-  LegacyBiosThunk.c
 
 [LibraryClasses]
   UefiDriverEntryPoint
@@ -40,22 +39,19 @@
   DevicePathLib
   MemoryAllocationLib
   MemLogLib
+  LegacyBiosThunkLib
 
 [Protocols]
   gEfiBlockIoProtocolGuid
   gEfiDevicePathProtocolGuid
   gEfiPciIoProtocolGuid
-  gEfiLegacy8259ProtocolGuid           # PROTOCOL TO_START
-//  gEfiLegacyBiosProtocolGuid
-
 
 [Guids]
   gBlockIoVendorGuid
-//  gEfiLegacyBiosGuid
 
 [Packages]
-  bareBoot/bareBoot.dec
   MdePkg/MdePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
+  bareBoot/bareBoot.dec
 

@@ -26,7 +26,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Protocol/ComponentName2.h>
 #include <Protocol/UgaDraw.h>
 #include <Protocol/VgaMiniPort.h>
-#include <Protocol/Legacy8259.h>
 #include <Protocol/EdidActive.h>
 #include <Protocol/EdidDiscovered.h>
 #include <Protocol/DevicePath.h>
@@ -37,6 +36,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/LegacyBiosThunkLib.h>
 
 #include <IndustryStandard/Pci.h>
 
@@ -132,9 +132,6 @@ typedef struct {
 #define BIOS_VIDEO_DEV_FROM_VGA_MINI_PORT_THIS(a) CR (a, BIOS_VIDEO_DEV, VgaMiniPort, BIOS_VIDEO_DEV_SIGNATURE)
 
 #define GRAPHICS_OUTPUT_INVALIDE_MODE_NUMBER  0xffff
-
-#define EFI_SEGMENT(_Adr)     (UINT16) ((UINT16) (((UINTN) (_Adr)) >> 4) & 0xf000)
-#define EFI_OFFSET(_Adr)      (UINT16) (((UINT16) ((UINTN) (_Adr))) & 0xffff)
 
 //
 // Global Variables
@@ -456,51 +453,4 @@ BiosVideoIsVga (
 
 #define VGA_GRAPHICS_CONTROLLER_BIT_MASK_REGISTER         0x08
 
-/**
-  Initialize legacy environment for BIOS INI caller.
-  
-  @param ThunkContext   the instance pointer of THUNK_CONTEXT
-**/
-VOID
-InitializeBiosIntCaller (
-  THUNK_CONTEXT     *ThunkContext
-  );
-  
-/**
-   Initialize interrupt redirection code and entries, because
-   IDT Vectors 0x68-0x6f must be redirected to IDT Vectors 0x08-0x0f.
-   Or the interrupt will lost when we do thunk.
-   NOTE: We do not reset 8259 vector base, because it will cause pending
-   interrupt lost.
-   
-   @param Legacy8259  Instance pointer for EFI_LEGACY_8259_PROTOCOL.
-   
-**/  
-VOID
-InitializeInterruptRedirection (
-  IN  EFI_LEGACY_8259_PROTOCOL  *Legacy8259
-  );
-  
-/**
-  Thunk to 16-bit real mode and execute a software interrupt with a vector 
-  of BiosInt. Regs will contain the 16-bit register context on entry and 
-  exit.
-  
-  @param  This    Protocol instance pointer.
-  @param  BiosInt Processor interrupt vector to invoke
-  @param  Reg     Register contexted passed into (and returned) from thunk to 16-bit mode
-  
-  @retval TRUE   Thunk completed, and there were no BIOS errors in the target code.
-                 See Regs for status.
-  @retval FALSE  There was a BIOS erro in the target code.  
-**/  
-BOOLEAN
-EFIAPI
-LegacyBiosInt86 (
-  IN  EFI_LEGACY_8259_PROTOCOL      *Legacy8259,
-  IN  THUNK_CONTEXT                 *ThunkContext,
-  IN  UINT8                         BiosInt,
-  IN  IA32_REGISTER_SET             *Regs
-  );    
-  
 #endif

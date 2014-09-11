@@ -1,0 +1,32 @@
+## @file
+#  Default instance of LegacyBiosThunkLib library.
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = LegacyBiosThunkLib
+  FILE_GUID                      = 767DC6A4-077E-4DE6-866B-311B5B6724B8
+  MODULE_TYPE                    = BASE
+  VERSION_STRING                 = 1.0
+  LIBRARY_CLASS                  = LegacyBiosThunkLib 
+
+#
+#  VALID_ARCHITECTURES           = IA32 X64
+#
+
+[Sources]
+  LegacyBiosThunkLib.c
+
+[Packages]
+  MdePkg/MdePkg.dec
+  IntelFrameworkPkg/IntelFrameworkPkg.dec
+  bareBoot/bareBoot.dec
+
+[LibraryClasses]
+  DebugLib
+  BaseLib
+  BaseMemoryLib
+  UefiBootServicesTableLib
+
+[Protocols]
+   gEfiLegacy8259ProtocolGuid                   # PROTOCOL TO_START
