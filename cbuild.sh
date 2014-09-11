@@ -25,6 +25,7 @@ while [[ $# -gt 0 ]]; do
         "-ps2") DEF="$DEF -D PS2" ;;
         "-m2s") DEF="$DEF -D MEMLOG2SERIAL" ;;
         "-ion") DEF="$DEF -D ION" ;;
+        "-xcode5")    TARGET_TOOLS=XCODE5;;
         "-*")
          echo $"ERROR!"
         exit 1
