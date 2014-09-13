@@ -375,14 +375,12 @@ typedef struct {
 // Func List
 
 /**
-
   Get OHCI operational reg value
 
   @param  PciIo                 PciIo protocol instance
   @param  Offset                Offset of the operational reg
 
   @retval                       Value of the register
-
 **/
 
 UINT32
@@ -392,7 +390,6 @@ OhciGetOperationalReg (
   );
 
 /**
-
   Set OHCI operational reg value
 
   @param  PciIo                  PCI Bus Io protocol instance
@@ -400,7 +397,6 @@ OhciGetOperationalReg (
   @param  Value                  Value to set
 
   @retval EFI_SUCCESS            Value set to the reg
-
 **/
 
 EFI_STATUS
@@ -411,13 +407,11 @@ OhciSetOperationalReg (
   );
 
 /**
-
   Get HcRevision reg value
 
   @param  PciIo                 PCI Bus Io protocol instance
 
   @retval                       Value of the register
-
 **/
 
 UINT32
@@ -426,15 +420,13 @@ OhciGetHcRevision (
   );
 
 /**
-
   Set HcReset reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -445,14 +437,12 @@ OhciSetHcReset (
   );
 
 /**
-
   Get specific field of HcReset reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -462,15 +452,13 @@ OhciGetHcReset (
   );
 
 /**
-
   Set HcControl reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -481,14 +469,12 @@ OhciSetHcControl (
   );
 
 /**
-
   Get specific field of HcControl reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -498,15 +484,13 @@ OhciGetHcControl (
   );
 
 /**
-
   Set HcCommand reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -517,14 +501,12 @@ OhciSetHcCommandStatus (
   );
 
 /**
-
   Get specific field of HcCommand reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -534,14 +516,12 @@ OhciGetHcCommandStatus (
   );
 
 /**
-
   Clear specific fields of Interrupt Status
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to clear
 
   @retval EFI_SUCCESS           Fields cleared
-
 **/
 
 EFI_STATUS
@@ -551,14 +531,12 @@ OhciClearInterruptStatus (
   );
 
 /**
-
   Get fields of HcInterrupt reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -568,16 +546,14 @@ OhciGetHcInterruptStatus (
   );
 
 /**
-
   Set Interrupt Control reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  StatEnable            Enable or Disable
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -589,14 +565,12 @@ OhciSetInterruptControl (
   );
 
 /**
-
   Get field of HcInterruptControl reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -606,15 +580,13 @@ OhciGetHcInterruptControl (
   );
 
 /**
-
   Set memory pointer of specific type
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  PointerType           Type of the pointer to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Memory pointer set
-
 **/
 
 EFI_STATUS
@@ -625,14 +597,12 @@ OhciSetMemoryPointer (
   );
 
 /**
-
   Get memory pointer of specific type
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  PointerType           Type of pointer
 
   @retval                       Memory pointer of the specific type
-
 **/
 
 VOID *
@@ -642,15 +612,13 @@ OhciGetMemoryPointer (
   );
 
 /**
-
   Set Frame Interval value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -661,14 +629,12 @@ OhciSetFrameInterval (
   );
 
 /**
-
   Get field of frame interval reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -678,14 +644,12 @@ OhciGetFrameInterval (
   );
 
 /**
-
   Set Frame Remaining reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -695,14 +659,12 @@ OhciSetFrameRemaining (
   );
 
 /**
-
   Get value of frame remaining reg
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of frame remaining reg
-
 **/
 
 UINT32
@@ -712,14 +674,12 @@ OhciGetFrameRemaining (
   );
 
 /**
-
   Set frame number reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -729,13 +689,11 @@ OhciSetFrameNumber (
   );
 
 /**
-
   Get frame number reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
 
   @retval                       Value of frame number reg
-
 **/
 
 UINT32
@@ -744,14 +702,12 @@ OhciGetFrameNumber (
   );
 
 /**
-
   Set period start reg value
   
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -761,13 +717,11 @@ OhciSetPeriodicStart (
   );
 
 /**
-
   Get periodic start reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
 
   @param                        Value of periodic start reg
-
 **/
 
 UINT32
@@ -776,14 +730,12 @@ OhciGetPeriodicStart (
   );
 
 /**
-
   Set Ls Threshold reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -793,13 +745,11 @@ OhciSetLsThreshold (
   );
 
 /**
-
   Get Ls Threshold reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
 
   @retval                       Value of Ls Threshold reg
-
 **/
 
 UINT32
@@ -808,15 +758,13 @@ OhciGetLsThreshold (
   );
 
 /**
-
   Set Root Hub Descriptor reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -827,14 +775,12 @@ OhciSetRootHubDescriptor (
   );
 
 /**
-
   Get Root Hub Descriptor reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -844,14 +790,12 @@ OhciGetRootHubDescriptor (
   );
 
 /**
-
   Set Root Hub Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -861,14 +805,12 @@ OhciSetRootHubStatus (
   );
 
 /**
-
   Get Root Hub Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -878,15 +820,13 @@ OhciGetRootHubStatus (
   );
 
 /**
-
   Set Root Hub Port Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Index                 Index of the port
   @param  Field                 Field to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -897,15 +837,13 @@ OhciSetRootHubPortStatus (
   );
 
 /**
-
   Get Root Hub Port Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Index                 Index of the port
   @param  Field                 Field to get
 
   @retval                       Value of the field and index
-
 **/
 
 UINT32

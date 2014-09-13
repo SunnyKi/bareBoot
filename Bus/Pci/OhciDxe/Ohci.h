@@ -89,7 +89,6 @@ typedef struct _HCCA_MEMORY_BLOCK {
   UINT8                     Reserved[116];
 } HCCA_MEMORY_BLOCK;
 
-
 struct _USB_OHCI_HC_DEV {
   UINTN                     Signature;
   EFI_USB_HC_PROTOCOL       UsbHc;
@@ -134,7 +133,6 @@ struct _USB_OHCI_HC_DEV {
   @retval EFI_UNSUPPOURTED      The type of reset specified by Attributes is
                                 not currently supported by the host controller.
   @retval EFI_DEVICE_ERROR      Host controller isn't halted to reset.
-
 **/
 
 EFI_STATUS
@@ -155,7 +153,6 @@ OhciReset (
   @retval EFI_INVALID_PARAMETER State is NULL.
   @retval EFI_DEVICE_ERROR      An error was encountered while attempting to
                                 retrieve the host controller's current state.
-
 **/
 
 EFI_STATUS
@@ -175,7 +172,6 @@ OhciGetState (
                                 in the state specified by State.
   @retval EFI_INVALID_PARAMETER State is invalid.
   @retval EFI_DEVICE_ERROR      Failed to set the state due to device error.
-
 **/
 
 EFI_STATUS
@@ -285,7 +281,6 @@ OhciBulkTransfer (
   );
 
 /**
-
   Submits an interrupt transfer to an interrupt endpoint of a USB device.
 
   @param  Ohc                   Device private data
@@ -356,7 +351,6 @@ OhciInterruptTransfer (
   );
 
 /**
-
   Submits an asynchronous interrupt transfer to an interrupt endpoint of a USB device.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL instance.
@@ -400,7 +394,6 @@ OhciInterruptTransfer (
                                 submitted or canceled.
   @retval EFI_INVALID_PARAMETER Some parameters are invalid.
   @retval EFI_OUT_OF_RESOURCES  The request could not be completed due to a lack of resources.
-    
 **/
 
 EFI_STATUS
@@ -420,7 +413,6 @@ OhciAsyncInterruptTransfer (
   );
 
 /**
-
   Submits synchronous interrupt transfer to an interrupt endpoint
   of a USB device.
 
@@ -454,7 +446,6 @@ OhciAsyncInterruptTransfer (
 
   @retval EFI_UNSUPPORTED       This interface not available.
   @retval EFI_INVALID_PARAMETER Parameters not follow spec
-    
 **/
 
 EFI_STATUS
@@ -473,7 +464,6 @@ OhciSyncInterruptTransfer (
   );
 
 /**
-
   Submits isochronous transfer to a target USB device.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL instance.
@@ -492,7 +482,6 @@ OhciSyncInterruptTransfer (
 
   @retval EFI_UNSUPPORTED       This interface not available
   @retval EFI_INVALID_PARAMETER Data is NULL or DataLength is 0 or TransferResult is NULL
-
 **/
 
 EFI_STATUS
@@ -508,7 +497,6 @@ OhciIsochronousTransfer (
   );
 
 /**
-
   Submits Async isochronous transfer to a target USB device.
 
   @param  his                   A pointer to the EFI_USB_HC_PROTOCOL instance.
@@ -525,7 +513,6 @@ OhciIsochronousTransfer (
 
   @retval EFI_UNSUPPORTED       This interface not available
   @retval EFI_INVALID_PARAMETER Data is NULL or Datalength is 0
-
 **/
 
 EFI_STATUS
@@ -542,7 +529,6 @@ OhciAsyncIsochronousTransfer (
   );
 
 /**
-
   Retrieves the number of root hub ports.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL instance.
@@ -559,7 +545,6 @@ OhciGetRootHubNumOfPorts (
   );
 
 /**
-
   Retrieves the current status of a USB root hub port.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL.
@@ -584,7 +569,6 @@ OhciGetRootHubPortStatus (
   );
 
 /**
-
   Sets a feature for the specified root hub port.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL.
@@ -608,7 +592,6 @@ OhciSetRootHubPortFeature (
   );
 
 /**
-
   Clears a feature for the specified root hub port.
 
   @param  This                  A pointer to the EFI_USB_HC_PROTOCOL instance.
@@ -641,7 +624,6 @@ OhciClearRootHubPortFeature (
 
   @return EFI_SUCCESS          This driver supports this device.
   @return EFI_UNSUPPORTED      This driver does not support this device.
-
 **/
 
 EFI_STATUS
@@ -662,8 +644,7 @@ OHCIDriverBindingSupported (
   @retval EFI_SUCCESS           This driver supports this device.
   @retval EFI_UNSUPPORTED       This driver does not support this device.
   @retval EFI_DEVICE_ERROR      This driver cannot be started due to device Error.
-                                EFI_OUT_OF_RESOURCES- Failed due to resource shortage.
-
+  @retval EFI_OUT_OF_RESOURCES  Failed due to resource shortage.
 **/
 
 EFI_STATUS
@@ -685,7 +666,6 @@ OHCIDriverBindingStart (
 
   @return EFI_SUCCESS
   @return others
-
 **/
 
 EFI_STATUS

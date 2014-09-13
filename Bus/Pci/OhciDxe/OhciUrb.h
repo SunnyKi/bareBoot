@@ -39,13 +39,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Func List
 
 /**
-
   Create a TD
 
-  @Param  Ohc                   UHC private data
+  @Param  Ohc                   OHC private data
 
   @retval                       TD structure pointer
-
 **/
 
 TD_DESCRIPTOR *
@@ -54,14 +52,12 @@ OhciCreateTD (
   ); 
 
 /**
-
   Free a TD
 	
-  @Param  Ohc                   UHC private data  
+  @Param  Ohc                   OHC private data  
   @Param  Td                    Pointer to a TD to free
 
   @retval  EFI_SUCCESS          TD freed
-
 **/
 
 EFI_STATUS
@@ -71,13 +67,11 @@ OhciFreeTD (
   ); 
 
 /**
-
   Create a ED
 
   @Param   Ohc                  Device private data
 
   @retval  ED                   descriptor pointer
-
 **/
 
 ED_DESCRIPTOR *
@@ -86,14 +80,12 @@ OhciCreateED (
   ); 
 
 /**
-
   Free a ED
   
-  @Param  Ohc                   UHC private data
+  @Param  Ohc                   OHC private data
   @Param  Ed                    Pointer to a ED to free
 
   @retval  EFI_SUCCESS          ED freed
-
 **/
 
 EFI_STATUS
@@ -103,14 +95,12 @@ OhciFreeED (
   );
 
 /**
-
   Free  ED
 
   @Param  Ohc                    Device private data
   @Param  Ed                     Pointer to a ED to free
 
   @retval  EFI_SUCCESS           ED freed
-
 **/
 
 EFI_STATUS
@@ -120,7 +110,6 @@ OhciFreeAllTDFromED (
   );
 
 /**
-
   Find a working ED match the requirement
 
   @Param  EdHead                Head of the ED list
@@ -141,13 +130,11 @@ OhciFindWorkingEd (
   ); 
 
 /**
-
   Initialize interrupt list.
 
   @Param Ohc                    Device private data
 
   @retval  EFI_SUCCESS          Initialization done
-
 **/
 
 EFI_STATUS
@@ -156,7 +143,6 @@ OhciInitializeInterruptList (
   ); 
 
 /**
-
   Attach an ED
 
   @Param  Ed                    Ed to be attached
@@ -164,7 +150,6 @@ OhciInitializeInterruptList (
 
   @retval EFI_SUCCESS           NewEd attached to Ed
   @retval EFI_INVALID_PARAMETER Ed is NULL
-
 **/
 
 EFI_STATUS
@@ -174,13 +159,11 @@ OhciAttachED (
   ); 
 
 /**
-
   Count ED number on a ED chain
 
   @Param  Ed                    Head of the ED chain
 
   @retval                       ED number on the chain
-
 **/
 
 UINTN
@@ -189,14 +172,12 @@ CountEdNum (
   ); 
 
 /**
-
   Find the minimal burn ED list on a specific depth level
 
   @Param  Ohc                   Device private data
   @Param  Depth                 Depth level
 
   @retval                       ED list found
-
 **/
 
 ED_DESCRIPTOR *
@@ -206,16 +187,14 @@ OhciFindMinInterruptEDList (
   ); 
 
 /**
-
   Attach an ED to an ED list
 
-  @Param  OHC                   UHC private data
+  @Param  OHC                   OHC private data
   @Param  ListType              Type of the ED list
   @Param  Ed                    ED to attach
   @Param  EdList                ED list to be attached
 
   @retval  EFI_SUCCESS          ED attached to ED list
-
 **/
 
 ED_DESCRIPTOR *
@@ -227,14 +206,12 @@ OhciAttachEDToList (
   );
 
 /**
-
   Remove interrupt EDs that match requirement
 
-  @Param  Ohc                   UHC private data
+  @Param  Ohc                   OHC private data
   @Param  IntEd                 The address of Interrupt endpoint
 
   @retval  EFI_SUCCESS          EDs match requirement removed
-
 **/
 
 EFI_STATUS
@@ -244,15 +221,13 @@ OhciFreeInterruptEdByEd (
   );
 
 /**
-
   Remove interrupt EDs that match requirement
 
-  @Param  Ohc                   UHC private data
+  @Param  Ohc                   OHC private data
   @Param  FunctionAddress       Requirement on function address
   @Param  EndPointNum           Requirement on end point number
 
   @retval  EFI_SUCCESS          EDs match requirement removed
-
 **/
 
 EFI_STATUS
@@ -263,7 +238,6 @@ OhciFreeInterruptEdByAddr (
   ); 
 
 /**
-
   Link Td2 to the end of Td1
 
   @Param Td1                    TD to be linked
@@ -271,7 +245,6 @@ OhciFreeInterruptEdByAddr (
 
   @retval EFI_SUCCESS           TD successfully linked
   @retval EFI_INVALID_PARAMETER Td1 is NULL
-
 **/
 
 EFI_STATUS
@@ -281,14 +254,12 @@ OhciLinkTD (
   ); 
 
 /**
-
   Attach TD list to ED
 
   @Param  Ed                    ED which TD list attach on
   @Param  HeadTd                Head of the TD list to attach
 
   @retval  EFI_SUCCESS          TD list attached on the ED
-
 **/
 
 EFI_STATUS
@@ -298,7 +269,6 @@ OhciAttachTDListToED (
   ); 
 
 /**
-
   Set value to ED specific field
 
   @Param  Ed                    ED to be set
@@ -306,7 +276,6 @@ OhciAttachTDListToED (
   @Param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -317,14 +286,12 @@ OhciSetEDField (
   ); 
 
 /**
-
   Get value from an ED's specific field
 
   @Param  Ed                    ED pointer
   @Param  Field                 Field to get value from
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -334,7 +301,6 @@ OhciGetEDField (
   ); 
 
 /**
-
   Set value to TD specific field
 
   @Param  Td                    TD to be set
@@ -342,7 +308,6 @@ OhciGetEDField (
   @Param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -353,14 +318,12 @@ OhciSetTDField (
   ); 
 
 /**
-
   Get value from ED specific field
 
   @Param  Td                    TD pointer
   @Param  Field                 Field to get value from
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -370,8 +333,7 @@ OhciGetTDField (
   ); 
 
 /**
-
-  Free the Ed,Td,buffer that were created during transferring
+  Free the Ed, Td & buffer that were created during transferring
 
   @Param  Ohc                   Device private data
 **/
@@ -382,13 +344,10 @@ OhciFreeDynamicIntMemory (
   ); 
 
 /**
-
   Free the Ed that were initilized during driver was starting,
   those memory were used as interrupt ED head
 
   @Param  Ohc                   Device private data
-
-
 **/
 
 VOID 
@@ -397,13 +356,11 @@ OhciFreeFixedIntMemory (
   ); 
 
 /**
-
   Release all OHCI used memory when OHCI going to quit
 
   @Param  Ohc                   Device private data
 
   @retval EFI_SUCCESS          Memory released
-
 **/
 
 EFI_STATUS

@@ -1,5 +1,5 @@
 /** @file
-  This file contains the definination for host controller schedule routines.
+This file contains the definination for host controller schedule routines.
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.
 
@@ -65,14 +65,12 @@ typedef struct {
 } OHCI_ED_RESULT;
 
 /**
-
   Add an item of interrupt context
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  NewEntry              New entry to add
 
   @retval EFI_SUCCESS           Item successfully added
-
 **/
 
 EFI_STATUS
@@ -82,15 +80,13 @@ OhciAddInterruptContextEntry (
   );
 
 /**
-
   Free a interrupt context entry
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Entry                 Pointer to an interrupt context entry
 
   @retval EFI_SUCCESS           Entry freed
   @retval EFI_INVALID_PARAMETER Entry is NULL
-
 **/
 
 EFI_STATUS
@@ -100,16 +96,14 @@ OhciFreeInterruptContextEntry (
   );
 
 /**
-
   Free entries match the device address and endpoint address
 
-  @Param  Ohc                   UHC private date
+  @Param  Ohc                   OHC private date
   @Param  DeviceAddress         Item to free must match this device address
   @Param  EndPointAddress       Item to free must match this end point address
   @Param  DataToggle            DataToggle for output
 
   @retval  EFI_SUCCESS          Items match the requirement removed
-
 **/
 
 EFI_STATUS
@@ -121,13 +115,11 @@ OhciFreeInterruptContext (
   );
 
 /**
-
   Convert Error code from OHCI format to EFI format
 
   @Param  ErrorCode             ErrorCode in OHCI format
 
   @retval                       ErrorCode in EFI format
-
 **/
 
 UINT32
@@ -136,16 +128,14 @@ ConvertErrorCode (
   );
 
 /**
-
   Check TDs Results
 
-  @Param  Ohc                   UHC private data
+  @Param  Ohc                   OHC private data
   @Param  Td                    TD_DESCRIPTOR
   @Param  Result                Result to return
  
   @retval TRUE                  means OK
   @retval FLASE                 means Error or Short packet
-
 **/
 
 BOOLEAN
@@ -156,14 +146,12 @@ OhciCheckTDsResults (
   );
 
 /**
-
   Check the task status on an ED
 
   @Param  Ed                    Pointer to the ED task that TD hooked on
   @Param  HeadTd                TD header for current transaction
 
   @retval                       Task Status Code
-
 **/
 
 UINT32
@@ -174,10 +162,9 @@ CheckEDStatus (
   );
 
 /**
-
   Check the task status
 
-  @Param  Ohc                   UHC private data
+  @Param  Ohc                   OHC private data
   @Param  ListType              Pipe type
   @Param  Ed                    Pointer to the ED task hooked on
   @Param  HeadTd                Head of TD corresponding to the task
@@ -186,7 +173,6 @@ CheckEDStatus (
   @retval  EFI_SUCCESS          Task done
   @retval  EFI_NOT_READY        Task on processing
   @retval  EFI_DEVICE_ERROR     Some error occured
-
 **/
 
 EFI_STATUS
@@ -199,7 +185,6 @@ CheckIfDone (
   );
 
 /**
-
   Convert TD condition code to Efi Status
 
   @Param  ConditionCode         Condition code to convert
@@ -207,7 +192,6 @@ CheckIfDone (
   @retval  EFI_SUCCESS          No error occured
   @retval  EFI_NOT_READY        TD still on processing
   @retval  EFI_DEVICE_ERROR     Error occured in processing TD
-
 **/
 
 EFI_STATUS
@@ -216,14 +200,12 @@ OhciTDConditionCodeToStatus (
   );
 
 /**
-
   Invoke callbacks hooked on done TDs
 
   @Param  Entry                 Interrupt transfer transaction information data structure
-  @Param  Context               Ohc private data
-  
+  @Param  Result                ???
 **/
-
+  
 VOID
 OhciInvokeInterruptCallBack (
   IN  INTERRUPT_CONTEXT_ENTRY  *Entry,
@@ -231,12 +213,10 @@ OhciInvokeInterruptCallBack (
 );
 
 /**
-
   Timer to submit periodic interrupt transfer, and invoke callbacks hooked on done TDs
 
   @param  Event                 Event handle
   @param  Context               Device private data
-  
 **/
 
 VOID

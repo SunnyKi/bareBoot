@@ -32,8 +32,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **/
 
-/*++
-
+/**
 Routine Description:
 
   Print the data of ED and the TDs attached to the ED
@@ -43,7 +42,6 @@ Routine Description:
   @param  Td                    Pointer to the Td head
   
   @retval EFI_SUCCESS           ED 
-
 **/
 
 EFI_STATUS

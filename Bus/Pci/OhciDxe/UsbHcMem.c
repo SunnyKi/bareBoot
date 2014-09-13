@@ -40,7 +40,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   @param  Pages          How many pages to allocate.
 
   @return The allocated memory block or NULL if failed.
-
 **/
 
 USBHC_MEM_BLOCK *
@@ -104,14 +103,14 @@ UsbHcAllocMemBlock (
                     &Mapping
                     );
 
-  if (EFI_ERROR (Status) || (Bytes != EFI_PAGES_TO_SIZE (Pages))) {
+  if (EFI_ERROR (Status) || Bytes != EFI_PAGES_TO_SIZE (Pages)) {
     goto FREE_BUFFER;
   }
 
   // Check whether the data structure used by the host controller
   // should be restricted into the same 4G
 
-  if (Pool->Check4G && (Pool->Which4G != USB_HC_HIGH_32BIT (MappedAddr))) {
+  if (Pool->Check4G && Pool->Which4G != USB_HC_HIGH_32BIT (MappedAddr)) {
     PciIo->Unmap (PciIo, Mapping);
     goto FREE_BUFFER;
   }
@@ -136,7 +135,6 @@ FREE_BITARRAY:
 
   @param  Pool           The memory pool to free the block from.
   @param  Block          The memory block to free.
-
 **/
 
 VOID
@@ -147,7 +145,7 @@ UsbHcFreeMemBlock (
 {
   EFI_PCI_IO_PROTOCOL     *PciIo;
 
-  ASSERT ((Pool != NULL) && (Block != NULL));
+  ASSERT (Pool != NULL && Block != NULL);
 
   PciIo = Pool->PciIo;
 
@@ -168,7 +166,6 @@ UsbHcFreeMemBlock (
 
   @return The pointer to the allocated memory. If couldn't allocate the needed memory,
           the return value is NULL.
-
 **/
 
 VOID *
@@ -184,7 +181,7 @@ UsbHcAllocMemFromBlock (
   UINTN                   Available;
   UINTN                   Count;
 
-  ASSERT ((Block != 0) && (Units != 0));
+  ASSERT (Block != 0 && Units != 0);
 
   StartByte  = 0;
   StartBit   = 0;
@@ -268,12 +265,12 @@ UsbHcGetPciAddressForHostMem (
     // scan the memory block list for the memory block that
     // completely contains the allocated memory.
 
-    if ((Block->BufHost <= (UINT8 *) Mem) && (((UINT8 *) Mem + AllocSize) <= (Block->BufHost + Block->BufLen))) {
+    if (Block->BufHost <= (UINT8 *) Mem && ((UINT8 *) Mem + AllocSize) <= (Block->BufHost + Block->BufLen)) {
       break;
     }
   }
 
-  ASSERT ((Block != NULL));
+  ASSERT (Block != NULL);
 
   // calculate the pci memory address for host memory address.
 
@@ -295,7 +292,7 @@ UsbHcInsertMemBlockToPool (
   IN USBHC_MEM_BLOCK      *Block
   )
 {
-  ASSERT ((Head != NULL) && (Block != NULL));
+  ASSERT (Head != NULL && Block != NULL);
   Block->Next = Head->Next;
   Head->Next  = Block;
 }
@@ -528,7 +525,7 @@ UsbHcFreeMem (
     // scan the memory block list for the memory block that
     // completely contains the memory to free.
 
-    if ((Block->BufHost <= ToFree) && ((ToFree + AllocSize) <= (Block->BufHost + Block->BufLen))) {
+    if (Block->BufHost <= ToFree && (ToFree + AllocSize) <= (Block->BufHost + Block->BufLen)) {
 
       // compute the start byte and bit in the bit array
 
@@ -543,7 +540,6 @@ UsbHcFreeMem (
         Block->Bits[Byte] = (UINT8) (Block->Bits[Byte] ^ USB_HC_BIT (Bit));
         NEXT_BIT (Byte, Bit);
       }
-
       break;
     }
   }
@@ -556,7 +552,7 @@ UsbHcFreeMem (
 
   // Release the current memory block if it is empty and not the head
 
-  if ((Block != Head) && UsbHcIsMemBlockEmpty (Block)) {
+  if (Block != Head && UsbHcIsMemBlockEmpty (Block)) {
     UsbHcUnlinkMemBlock (Head, Block);
     UsbHcFreeMemBlock (Pool, Block);
   }

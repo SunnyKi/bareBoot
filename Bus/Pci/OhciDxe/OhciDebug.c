@@ -34,15 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ohci.h"
 
 /**
-
   Print the data of ED and the TDs attached to the ED
 
   @param  Uhc                   Pointer to OHCI private data 
   @param  Ed                    Pointer to a ED to free
   @param  Td                    Pointer to the Td head
   
-  @retval EFI_SUCCESS           ED 
-
+  @retval EFI_SUCCESS
 **/
 
 EFI_STATUS
@@ -64,7 +62,7 @@ OhciDumpEdTdInfo (
     DEBUG ((EFI_D_INFO, "\nED Address:%x, ED buffer:\n", (UINT32)(UINTN) Ed));
     DEBUG ((EFI_D_INFO, "DWord0  :TD Tail :TD Head :Next ED\n"));
     for (Index = 0; Index < sizeof (ED_DESCRIPTOR) / 4; Index++) {
-      DEBUG ((EFI_D_INFO, "%8x ", *((UINT32*)(Ed) + Index)));
+      DEBUG ((EFI_D_INFO, "%8x ", *((UINT32*) (Ed) + Index)));
     }
     DEBUG ((EFI_D_INFO, "\nNext TD buffer:\n", (UINT32)(UINTN) Td));
   }
@@ -81,7 +79,7 @@ OhciDumpEdTdInfo (
     DEBUG ((EFI_D_INFO, "TD Address:%x, TD buffer:\n", (UINT32)(UINTN) Td));
     DEBUG ((EFI_D_INFO, "DWord0  :CuBuffer:Next TD :Buff End:Next TD :DataBuff:ActLength\n"));
     for (Index = 0; Index < sizeof (TD_DESCRIPTOR) / 4; Index++) {
-      DEBUG ((EFI_D_INFO, "%8x ", *((UINT32*)(Td) + Index)));
+      DEBUG ((EFI_D_INFO, "%8x ", *((UINT32*) (Td) + Index)));
     }
     DEBUG ((EFI_D_INFO, "\nCurrent TD Data buffer(size%d)\n", (UINT32) Td->ActualSendLength));
     for (Index = 0; Index < Td->ActualSendLength; Index++) {

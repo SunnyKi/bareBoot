@@ -1,5 +1,5 @@
 /** @file
-  The OHCI register operation routines.
+The OHCI register operation routines.
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.
 
@@ -28,7 +28,6 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 **/
 
 #include "Ohci.h"
@@ -40,7 +39,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   @param  Offset                Offset of the operational reg
 
   @retval                       Value of the register
-
 **/
 
 UINT32
@@ -52,13 +50,12 @@ OhciGetOperationalReg (
   UINT32                  Value = 0;
   EFI_STATUS              Status;
 
-  Status = PciIo->Mem.Read(PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, &Value);
+  Status = PciIo->Mem.Read (PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, &Value);
 
   return Value;
 }
 
 /**
-
   Set OHCI operational reg value
 
   @param  PciIo                  PCI Bus Io protocol instance
@@ -66,7 +63,6 @@ OhciGetOperationalReg (
   @param  Value                  Value to set
 
   @retval EFI_SUCCESS            Value set to the reg
-
 **/
 
 EFI_STATUS
@@ -76,17 +72,15 @@ OhciSetOperationalReg (
   IN VOID                 *Value
   )
 {
-  return PciIo->Mem.Write(PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, Value);
+  return PciIo->Mem.Write (PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, Value);
 }
 
 /**
-
   Get HcRevision reg value
 
   @param  PciIo                 PCI Bus Io protocol instance
 
   @retval                       Value of the register
-
 **/
 
 UINT32
@@ -98,15 +92,13 @@ OhciGetHcRevision (
 }
 
 /**
-
   Set HcReset reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -164,14 +156,12 @@ OhciSetHcReset (
 }
 
 /**
-
   Get specific field of HcReset reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -190,57 +180,45 @@ OhciGetHcReset (
   case RESET_SYSTEM_BUS:
     Value = Reset.FSBIR;
     break;
-
   case RESET_HOST_CONTROLLER:
     Value = Reset.FHR;
     break;
-
   case RESET_CLOCK_GENERATION:
     Value = Reset.CGR;
     break;
-
   case RESET_SSE_GLOBAL:
     Value = Reset.SSE;
     break;
-
   case RESET_PSPL:
     Value = Reset.PSPL;
     break;
-
   case RESET_PCPL:
     Value = Reset.PCPL;
     break;
-
   case RESET_SSEP1:
     Value = Reset.SSEP1;
     break;
-
   case RESET_SSEP2:
     Value = Reset.SSEP2;
     break;
-
   case RESET_SSEP3:
     Value = Reset.SSEP3;
     break;
-
   default:
     ASSERT (FALSE);
   }
-
 
   return Value;
 }
 
 /**
-
   Set HcControl reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -289,14 +267,12 @@ OhciSetHcControl (
 }
 
 /**
-
   Get specific field of HcControl reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -339,15 +315,13 @@ OhciGetHcControl (
 }
 
 /**
-
   Set HcCommand reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -362,23 +336,23 @@ OhciSetHcCommandStatus (
 
   ZeroMem (&CommandStatus, sizeof (HcCOMMAND_STATUS));
 
-  if(Field & HC_RESET){
+  if(Field & HC_RESET) {
     CommandStatus.HcReset = Value;
   }
 
-  if(Field & CONTROL_LIST_FILLED){
+  if(Field & CONTROL_LIST_FILLED) {
     CommandStatus.ControlListFilled = Value;
   }
 
-  if(Field & BULK_LIST_FILLED){
+  if(Field & BULK_LIST_FILLED) {
     CommandStatus.BulkListFilled = Value;
   }
 
-  if(Field & CHANGE_OWNER_REQUEST){
+  if(Field & CHANGE_OWNER_REQUEST) {
     CommandStatus.ChangeOwnerRequest = Value;
   }
 
-  if(Field & SCHEDULE_OVERRUN_COUNT){
+  if(Field & SCHEDULE_OVERRUN_COUNT) {
     CommandStatus.ScheduleOverrunCount = Value;
   }
 
@@ -388,14 +362,12 @@ OhciSetHcCommandStatus (
 }
 
 /**
-
   Get specific field of HcCommand reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -408,7 +380,7 @@ OhciGetHcCommandStatus (
 
   *(UINT32 *) &CommandStatus = OhciGetOperationalReg (Ohc->PciIo, HC_COMMAND_STATUS);
 
-  switch (Field){
+  switch (Field) {
   case HC_RESET:
     return CommandStatus.HcReset;
     break;
@@ -432,14 +404,12 @@ OhciGetHcCommandStatus (
 }
 
 /**
-
   Clear specific fields of Interrupt Status
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to clear
 
   @retval EFI_SUCCESS           Fields cleared
-
 **/
 
 EFI_STATUS
@@ -453,34 +423,34 @@ OhciClearInterruptStatus (
 
   ZeroMem (&InterruptStatus, sizeof (HcINTERRUPT_STATUS));
 
-  if(Field & SCHEDULE_OVERRUN){
+  if(Field & SCHEDULE_OVERRUN) {
     InterruptStatus.SchedulingOverrun = 1;
   }
 
-  if(Field & WRITEBACK_DONE_HEAD){
+  if(Field & WRITEBACK_DONE_HEAD) {
     InterruptStatus.WriteBackDone = 1;
   }
-  if(Field & START_OF_FRAME){
+  if(Field & START_OF_FRAME) {
     InterruptStatus.Sof = 1;
   }
 
-  if(Field & RESUME_DETECT){
+  if(Field & RESUME_DETECT) {
     InterruptStatus.ResumeDetected = 1;
   }
 
-  if(Field & UNRECOVERABLE_ERROR){
+  if(Field & UNRECOVERABLE_ERROR) {
     InterruptStatus.UnrecoverableError = 1;
   }
 
-  if(Field & FRAME_NUMBER_OVERFLOW){
+  if(Field & FRAME_NUMBER_OVERFLOW) {
     InterruptStatus.FrameNumOverflow = 1;
   }
 
-  if(Field & ROOTHUB_STATUS_CHANGE){
+  if(Field & ROOTHUB_STATUS_CHANGE) {
     InterruptStatus.RHStatusChange = 1;
   }
 
-  if(Field & OWNERSHIP_CHANGE){
+  if(Field & OWNERSHIP_CHANGE) {
     InterruptStatus.OwnerChange = 1;
   }
 
@@ -490,14 +460,12 @@ OhciClearInterruptStatus (
 }
 
 /**
-
   Get fields of HcInterrupt reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -510,39 +478,31 @@ OhciGetHcInterruptStatus (
 
   *(UINT32 *) &InterruptStatus = OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_STATUS);
 
-  switch (Field){
+  switch (Field) {
   case SCHEDULE_OVERRUN:
     return InterruptStatus.SchedulingOverrun;
     break;
-
   case  WRITEBACK_DONE_HEAD:
     return InterruptStatus.WriteBackDone;
     break;
-
   case START_OF_FRAME:
     return InterruptStatus.Sof;
     break;
-
   case RESUME_DETECT:
     return InterruptStatus.ResumeDetected;
     break;
-
   case UNRECOVERABLE_ERROR:
     return InterruptStatus.UnrecoverableError;
     break;
-
   case FRAME_NUMBER_OVERFLOW:
     return InterruptStatus.FrameNumOverflow;
     break;
-
   case ROOTHUB_STATUS_CHANGE:
     return InterruptStatus.RHStatusChange;
     break;
-
   case OWNERSHIP_CHANGE:
     return InterruptStatus.OwnerChange;
     break;
-
   default:
     ASSERT (FALSE);
   }
@@ -551,16 +511,14 @@ OhciGetHcInterruptStatus (
 }
 
 /**
-
   Set Interrupt Control reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  StatEnable            Enable or Disable
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -621,14 +579,12 @@ OhciSetInterruptControl (
 }
 
 /**
-
   Get field of HcInterruptControl reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -641,43 +597,34 @@ OhciGetHcInterruptControl (
 
   *(UINT32 *) &InterruptState = OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_ENABLE);
 
-  switch (Field){
+  switch (Field) {
     case SCHEDULE_OVERRUN:
       return InterruptState.SchedulingOverrunInt;
       break;
-
     case WRITEBACK_DONE_HEAD:
       return InterruptState.WriteBackDoneInt;
       break;
-
     case START_OF_FRAME:
       return InterruptState.SofInt;
       break;
-
     case RESUME_DETECT:
       return InterruptState.ResumeDetectedInt;
       break;
-
     case UNRECOVERABLE_ERROR:
       return InterruptState.UnrecoverableErrorInt;
       break;
-
     case FRAME_NUMBER_OVERFLOW:
       return InterruptState.FrameNumOverflowInt;
       break;
-
     case ROOTHUB_STATUS_CHANGE:
       return InterruptState.RHStatusChangeInt;
       break;
-
     case OWNERSHIP_CHANGE:
       return InterruptState.OwnerChangedInt;
       break;
-
     case MASTER_INTERRUPT:
       return InterruptState.MasterInterruptEnable;
       break;
-
     default:
       ASSERT (FALSE);
   }
@@ -686,15 +633,13 @@ OhciGetHcInterruptControl (
 }
 
 /**
-
   Set memory pointer of specific type
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  PointerType           Type of the pointer to set
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Memory pointer set
-
 **/
 
 EFI_STATUS
@@ -715,8 +660,8 @@ OhciSetMemoryPointer (
 
   Verify = OhciGetOperationalReg (Ohc->PciIo, (UINT32)PointerType);
 
-  while (Verify != (UINT32)(UINTN)Value) {
-    gBS->Stall(1000);
+  while (Verify != (UINT32)(UINTN) Value) {
+    gBS->Stall (1000);
     Verify = OhciGetOperationalReg (Ohc->PciIo, (UINT32)PointerType);
   };
 
@@ -724,14 +669,12 @@ OhciSetMemoryPointer (
 }
 
 /**
-
   Get memory pointer of specific type
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  PointerType           Type of pointer
 
   @retval                       Memory pointer of the specific type
-
 **/
 
 VOID *
@@ -740,19 +683,17 @@ OhciGetMemoryPointer (
   IN UINTN                PointerType
   )
 {
-  return (VOID *)(UINTN)OhciGetOperationalReg (Ohc->PciIo, (UINT32)PointerType);
+  return (VOID *)(UINTN) OhciGetOperationalReg (Ohc->PciIo, (UINT32) PointerType);
 }
 
 /**
-
   Set Frame Interval value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -765,7 +706,7 @@ OhciSetFrameInterval (
   EFI_STATUS              Status;
   HcFRM_INTERVAL          FrameInterval;
 
-  *(UINT32 *) &FrameInterval = OhciGetOperationalReg(Ohc->PciIo, HC_FRM_INTERVAL);
+  *(UINT32 *) &FrameInterval = OhciGetOperationalReg (Ohc->PciIo, HC_FRM_INTERVAL);
 
   if (Field & FRAME_INTERVAL) {
     FrameInterval.FrmIntervalToggle = !FrameInterval.FrmIntervalToggle;
@@ -790,14 +731,12 @@ OhciSetFrameInterval (
 }
 
 /**
-
   Get field of frame interval reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -810,19 +749,16 @@ OhciGetFrameInterval (
 
   *(UINT32 *) &FrameInterval = OhciGetOperationalReg (Ohc->PciIo, HC_FRM_INTERVAL);
 
-  switch (Field){
+  switch (Field) {
     case FRAME_INTERVAL:
       return FrameInterval.FrameInterval;
       break;
-
     case FS_LARGEST_DATA_PACKET:
       return FrameInterval.FSMaxDataPacket;
       break;
-
     case FRMINT_TOGGLE:
       return FrameInterval.FrmIntervalToggle;
       break;
-
     default:
       ASSERT (FALSE);
   }
@@ -831,14 +767,12 @@ OhciGetFrameInterval (
 }
 
 /**
-
   Set Frame Remaining reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -861,14 +795,12 @@ OhciSetFrameRemaining (
 }
 
 /**
-
   Get value of frame remaining reg
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of frame remaining reg
-
 **/
 
 UINT32
@@ -881,15 +813,13 @@ OhciGetFrameRemaining (
 
   *(UINT32 *) &FrameRemaining = OhciGetOperationalReg (Ohc->PciIo, HC_FRM_REMAINING);
 
-  switch (Field){
+  switch (Field) {
     case FRAME_REMAINING:
       return FrameRemaining.FrameRemaining;
       break;
-
     case FRAME_REMAIN_TOGGLE:
       return FrameRemaining.FrameRemainingToggle;
       break;
-
     default:
       ASSERT (FALSE);
   }
@@ -898,18 +828,16 @@ OhciGetFrameRemaining (
 }
 
 /**
-
   Set frame number reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
-OhciSetFrameNumber(
+OhciSetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
   )
@@ -918,13 +846,11 @@ OhciSetFrameNumber(
 }
 
 /**
-
   Get frame number reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
 
   @retval                       Value of frame number reg
-
 **/
 
 UINT32
@@ -932,18 +858,16 @@ OhciGetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc
   )
 {
-  return OhciGetOperationalReg(Ohc->PciIo, HC_FRM_NUMBER);
+  return OhciGetOperationalReg (Ohc->PciIo, HC_FRM_NUMBER);
 }
 
 /**
-
   Set period start reg value
   
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval EFI_SUCCESS           Value set
-
 **/
 
 EFI_STATUS
@@ -956,13 +880,11 @@ OhciSetPeriodicStart (
 }
 
 /**
-
   Get periodic start reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
 
   @param                        Value of periodic start reg
-
 **/
 
 UINT32
@@ -970,18 +892,16 @@ OhciGetPeriodicStart (
   IN USB_OHCI_HC_DEV      *Ohc
   )
 {
-  return OhciGetOperationalReg(Ohc->PciIo, HC_PERIODIC_START);
+  return OhciGetOperationalReg (Ohc->PciIo, HC_PERIODIC_START);
 }
 
 /**
-
   Set Ls Threshold reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -998,13 +918,11 @@ OhciSetLsThreshold (
 }
 
 /**
-
   Get Ls Threshold reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
 
   @retval                       Value of Ls Threshold reg
-
 **/
 
 UINT32
@@ -1012,19 +930,17 @@ OhciGetLsThreshold (
   IN USB_OHCI_HC_DEV      *Ohc
   )
 {
-  return OhciGetOperationalReg(Ohc->PciIo, HC_PERIODIC_START);
+  return OhciGetOperationalReg (Ohc->PciIo, HC_PERIODIC_START);
 }
 
 /**
-
   Set Root Hub Descriptor reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
   @param  Value                 Value to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -1082,16 +998,13 @@ OhciSetRootHubDescriptor (
   return Status;
 }
 
-
 /**
-
   Get Root Hub Descriptor reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -1106,43 +1019,34 @@ OhciGetRootHubDescriptor (
   *(UINT32 *) &DescriptorA = OhciGetOperationalReg (Ohc->PciIo, HC_RH_DESC_A);
   *(UINT32 *) &DescriptorB = OhciGetOperationalReg (Ohc->PciIo, HC_RH_DESC_B);
 
-  switch (Field){
+  switch (Field) {
     case RH_DEV_REMOVABLE:
       return DescriptorB.DeviceRemovable;
       break;
-
     case RH_PORT_PWR_CTRL_MASK:
       return DescriptorB.PortPowerControlMask;
       break;
-
     case RH_NUM_DS_PORTS:
       return DescriptorA.NumDownStrmPorts;
       break;
-
     case RH_NO_PSWITCH:
       return DescriptorA.NoPowerSwitch;
       break;
-
     case RH_PSWITCH_MODE:
       return DescriptorA.PowerSwitchMode;
       break;
-
     case RH_DEVICE_TYPE:
       return DescriptorA.DeviceType;
       break;
-
     case RH_OC_PROT_MODE:
       return DescriptorA.OverCurrentProtMode;
       break;
-
     case RH_NOC_PROT:
       return DescriptorA.NoOverCurrentProtMode;
       break;
-
     case RH_NO_POTPGT:
       return DescriptorA.PowerOnToPowerGoodTime;
       break;
-
     default:
       ASSERT (FALSE);
   }
@@ -1151,14 +1055,12 @@ OhciGetRootHubDescriptor (
 }
 
 /**
-
   Set Root Hub Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -1172,22 +1074,22 @@ OhciSetRootHubStatus (
 
   ZeroMem (&RootHubStatus, sizeof(HcRH_STATUS));
 
-  if(Field & RH_LOCAL_PSTAT){
+  if(Field & RH_LOCAL_PSTAT) {
     RootHubStatus.LocalPowerStat = 1;
   }
-  if(Field & RH_OC_ID){
+  if(Field & RH_OC_ID) {
     RootHubStatus.OverCurrentIndicator = 1;
   }
-  if(Field & RH_REMOTE_WK_ENABLE){
+  if(Field & RH_REMOTE_WK_ENABLE) {
     RootHubStatus.DevRemoteWakeupEnable = 1;
   }
-  if(Field & RH_LOCAL_PSTAT_CHANGE){
+  if(Field & RH_LOCAL_PSTAT_CHANGE) {
     RootHubStatus.LocalPowerStatChange = 1;
   }
-  if(Field & RH_OC_ID_CHANGE){
+  if(Field & RH_OC_ID_CHANGE) {
     RootHubStatus.OverCurrentIndicatorChange = 1;
   }
-  if(Field & RH_CLR_RMT_WK_ENABLE){
+  if(Field & RH_CLR_RMT_WK_ENABLE) {
     RootHubStatus.ClearRemoteWakeupEnable = 1;
   }
 
@@ -1197,14 +1099,12 @@ OhciSetRootHubStatus (
 }
 
 /**
-
   Get Root Hub Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Field                 Field to get
 
   @retval                       Value of the field
-
 **/
 
 UINT32
@@ -1244,15 +1144,13 @@ OhciGetRootHubStatus (
 }
 
 /**
-
   Set Root Hub Port Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Index                 Index of the port
   @param  Field                 Field to set
 
   @retval  EFI_SUCCESS          Value set
-
 **/
 
 EFI_STATUS
@@ -1310,15 +1208,13 @@ OhciSetRootHubPortStatus (
 }
 
 /**
-
   Get Root Hub Port Status reg value
 
-  @param  Ohc                   UHC private data
+  @param  Ohc                   OHC private data
   @param  Index                 Index of the port
   @param  Field                 Field to get
 
   @retval                       Value of the field and index
-
 **/
 
 UINT32
@@ -1335,7 +1231,7 @@ OhciReadRootHubPortStatus (
                               HC_RH_PORT_STATUS + (Index * 4)
                               );
 
-  switch (Field){
+  switch (Field) {
   case RH_CURR_CONNECT_STAT:
     return PortStatus.CurrentConnectStat;
     break;
