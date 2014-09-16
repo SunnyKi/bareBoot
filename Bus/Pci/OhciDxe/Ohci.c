@@ -386,7 +386,7 @@ OhciControlTransfer (
   //
   // Setup Stage
   //
-  if(Request != NULL) {
+  if (Request != NULL) {
     ReqMapLength = sizeof(EFI_USB_DEVICE_REQUEST);
     MapOp = EfiPciIoOperationBusMasterRead;
     Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Request, &ReqMapLength, &ReqMapPhyAddr, &ReqMapping);
@@ -562,7 +562,7 @@ UNMAP_DATA_BUFF:
   } else {
     HeadEd->NextED = Ed->NextED;
   }
-  if(DataMapping != NULL) {
+  if (DataMapping != NULL) {
     Ohc->PciIo->Unmap(Ohc->PciIo, DataMapping);
   }
   
@@ -574,7 +574,7 @@ FREE_TD_BUFF:
   }
   
 UNMAP_SETUP_BUFF:
-  if(ReqMapping != NULL) {
+  if (ReqMapping != NULL) {
     Ohc->PciIo->Unmap(Ohc->PciIo, ReqMapping);
   }
 
@@ -720,7 +720,7 @@ OhciBulkTransfer (
   OhciSetEDField (Ed, ED_NEXT_EDPTR, 0);
   HeadEd = OhciAttachEDToList (Ohc, BULK_LIST, Ed, NULL);
 
-  if(Data != NULL) {
+  if (Data != NULL) {
     MapLength = *DataLength;
     Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Data, &MapLength, &MapPyhAddr, &Mapping);
     if (EFI_ERROR(Status)) {
@@ -846,7 +846,7 @@ FREE_OHCI_TDBUFF:
     UsbHcFreeMem(Ohc->MemPool, DataTd, sizeof(TD_DESCRIPTOR));
   }
   
-  if(Mapping != NULL) {
+  if (Mapping != NULL) {
     Ohc->PciIo->Unmap(Ohc->PciIo, Mapping);
   }
   
@@ -1133,7 +1133,7 @@ FREE_OHCI_TDBUFF:
 FREE_OHCI_EDBUFF:
 #endif
   if ((HeadEd != Ed) && HeadEd && Ed) {
-    while(HeadEd->NextED != (UINT32)(UINTN) Ed) {
+    while (HeadEd->NextED != (UINT32)(UINTN) Ed) {
       HeadEd = (ED_DESCRIPTOR *)(UINTN) (HeadEd->NextED);
     }
   HeadEd->NextED = Ed->NextED;
@@ -2021,7 +2021,7 @@ OhciAllocateDev (
   Ohc->HouseKeeperTimer = NULL;
   
   Ohc->MemPool = UsbHcInitMemPool (PciIo, TRUE, 0); 
-  if(Ohc->MemPool == NULL) {
+  if (Ohc->MemPool == NULL) {
     goto FREE_DEV_BUFFER;
   } 
   

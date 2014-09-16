@@ -336,23 +336,23 @@ OhciSetHcCommandStatus (
 
   ZeroMem (&CommandStatus, sizeof (HcCOMMAND_STATUS));
 
-  if(Field & HC_RESET) {
+  if (Field & HC_RESET) {
     CommandStatus.HcReset = Value;
   }
 
-  if(Field & CONTROL_LIST_FILLED) {
+  if (Field & CONTROL_LIST_FILLED) {
     CommandStatus.ControlListFilled = Value;
   }
 
-  if(Field & BULK_LIST_FILLED) {
+  if (Field & BULK_LIST_FILLED) {
     CommandStatus.BulkListFilled = Value;
   }
 
-  if(Field & CHANGE_OWNER_REQUEST) {
+  if (Field & CHANGE_OWNER_REQUEST) {
     CommandStatus.ChangeOwnerRequest = Value;
   }
 
-  if(Field & SCHEDULE_OVERRUN_COUNT) {
+  if (Field & SCHEDULE_OVERRUN_COUNT) {
     CommandStatus.ScheduleOverrunCount = Value;
   }
 
@@ -423,34 +423,34 @@ OhciClearInterruptStatus (
 
   ZeroMem (&InterruptStatus, sizeof (HcINTERRUPT_STATUS));
 
-  if(Field & SCHEDULE_OVERRUN) {
+  if (Field & SCHEDULE_OVERRUN) {
     InterruptStatus.SchedulingOverrun = 1;
   }
 
-  if(Field & WRITEBACK_DONE_HEAD) {
+  if (Field & WRITEBACK_DONE_HEAD) {
     InterruptStatus.WriteBackDone = 1;
   }
-  if(Field & START_OF_FRAME) {
+  if (Field & START_OF_FRAME) {
     InterruptStatus.Sof = 1;
   }
 
-  if(Field & RESUME_DETECT) {
+  if (Field & RESUME_DETECT) {
     InterruptStatus.ResumeDetected = 1;
   }
 
-  if(Field & UNRECOVERABLE_ERROR) {
+  if (Field & UNRECOVERABLE_ERROR) {
     InterruptStatus.UnrecoverableError = 1;
   }
 
-  if(Field & FRAME_NUMBER_OVERFLOW) {
+  if (Field & FRAME_NUMBER_OVERFLOW) {
     InterruptStatus.FrameNumOverflow = 1;
   }
 
-  if(Field & ROOTHUB_STATUS_CHANGE) {
+  if (Field & ROOTHUB_STATUS_CHANGE) {
     InterruptStatus.RHStatusChange = 1;
   }
 
-  if(Field & OWNERSHIP_CHANGE) {
+  if (Field & OWNERSHIP_CHANGE) {
     InterruptStatus.OwnerChange = 1;
   }
 
@@ -534,38 +534,38 @@ OhciSetInterruptControl (
 
   ZeroMem (&InterruptState, sizeof (HcINTERRUPT_CONTROL));
 
-  if(Field & SCHEDULE_OVERRUN) {
+  if (Field & SCHEDULE_OVERRUN) {
     InterruptState.SchedulingOverrunInt = Value;
   }
 
-  if(Field & WRITEBACK_DONE_HEAD) {
+  if (Field & WRITEBACK_DONE_HEAD) {
     InterruptState.WriteBackDoneInt = Value;
   }
-  if(Field & START_OF_FRAME) {
+  if (Field & START_OF_FRAME) {
     InterruptState.SofInt = Value;
   }
 
-  if(Field & RESUME_DETECT) {
+  if (Field & RESUME_DETECT) {
     InterruptState.ResumeDetectedInt = Value;
   }
 
-  if(Field & UNRECOVERABLE_ERROR) {
+  if (Field & UNRECOVERABLE_ERROR) {
     InterruptState.UnrecoverableErrorInt = Value;
   }
 
-  if(Field & FRAME_NUMBER_OVERFLOW) {
+  if (Field & FRAME_NUMBER_OVERFLOW) {
     InterruptState.FrameNumOverflowInt = Value;
   }
 
-  if(Field & ROOTHUB_STATUS_CHANGE) {
+  if (Field & ROOTHUB_STATUS_CHANGE) {
     InterruptState.RHStatusChangeInt = Value;
   }
 
-  if(Field & OWNERSHIP_CHANGE) {
+  if (Field & OWNERSHIP_CHANGE) {
     InterruptState.OwnerChangedInt = Value;
   }
 
-  if(Field & MASTER_INTERRUPT) {
+  if (Field & MASTER_INTERRUPT) {
     InterruptState.MasterInterruptEnable = Value;
   }
 
@@ -957,10 +957,10 @@ OhciSetRootHubDescriptor (
   if (Field & (RH_DEV_REMOVABLE | RH_PORT_PWR_CTRL_MASK)) {
     *(UINT32 *) &DescriptorB = OhciGetOperationalReg (Ohc->PciIo, HC_RH_DESC_B);
 
-    if(Field & RH_DEV_REMOVABLE) {
+    if (Field & RH_DEV_REMOVABLE) {
       DescriptorB.DeviceRemovable = Value;
     }
-    if(Field & RH_PORT_PWR_CTRL_MASK) {
+    if (Field & RH_PORT_PWR_CTRL_MASK) {
       DescriptorB.PortPowerControlMask = Value;
     }
 
@@ -971,25 +971,25 @@ OhciSetRootHubDescriptor (
 
   *(UINT32 *)&DescriptorA = OhciGetOperationalReg (Ohc->PciIo, HC_RH_DESC_A);
 
-  if(Field & RH_NUM_DS_PORTS) {
+  if (Field & RH_NUM_DS_PORTS) {
     DescriptorA.NumDownStrmPorts = Value;
   }
-  if(Field & RH_NO_PSWITCH) {
+  if (Field & RH_NO_PSWITCH) {
     DescriptorA.NoPowerSwitch = Value;
   }
-  if(Field & RH_PSWITCH_MODE) {
+  if (Field & RH_PSWITCH_MODE) {
     DescriptorA.PowerSwitchMode = Value;
   }
-  if(Field & RH_DEVICE_TYPE) {
+  if (Field & RH_DEVICE_TYPE) {
     DescriptorA.DeviceType = Value;
   }
-  if(Field & RH_OC_PROT_MODE) {
+  if (Field & RH_OC_PROT_MODE) {
     DescriptorA.OverCurrentProtMode = Value;
   }
-  if(Field & RH_NOC_PROT) {
+  if (Field & RH_NOC_PROT) {
     DescriptorA.NoOverCurrentProtMode = Value;
   }
-  if(Field & RH_NO_POTPGT) {
+  if (Field & RH_NO_POTPGT) {
     DescriptorA.PowerOnToPowerGoodTime = Value;
   }
 
@@ -1074,22 +1074,22 @@ OhciSetRootHubStatus (
 
   ZeroMem (&RootHubStatus, sizeof(HcRH_STATUS));
 
-  if(Field & RH_LOCAL_PSTAT) {
+  if (Field & RH_LOCAL_PSTAT) {
     RootHubStatus.LocalPowerStat = 1;
   }
-  if(Field & RH_OC_ID) {
+  if (Field & RH_OC_ID) {
     RootHubStatus.OverCurrentIndicator = 1;
   }
-  if(Field & RH_REMOTE_WK_ENABLE) {
+  if (Field & RH_REMOTE_WK_ENABLE) {
     RootHubStatus.DevRemoteWakeupEnable = 1;
   }
-  if(Field & RH_LOCAL_PSTAT_CHANGE) {
+  if (Field & RH_LOCAL_PSTAT_CHANGE) {
     RootHubStatus.LocalPowerStatChange = 1;
   }
-  if(Field & RH_OC_ID_CHANGE) {
+  if (Field & RH_OC_ID_CHANGE) {
     RootHubStatus.OverCurrentIndicatorChange = 1;
   }
-  if(Field & RH_CLR_RMT_WK_ENABLE) {
+  if (Field & RH_CLR_RMT_WK_ENABLE) {
     RootHubStatus.ClearRemoteWakeupEnable = 1;
   }
 
