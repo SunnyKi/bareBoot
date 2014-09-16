@@ -1917,7 +1917,7 @@ OHCIDriverBindingSupported (
 {
   EFI_STATUS              Status;
   EFI_PCI_IO_PROTOCOL     *PciIo;
-  PCI_TYPE                PciType;
+  PCI_TYPE00              PciType;
 
   // Test whether there is PCI IO Protocol attached on the controller handle.
 
