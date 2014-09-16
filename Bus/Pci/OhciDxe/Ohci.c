@@ -2012,14 +2012,6 @@ OhciAllocateDev (
   
   Ohc->OriginalPciAttributes = OriginalPciAttributes;
 
-  Ohc->HccaMemoryBlock = NULL;
-  Ohc->HccaMemoryMapping   = NULL;
-  Ohc->HccaMemoryBuf = NULL;
-  Ohc->HccaMemoryPages = 0;
-  Ohc->InterruptContextList = NULL;
-  Ohc->ControllerNameTable = NULL;
-  Ohc->HouseKeeperTimer = NULL;
-  
   Ohc->MemPool = UsbHcInitMemPool (PciIo, TRUE, 0); 
   if (Ohc->MemPool == NULL) {
     goto FREE_DEV_BUFFER;
