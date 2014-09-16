@@ -178,8 +178,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HC_RH_STATUS            0x50
 #define HC_RH_PORT_STATUS       0x54
 
-#define USBHOST_OFFSET_UHCHR    0x64         // Usb Host reset register
-
 #define OHC_BAR_INDEX           0  
 
 // Usb Host controller register offset
@@ -206,6 +204,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define USBHOST_OFFSET_UHCRHDB       0x4C         // Usb Host Root Hub Descriptor B register
 #define USBHOST_OFFSET_UHCRHS        0x50         // Usb Host Root Hub Status register
 #define USBHOST_OFFSET_UHCRHPS1      0x54         // Usb Host Root Hub Port Status 1 register
+
+#define USBHOST_OFFSET_UHCHR         0x64         // Usb Host reset register
 
 // Usb Host controller register bit fields
 
