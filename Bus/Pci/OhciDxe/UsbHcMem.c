@@ -46,7 +46,7 @@ USBHC_MEM_BLOCK *
 UsbHcAllocMemBlock (
   IN  USBHC_MEM_POOL      *Pool,
   IN  UINTN               Pages
-  )
+)
 {
   USBHC_MEM_BLOCK         *Block;
   EFI_PCI_IO_PROTOCOL     *PciIo;
@@ -87,7 +87,7 @@ UsbHcAllocMemBlock (
                     Pages,
                     &BufHost,
                     0
-                    );
+                  );
 
   if (EFI_ERROR (Status)) {
     goto FREE_BITARRAY;
@@ -101,7 +101,7 @@ UsbHcAllocMemBlock (
                     &Bytes,
                     &MappedAddr,
                     &Mapping
-                    );
+                  );
 
   if (EFI_ERROR (Status) || Bytes != EFI_PAGES_TO_SIZE (Pages)) {
     goto FREE_BUFFER;
@@ -141,7 +141,7 @@ VOID
 UsbHcFreeMemBlock (
   IN USBHC_MEM_POOL       *Pool,
   IN USBHC_MEM_BLOCK      *Block
-  )
+)
 {
   EFI_PCI_IO_PROTOCOL     *PciIo;
 
@@ -172,7 +172,7 @@ VOID *
 UsbHcAllocMemFromBlock (
   IN  USBHC_MEM_BLOCK     *Block,
   IN  UINTN               Units
-  )
+)
 {
   UINTN                   Byte;
   UINT8                   Bit;
@@ -245,7 +245,7 @@ UsbHcGetPciAddressForHostMem (
   IN USBHC_MEM_POOL       *Pool,
   IN VOID                 *Mem,
   IN UINTN                Size
-  )
+)
 {
   USBHC_MEM_BLOCK         *Head;
   USBHC_MEM_BLOCK         *Block;
@@ -290,7 +290,7 @@ VOID
 UsbHcInsertMemBlockToPool (
   IN USBHC_MEM_BLOCK      *Head,
   IN USBHC_MEM_BLOCK      *Block
-  )
+)
 {
   ASSERT (Head != NULL && Block != NULL);
   Block->Next = Head->Next;
@@ -309,7 +309,7 @@ UsbHcInsertMemBlockToPool (
 BOOLEAN
 UsbHcIsMemBlockEmpty (
   IN USBHC_MEM_BLOCK     *Block
-  )
+)
 {
   UINTN                   Index;
 
@@ -333,7 +333,7 @@ VOID
 UsbHcUnlinkMemBlock (
   IN USBHC_MEM_BLOCK      *Head,
   IN USBHC_MEM_BLOCK      *BlockToUnlink
-  )
+)
 {
   USBHC_MEM_BLOCK         *Block;
 
@@ -365,7 +365,7 @@ UsbHcInitMemPool (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN BOOLEAN              Check4G,
   IN UINT32               Which4G
-  )
+)
 {
   USBHC_MEM_POOL          *Pool;
 
@@ -400,7 +400,7 @@ UsbHcInitMemPool (
 EFI_STATUS
 UsbHcFreeMemPool (
   IN USBHC_MEM_POOL       *Pool
-  )
+)
 {
   USBHC_MEM_BLOCK *Block;
 
@@ -434,7 +434,7 @@ VOID *
 UsbHcAllocateMem (
   IN  USBHC_MEM_POOL      *Pool,
   IN  UINTN               Size
-  )
+)
 {
   USBHC_MEM_BLOCK         *Head;
   USBHC_MEM_BLOCK         *Block;
@@ -506,7 +506,7 @@ UsbHcFreeMem (
   IN USBHC_MEM_POOL       *Pool,
   IN VOID                 *Mem,
   IN UINTN                Size
-  )
+)
 {
   USBHC_MEM_BLOCK         *Head;
   USBHC_MEM_BLOCK         *Block;

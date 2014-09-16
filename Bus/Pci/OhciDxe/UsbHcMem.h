@@ -102,7 +102,7 @@ UsbHcInitMemPool (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN BOOLEAN              Check4G,
   IN UINT32               Which4G
-  );
+);
 
 /**
   Release the memory management pool.
@@ -116,7 +116,7 @@ UsbHcInitMemPool (
 EFI_STATUS
 UsbHcFreeMemPool (
   IN USBHC_MEM_POOL       *Pool
-  );
+);
 
 /**
   Allocate some memory from the host controller's memory pool
@@ -132,7 +132,7 @@ VOID *
 UsbHcAllocateMem (
   IN  USBHC_MEM_POOL      *Pool,
   IN  UINTN               Size
-  );
+);
 
 /**
   Free the allocated memory back to the memory pool.
@@ -147,7 +147,7 @@ UsbHcFreeMem (
   IN USBHC_MEM_POOL       *Pool,
   IN VOID                 *Mem,
   IN UINTN                Size
-  );
+);
 
 /**
   Calculate the corresponding pci bus address according to the Mem parameter.
@@ -163,6 +163,6 @@ UsbHcGetPciAddressForHostMem (
   IN USBHC_MEM_POOL       *Pool,
   IN VOID                 *Mem,
   IN UINTN                Size
-  );
+);
 
 #endif

@@ -101,7 +101,7 @@ OhciComponentNameGetDriverName (
   IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
   IN  CHAR8                        *Language,
   OUT CHAR16                       **DriverName
-  )
+)
 {
   return LookupUnicodeString2 (
            Language,
@@ -109,7 +109,7 @@ OhciComponentNameGetDriverName (
            mOhciDriverNameTable,
            DriverName,
            (BOOLEAN) (This == &gOhciComponentName)
-           );
+         );
 }
 
 /**
@@ -189,7 +189,7 @@ OhciComponentNameGetControllerName (
   IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
   IN  CHAR8                                           *Language,
   OUT CHAR16                                          **ControllerName
-  )
+)
 {
   EFI_STATUS           Status;
   USB_OHCI_HC_DEV      *OhciDev;
@@ -207,7 +207,7 @@ OhciComponentNameGetControllerName (
              ControllerHandle,
              gOhciDriverBinding.DriverBindingHandle,
              &gEfiPciIoProtocolGuid
-             );
+           );
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -221,7 +221,7 @@ OhciComponentNameGetControllerName (
                   gOhciDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                  );
+                );
   if (EFI_ERROR (Status)) {
     return Status;
   }
@@ -234,5 +234,5 @@ OhciComponentNameGetControllerName (
            OhciDev->ControllerNameTable,
            ControllerName,
            (BOOLEAN)(This == &gOhciComponentName)
-           );
+         );
 }

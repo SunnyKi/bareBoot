@@ -80,7 +80,7 @@ OhciComponentNameGetDriverName (
   IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
   IN  CHAR8                        *Language,
   OUT CHAR16                       **DriverName
-  );
+);
 
 /**
   Retrieves a Unicode string that is the user readable name of the controller
@@ -159,6 +159,6 @@ OhciComponentNameGetControllerName (
   IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
   IN  CHAR8                                           *Language,
   OUT CHAR16                                          **ControllerName
-  );
+);
 
 #endif

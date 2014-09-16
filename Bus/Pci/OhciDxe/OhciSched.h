@@ -77,7 +77,7 @@ EFI_STATUS
 OhciAddInterruptContextEntry (
   IN  USB_OHCI_HC_DEV          *Ohc,
   IN  INTERRUPT_CONTEXT_ENTRY  *NewEntry
-  );
+);
 
 /**
   Free a interrupt context entry
@@ -93,7 +93,7 @@ EFI_STATUS
 OhciFreeInterruptContextEntry (
   IN USB_OHCI_HC_DEV          *Ohc,
   IN INTERRUPT_CONTEXT_ENTRY  *Entry
-  );
+);
 
 /**
   Free entries match the device address and endpoint address
@@ -112,7 +112,7 @@ OhciFreeInterruptContext (
   IN  UINT8               DeviceAddress,
   IN  UINT8               EndPointAddress,
   OUT UINT8               *DataToggle
-  );
+);
 
 /**
   Convert Error code from OHCI format to EFI format
@@ -125,7 +125,7 @@ OhciFreeInterruptContext (
 UINT32
 ConvertErrorCode (
   IN  UINT32 ErrorCode
-  );
+);
 
 /**
   Check TDs Results
@@ -143,7 +143,7 @@ OhciCheckTDsResults (
   IN  USB_OHCI_HC_DEV     *Ohc,
   IN  TD_DESCRIPTOR       *Td,
   OUT UINT32              *Result
-  );
+);
 
 /**
   Check the task status on an ED
@@ -159,7 +159,7 @@ CheckEDStatus (
   IN  ED_DESCRIPTOR       *Ed,
   IN  TD_DESCRIPTOR       *HeadTd,
   OUT OHCI_ED_RESULT      *EdResult
-  );
+);
 
 /**
   Check the task status
@@ -182,7 +182,7 @@ CheckIfDone (
   IN  ED_DESCRIPTOR         *Ed,
   IN  TD_DESCRIPTOR         *HeadTd,
   OUT OHCI_ED_RESULT        *EdResult
-  );
+);
 
 /**
   Convert TD condition code to Efi Status
@@ -197,7 +197,7 @@ CheckIfDone (
 EFI_STATUS
 OhciTDConditionCodeToStatus (
   IN  UINT32              ConditionCode
-  );
+);
 
 /**
   Invoke callbacks hooked on done TDs
@@ -224,6 +224,6 @@ EFIAPI
 OhciHouseKeeper (
   IN  EFI_EVENT           Event,
   IN  VOID                *Context
-  );
+);
 
 #endif

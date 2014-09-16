@@ -51,7 +51,7 @@ EFIAPI
 OhciReset (
   IN EFI_USB_HC_PROTOCOL  *This,
   IN UINT16               Attributes
-  )
+)
 {
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
@@ -74,14 +74,14 @@ OhciReset (
     if (EFI_ERROR (Status)) {
       return EFI_DEVICE_ERROR;
     }
-    gBS->Stall (50 * 1000);	
+    gBS->Stall (50 * 1000);  
 
     // Wait for host controller reset. 
 
     PowerOnGoodTime = 50;
     do {
       gBS->Stall (1 * 1000);
-      Data32 = OhciGetOperationalReg (Ohc->PciIo, HC_COMMAND_STATUS );
+      Data32 = OhciGetOperationalReg (Ohc->PciIo, HC_COMMAND_STATUS);
       if (EFI_ERROR (Status)) {
         return EFI_DEVICE_ERROR;
       }
@@ -169,7 +169,7 @@ EFIAPI
 OhciGetState (
   IN  EFI_USB_HC_PROTOCOL  *This,
   OUT EFI_USB_HC_STATE     *State
-  )
+)
 {
   USB_OHCI_HC_DEV         *Ohc;
   UINT32                  FuncState;
@@ -219,7 +219,7 @@ EFIAPI
 OhciSetState (
   IN EFI_USB_HC_PROTOCOL  *This,
   IN EFI_USB_HC_STATE     State
-  )
+)
 {
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
@@ -294,7 +294,7 @@ OhciControlTransfer (
   IN OUT UINTN                   *DataLength           OPTIONAL,
   IN     UINTN                   TimeOut,
   OUT    UINT32                  *TransferResult
-  )
+)
 {
   USB_OHCI_HC_DEV                *Ohc;
   ED_DESCRIPTOR                  *HeadEd;
@@ -392,7 +392,7 @@ OhciControlTransfer (
     Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Request, &ReqMapLength, &ReqMapPhyAddr, &ReqMapping);
     if (EFI_ERROR(Status)) {
       goto FREE_ED_BUFF;
-    }	
+    }  
   }
   SetupTd = OhciCreateTD (Ohc);
   if (SetupTd == NULL) {
@@ -634,7 +634,7 @@ OhciBulkTransfer (
   IN OUT UINT8                *DataToggle,
   IN     UINTN                TimeOut,
   OUT    UINT32               *TransferResult
-  )
+)
 {
   USB_OHCI_HC_DEV                *Ohc;
   ED_DESCRIPTOR                  *HeadEd;
@@ -739,7 +739,7 @@ OhciBulkTransfer (
     if (LeftLength > MaxPacketLength) {
       ActualSendLength = MaxPacketLength;
     }
-    DataTd = OhciCreateTD (Ohc);	
+    DataTd = OhciCreateTD (Ohc);  
     if (DataTd == NULL) {
       Status = EFI_OUT_OF_RESOURCES;  
       goto FREE_OHCI_TDBUFF;
@@ -787,7 +787,7 @@ OhciBulkTransfer (
   OhciSetTDField (EmptyTd, TD_COND_CODE, 0);
   OhciSetTDField (EmptyTd, TD_CURR_BUFFER_PTR, 0);
   OhciSetTDField (EmptyTd, TD_BUFFER_END_PTR, 0);
-  OhciSetTDField (EmptyTd, TD_NEXT_PTR, 0);  	
+  OhciSetTDField (EmptyTd, TD_NEXT_PTR, 0);    
   EmptyTd->ActualSendLength = 0;
   EmptyTd->DataBuffer = 0;
   EmptyTd->NextTDPointer = 0;
@@ -924,7 +924,7 @@ OhciInterruptTransfer (
   IN     BOOLEAN                          IsPeriodic         OPTIONAL,
   OUT    ED_DESCRIPTOR                    **OutputED         OPTIONAL,
   OUT    TD_DESCRIPTOR                    **OutputTD         OPTIONAL
-  )
+)
 {
   ED_DESCRIPTOR            *Ed;
   UINT8                    EdDir;
@@ -982,7 +982,7 @@ OhciInterruptTransfer (
                          &MapLength,
                          &MapPyhAddr,
                          &Mapping
-                         );
+                       );
   if (EFI_ERROR (Status)) {
     goto EXIT;
   }
@@ -1075,7 +1075,7 @@ OhciInterruptTransfer (
   OhciSetTDField (EmptTd, TD_COND_CODE, 0);
   OhciSetTDField (EmptTd, TD_CURR_BUFFER_PTR, 0);
   OhciSetTDField (EmptTd, TD_BUFFER_END_PTR, 0);
-  OhciSetTDField (EmptTd, TD_NEXT_PTR, 0);  	
+  OhciSetTDField (EmptTd, TD_NEXT_PTR, 0);    
   EmptTd->ActualSendLength = 0;
   EmptTd->DataBuffer = 0;
   EmptTd->NextTDPointer = 0;
@@ -1092,7 +1092,7 @@ OhciInterruptTransfer (
 
   if (CallBackFunction != NULL) {
     Entry = AllocateZeroPool (sizeof (INTERRUPT_CONTEXT_ENTRY));                      
-    if (Entry == NULL) {	
+    if (Entry == NULL) {  
       goto FREE_OHCI_TDBUFF;
     }
 
@@ -1108,7 +1108,7 @@ OhciInterruptTransfer (
     Entry->IsPeriodic = IsPeriodic;      
     Entry->UCBuffer = UCBuffer;
     Entry->UCBufferMapping = Mapping;
-    Entry->DataLength = DataLength;  	
+    Entry->DataLength = DataLength;    
     Entry->Toggle = DataToggle;
     Entry->NextEntry = NULL;
     OhciAddInterruptContextEntry (Ohc, Entry);
@@ -1207,7 +1207,7 @@ OhciAsyncInterruptTransfer (
   IN     UINTN                            DataLength         OPTIONAL,
   IN     EFI_ASYNC_USB_TRANSFER_CALLBACK  CallBackFunction   OPTIONAL,
   IN     VOID                             *Context           OPTIONAL
-  )
+)
 {
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
@@ -1244,7 +1244,7 @@ OhciAsyncInterruptTransfer (
              TRUE,
              NULL,
              NULL
-             );
+           );
   if (IsNewTransfer) {
     if (EFI_ERROR(Status)) {
       gBS->FreePool (UCBuffer);
@@ -1302,7 +1302,7 @@ OhciSyncInterruptTransfer (
   IN OUT UINT8                *DataToggle,
   IN     UINTN                TimeOut,
   OUT    UINT32               *TransferResult
-  )
+)
 {
   USB_OHCI_HC_DEV         *Ohc;
   EFI_STATUS              Status;
@@ -1340,7 +1340,7 @@ OhciSyncInterruptTransfer (
              FALSE,
              &Ed,
              &HeadTd
-             );
+           );
              
   if (!EFI_ERROR (Status)) {
     Status = CheckIfDone (Ohc, INTERRUPT_LIST, Ed, HeadTd, &EdResult);
@@ -1369,7 +1369,7 @@ OhciSyncInterruptTransfer (
              FALSE,
              NULL,
              NULL
-             );
+           );
   
   return Status;
 }
@@ -1406,7 +1406,7 @@ OhciIsochronousTransfer (
   IN OUT VOID                 *Data,
   IN OUT UINTN                DataLength,
   OUT    UINT32               *TransferResult
-  )
+)
 {
   if (Data == NULL || DataLength == 0 || TransferResult == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -1445,7 +1445,7 @@ OhciAsyncIsochronousTransfer (
   IN OUT UINTN                              DataLength,
   IN     EFI_ASYNC_USB_TRANSFER_CALLBACK    IsochronousCallBack,
   IN     VOID                               *Context OPTIONAL
-  )
+)
 {
 
   if (Data == NULL || DataLength == 0) {
@@ -1469,7 +1469,7 @@ EFIAPI
 OhciGetRootHubNumOfPorts (
   IN  EFI_USB_HC_PROTOCOL  *This,
   OUT UINT8                *NumOfPorts
-  )
+)
 {  
   USB_OHCI_HC_DEV  *Ohc;
   Ohc = USB_OHCI_HC_DEV_FROM_THIS (This);
@@ -1505,7 +1505,7 @@ OhciGetRootHubPortStatus (
   IN  EFI_USB_HC_PROTOCOL  *This,
   IN  UINT8                PortNumber,
   OUT EFI_USB_PORT_STATUS  *PortStatus
-  )
+)
 {
   USB_OHCI_HC_DEV  *Ohc;
   UINT8            NumOfPorts;
@@ -1580,7 +1580,7 @@ OhciSetRootHubPortFeature (
   IN EFI_USB_HC_PROTOCOL   *This,
   IN UINT8                 PortNumber,
   IN EFI_USB_PORT_FEATURE  PortFeature
-  )
+)
 {
   USB_OHCI_HC_DEV         *Ohc;
   EFI_STATUS              Status;
@@ -1696,7 +1696,7 @@ OhciClearRootHubPortFeature (
   IN EFI_USB_HC_PROTOCOL   *This,
   IN UINT8                 PortNumber,
   IN EFI_USB_PORT_FEATURE  PortFeature
-  )
+)
 {
   USB_OHCI_HC_DEV         *Ohc;
   EFI_STATUS              Status;
@@ -1883,7 +1883,7 @@ EFIAPI
 OHCIDriverEntryPoint (
   IN EFI_HANDLE          ImageHandle,
   IN EFI_SYSTEM_TABLE    *SystemTable
-  )
+)
 {
   return EfiLibInstallDriverBindingComponentName2 (
            ImageHandle, 
@@ -1892,7 +1892,7 @@ OHCIDriverEntryPoint (
            ImageHandle,
            &gOhciComponentName,
            &gOhciComponentName2
-           );
+         );
 }
 
 /**
@@ -1913,11 +1913,11 @@ OHCIDriverBindingSupported (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-  )
+)
 {
   EFI_STATUS              Status;
   EFI_PCI_IO_PROTOCOL     *PciIo;
-  USB_CLASSC              UsbClassCReg;
+  PCI_TYPE                PciType;
 
   // Test whether there is PCI IO Protocol attached on the controller handle.
 
@@ -1928,7 +1928,7 @@ OHCIDriverBindingSupported (
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
-                  );
+                );
 
   if (EFI_ERROR (Status)) {
     return EFI_UNSUPPORTED;
@@ -1936,11 +1936,11 @@ OHCIDriverBindingSupported (
 
   Status = PciIo->Pci.Read (
                         PciIo,
-                        EfiPciIoWidthUint8,
-                        PCI_CLASSCODE_OFFSET,
-                        sizeof (USB_CLASSC) / sizeof (UINT8),
-                        &UsbClassCReg
-                        );
+                        EfiPciIoWidthUint32,
+                        0,
+                        sizeof (PciType) / sizeof (UINT32),
+                        &PciType
+                      );
 
   if (EFI_ERROR (Status)) {
     Status = EFI_UNSUPPORTED;   
@@ -1949,11 +1949,7 @@ OHCIDriverBindingSupported (
 
   // Test whether the controller belongs to OHCI type
 
-  if ((UsbClassCReg.BaseCode != PCI_CLASS_SERIAL) ||
-      (UsbClassCReg.SubClassCode != PCI_CLASS_SERIAL_USB) ||
-      (UsbClassCReg.ProgInterface != PCI_IF_OHCI)
-      ) {
-
+  if (!IS_PCI_USB (&PciType) || PciType.Hdr.ClassCode[0] != PCI_IF_OHCI) {
     Status = EFI_UNSUPPORTED;
   }
 ON_EXIT:
@@ -1962,7 +1958,7 @@ ON_EXIT:
          &gEfiPciIoProtocolGuid,
          This->DriverBindingHandle,
          Controller
-         );
+       );
 
   return Status;
 }
@@ -1980,11 +1976,11 @@ USB_OHCI_HC_DEV *
 OhciAllocateDev (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN UINT64               OriginalPciAttributes
-  )
+)
 {
   USB_OHCI_HC_DEV         *Ohc;
   EFI_STATUS              Status;
-  VOID			              *Buf;
+  VOID                    *Buf;
   EFI_PHYSICAL_ADDRESS    PhyAddr;
   VOID                    *Map;
   UINTN                   Pages;
@@ -2026,7 +2022,7 @@ OhciAllocateDev (
   
   Ohc->MemPool = UsbHcInitMemPool (PciIo, TRUE, 0); 
   if(Ohc->MemPool == NULL) {
-  	goto FREE_DEV_BUFFER;
+    goto FREE_DEV_BUFFER;
   } 
   
   Bytes = 4096;
@@ -2039,7 +2035,7 @@ OhciAllocateDev (
                     Pages,
                     &Buf,
                     0
-                    );
+                  );
  
   if (EFI_ERROR (Status)) {
     goto FREE_MEM_POOL;
@@ -2052,7 +2048,7 @@ OhciAllocateDev (
                     &Bytes,
                     &PhyAddr,
                     &Map
-                    );
+                  );
  
   if (EFI_ERROR (Status) || (Bytes != 4096)) {
     goto FREE_MEM_PAGE;
@@ -2084,7 +2080,7 @@ FREE_DEV_BUFFER:
 VOID
 OhciFreeDev (
   IN USB_OHCI_HC_DEV      *Ohc
-  )
+)
 {
   OhciFreeFixedIntMemory (Ohc);
 
@@ -2100,8 +2096,8 @@ OhciFreeDev (
     UsbHcFreeMemPool (Ohc->MemPool);
   }
 
-  if (Ohc->HccaMemoryMapping != NULL ) {
-  	Ohc->PciIo->FreeBuffer (Ohc->PciIo, Ohc->HccaMemoryPages, Ohc->HccaMemoryBuf);
+  if (Ohc->HccaMemoryMapping != NULL) {
+    Ohc->PciIo->FreeBuffer (Ohc->PciIo, Ohc->HccaMemoryPages, Ohc->HccaMemoryBuf);
   }
   
   if (Ohc->ControllerNameTable != NULL) {
@@ -2122,7 +2118,7 @@ VOID
 OhciCleanDevUp (
   IN  EFI_HANDLE           Controller,
   IN  EFI_USB_HC_PROTOCOL  *This
-  )
+)
 {
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
@@ -2133,10 +2129,10 @@ OhciCleanDevUp (
   Ohc = USB_OHCI_HC_DEV_FROM_THIS (This);
   
   Status = gBS->UninstallProtocolInterface (
-         Controller,
-         &gEfiUsbHcProtocolGuid,
-         &Ohc->UsbHc
-         );
+                  Controller,
+                  &gEfiUsbHcProtocolGuid,
+                  &Ohc->UsbHc
+                );
 
   if (EFI_ERROR (Status)) {
     return;
@@ -2155,7 +2151,7 @@ OhciCleanDevUp (
                 EfiPciIoAttributeOperationSet,
                 Ohc->OriginalPciAttributes,
                 NULL
-                );
+              );
 
   OhciFreeDev (Ohc);
 
@@ -2174,7 +2170,7 @@ EFIAPI
 OhcExitBootService (
   EFI_EVENT                      Event,
   VOID                           *Context
-  )
+)
 {
   USB_OHCI_HC_DEV           *Ohc;
   EFI_USB_HC_PROTOCOL       *UsbHc;
@@ -2215,7 +2211,7 @@ OHCIDriverBindingStart (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-  )
+)
 {
   EFI_STATUS              Status;
   EFI_PCI_IO_PROTOCOL     *PciIo;
@@ -2240,7 +2236,7 @@ OHCIDriverBindingStart (
                   This->DriverBindingHandle,
                   Controller,
                   EFI_OPEN_PROTOCOL_BY_DRIVER
-                  );
+                );
 
   if (EFI_ERROR (Status)) {
     return Status;
@@ -2255,7 +2251,7 @@ OHCIDriverBindingStart (
                     EfiPciIoAttributeOperationGet,
                     0,
                     &OriginalPciAttributes
-                    );
+                  );
 
   if (EFI_ERROR (Status)) {
     goto CLOSE_PCIIO;
@@ -2276,7 +2272,7 @@ OHCIDriverBindingStart (
                     EfiPciIoAttributeOperationSupported,
                     0,
                     &Supports
-                    );
+                  );
 
   if (EFI_ERROR (Status)) {
     goto CLOSE_PCIIO;
@@ -2288,7 +2284,7 @@ OHCIDriverBindingStart (
                     EfiPciIoAttributeOperationEnable,
                     Supports,
                     NULL
-                    );
+                  );
 
   // Allocate memory for OHC private data structure 
 
@@ -2297,7 +2293,7 @@ OHCIDriverBindingStart (
     Status = EFI_OUT_OF_RESOURCES;
     goto CLOSE_PCIIO;
   }  
-  	
+    
 #if 0
   Status = OhciInitializeInterruptList (Uhc);
   if (EFI_ERROR (Status)) {
@@ -2313,7 +2309,7 @@ OHCIDriverBindingStart (
                   OhciHouseKeeper, 
                   Ohc,
                   &Ohc->HouseKeeperTimer
-                  );
+                );
   if (EFI_ERROR (Status)) {
     goto FREE_OHC;
   }
@@ -2341,13 +2337,13 @@ OHCIDriverBindingStart (
            &OhciBusNumber,
            &OhciDeviceNumber,
            &OhciFunctionNumber
-           );
+         );
                     
   for (Index = 0; Index < NumberOfControllers; Index++) {
     PciOr16 (
       PCI_LIB_ADDRESS (OhciBusNumber, OhciDeviceNumber, Index, PCI_COMMAND_OFFSET), 
       (EFI_PCI_COMMAND_IO_SPACE + EFI_PCI_COMMAND_MEMORY_SPACE + EFI_PCI_COMMAND_BUS_MASTER)
-    );	  	  	
+    );          
   }
 
   // Install Host Controller Protocol
@@ -2357,7 +2353,7 @@ OHCIDriverBindingStart (
                   &gEfiUsbHcProtocolGuid, 
                   EFI_NATIVE_INTERFACE,
                   &Ohc->UsbHc
-                  );
+                );
   if (EFI_ERROR (Status)) {
     goto FREE_OHC;
   }
@@ -2371,7 +2367,7 @@ OHCIDriverBindingStart (
                   Ohc,
                   &gEfiEventExitBootServicesGuid,
                   &Ohc->ExitBootServiceEvent
-                  );
+                );
   if (EFI_ERROR (Status)) {
     goto UNINSTALL_USBHC;
   }
@@ -2382,7 +2378,7 @@ OHCIDriverBindingStart (
     &Ohc->ControllerNameTable,
     L"Usb Open Host Controller",
     TRUE
-    );
+  );
 
   AddUnicodeString2 (
     "en",
@@ -2390,7 +2386,7 @@ OHCIDriverBindingStart (
     &Ohc->ControllerNameTable,
     L"Usb Open Host Controller",
     FALSE
-    );
+  );
 
   return EFI_SUCCESS;
 
@@ -2400,7 +2396,7 @@ UNINSTALL_USBHC:
          &gEfiUsbHcProtocolGuid,
          &Ohc->UsbHc,
          NULL
-         );	
+       );  
 
 FREE_OHC:
   OhciFreeDev (Ohc);
@@ -2415,7 +2411,7 @@ CLOSE_PCIIO:
              EfiPciIoAttributeOperationSet,
              OriginalPciAttributes,
              NULL
-             );
+           );
   }
 
   gBS->CloseProtocol (
@@ -2423,7 +2419,7 @@ CLOSE_PCIIO:
          &gEfiPciIoProtocolGuid,
          This->DriverBindingHandle,
          Controller
-         );
+       );
 
   return Status;
 }
@@ -2448,7 +2444,7 @@ OHCIDriverBindingStop (
   IN EFI_HANDLE                   Controller,
   IN UINTN                        NumberOfChildren,
   IN EFI_HANDLE                   *ChildHandleBuffer
-  )
+)
 {
   EFI_STATUS           Status;
   EFI_USB_HC_PROTOCOL  *UsbHc;
@@ -2460,16 +2456,16 @@ OHCIDriverBindingStop (
                   This->DriverBindingHandle,
                   Controller, 
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
-                  );
+                );
   if (!EFI_ERROR (Status)) {
     OhciCleanDevUp (Controller, UsbHc);
   
     Status = gBS->CloseProtocol (
-         Controller, 
-         &gEfiPciIoProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-         );
+                    Controller, 
+                    &gEfiPciIoProtocolGuid,
+                    This->DriverBindingHandle,
+                    Controller
+                  );
   }
   return Status;
 }

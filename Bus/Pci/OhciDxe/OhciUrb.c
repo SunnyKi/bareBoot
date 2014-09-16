@@ -45,7 +45,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TD_DESCRIPTOR *
 OhciCreateTD (
   IN USB_OHCI_HC_DEV      *Ohc
-  )
+)
 {
   TD_DESCRIPTOR           *Td;
 
@@ -75,7 +75,7 @@ EFI_STATUS
 OhciFreeTD (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN TD_DESCRIPTOR        *Td
-  )
+)
 {
   if (Td == NULL) {
     return EFI_SUCCESS;
@@ -96,7 +96,7 @@ OhciFreeTD (
 ED_DESCRIPTOR *
 OhciCreateED (
   USB_OHCI_HC_DEV          *Ohc
-  )
+)
 {
   ED_DESCRIPTOR   *Ed;
   Ed = UsbHcAllocateMem (Ohc->MemPool, sizeof (ED_DESCRIPTOR));
@@ -125,7 +125,7 @@ EFI_STATUS
 OhciFreeED (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN ED_DESCRIPTOR        *Ed
-  )
+)
 {
   if (Ed == NULL) {
     return EFI_SUCCESS;
@@ -148,7 +148,7 @@ EFI_STATUS
 OhciFreeAllTDFromED (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN ED_DESCRIPTOR        *Ed
-  )
+)
 {
   TD_DESCRIPTOR           *HeadTd;
   TD_DESCRIPTOR           *TailTd;
@@ -189,7 +189,7 @@ OhciFindWorkingEd (
   IN UINT8               DeviceAddress,
   IN UINT8               EndPointNum,
   IN UINT8               EdDir
-  )
+)
 {
   ED_DESCRIPTOR           *Ed;
 
@@ -215,7 +215,7 @@ OhciFindWorkingEd (
 EFI_STATUS
 OhciInitializeInterruptList (
   USB_OHCI_HC_DEV          *Ohc
-  )
+)
 {
   static UINT32     Leaf[32] = { 0, 16, 8, 24, 4, 20, 12, 28, 2, 18, 10, 26, 6, 22, 14, 30, 1, 17,
                                 9, 25, 5, 21, 13, 29, 3, 19, 11, 27, 7, 23, 15, 31 };
@@ -270,7 +270,7 @@ EFI_STATUS
 OhciAttachED (
   IN ED_DESCRIPTOR        *Ed,
   IN ED_DESCRIPTOR        *NewEd
-  )
+)
 {
   ED_DESCRIPTOR           *Temp;
 
@@ -301,7 +301,7 @@ OhciAttachED (
 UINTN
 CountEdNum (
   IN ED_DESCRIPTOR      *Ed
-  )
+)
 {
   UINTN     Count;
 
@@ -328,7 +328,7 @@ ED_DESCRIPTOR *
 OhciFindMinInterruptEDList (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Depth
-  )
+)
 {
   UINTN                   EdNum;
   UINTN                   MinEdNum;
@@ -373,7 +373,7 @@ OhciAttachEDToList (
   IN DESCRIPTOR_LIST_TYPE  ListType,
   IN ED_DESCRIPTOR         *Ed,
   IN ED_DESCRIPTOR         *EdList
-  )
+)
 {
   ED_DESCRIPTOR            *HeadEd;
 
@@ -422,7 +422,7 @@ EFI_STATUS
 OhciFreeInterruptEdByEd (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN ED_DESCRIPTOR        *IntEd
-  )
+)
 {
   ED_DESCRIPTOR           *Ed;
   ED_DESCRIPTOR           *TempEd;
@@ -465,7 +465,7 @@ OhciFreeInterruptEdByAddr (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT8                FunctionAddress,
   IN UINT8                EndPointNum
-  )
+)
 {
   ED_DESCRIPTOR           *Ed;
   ED_DESCRIPTOR           *TempEd;
@@ -506,7 +506,7 @@ EFI_STATUS
 OhciLinkTD (
   IN TD_DESCRIPTOR        *Td1,
   IN TD_DESCRIPTOR        *Td2
-  )
+)
 {
   TD_DESCRIPTOR           *TempTd;
 
@@ -542,7 +542,7 @@ EFI_STATUS
 OhciAttachTDListToED (
   IN ED_DESCRIPTOR        *Ed,
   IN TD_DESCRIPTOR        *HeadTd
-  )
+)
 {
   TD_DESCRIPTOR           *TempTd;
 
@@ -576,7 +576,7 @@ OhciSetEDField (
   IN ED_DESCRIPTOR        *Ed,
   IN UINT32               Field,
   IN UINT32               Value
-  )
+)
 {
   if (Field & ED_FUNC_ADD) {
     Ed->Word0.FunctionAddress = Value;
@@ -637,7 +637,7 @@ UINT32
 OhciGetEDField (
   IN ED_DESCRIPTOR        *Ed,
   IN UINT32               Field
-  )
+)
 {
   switch (Field) {
     case ED_FUNC_ADD:
@@ -698,7 +698,7 @@ OhciSetTDField (
   IN TD_DESCRIPTOR        *Td,
   IN UINT32               Field,
   IN UINT32               Value
-  )
+)
 {
   if (Field & TD_PDATA) {
     Td->Word0.Reserved = Value;
@@ -750,7 +750,7 @@ UINT32
 OhciGetTDField (
   IN TD_DESCRIPTOR      *Td,
   IN UINT32             Field
-  )
+)
 {
   switch (Field) {
     case TD_BUFFER_ROUND:
@@ -796,7 +796,7 @@ OhciGetTDField (
 VOID
 OhciFreeDynamicIntMemory ( 
   IN USB_OHCI_HC_DEV      *Ohc
-  ) 
+) 
 {
   INTERRUPT_CONTEXT_ENTRY *Entry;
 
@@ -822,7 +822,7 @@ OhciFreeDynamicIntMemory (
 VOID 
 OhciFreeFixedIntMemory (
   IN USB_OHCI_HC_DEV      *Ohc
-  ) 
+) 
 {       
   static UINT32           Leaf[] = { 32, 16, 8, 4, 2, 1 };
   UINTN                   Index;
@@ -848,7 +848,7 @@ OhciFreeFixedIntMemory (
 EFI_STATUS
 OhciFreeIntTransferMemory (
   IN USB_OHCI_HC_DEV           *Ohc
-  )
+)
 { 
   // Free the Ed, Td & buffer that were created during transferring
 

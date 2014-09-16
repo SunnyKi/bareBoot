@@ -49,7 +49,7 @@ OhciDumpEdTdInfo (
   IN ED_DESCRIPTOR        *Ed,
   IN TD_DESCRIPTOR        *Td,
   BOOLEAN                 Stage
-  )
+)
 {
   UINT32                  Index;
 

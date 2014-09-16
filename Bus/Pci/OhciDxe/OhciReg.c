@@ -45,7 +45,7 @@ UINT32
 OhciGetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN UINT32               Offset
-  )
+)
 {
   UINT32                  Value = 0;
   EFI_STATUS              Status;
@@ -70,7 +70,7 @@ OhciSetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN UINT32               Offset,
   IN VOID                 *Value
-  )
+)
 {
   return PciIo->Mem.Write (PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, Value);
 }
@@ -86,7 +86,7 @@ OhciSetOperationalReg (
 UINT32
 OhciGetHcRevision (
   IN EFI_PCI_IO_PROTOCOL  *PciIo
-  )
+)
 {
   return OhciGetOperationalReg (PciIo, HC_REVISION);
 }
@@ -106,7 +106,7 @@ OhciSetHcReset (
   IN USB_OHCI_HC_DEV            *Ohc,
   IN UINT32                     Field,
   IN UINT32                     Value
-  )
+)
 {
   EFI_STATUS                    Status;
   HcRESET                       Reset;
@@ -168,7 +168,7 @@ UINT32
 OhciGetHcReset (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Field
-  )
+)
 {
   HcRESET                 Reset;
   UINT32                  Value;
@@ -226,7 +226,7 @@ OhciSetHcControl (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  )
+)
 {
   EFI_STATUS              Status;
   HcCONTROL               Control;
@@ -279,7 +279,7 @@ UINT32
 OhciGetHcControl (
   IN USB_OHCI_HC_DEV   *Ohc,
   IN UINTN             Field
-  )
+)
 {
   HcCONTROL     Control;
 
@@ -329,7 +329,7 @@ OhciSetHcCommandStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  )
+)
 {
   EFI_STATUS              Status;
   HcCOMMAND_STATUS        CommandStatus;
@@ -374,7 +374,7 @@ UINT32
 OhciGetHcCommandStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   HcCOMMAND_STATUS        CommandStatus;
 
@@ -416,7 +416,7 @@ EFI_STATUS
 OhciClearInterruptStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   EFI_STATUS              Status;
   HcINTERRUPT_STATUS      InterruptStatus;
@@ -472,7 +472,7 @@ UINT32
 OhciGetHcInterruptStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   HcINTERRUPT_STATUS      InterruptStatus;
 
@@ -527,7 +527,7 @@ OhciSetInterruptControl (
   IN BOOLEAN              StatEnable,
   IN UINTN                Field,
   IN UINT32               Value
-  )
+)
 {
   EFI_STATUS              Status;
   HcINTERRUPT_CONTROL     InterruptState;
@@ -591,7 +591,7 @@ UINT32
 OhciGetHcInterruptControl (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   HcINTERRUPT_CONTROL     InterruptState;
 
@@ -647,7 +647,7 @@ OhciSetMemoryPointer (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                PointerType,
   IN VOID                 *Value
-  )
+)
 {
   EFI_STATUS              Status;
   UINT32                  Verify;
@@ -681,7 +681,7 @@ VOID *
 OhciGetMemoryPointer (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                PointerType
-  )
+)
 {
   return (VOID *)(UINTN) OhciGetOperationalReg (Ohc->PciIo, (UINT32) PointerType);
 }
@@ -701,7 +701,7 @@ OhciSetFrameInterval (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  )
+)
 {
   EFI_STATUS              Status;
   HcFRM_INTERVAL          FrameInterval;
@@ -725,7 +725,7 @@ OhciSetFrameInterval (
              Ohc->PciIo,
              HC_FRM_INTERVAL,
              &FrameInterval
-             );
+           );
 
   return Status;
 }
@@ -743,7 +743,7 @@ UINT32
 OhciGetFrameInterval (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   HcFRM_INTERVAL          FrameInterval;
 
@@ -779,7 +779,7 @@ EFI_STATUS
 OhciSetFrameRemaining (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  )
+)
 {
   EFI_STATUS              Status;
   HcFRAME_REMAINING       FrameRemaining;
@@ -807,7 +807,7 @@ UINT32
 OhciGetFrameRemaining (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   HcFRAME_REMAINING       FrameRemaining;
 
@@ -840,7 +840,7 @@ EFI_STATUS
 OhciSetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  )
+)
 {
   return OhciSetOperationalReg (Ohc->PciIo, HC_FRM_NUMBER, &Value);
 }
@@ -856,7 +856,7 @@ OhciSetFrameNumber (
 UINT32
 OhciGetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc
-  )
+)
 {
   return OhciGetOperationalReg (Ohc->PciIo, HC_FRM_NUMBER);
 }
@@ -874,7 +874,7 @@ EFI_STATUS
 OhciSetPeriodicStart (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  )
+)
 {
   return OhciSetOperationalReg (Ohc->PciIo, HC_PERIODIC_START, &Value);
 }
@@ -890,7 +890,7 @@ OhciSetPeriodicStart (
 UINT32
 OhciGetPeriodicStart (
   IN USB_OHCI_HC_DEV      *Ohc
-  )
+)
 {
   return OhciGetOperationalReg (Ohc->PciIo, HC_PERIODIC_START);
 }
@@ -908,7 +908,7 @@ EFI_STATUS
 OhciSetLsThreshold (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  )
+)
 {
   EFI_STATUS              Status;
 
@@ -928,7 +928,7 @@ OhciSetLsThreshold (
 UINT32
 OhciGetLsThreshold (
   IN USB_OHCI_HC_DEV      *Ohc
-  )
+)
 {
   return OhciGetOperationalReg (Ohc->PciIo, HC_PERIODIC_START);
 }
@@ -948,7 +948,7 @@ OhciSetRootHubDescriptor (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  )
+)
 {
   EFI_STATUS              Status;
   HcRH_DESC_A             DescriptorA;
@@ -1011,7 +1011,7 @@ UINT32
 OhciGetRootHubDescriptor (
   IN USB_OHCI_HC_DEV     *Ohc,
   IN UINTN               Field
-  )
+)
 {
   HcRH_DESC_A             DescriptorA;
   HcRH_DESC_B             DescriptorB;
@@ -1067,7 +1067,7 @@ EFI_STATUS
 OhciSetRootHubStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   EFI_STATUS              Status;
   HcRH_STATUS             RootHubStatus;
@@ -1111,7 +1111,7 @@ UINT32
 OhciGetRootHubStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  )
+)
 {
   HcRH_STATUS             RootHubStatus;
 
@@ -1158,7 +1158,7 @@ OhciSetRootHubPortStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Index,
   IN UINTN                Field
-  )
+)
 {
   EFI_STATUS              Status;
   HcRHPORT_STATUS         PortStatus;
@@ -1198,7 +1198,7 @@ OhciSetRootHubPortStatus (
   if (Field & RH_OC_INDICATOR_CHANGE) {
     PortStatus.OCIndicatorChange = 1;
   }
-  if (Field & RH_PORT_RESET_STAT_CHANGE ) {
+  if (Field & RH_PORT_RESET_STAT_CHANGE) {
     PortStatus.ResetStatChange = 1;
   }
 
@@ -1222,14 +1222,14 @@ OhciReadRootHubPortStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Index,
   IN UINTN                Field
-  )
+)
 {
   HcRHPORT_STATUS         PortStatus;
 
   *(UINT32 *) &PortStatus = OhciGetOperationalReg (
                               Ohc->PciIo,
                               HC_RH_PORT_STATUS + (Index * 4)
-                              );
+                            );
 
   switch (Field) {
   case RH_CURR_CONNECT_STAT:

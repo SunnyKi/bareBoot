@@ -46,7 +46,7 @@ EFI_STATUS
 OhciAddInterruptContextEntry (
   IN  USB_OHCI_HC_DEV          *Ohc,
   IN  INTERRUPT_CONTEXT_ENTRY  *NewEntry
-  )
+)
 {
   INTERRUPT_CONTEXT_ENTRY  *Entry;
   EFI_TPL                  OriginalTPL;
@@ -82,7 +82,7 @@ EFI_STATUS
 OhciFreeInterruptContextEntry (
   IN USB_OHCI_HC_DEV          *Ohc,
   IN INTERRUPT_CONTEXT_ENTRY  *Entry
-  )
+)
 {
   TD_DESCRIPTOR           *Td;
 
@@ -124,7 +124,7 @@ OhciFreeInterruptContext (
   IN  UINT8               DeviceAddress,
   IN  UINT8               EndPointAddress,
   OUT UINT8               *DataToggle
-  )
+)
 {
   INTERRUPT_CONTEXT_ENTRY  *Entry;
   INTERRUPT_CONTEXT_ENTRY  *TempEntry;
@@ -178,7 +178,7 @@ OhciFreeInterruptContext (
 UINT32
 ConvertErrorCode (
   IN  UINT32              ErrorCode
-  )
+)
 {
   UINT32                  TransferResult;
 
@@ -229,7 +229,7 @@ OhciCheckTDsResults (
   IN  USB_OHCI_HC_DEV     *Ohc,
   IN  TD_DESCRIPTOR       *Td,
   OUT UINT32              *Result
-  )
+)
 {
   UINT32                  TdCompletionCode;
 
@@ -265,7 +265,7 @@ CheckEDStatus (
   IN  ED_DESCRIPTOR       *Ed,
   IN  TD_DESCRIPTOR       *HeadTd,
   OUT OHCI_ED_RESULT      *EdResult
-  )
+)
 {
   while (HeadTd != NULL) {
     if (HeadTd->NextTDPointer == 0) {
@@ -304,7 +304,7 @@ CheckIfDone (
   IN  ED_DESCRIPTOR         *Ed,
   IN  TD_DESCRIPTOR         *HeadTd,
   OUT OHCI_ED_RESULT        *EdResult
-  )
+)
 {
   EdResult->ErrorCode = TD_TOBE_PROCESSED;
   
@@ -347,7 +347,7 @@ CheckIfDone (
 EFI_STATUS
 OhciTDConditionCodeToStatus (
   IN  UINT32              ConditionCode
-  )
+)
 {
   if (ConditionCode == TD_NO_ERROR) {
     return EFI_SUCCESS;
@@ -383,14 +383,14 @@ OhciInvokeInterruptCallBack (
              0, 
              Entry->Context,
              Result
-             );
+           );
   } else {
     Entry->CallBackFunction (
              (UINT8 *)(UINTN) (Entry->DataTd->DataBuffer), 
              Entry->DataTd->ActualSendLength, 
              Entry->Context,
              Result
-             );
+           );
   }
 }
 
@@ -406,7 +406,7 @@ EFIAPI
 OhciHouseKeeper (
   IN  EFI_EVENT           Event,
   IN  VOID                *Context
-  )
+)
 {
 
   USB_OHCI_HC_DEV          *Ohc; 
@@ -427,7 +427,7 @@ OhciHouseKeeper (
   PreEntry = NULL;
   
   while (Entry != NULL) {
-    OhciCheckTDsResults (Ohc, Entry->DataTd, &Result );
+    OhciCheckTDsResults (Ohc, Entry->DataTd, &Result);
     if (((Result & EFI_USB_ERR_STALL) == EFI_USB_ERR_STALL) ||
       ((Result & EFI_USB_ERR_NOTEXECUTE) == EFI_USB_ERR_NOTEXECUTE)) {
       // Why return? We should continue to next entry in this case.

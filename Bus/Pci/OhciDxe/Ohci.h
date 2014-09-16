@@ -140,7 +140,7 @@ EFIAPI
 OhciReset (
   IN EFI_USB_HC_PROTOCOL  *This,
   IN UINT16               Attributes
-  );
+);
 
 /**
   Retrieve the current state of the USB host controller.
@@ -160,7 +160,7 @@ EFIAPI
 OhciGetState (
   IN  EFI_USB_HC_PROTOCOL  *This,
   OUT EFI_USB_HC_STATE     *State
-  );
+);
 
 /**
   Sets the USB host controller to a specific state.
@@ -179,7 +179,7 @@ EFIAPI
 OhciSetState (
   IN EFI_USB_HC_PROTOCOL  *This,
   IN EFI_USB_HC_STATE     State
-  );
+);
 
 /**
   Submits control transfer to a target USB device.
@@ -227,7 +227,7 @@ OhciControlTransfer (
   IN OUT UINTN                   *DataLength           OPTIONAL,
   IN     UINTN                   TimeOut,
   OUT    UINT32                  *TransferResult
-  );
+);
 
 /**
   Submits bulk transfer to a bulk endpoint of a USB device.
@@ -278,7 +278,7 @@ OhciBulkTransfer (
   IN OUT UINT8                *DataToggle,
   IN     UINTN                TimeOut,
   OUT    UINT32               *TransferResult
-  );
+);
 
 /**
   Submits an interrupt transfer to an interrupt endpoint of a USB device.
@@ -348,7 +348,7 @@ OhciInterruptTransfer (
   IN     BOOLEAN                          IsPeriodic         OPTIONAL,
   OUT    ED_DESCRIPTOR                    **OutputED         OPTIONAL,
   OUT    TD_DESCRIPTOR                    **OutputTD         OPTIONAL
-  );
+);
 
 /**
   Submits an asynchronous interrupt transfer to an interrupt endpoint of a USB device.
@@ -410,7 +410,7 @@ OhciAsyncInterruptTransfer (
   IN     UINTN                            DataLength         OPTIONAL,
   IN     EFI_ASYNC_USB_TRANSFER_CALLBACK  CallBackFunction   OPTIONAL,
   IN     VOID                             *Context           OPTIONAL
-  );
+);
 
 /**
   Submits synchronous interrupt transfer to an interrupt endpoint
@@ -461,7 +461,7 @@ OhciSyncInterruptTransfer (
   IN OUT UINT8                *DataToggle,
   IN     UINTN                TimeOut,
   OUT    UINT32               *TransferResult
-  );
+);
 
 /**
   Submits isochronous transfer to a target USB device.
@@ -494,7 +494,7 @@ OhciIsochronousTransfer (
   IN OUT VOID                 *Data,
   IN OUT UINTN                DataLength,
   OUT    UINT32               *TransferResult
-  );
+);
 
 /**
   Submits Async isochronous transfer to a target USB device.
@@ -526,7 +526,7 @@ OhciAsyncIsochronousTransfer (
   IN OUT UINTN                              DataLength,
   IN     EFI_ASYNC_USB_TRANSFER_CALLBACK    IsochronousCallBack,
   IN     VOID                               *Context OPTIONAL
-  );
+);
 
 /**
   Retrieves the number of root hub ports.
@@ -542,7 +542,7 @@ EFIAPI
 OhciGetRootHubNumOfPorts (
   IN  EFI_USB_HC_PROTOCOL  *This,
   OUT UINT8                *NumOfPorts
-  );
+);
 
 /**
   Retrieves the current status of a USB root hub port.
@@ -566,7 +566,7 @@ OhciGetRootHubPortStatus (
   IN  EFI_USB_HC_PROTOCOL  *This,
   IN  UINT8                PortNumber,
   OUT EFI_USB_PORT_STATUS  *PortStatus
-  );
+);
 
 /**
   Sets a feature for the specified root hub port.
@@ -589,7 +589,7 @@ OhciSetRootHubPortFeature (
   IN EFI_USB_HC_PROTOCOL   *This,
   IN UINT8                 PortNumber,
   IN EFI_USB_PORT_FEATURE  PortFeature
-  );
+);
 
 /**
   Clears a feature for the specified root hub port.
@@ -612,7 +612,7 @@ OhciClearRootHubPortFeature (
   IN EFI_USB_HC_PROTOCOL   *This,
   IN UINT8                 PortNumber,
   IN EFI_USB_PORT_FEATURE  PortFeature
-  );
+);
 
 /**
   Test to see if this driver supports ControllerHandle. Any
@@ -632,7 +632,7 @@ OHCIDriverBindingSupported (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-  );
+);
 
 /**
   Starting the Usb OHCI Driver.
@@ -653,7 +653,7 @@ OHCIDriverBindingStart (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-  );
+);
 
 /**
   Stop this driver on ControllerHandle. Support stoping any child handles
@@ -675,6 +675,6 @@ OHCIDriverBindingStop (
   IN EFI_HANDLE                   Controller,
   IN UINTN                        NumberOfChildren,
   IN EFI_HANDLE                   *ChildHandleBuffer
-  );
+);
 
 #endif

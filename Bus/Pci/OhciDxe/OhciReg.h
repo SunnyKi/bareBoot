@@ -105,17 +105,17 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define   RH_OC_ID_CHANGE        0x00010
 #define   RH_CLR_RMT_WK_ENABLE   0x00020
 
-#define   RH_CLEAR_PORT_ENABLE        0x0001
-#define   RH_SET_PORT_ENABLE          0x0002
-#define   RH_SET_PORT_SUSPEND         0x0004
-#define   RH_CLEAR_SUSPEND_STATUS     0x0008
-#define   RH_SET_PORT_RESET           0x0010
-#define   RH_SET_PORT_POWER           0x0020
-#define   RH_CLEAR_PORT_POWER         0x0040
-#define   RH_CONNECT_STATUS_CHANGE    0x10000
-#define   RH_PORT_ENABLE_STAT_CHANGE  0x20000
-#define   RH_PORT_SUSPEND_STAT_CHANGE 0x40000
-#define   RH_OC_INDICATOR_CHANGE      0x80000
+#define   RH_CLEAR_PORT_ENABLE        0x000001
+#define   RH_SET_PORT_ENABLE          0x000002
+#define   RH_SET_PORT_SUSPEND         0x000004
+#define   RH_CLEAR_SUSPEND_STATUS     0x000008
+#define   RH_SET_PORT_RESET           0x000010
+#define   RH_SET_PORT_POWER           0x000020
+#define   RH_CLEAR_PORT_POWER         0x000040
+#define   RH_CONNECT_STATUS_CHANGE    0x010000
+#define   RH_PORT_ENABLE_STAT_CHANGE  0x020000
+#define   RH_PORT_SUSPEND_STAT_CHANGE 0x040000
+#define   RH_OC_INDICATOR_CHANGE      0x080000
 #define   RH_PORT_RESET_STAT_CHANGE   0x100000
 
 #define   RH_CURR_CONNECT_STAT        0x0001
@@ -210,12 +210,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Usb Host controller register bit fields
 
 #pragma pack(1)
-
-typedef struct {
-  UINT8                   ProgInterface;
-  UINT8                   SubClassCode;
-  UINT8                   BaseCode;
-} USB_CLASSC;
 
 typedef struct {
     UINT32 Revision:8;
@@ -387,7 +381,7 @@ UINT32
 OhciGetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN UINT32               Offset
-  );
+);
 
 /**
   Set OHCI operational reg value
@@ -404,7 +398,7 @@ OhciSetOperationalReg (
   IN EFI_PCI_IO_PROTOCOL  *PciIo,
   IN UINT32               Offset,
   IN VOID                 *Value
-  );
+);
 
 /**
   Get HcRevision reg value
@@ -417,7 +411,7 @@ OhciSetOperationalReg (
 UINT32
 OhciGetHcRevision (
   IN EFI_PCI_IO_PROTOCOL  *PciIo
-  );
+);
 
 /**
   Set HcReset reg value
@@ -434,7 +428,7 @@ OhciSetHcReset (
   IN USB_OHCI_HC_DEV            *Ohc,
   IN UINT32                     Field,
   IN UINT32                     Value
-  );
+);
 
 /**
   Get specific field of HcReset reg value
@@ -449,7 +443,7 @@ UINT32
 OhciGetHcReset (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Field
-  );
+);
 
 /**
   Set HcControl reg value
@@ -466,7 +460,7 @@ OhciSetHcControl (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  );
+);
 
 /**
   Get specific field of HcControl reg value
@@ -481,7 +475,7 @@ UINT32
 OhciGetHcControl (
   IN USB_OHCI_HC_DEV   *Ohc,
   IN UINTN             Field
-  );
+);
 
 /**
   Set HcCommand reg value
@@ -498,7 +492,7 @@ OhciSetHcCommandStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  );
+);
 
 /**
   Get specific field of HcCommand reg value
@@ -513,7 +507,7 @@ UINT32
 OhciGetHcCommandStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Clear specific fields of Interrupt Status
@@ -528,7 +522,7 @@ EFI_STATUS
 OhciClearInterruptStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Get fields of HcInterrupt reg value
@@ -543,7 +537,7 @@ UINT32
 OhciGetHcInterruptStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Set Interrupt Control reg value
@@ -562,7 +556,7 @@ OhciSetInterruptControl (
   IN BOOLEAN              StatEnable,
   IN UINTN                Field,
   IN UINT32               Value
-  );
+);
 
 /**
   Get field of HcInterruptControl reg value
@@ -577,7 +571,7 @@ UINT32
 OhciGetHcInterruptControl (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Set memory pointer of specific type
@@ -594,7 +588,7 @@ OhciSetMemoryPointer (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                PointerType,
   IN VOID                 *Value
-  );
+);
 
 /**
   Get memory pointer of specific type
@@ -609,7 +603,7 @@ VOID *
 OhciGetMemoryPointer (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                PointerType
-  );
+);
 
 /**
   Set Frame Interval value
@@ -626,7 +620,7 @@ OhciSetFrameInterval (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  );
+);
 
 /**
   Get field of frame interval reg value
@@ -641,7 +635,7 @@ UINT32
 OhciGetFrameInterval (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Set Frame Remaining reg value
@@ -656,7 +650,7 @@ EFI_STATUS
 OhciSetFrameRemaining (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  );
+);
 
 /**
   Get value of frame remaining reg
@@ -671,7 +665,7 @@ UINT32
 OhciGetFrameRemaining (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Set frame number reg value
@@ -686,7 +680,7 @@ EFI_STATUS
 OhciSetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  );
+);
 
 /**
   Get frame number reg value
@@ -699,7 +693,7 @@ OhciSetFrameNumber (
 UINT32
 OhciGetFrameNumber (
   IN USB_OHCI_HC_DEV      *Ohc
-  );
+);
 
 /**
   Set period start reg value
@@ -714,7 +708,7 @@ EFI_STATUS
 OhciSetPeriodicStart (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  );
+);
 
 /**
   Get periodic start reg value
@@ -727,7 +721,7 @@ OhciSetPeriodicStart (
 UINT32
 OhciGetPeriodicStart (
   IN USB_OHCI_HC_DEV      *Ohc
-  );
+);
 
 /**
   Set Ls Threshold reg value
@@ -742,7 +736,7 @@ EFI_STATUS
 OhciSetLsThreshold (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Value
-  );
+);
 
 /**
   Get Ls Threshold reg value
@@ -755,7 +749,7 @@ OhciSetLsThreshold (
 UINT32
 OhciGetLsThreshold (
   IN USB_OHCI_HC_DEV      *Ohc
-  );
+);
 
 /**
   Set Root Hub Descriptor reg value
@@ -772,7 +766,7 @@ OhciSetRootHubDescriptor (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field,
   IN UINT32               Value
-  );
+);
 
 /**
   Get Root Hub Descriptor reg value
@@ -787,7 +781,7 @@ UINT32
 OhciGetRootHubDescriptor (
   IN USB_OHCI_HC_DEV     *Ohc,
   IN UINTN               Field
-  );
+);
 
 /**
   Set Root Hub Status reg value
@@ -802,7 +796,7 @@ EFI_STATUS
 OhciSetRootHubStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Get Root Hub Status reg value
@@ -817,7 +811,7 @@ UINT32
 OhciGetRootHubStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINTN                Field
-  );
+);
 
 /**
   Set Root Hub Port Status reg value
@@ -834,7 +828,7 @@ OhciSetRootHubPortStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Index,
   IN UINTN                Field
-  );
+);
 
 /**
   Get Root Hub Port Status reg value
@@ -851,6 +845,6 @@ OhciReadRootHubPortStatus (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Index,
   IN UINTN                Field
-  );
+);
 
 #endif
