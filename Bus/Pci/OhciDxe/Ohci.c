@@ -509,10 +509,10 @@ OhciControlTransfer (
   OhciLinkTD (HeadTd, EmptyTd);
   Ed->TdTailPointer = (UINT32)(UINTN) EmptyTd;
   OhciAttachTDListToED (Ed, HeadTd);
+#if 0
   //
   // For debugging, dump ED & TD buffer before transfer
   //
-#if 0
   OhciDumpEdTdInfo (Ohc, Ed, HeadTd, TRUE);
 #endif
   OhciSetEDField (Ed, ED_SKIP, 0);
@@ -538,10 +538,10 @@ OhciControlTransfer (
     TimeCount++;
     Status = CheckIfDone (Ohc, CONTROL_LIST, Ed, HeadTd, &EdResult);
   }
+#if 0
   //
   // For debugging, dump ED & TD buffer after transfer
   //
-#if 0
   OhciDumpEdTdInfo (Ohc, Ed, HeadTd, FALSE);
 #endif
   *TransferResult = ConvertErrorCode (EdResult.ErrorCode);
@@ -1859,110 +1859,6 @@ OhciClearRootHubPortFeature (
   return Status;
 }
 
-EFI_DRIVER_BINDING_PROTOCOL gOhciDriverBinding = {
-  OHCIDriverBindingSupported,
-  OHCIDriverBindingStart,
-  OHCIDriverBindingStop,
-  0x10,
-  NULL,
-  NULL
-};
-
-/**
-  Entry point for EFI drivers.
-
-  @param  ImageHandle           EFI_HANDLE.
-  @param  SystemTable           EFI_SYSTEM_TABLE.
-
-  @retval EFI_SUCCESS           Driver is successfully loaded.
-  @return Others                Failed.
-**/
-
-EFI_STATUS
-EFIAPI
-OHCIDriverEntryPoint (
-  IN EFI_HANDLE          ImageHandle,
-  IN EFI_SYSTEM_TABLE    *SystemTable
-)
-{
-  return EfiLibInstallDriverBindingComponentName2 (
-           ImageHandle, 
-           SystemTable,
-           &gOhciDriverBinding,
-           ImageHandle,
-           &gOhciComponentName,
-           &gOhciComponentName2
-         );
-}
-
-/**
-  Test to see if this driver supports ControllerHandle. Any
-  ControllerHandle that has UsbHcProtocol installed will be supported.
-
-  @param  This                 Protocol instance pointer.
-  @param  Controller           Handle of device to test.
-  @param  RemainingDevicePath  Not used.
-
-  @return EFI_SUCCESS          This driver supports this device.
-  @return EFI_UNSUPPORTED      This driver does not support this device.
-**/
-
-EFI_STATUS
-EFIAPI
-OHCIDriverBindingSupported (
-  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
-  IN EFI_HANDLE                   Controller,
-  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
-)
-{
-  EFI_STATUS              Status;
-  EFI_PCI_IO_PROTOCOL     *PciIo;
-  PCI_TYPE00              PciType;
-
-  // Test whether there is PCI IO Protocol attached on the controller handle.
-
-  Status = gBS->OpenProtocol (
-                  Controller,
-                  &gEfiPciIoProtocolGuid,
-                  (VOID **) &PciIo,
-                  This->DriverBindingHandle,
-                  Controller,
-                  EFI_OPEN_PROTOCOL_BY_DRIVER
-                );
-
-  if (EFI_ERROR (Status)) {
-    return EFI_UNSUPPORTED;
-  }
-
-  Status = PciIo->Pci.Read (
-                        PciIo,
-                        EfiPciIoWidthUint32,
-                        0,
-                        sizeof (PciType) / sizeof (UINT32),
-                        &PciType
-                      );
-
-  if (EFI_ERROR (Status)) {
-    Status = EFI_UNSUPPORTED;   
-    goto ON_EXIT;
-  }
-
-  // Test whether the controller belongs to OHCI type
-
-  if (!IS_PCI_USB (&PciType) || PciType.Hdr.ClassCode[0] != PCI_IF_OHCI) {
-    Status = EFI_UNSUPPORTED;
-  }
-ON_EXIT:
-  gBS->CloseProtocol (
-         Controller,
-         &gEfiPciIoProtocolGuid,
-         This->DriverBindingHandle,
-         Controller
-       );
-
-  return Status;
-}
-
 /**
   Allocate and initialize the empty OHCI device.
 
@@ -2250,10 +2146,10 @@ OHCIDriverBindingStart (
   }
   PciAttributesSaved = TRUE;
 
+#if 0
   // Robustnesss improvement such as for UoL
   // Default is not required.
 
-#if 0
   if (FeaturePcdGet (PcdTurnOffUsbLegacySupport)) {
     OhciTurnOffUsbEmulation (PciIo);
   }
@@ -2308,11 +2204,7 @@ OHCIDriverBindingStart (
   
   // Polling at every 0.1s is too slow, use 0.05s like with UhciDxe
 
-#if 0
-  Status = gBS->SetTimer (Ohc->HouseKeeperTimer, TimerPeriodic, 100 * 1000 * 10);
-#else
   Status = gBS->SetTimer (Ohc->HouseKeeperTimer, TimerPeriodic, 50 * 1000 * 10);
-#endif
  
   if (EFI_ERROR (Status)) {
     goto FREE_OHC;
@@ -2360,6 +2252,7 @@ OHCIDriverBindingStart (
                   &gEfiEventExitBootServicesGuid,
                   &Ohc->ExitBootServiceEvent
                 );
+
   if (EFI_ERROR (Status)) {
     goto UNINSTALL_USBHC;
   }
@@ -2449,15 +2342,123 @@ OHCIDriverBindingStop (
                   Controller, 
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
                 );
-  if (!EFI_ERROR (Status)) {
-    OhciCleanDevUp (Controller, UsbHc);
-  
-    Status = gBS->CloseProtocol (
-                    Controller, 
-                    &gEfiPciIoProtocolGuid,
-                    This->DriverBindingHandle,
-                    Controller
-                  );
+
+  if (EFI_ERROR (Status)) {
+    return Status;
   }
+
+  OhciCleanDevUp (Controller, UsbHc);
+  
+  Status = gBS->CloseProtocol (
+                  Controller, 
+                  &gEfiPciIoProtocolGuid,
+                  This->DriverBindingHandle,
+                  Controller
+                );
   return Status;
+}
+
+/**
+  Test to see if this driver supports ControllerHandle. Any
+  ControllerHandle that has UsbHcProtocol installed will be supported.
+
+  @param  This                 Protocol instance pointer.
+  @param  Controller           Handle of device to test.
+  @param  RemainingDevicePath  Not used.
+
+  @return EFI_SUCCESS          This driver supports this device.
+  @return EFI_UNSUPPORTED      This driver does not support this device.
+**/
+
+EFI_STATUS
+EFIAPI
+OHCIDriverBindingSupported (
+  IN EFI_DRIVER_BINDING_PROTOCOL  *This,
+  IN EFI_HANDLE                   Controller,
+  IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
+)
+{
+  EFI_STATUS              Status;
+  EFI_PCI_IO_PROTOCOL     *PciIo;
+  PCI_TYPE00              PciType;
+
+  // Test whether there is PCI IO Protocol attached on the controller handle.
+
+  Status = gBS->OpenProtocol (
+                  Controller,
+                  &gEfiPciIoProtocolGuid,
+                  (VOID **) &PciIo,
+                  This->DriverBindingHandle,
+                  Controller,
+                  EFI_OPEN_PROTOCOL_BY_DRIVER
+                );
+
+  if (EFI_ERROR (Status)) {
+    return EFI_UNSUPPORTED;
+  }
+
+  Status = PciIo->Pci.Read (
+                        PciIo,
+                        EfiPciIoWidthUint32,
+                        0,
+                        sizeof (PciType) / sizeof (UINT32),
+                        &PciType
+                      );
+
+  if (EFI_ERROR (Status)) {
+    Status = EFI_UNSUPPORTED;   
+    goto ON_EXIT;
+  }
+
+  // Test whether the controller belongs to OHCI type
+
+  if (!IS_PCI_USB (&PciType) || PciType.Hdr.ClassCode[0] != PCI_IF_OHCI) {
+    Status = EFI_UNSUPPORTED;
+  }
+
+ON_EXIT:
+  gBS->CloseProtocol (
+         Controller,
+         &gEfiPciIoProtocolGuid,
+         This->DriverBindingHandle,
+         Controller
+       );
+
+  return Status;
+}
+
+EFI_DRIVER_BINDING_PROTOCOL gOhciDriverBinding = {
+  OHCIDriverBindingSupported,
+  OHCIDriverBindingStart,
+  OHCIDriverBindingStop,
+  0x10,
+  NULL,
+  NULL
+};
+
+/**
+  Entry point for EFI drivers.
+
+  @param  ImageHandle           EFI_HANDLE.
+  @param  SystemTable           EFI_SYSTEM_TABLE.
+
+  @retval EFI_SUCCESS           Driver is successfully loaded.
+  @return Others                Failed.
+**/
+
+EFI_STATUS
+EFIAPI
+OHCIDriverEntryPoint (
+  IN EFI_HANDLE          ImageHandle,
+  IN EFI_SYSTEM_TABLE    *SystemTable
+)
+{
+  return EfiLibInstallDriverBindingComponentName2 (
+           ImageHandle, 
+           SystemTable,
+           &gOhciDriverBinding,
+           ImageHandle,
+           &gOhciComponentName,
+           &gOhciComponentName2
+         );
 }
