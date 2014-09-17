@@ -2107,12 +2107,6 @@ OHCIDriverBindingStart (
   UINT64                  Supports;
   UINT64                  OriginalPciAttributes;
   BOOLEAN                 PciAttributesSaved;
-  UINTN                   OhciSegmentNumber;
-  UINTN                   OhciBusNumber;
-  UINTN                   OhciDeviceNumber;
-  UINTN                   OhciFunctionNumber;
-  UINTN                   NumberOfControllers;
-  UINTN                   Index;
 
   // Open PCIIO, then enable the HC device and turn off emulation
 
@@ -2208,26 +2202,6 @@ OHCIDriverBindingStart (
  
   if (EFI_ERROR (Status)) {
     goto FREE_OHC;
-  }
-
-  // Before initialization on the ohci, for QuarkSCSocId, all the companion controllers 
-  // should have bus master, memory space and io space bits enabled
-
-  NumberOfControllers = 4; /* XXX: ??? */
-  
-  PciIo->GetLocation (
-           PciIo,
-           &OhciSegmentNumber,
-           &OhciBusNumber,
-           &OhciDeviceNumber,
-           &OhciFunctionNumber
-         );
-                    
-  for (Index = 0; Index < NumberOfControllers; Index++) {
-    PciOr16 (
-      PCI_LIB_ADDRESS (OhciBusNumber, OhciDeviceNumber, Index, PCI_COMMAND_OFFSET), 
-      (EFI_PCI_COMMAND_IO_SPACE + EFI_PCI_COMMAND_MEMORY_SPACE + EFI_PCI_COMMAND_BUS_MASTER)
-    );          
   }
 
   // Install Host Controller Protocol

@@ -126,21 +126,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define   RH_PORT_POWER_STAT          0x0020
 #define   RH_LSDEVICE_ATTACHED        0x0040
 
-#define   RESET_SYSTEM_BUS            (1 << 0)
-#define   RESET_HOST_CONTROLLER       (1 << 1)
-#define   RESET_CLOCK_GENERATION      (1 << 2)
-#define   RESET_SSE_GLOBAL            (1 << 5)
-#define   RESET_PSPL                  (1 << 6)
-#define   RESET_PCPL                  (1 << 7)
-#define   RESET_SSEP1                 (1 << 9)
-#define   RESET_SSEP2                 (1 << 10)
-#define   RESET_SSEP3                 (1 << 11)
-
 #define ONE_SECOND                      1000000
 #define ONE_MILLI_SEC                   1000
 #define MAX_BYTES_PER_TD                0x1000
 #define MAX_RETRY_TIMES                 100
-#define PORT_NUMBER_ON_MAINSTONE2       1
 
 // Operational Register Offsets
 
@@ -204,8 +193,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define USBHOST_OFFSET_UHCRHDB       0x4C         // Usb Host Root Hub Descriptor B register
 #define USBHOST_OFFSET_UHCRHS        0x50         // Usb Host Root Hub Status register
 #define USBHOST_OFFSET_UHCRHPS1      0x54         // Usb Host Root Hub Port Status 1 register
-
-#define USBHOST_OFFSET_UHCHR         0x64         // Usb Host reset register
 
 // Usb Host controller register bit fields
 
@@ -348,22 +335,6 @@ typedef struct {
     UINT32 Reserved3:11;
 } HcRHPORT_STATUS;
 
-typedef struct {
-    UINT32 FSBIR:1;
-    UINT32 FHR:1;
-    UINT32 CGR:1;
-    UINT32 SSDC:1;
-    UINT32 UIT:1;
-    UINT32 SSE:1;
-    UINT32 PSPL:1;
-    UINT32 PCPL:1;
-    UINT32 Reserved0:1;
-    UINT32 SSEP1:1;
-    UINT32 SSEP2:1;
-    UINT32 SSEP3:1;
-    UINT32 Reserved1:20;
-} HcRESET;
-
 #pragma pack()
 
 // Func List
@@ -411,38 +382,6 @@ OhciSetOperationalReg (
 UINT32
 OhciGetHcRevision (
   IN EFI_PCI_IO_PROTOCOL  *PciIo
-);
-
-/**
-  Set HcReset reg value
-
-  @param  Ohc                   OHC private data
-  @param  Field                 Field to set
-  @param  Value                 Value to set
-
-  @retval EFI_SUCCESS           Value set
-**/
-
-EFI_STATUS
-OhciSetHcReset (
-  IN USB_OHCI_HC_DEV            *Ohc,
-  IN UINT32                     Field,
-  IN UINT32                     Value
-);
-
-/**
-  Get specific field of HcReset reg value
-
-  @param  Ohc                   OHC private data
-  @param  Field                 Field to get
-
-  @retval                       Value of the field
-**/
-
-UINT32
-OhciGetHcReset (
-  IN USB_OHCI_HC_DEV      *Ohc,
-  IN UINT32               Field
 );
 
 /**
