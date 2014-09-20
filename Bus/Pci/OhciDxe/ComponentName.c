@@ -193,7 +193,7 @@ OhciComponentNameGetControllerName (
 {
   EFI_STATUS           Status;
   USB_OHCI_HC_DEV      *OhciDev;
-  EFI_USB_HC_PROTOCOL  *UsbHc;
+  EFI_USB2_HC_PROTOCOL *Usb2Hc;
 
   // This is a device driver, so ChildHandle must be NULL.
 
@@ -216,8 +216,8 @@ OhciComponentNameGetControllerName (
 
   Status = gBS->OpenProtocol (
                   ControllerHandle,
-                  &gEfiUsbHcProtocolGuid,
-                  (VOID **) &UsbHc,
+                  &gEfiUsb2HcProtocolGuid,
+                  (VOID **) &Usb2Hc,
                   gOhciDriverBinding.DriverBindingHandle,
                   ControllerHandle,
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
@@ -226,7 +226,7 @@ OhciComponentNameGetControllerName (
     return Status;
   }
 
-  OhciDev = USB_OHCI_HC_DEV_FROM_THIS (UsbHc);
+  OhciDev = USB2_OHCI_HC_DEV_FROM_THIS (Usb2Hc);
 
   return LookupUnicodeString2 (
            Language,

@@ -45,8 +45,8 @@ typedef struct _INTERRUPT_CONTEXT_ENTRY {
   UINT8                               EndPointAddress;      
   ED_DESCRIPTOR                       *Ed;
   TD_DESCRIPTOR                       *DataTd;
-  BOOLEAN                             IsSlowDevice;
-  UINT8                               MaxPacketLength;
+  UINT8                               DeviceSpeed;
+  UINTN                               MaximumPacketLength;
   UINTN                               PollingInterval;
   EFI_ASYNC_USB_TRANSFER_CALLBACK     CallBackFunction;
   VOID                                *Context;
