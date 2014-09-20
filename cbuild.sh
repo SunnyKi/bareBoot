@@ -13,8 +13,8 @@ while [[ $# -gt 0 ]]; do
         "-x64")     PROCESSOR=X64;;
         "-debug")   TARGET=DEBUG;;
         "-release") TARGET=RELEASE;;
-        "-clean")   export ARG=claen;;
-        "-cleanall") export ARG=claenall;;
+        "-clean")   export ARG=clean;;
+        "-cleanall") export ARG=cleanall;;
 #use BlockIoDxe instead SataControllerDxe and Co
         "-b") DEF="$DEF -D BLOCKIO" ;;
 #don't use usb drivers and oem config dir
@@ -34,7 +34,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 fnMainBuildScript ()
-# Function MAIN DUET BUILD SCRIPT
+# Function MAIN bareBoot BUILD SCRIPT
 {
 set -e
 shopt -s nocasematch
@@ -109,8 +109,8 @@ fi
 export BOOTSECTOR_BIN_DIR=$WORKSPACE/bareBoot/BootSector/bin
 export BUILD_DIR=$WORKSPACE/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"
 
-echo Compressing DUETEFIMainFv.FV ...
-$BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DUETEFIMAINFV.z $BUILD_DIR/FV/DUETEFIMAINFV.Fv
+echo Compressing bareBootEFIMainFv.FV ...
+$BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/bareBootEFIMAINFV.z $BUILD_DIR/FV/bareBootEFIMAINFV.Fv
 
 echo Compressing DxeMain.efi ...
 $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/$PROCESSOR/DxeCore.efi
@@ -123,7 +123,7 @@ echo Generate Loader Image ...
 if [ $PROCESSOR = IA32 ]
 then
   $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/DUETEFIMAINFV.z
+  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
   cat $BOOTSECTOR_BIN_DIR/Start16.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32 > $BUILD_DIR/FV/Efildr16
   cat $BOOTSECTOR_BIN_DIR/Start32.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32 > $BUILD_DIR/FV/Efildr20
   #cat $BOOTSECTOR_BIN_DIR/Start32.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32 > $BUILD_DIR/FV/boot
@@ -135,7 +135,7 @@ fi
 if [ $PROCESSOR = X64 ]
 then
   $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/DUETEFIMAINFV.z
+  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
 
   cat $BOOTSECTOR_BIN_DIR/St32_64m.com $BOOTSECTOR_BIN_DIR/efi64.com2 $BUILD_DIR/FV/Efildr64 > $BUILD_DIR/FV/Efildr20Pure
   $BASETOOLS_DIR/GenPage -f 0x70000 $BUILD_DIR/FV/Efildr20Pure -o $BUILD_DIR/FV/Efildr20
@@ -150,4 +150,3 @@ fi
 
 fnMainBuildScript
 fnMainPostBuildScript
-
