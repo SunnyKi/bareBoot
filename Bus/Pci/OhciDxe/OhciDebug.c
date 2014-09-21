@@ -32,11 +32,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 
 #include "Ohci.h"
+#include "OhciDebug.h"
 
 /**
   Print the data of ED and the TDs attached to the ED
 
-  @param  Uhc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data 
   @param  Ed                    Pointer to a ED to free
   @param  Td                    Pointer to the Td head
   
@@ -45,7 +46,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 EFI_STATUS
 OhciDumpEdTdInfo (
-  IN USB_OHCI_HC_DEV      *Uhc,
+  IN USB_OHCI_HC_DEV      *Ohc,
   IN ED_DESCRIPTOR        *Ed,
   IN TD_DESCRIPTOR        *Td,
   BOOLEAN                 Stage
@@ -90,4 +91,41 @@ OhciDumpEdTdInfo (
   DEBUG ((EFI_D_INFO, "\n TD buffer End\n", (UINT32)(UINTN) Td));
 
   return EFI_SUCCESS;
+}
+
+/**
+  Print controller registers
+
+  @param  Ohc                   Pointer to OHCI private data 
+**/
+
+VOID
+OhciDumpRegs (
+  IN USB_OHCI_HC_DEV      *Ohc
+)
+{
+  DEBUG ((DEBUG_INFO, "%a: begin dump for %p\n", __FUNCTION__, Ohc));
+  DEBUG ((DEBUG_INFO, "Control 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_CONTROL)));
+  DEBUG ((DEBUG_INFO, "Command&Status 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_COMMAND_STATUS)));
+  DEBUG ((DEBUG_INFO, "InterruptStatus 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_STATUS)));
+  DEBUG ((DEBUG_INFO, "InterruptEnable 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_ENABLE)));
+  DEBUG ((DEBUG_INFO, "InterruptDisable 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_DISABLE)));
+  DEBUG ((DEBUG_INFO, "HCCA 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_HCCA)));
+  DEBUG ((DEBUG_INFO, "DoneHead 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_DONE_HEAD)));
+  DEBUG ((DEBUG_INFO, "%a: end dump for %p\n", __FUNCTION__, Ohc));
+}
+
+/**
+  Print HCCA fields
+
+  @param  Ohc                   Pointer to OHCI private data 
+**/
+
+VOID
+OhciDumpHCCA (
+  IN USB_OHCI_HC_DEV      *Ohc
+)
+{
+  DEBUG ((DEBUG_INFO, "%a: begin dump for %p\n", __FUNCTION__, Ohc));
+  DEBUG ((DEBUG_INFO, "%a: end dump for %p\n", __FUNCTION__, Ohc));
 }

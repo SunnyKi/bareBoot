@@ -37,7 +37,7 @@ Routine Description:
 
   Print the data of ED and the TDs attached to the ED
 
-  @param  Uhc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data 
   @param  Ed                    Pointer to a ED to free
   @param  Td                    Pointer to the Td head
   
@@ -46,8 +46,30 @@ Routine Description:
 
 EFI_STATUS
 OhciDumpEdTdInfo (
-  IN USB_OHCI_HC_DEV   *Uhc,
+  IN USB_OHCI_HC_DEV   *Ohc,
   IN ED_DESCRIPTOR     *Ed,
   IN TD_DESCRIPTOR     *Td,
   BOOLEAN Stage
+);
+
+/**
+  Print controller registers
+
+  @param  Ohc                   Pointer to OHCI private data 
+**/
+
+VOID
+OhciDumpRegs (
+  IN USB_OHCI_HC_DEV      *Ohc
+);
+
+/**
+  Print HCCA fields
+
+  @param  Ohc                   Pointer to OHCI private data 
+**/
+
+VOID
+OhciDumpHCCA (
+  IN USB_OHCI_HC_DEV      *Ohc
 );
