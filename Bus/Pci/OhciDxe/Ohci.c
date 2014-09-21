@@ -33,6 +33,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Ohci.h"
 
+EFI_DRIVER_BINDING_PROTOCOL gOhciDriverBinding = {
+  OHCIDriverBindingSupported,
+  OHCIDriverBindingStart,
+  OHCIDriverBindingStop,
+  0x10,
+  NULL,
+  NULL
+};
+
 /* Template for Ohci's Usb2 Host Controller Protocol Instance */
 
 EFI_USB2_HC_PROTOCOL gOhciUsb2HcTemplate = {
@@ -86,7 +95,7 @@ OhciGetCapability (
 
   Ohc = USB2_OHCI_HC_DEV_FROM_THIS (This);
   *MaxSpeed       = EFI_USB_SPEED_FULL;
-  *PortNumber     = 0; /* XXX: Fixme */
+  OhciGetRootHubNumOfPorts (This, PortNumber);
   *Is64BitCapable = 0;
   DEBUG ((EFI_D_INFO, "%a: %d ports, 64 bit %d\n", __FUNCTION__, *PortNumber, *Is64BitCapable));
 
@@ -2452,15 +2461,6 @@ ON_EXIT:
 
   return Status;
 }
-
-EFI_DRIVER_BINDING_PROTOCOL gOhciDriverBinding = {
-  OHCIDriverBindingSupported,
-  OHCIDriverBindingStart,
-  OHCIDriverBindingStop,
-  0x10,
-  NULL,
-  NULL
-};
 
 /**
   Entry point for EFI drivers.
