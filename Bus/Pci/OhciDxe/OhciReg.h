@@ -169,38 +169,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define OHC_BAR_INDEX           0  
 
-// Usb Host controller register offset
-
-#define USBHOST_OFFSET_UHCREV        0x00         // Usb Host revision register
-#define USBHOST_OFFSET_UHCHCON       0x04         // Usb Host control register
-#define USBHOST_OFFSET_UHCCOMS       0x08         // Usb Host Command Status register
-#define USBHOST_OFFSET_UHCINTS       0x0C         // Usb Host Interrupt Status register
-#define USBHOST_OFFSET_UHCINTE       0x10         // Usb Host Interrupt Enable register
-#define USBHOST_OFFSET_UHCINTD       0x14         // Usb Host Interrupt Disable register
-#define USBHOST_OFFSET_UHCHCCA       0x18         // Usb Host Controller Communication Area
-#define USBHOST_OFFSET_UHCPCED       0x1C         // Usb Host Period Current Endpoint Descriptor
-#define USBHOST_OFFSET_UHCCHED       0x20         // Usb Host Control Head Endpoint Descriptor
-#define USBHOST_OFFSET_UHCCCED       0x24         // Usb Host Control Current Endpoint Descriptor
-#define USBHOST_OFFSET_UHCBHED       0x28         // Usb Host Bulk Head Endpoint Descriptor
-#define USBHOST_OFFSET_UHCBCED       0x2C         // Usb Host Bulk Current Endpoint Descriptor
-#define USBHOST_OFFSET_UHCDHEAD      0x30         // Usb Host Done Head register
-#define USBHOST_OFFSET_UHCFMI        0x34         // Usb Host Frame Interval register
-#define USBHOST_OFFSET_UHCFMR        0x38         // Usb Host Frame Remaining register
-#define USBHOST_OFFSET_UHCFMN        0x3C         // Usb Host Frame Number register
-#define USBHOST_OFFSET_UHCPERS       0x40         // Usb Host Periodic Start register
-#define USBHOST_OFFSET_UHCLST        0x44         // Usb Host Low-Speed Threshold register
-#define USBHOST_OFFSET_UHCRHDA       0x48         // Usb Host Root Hub Descriptor A register
-#define USBHOST_OFFSET_UHCRHDB       0x4C         // Usb Host Root Hub Descriptor B register
-#define USBHOST_OFFSET_UHCRHS        0x50         // Usb Host Root Hub Status register
-#define USBHOST_OFFSET_UHCRHPS1      0x54         // Usb Host Root Hub Port Status 1 register
-
-// Usb Host controller register bit fields
-
 #pragma pack(1)
 
 typedef struct {
     UINT32 Revision:8;
-    UINT32 Rsvd:24;
+    UINT32 Legacy:1;
+    UINT32 Rsvd:23;
 } HcREVISION;
 
 typedef struct {

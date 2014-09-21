@@ -60,13 +60,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef struct _USB_OHCI_HC_DEV USB_OHCI_HC_DEV;
 
-#include "UsbHcMem.h"
+#include "ComponentName.h"
+#include "Descriptor.h"
 #include "OhciReg.h"
 #include "OhciSched.h"
 #include "OhciUrb.h"
-#include "Descriptor.h"
-#include "ComponentName.h"
-#include "OhciDebug.h"
+#include "UsbHcMem.h"
 
 extern EFI_DRIVER_BINDING_PROTOCOL   gOhciDriverBinding;
 extern EFI_COMPONENT_NAME_PROTOCOL   gOhciComponentName;
