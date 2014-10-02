@@ -52,13 +52,7 @@ OhciCreateTD (
   Td = UsbHcAllocateMem (Ohc->MemPool, sizeof (TD_DESCRIPTOR));
   if (Td == NULL) {
     DEBUG ((EFI_D_INFO, "%a: TD allocation failed!\n", __FUNCTION__));
-    return NULL;
   }
-  Td->CurrBufferPointer = 0;
-  Td->NextTD = 0;
-  Td->BufferEndPointer = 0;
-  Td->NextTDPointer = 0;
-  	
   return Td;
 }
 
@@ -104,10 +98,8 @@ OhciCreateED (
     DEBUG ((EFI_D_INFO, "%a: ED allocation failed!\n", __FUNCTION__));	
     return NULL;
   }
+
   Ed->Word0.Skip = 1;
-  Ed->TdTailPointer = 0;
-  Ed->Word2.TdHeadPointer = RIGHT_SHIFT_4 (0);
-  Ed->NextED = 0;
 
   return Ed;
 }
