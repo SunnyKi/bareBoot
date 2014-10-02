@@ -1,5 +1,5 @@
 /** @file
-  This file contains the delarations for componet name routines.
+  This file contains the delarations for component name routines.
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.
 
@@ -28,7 +28,6 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 **/
 
 #ifndef _COMPONENT_NAME_H_
@@ -71,15 +70,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
   @retval EFI_UNSUPPORTED       The driver specified by This does not support
                                 the language specified by Language.
-
 **/
 
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetDriverName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
-  IN  CHAR8                        *Language,
-  OUT CHAR16                       **DriverName
+  IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+  IN  CHAR8                       *Language,
+  OUT CHAR16                      **DriverName
 );
 
 /**
@@ -148,17 +146,16 @@ OhciComponentNameGetDriverName (
 
   @retval EFI_UNSUPPORTED       The driver specified by This does not support
                                 the language specified by Language.
-
 **/
 
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+  IN  EFI_HANDLE                  ControllerHandle,
+  IN  EFI_HANDLE                  ChildHandle        OPTIONAL,
+  IN  CHAR8                       *Language,
+  OUT CHAR16                      **ControllerName
 );
 
 #endif

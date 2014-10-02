@@ -28,14 +28,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 **/
 
 #include "Ohci.h"
 
 // EFI Component Name Protocol
 
-GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL  gOhciComponentName = {
+GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME_PROTOCOL gOhciComponentName = {
   OhciComponentNameGetDriverName,
   OhciComponentNameGetControllerName,
   "eng"
@@ -48,7 +47,6 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_COMPONENT_NAME2_PROTOCOL gOhciComponentName2 =
   (EFI_COMPONENT_NAME2_GET_CONTROLLER_NAME) OhciComponentNameGetControllerName,
   "en"
 };
-
 
 GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mOhciDriverNameTable[] = {
   { "eng;en", L"Usb Ohci Driver" },
@@ -92,15 +90,14 @@ GLOBAL_REMOVE_IF_UNREFERENCED EFI_UNICODE_STRING_TABLE mOhciDriverNameTable[] = 
 
   @retval EFI_UNSUPPORTED       The driver specified by This does not support
                                 the language specified by Language.
-
 **/
 
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetDriverName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL  *This,
-  IN  CHAR8                        *Language,
-  OUT CHAR16                       **DriverName
+  IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+  IN  CHAR8                       *Language,
+  OUT CHAR16                      **DriverName
 )
 {
   return LookupUnicodeString2 (
@@ -178,22 +175,21 @@ OhciComponentNameGetDriverName (
 
   @retval EFI_UNSUPPORTED       The driver specified by This does not support
                                 the language specified by Language.
-
 **/
 
 EFI_STATUS
 EFIAPI
 OhciComponentNameGetControllerName (
-  IN  EFI_COMPONENT_NAME_PROTOCOL                     *This,
-  IN  EFI_HANDLE                                      ControllerHandle,
-  IN  EFI_HANDLE                                      ChildHandle        OPTIONAL,
-  IN  CHAR8                                           *Language,
-  OUT CHAR16                                          **ControllerName
+  IN  EFI_COMPONENT_NAME_PROTOCOL *This,
+  IN  EFI_HANDLE                  ControllerHandle,
+  IN  EFI_HANDLE                  ChildHandle OPTIONAL,
+  IN  CHAR8                       *Language,
+  OUT CHAR16                      **ControllerName
 )
 {
   EFI_STATUS           Status;
-  USB_OHCI_HC_DEV      *OhciDev;
   EFI_USB2_HC_PROTOCOL *Usb2Hc;
+  USB_OHCI_HC_DEV      *OhciDev;
 
   // This is a device driver, so ChildHandle must be NULL.
 

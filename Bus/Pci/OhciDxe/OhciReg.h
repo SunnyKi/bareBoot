@@ -174,7 +174,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef struct {
     UINT32 Revision:8;
     UINT32 Legacy:1;
-    UINT32 Rsvd:23;
+    UINT32 Reserved:23;
 } HcREVISION;
 
 typedef struct {
@@ -197,7 +197,7 @@ typedef struct {
     UINT32 ChangeOwnerRequest:1;
     UINT32 Reserved1:12;
     UINT32 ScheduleOverrunCount:2;
-    UINT32 Reserved:14;
+    UINT32 Reserved2:14;
 } HcCOMMAND_STATUS;
 
 typedef struct {

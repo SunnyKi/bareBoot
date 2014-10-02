@@ -43,14 +43,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 UINT32
 OhciGetOperationalReg (
-  IN EFI_PCI_IO_PROTOCOL  *PciIo,
-  IN UINT32               Offset
+  IN EFI_PCI_IO_PROTOCOL *PciIo,
+  IN UINT32              Offset
 )
 {
-  UINT32                  Value = 0;
-  EFI_STATUS              Status;
+  UINT32     Value;
 
-  Status = PciIo->Mem.Read (PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, &Value);
+  Value = 0;
+  (void) PciIo->Mem.Read (PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, &Value);
 
   return Value;
 }
@@ -67,9 +67,9 @@ OhciGetOperationalReg (
 
 EFI_STATUS
 OhciSetOperationalReg (
-  IN EFI_PCI_IO_PROTOCOL  *PciIo,
-  IN UINT32               Offset,
-  IN VOID                 *Value
+  IN EFI_PCI_IO_PROTOCOL *PciIo,
+  IN UINT32              Offset,
+  IN VOID                *Value
 )
 {
   return PciIo->Mem.Write (PciIo, EfiPciIoWidthUint32, OHC_BAR_INDEX, Offset, 1, Value);
@@ -85,7 +85,7 @@ OhciSetOperationalReg (
 
 UINT32
 OhciGetHcRevision (
-  IN EFI_PCI_IO_PROTOCOL  *PciIo
+  IN EFI_PCI_IO_PROTOCOL *PciIo
 )
 {
   return OhciGetOperationalReg (PciIo, HC_REVISION);
@@ -103,13 +103,13 @@ OhciGetHcRevision (
 
 EFI_STATUS
 OhciSetHcControl (
-  IN USB_OHCI_HC_DEV      *Ohc,
-  IN UINTN                Field,
-  IN UINT32               Value
+  IN USB_OHCI_HC_DEV *Ohc,
+  IN UINTN           Field,
+  IN UINT32          Value
 )
 {
-  EFI_STATUS              Status;
-  HcCONTROL               Control;
+  EFI_STATUS Status;
+  HcCONTROL  Control;
 
   *(UINT32 *) &Control = OhciGetOperationalReg (Ohc->PciIo, HC_CONTROL);
 
