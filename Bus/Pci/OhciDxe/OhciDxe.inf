@@ -37,7 +37,7 @@
   FILE_GUID                      = 4ACA697E-F883-446f-98F7-096416FFFFFF
   MODULE_TYPE                    = UEFI_DRIVER
   VERSION_STRING                 = 1.0
-  ENTRY_POINT                    = OHCIDriverEntryPoint
+  ENTRY_POINT                    = OhciDriverEntryPoint
 
 #
 # The following information is for reference only and not required by the build tools.

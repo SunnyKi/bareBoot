@@ -645,7 +645,7 @@ OhciClearRootHubPortFeature (
 
 EFI_STATUS
 EFIAPI
-OHCIDriverBindingSupported (
+OhciDriverBindingSupported (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
@@ -666,7 +666,7 @@ OHCIDriverBindingSupported (
 
 EFI_STATUS
 EFIAPI
-OHCIDriverBindingStart (
+OhciDriverBindingStart (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
   IN EFI_DEVICE_PATH_PROTOCOL     *RemainingDevicePath
@@ -687,7 +687,7 @@ OHCIDriverBindingStart (
 
 EFI_STATUS
 EFIAPI
-OHCIDriverBindingStop (
+OhciDriverBindingStop (
   IN EFI_DRIVER_BINDING_PROTOCOL  *This,
   IN EFI_HANDLE                   Controller,
   IN UINTN                        NumberOfChildren,
