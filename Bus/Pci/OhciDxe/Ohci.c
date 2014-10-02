@@ -106,6 +106,50 @@ OhciGetCapability (
 }
 
 /**
+  Start current OHCI device activity
+
+  @param  Ohc                   The OHCI device to start
+**/
+
+VOID
+OhciStartDev (
+  IN USB_OHCI_HC_DEV      *Ohc
+)
+{
+  OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | BULK_ENABLE, 1); /*ISOCHRONOUS_ENABLE*/
+  OhciSetHcControl (Ohc, HC_FUNCTIONAL_STATE, HC_STATE_OPERATIONAL);  
+  gBS->Stall (50*1000);
+
+  // Wait till first SOF occurs, and then clear it
+
+  while (OhciGetHcInterruptStatus (Ohc, START_OF_FRAME) == 0)
+    ;
+  OhciClearInterruptStatus (Ohc, START_OF_FRAME);
+  gBS->Stall (1000);  
+}
+
+/**
+  Stop current OHCI device activity
+
+  @param  Ohc                   The OHCI device to stop
+**/
+
+VOID
+OhciStopDev (
+  IN USB_OHCI_HC_DEV      *Ohc
+)
+{
+  OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | ISOCHRONOUS_ENABLE | BULK_ENABLE, 0);
+}
+
+/**
+  Uninstall all Ohci Interface.
+
+  @param  Controller            Controller handle.
+  @param  This                  Protocol instance pointer.
+**/
+
+/**
   Provides software reset for the USB host controller.
 
   @param  This                  This EFI_USB2_HC_PROTOCOL instance.
@@ -143,8 +187,6 @@ OhciReset (
   Status = EFI_SUCCESS;
   Ohc = USB2_OHCI_HC_DEV_FROM_THIS (This);
 
-  OhciDumpRegs (Ohc); /* XXX */
-
   if ((Attributes & EFI_USB_HC_RESET_HOST_CONTROLLER) != 0) {
     gBS->Stall (50 * 1000);
     Status = OhciSetHcCommandStatus (Ohc, HC_RESET, HC_RESET);
@@ -172,8 +214,6 @@ OhciReset (
     }
   }
 
-  OhciDumpRegs (Ohc); /* XXX */
-
   OhciFreeIntTransferMemory (Ohc);
   Status = OhciInitializeInterruptList (Ohc);
   OhciSetFrameInterval (Ohc, FRAME_INTERVAL, 0x2edf);
@@ -184,8 +224,6 @@ OhciReset (
     }
     gBS->Stall (50 * 1000);
   }
-
-  OhciDumpRegs (Ohc); /* XXX */
 
   // Initialize host controller operational registers
 
@@ -219,16 +257,6 @@ OhciReset (
   OhciSetMemoryPointer (Ohc, HC_HCCA, Ohc->HccaMemoryBlock);
   OhciSetMemoryPointer (Ohc, HC_CONTROL_HEAD, NULL);
   OhciSetMemoryPointer (Ohc, HC_BULK_HEAD, NULL);
-  OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | BULK_ENABLE, 1); /*ISOCHRONOUS_ENABLE*/
-  OhciSetHcControl (Ohc, HC_FUNCTIONAL_STATE, HC_STATE_OPERATIONAL);  
-  gBS->Stall (50*1000);
-
-  // Wait till first SOF occurs, and then clear it
-
-  while (OhciGetHcInterruptStatus (Ohc, START_OF_FRAME) == 0)
-    ;
-  OhciClearInterruptStatus (Ohc, START_OF_FRAME);
-  gBS->Stall (1000);  
   
   OhciDumpRegs (Ohc); /* XXX */
 
@@ -329,7 +357,8 @@ OhciSetState (
 
     case EfiUsbHcStateOperational:
       DEBUG ((EFI_D_INFO, "%a: state OPERATIONAL\n", __FUNCTION__));
-      Status = OhciSetHcControl (Ohc, HC_FUNCTIONAL_STATE, HC_STATE_OPERATIONAL);
+      OhciStartDev (Ohc);
+      Status = EFI_SUCCESS;
       break;
 
     case EfiUsbHcStateSuspend:
@@ -384,7 +413,7 @@ OhciSetState (
 EFI_STATUS
 EFIAPI
 OhciControlTransfer (
-  IN     EFI_USB2_HC_PROTOCOL     *This,
+  IN     EFI_USB2_HC_PROTOCOL    *This,
   IN     UINT8                   DeviceAddress,
   IN     UINT8                   DeviceSpeed,
   IN     UINTN                   MaximumPacketLength,
@@ -2088,13 +2117,6 @@ OhciFreeDev (
   FreePool (Ohc);
 }
 
-/**
-  Uninstall all Ohci Interface.
-
-  @param  Controller            Controller handle.
-  @param  This                  Protocol instance pointer.
-**/
-
 VOID
 OhciCleanDevUp (
   IN  EFI_HANDLE           Controller,
@@ -2121,7 +2143,7 @@ OhciCleanDevUp (
     return;
   }
 
-  OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | ISOCHRONOUS_ENABLE | BULK_ENABLE, 0);
+  OhciStopDev (Ohc); 
   This->Reset (This, EFI_USB_HC_RESET_GLOBAL);
   This->SetState (This, EfiUsbHcStateHalt);
 
@@ -2163,13 +2185,8 @@ OhcExitBootService (
 
   UsbHc = &Ohc->Usb2Hc;
 
-  // Stop the Host Controller
+  OhciStopDev (Ohc); 
 
-#if 0
-  OhciStopHc (Ohc, OHC_GENERIC_TIMEOUT);
-#endif
-
-  OhciSetHcControl (Ohc, PERIODIC_ENABLE | CONTROL_ENABLE | ISOCHRONOUS_ENABLE | BULK_ENABLE, 0);
   UsbHc->Reset (UsbHc, EFI_USB_HC_RESET_GLOBAL);
   UsbHc->SetState (UsbHc, EfiUsbHcStateHalt);
   
