@@ -21,73 +21,6 @@ Abstract:
 
 #include "InternalBdsLib.h"
 
-/*
- * There is no poll function for pci space yet
- */
-
-EFI_STATUS
-EFIAPI
-ZhciPollPci ( 
-  IN  EFI_PCI_IO_PROTOCOL        *This,
-  IN  EFI_PCI_IO_PROTOCOL_WIDTH  Width,
-  IN  UINT64                     Address,
-  IN  UINT64                     Mask,
-  IN  UINT64                     Value,
-  IN  UINT64                     Delay,
-  OUT UINT64                     *Result
-  )
-{
-  EFI_STATUS  Status;
-  UINT64      NumberOfTicks;
-  UINT32       Remainder;
-
-  if (Result == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-
-  if ((UINT32)Width > EfiPciIoWidthUint64) {
-    return EFI_INVALID_PARAMETER;
-  }
-  //
-  // No matter what, always do a single poll.
-  //
-  Status = This->Pci.Read (This, Width, (UINT32) Address, 1, Result);
-  if ( EFI_ERROR(Status) ) {
-    return Status;
-  }    
-  if ( (*Result & Mask) == Value ) {
-    return EFI_SUCCESS;
-  }
-
-  if (Delay == 0) {
-    return EFI_SUCCESS;
-  } else {
-
-    NumberOfTicks = DivU64x32Remainder (Delay, 100, &Remainder);
-    if ( Remainder !=0 ) {
-      NumberOfTicks += 1;
-    }
-    NumberOfTicks += 1;
-  
-    while ( NumberOfTicks ) {
-
-      gBS->Stall(10);
-    
-      Status = This->Pci.Read (This, Width, (UINT32) Address, 1, Result);
-      if ( EFI_ERROR(Status) ) {
-        return Status;
-      }
-    
-      if ( (*Result & Mask) == Value ) {
-        return EFI_SUCCESS;
-      }
-
-      NumberOfTicks -= 1;
-    }
-  }
-  return EFI_TIMEOUT;
-}
-
 VOID
 DisableEhciLegacy (
   EFI_PCI_IO_PROTOCOL       *PciIo,
@@ -143,9 +76,10 @@ DisableEhciLegacy (
         DEBUG ((DEBUG_INFO, "%a: bail out (flush: %r)\n", __FUNCTION__, Status));
         return;
       }
-      Status = ZhciPollPci (
+      Status = PciIo->PollIo (
                        PciIo,
                        EfiPciIoWidthUint32,
+                       0,                   //EHCI_BAR_INDEX
                        (UINT64) ExtendCapPtr, // USBLEGSUP
                        (UINT64) (BIOS_OWNED | OS_OWNED),
                        (UINT64) OS_OWNED,
