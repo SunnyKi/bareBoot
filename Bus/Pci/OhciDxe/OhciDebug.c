@@ -104,15 +104,15 @@ OhciDumpRegs (
   IN USB_OHCI_HC_DEV      *Ohc
 )
 {
-  DEBUG ((DEBUG_INFO, "%a: begin dump for %p\n", __FUNCTION__, Ohc));
-  DEBUG ((DEBUG_INFO, "Control 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_CONTROL)));
-  DEBUG ((DEBUG_INFO, "Command&Status 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_COMMAND_STATUS)));
-  DEBUG ((DEBUG_INFO, "InterruptStatus 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_STATUS)));
-  DEBUG ((DEBUG_INFO, "InterruptEnable 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_ENABLE)));
-  DEBUG ((DEBUG_INFO, "InterruptDisable 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_INTERRUPT_DISABLE)));
-  DEBUG ((DEBUG_INFO, "HCCA 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_HCCA)));
-  DEBUG ((DEBUG_INFO, "DoneHead 0x%08x\n", OhciGetOperationalReg (Ohc->PciIo, HC_DONE_HEAD)));
-  DEBUG ((DEBUG_INFO, "%a: end dump for %p\n", __FUNCTION__, Ohc));
+  UINTN i;
+  DEBUG ((DEBUG_INFO, "%a: begin opregs dump for %p", __FUNCTION__, Ohc));
+  for (i = 0; i <= 0x5C; i += 4) {
+    if ((i % 0x10) == 0) {
+      DEBUG ((DEBUG_INFO, "\n"));
+    }
+    DEBUG ((DEBUG_INFO, "  0x%02x 0x%08x", i, OhciGetOperationalReg (Ohc->PciIo, i)));
+  }
+  DEBUG ((DEBUG_INFO, "\n%a: end opregs dump for %p\n", __FUNCTION__, Ohc));
 }
 
 /**

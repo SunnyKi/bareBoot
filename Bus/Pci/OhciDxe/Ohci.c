@@ -98,7 +98,6 @@ OhciGetCapability (
   *MaxSpeed       = EFI_USB_SPEED_FULL;
   OhciGetRootHubNumOfPorts (This, PortNumber);
   *Is64BitCapable = 0;
-  DEBUG ((EFI_D_INFO, "%a: %d ports, 64 bit %d\n", __FUNCTION__, *PortNumber, *Is64BitCapable));
 
   gBS->RestoreTPL (OldTpl);
 
@@ -177,10 +176,7 @@ OhciReset (
   UINT32                  Data32;
   BOOLEAN                 Flag = FALSE;
 
-  DEBUG ((EFI_D_INFO, "%a: enter with 0x%02x\n", __FUNCTION__, Attributes));
-
   if ((Attributes & ~(EFI_USB_HC_RESET_GLOBAL | EFI_USB_HC_RESET_HOST_CONTROLLER)) != 0) {
-    DEBUG ((EFI_D_INFO, "%a: leave (invalid parameter)\n", __FUNCTION__));
     return EFI_INVALID_PARAMETER;
   }
 
@@ -258,9 +254,6 @@ OhciReset (
   OhciSetMemoryPointer (Ohc, HC_CONTROL_HEAD, NULL);
   OhciSetMemoryPointer (Ohc, HC_BULK_HEAD, NULL);
   
-  OhciDumpRegs (Ohc); /* XXX */
-
-  DEBUG ((EFI_D_INFO, "%a: leave (%r)\n", __FUNCTION__, Status));
   return Status;
 }
 
@@ -287,8 +280,6 @@ OhciGetState (
   USB_OHCI_HC_DEV         *Ohc;
   UINT32                  FuncState;
   
-  DEBUG ((EFI_D_INFO, "%a: enter\n", __FUNCTION__));
-
   if (State == NULL) {
     return EFI_INVALID_PARAMETER;
   }
@@ -299,28 +290,23 @@ OhciGetState (
 
   switch (FuncState) {
     case HC_STATE_RESET:
-      DEBUG ((EFI_D_INFO, "%a: state RESET\n", __FUNCTION__));
       *State = EfiUsbHcStateHalt;
       break;
     case HC_STATE_RESUME:
-      DEBUG ((EFI_D_INFO, "%a: state RESUME\n", __FUNCTION__));
       *State = EfiUsbHcStateHalt;
       break;
 
     case HC_STATE_OPERATIONAL:
-      DEBUG ((EFI_D_INFO, "%a: state OPERATIONAL\n", __FUNCTION__));
       *State = EfiUsbHcStateOperational;
       break;
 
     case HC_STATE_SUSPEND:
-      DEBUG ((EFI_D_INFO, "%a: state SUSPEND\n", __FUNCTION__));
       *State = EfiUsbHcStateSuspend;
       break;
 
     default:
       ASSERT (FALSE);
   }
-  DEBUG ((EFI_D_INFO, "%a: leave\n", __FUNCTION__));
   return EFI_SUCCESS;
 }
 
@@ -346,34 +332,28 @@ OhciSetState (
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
 
-  DEBUG ((EFI_D_INFO, "%a: enter\n", __FUNCTION__));
   Ohc = USB2_OHCI_HC_DEV_FROM_THIS (This);
 
   switch (State) {
     case EfiUsbHcStateHalt:
-      DEBUG ((EFI_D_INFO, "%a: state HALT\n", __FUNCTION__));
       Status = OhciSetHcControl (Ohc, HC_FUNCTIONAL_STATE, HC_STATE_RESET);
       break;
 
     case EfiUsbHcStateOperational:
-      DEBUG ((EFI_D_INFO, "%a: state OPERATIONAL\n", __FUNCTION__));
       OhciStartDev (Ohc);
       Status = EFI_SUCCESS;
       break;
 
     case EfiUsbHcStateSuspend:
-      DEBUG ((EFI_D_INFO, "%a: state SUSPEND\n", __FUNCTION__));
       Status = OhciSetHcControl (Ohc, HC_FUNCTIONAL_STATE, HC_STATE_SUSPEND);
       break;
 
     default:
-      DEBUG ((EFI_D_INFO, "%a: unknown state 0x%x\n", __FUNCTION__, State));
       Status = EFI_INVALID_PARAMETER;
   }
 
   gBS->Stall (1000);
 
-  DEBUG ((EFI_D_INFO, "%a: leave (%r)\n", __FUNCTION__, Status));
   return Status;
 }
 
@@ -1841,8 +1821,6 @@ OhciClearRootHubPortFeature (
     return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((EFI_D_INFO, "%a: enter for %p/#%d\n", __FUNCTION__, This, PortNumber));
-
   Ohc = USB2_OHCI_HC_DEV_FROM_THIS (This);
 
   Status = EFI_SUCCESS;
@@ -1991,7 +1969,6 @@ OhciClearRootHubPortFeature (
       return EFI_INVALID_PARAMETER;
   }
 
-  DEBUG ((EFI_D_INFO, "%a: leave for %p/#%d (%r)\n", __FUNCTION__, This, PortNumber, Status));
   return Status;
 }
 
@@ -2126,8 +2103,6 @@ OhciCleanDevUp (
   EFI_STATUS              Status;
   USB_OHCI_HC_DEV         *Ohc;
 
-  DEBUG ((EFI_D_INFO, "%a: enter for %p/%p\n", __FUNCTION__, This, Controller));
-
   // Uninstall the USB_HC and USB_HC2 protocol, then disable the controller
 
   Ohc = USB2_OHCI_HC_DEV_FROM_THIS (This);
@@ -2160,7 +2135,6 @@ OhciCleanDevUp (
 
   OhciFreeDev (Ohc);
 
-  DEBUG ((EFI_D_INFO, "%a: leave for %p/%p\n", __FUNCTION__, This, Controller));
   return;
 }
 
@@ -2189,7 +2163,7 @@ OhcExitBootService (
 
   UsbHc->Reset (UsbHc, EFI_USB_HC_RESET_GLOBAL);
   UsbHc->SetState (UsbHc, EfiUsbHcStateHalt);
-  
+
   return;
 }
 
@@ -2220,8 +2194,6 @@ OhciDriverBindingStart (
   UINT64                  Supports;
   UINT64                  OriginalPciAttributes;
   BOOLEAN                 PciAttributesSaved;
-
-  DEBUG ((EFI_D_INFO, "%a: enter for %p/%p\n", __FUNCTION__, This, Controller));
 
   // Open PCIIO, then enable the HC device and turn off emulation
 
@@ -2363,7 +2335,6 @@ OhciDriverBindingStart (
     FALSE
   );
 
-  DEBUG ((EFI_D_INFO, "%a: leave for %p/%p (SUCCESS)\n", __FUNCTION__, This, Controller));
   return EFI_SUCCESS;
 
 UNINSTALL_USBHC:
@@ -2397,7 +2368,6 @@ CLOSE_PCIIO:
          Controller
        );
 
-  DEBUG ((EFI_D_INFO, "%a: leave for %p/%p (%r)\n", __FUNCTION__, This, Controller, Status));
   return Status;
 }
 
@@ -2426,8 +2396,6 @@ OhciDriverBindingStop (
   EFI_STATUS           Status;
   EFI_USB2_HC_PROTOCOL  *UsbHc;
 
-  DEBUG ((EFI_D_INFO, "%a: enter for %p/%p\n", __FUNCTION__, This, Controller));
-
   Status = gBS->OpenProtocol (
                   Controller, 
                   &gEfiUsb2HcProtocolGuid, 
@@ -2450,7 +2418,6 @@ OhciDriverBindingStop (
                   This->DriverBindingHandle,
                   Controller
                 );
-  DEBUG ((EFI_D_INFO, "%a: leave for %p/%p (%r)\n", __FUNCTION__, This, Controller, Status));
   return Status;
 }
 
