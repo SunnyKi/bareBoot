@@ -1307,16 +1307,15 @@ fsw_hfs_readlink (
   if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
     return FSW_UNSUPPORTED;
   } else if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
-#define MPRFINUM 28
 #define MPRFSIZE (sizeof (metaprefix))
-    static fsw_u8 metaprefix[] = "/\0\0\0\0HFS+ Private Data/iNode2147483647";
-    static char* inumstart = (char*) (&metaprefix[MPRFINUM]);
+#define MPRFINUM (MPRFSIZE - 1 - 10)
+    static fsw_u8 metaprefix[] = "/\0\0\0\0HFS+ Private Data/iNode0123456789";
     fsw_u32 sz = 0;
 
     link_target->type = FSW_STRING_TYPE_ISO88591;
     link_target->size = MPRFSIZE;
     fsw_memdup (&link_target->data, metaprefix, link_target->size);
-    sz = fsw_snprintf(inumstart, 10 + 1, "%d", dno->ilink);
+    sz = fsw_snprintf(((fsw_u8 *) link_target->data) + MPRFINUM, 10, "%d", dno->ilink);
     link_target->len = MPRFINUM + sz;
     return FSW_SUCCESS;
 #undef MPRFINUM
