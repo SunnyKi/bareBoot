@@ -1305,15 +1305,12 @@ fsw_hfs_readlink (
 )
 {
   /*
-   * Hardlinks for files -- done
-   * Symlinks for files -- not yet
+   * XXX: Hardlinks for files -- done
    * Hardlinks for directories -- not yet
-   * Symlinks for directories -- not yet
+   * Symlinks -- symlink datum is in resource fork ;-(
    */
 
-  if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
-    return FSW_UNSUPPORTED;
-  } else if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
+  if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
 #define MPRFSIZE (sizeof (metaprefix))
 #define MPRFINUM (MPRFSIZE - 1 - 10)
     static fsw_u8 metaprefix[] = "/\0\0\0\0HFS+ Private Data/iNode0123456789";
@@ -1327,6 +1324,8 @@ fsw_hfs_readlink (
     return FSW_SUCCESS;
 #undef MPRFINUM
 #undef MPRFSIZE
+  } else if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
+    return FSW_UNSUPPORTED;
   }
   /* Unknown link type */
   return FSW_UNSUPPORTED;
