@@ -1307,7 +1307,20 @@ fsw_hfs_readlink (
   if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
     return FSW_UNSUPPORTED;
   } else if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
-    return FSW_UNSUPPORTED;
+#define MPRFINUM 28
+#define MPRFSIZE (sizeof (metaprefix))
+    static fsw_u8 metaprefix[] = "/\0\0\0\0HFS+ Private Data/iNode2147483647";
+    static char* inumstart = (char*) (&metaprefix[MPRFINUM]);
+    fsw_u32 sz = 0;
+
+    link_target->type = FSW_STRING_TYPE_ISO88591;
+    link_target->size = MPRFSIZE;
+    fsw_memdup (&link_target->data, metaprefix, link_target->size);
+    sz = fsw_snprintf(inumstart, 10 + 1, "%d", dno->ilink);
+    link_target->len = MPRFINUM + sz;
+    return FSW_SUCCESS;
+#undef MPRFINUM
+#undef MPRFSIZE
   }
   /* Unknown link type */
   return FSW_UNSUPPORTED;
