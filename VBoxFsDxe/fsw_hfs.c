@@ -632,7 +632,7 @@ fsw_hfs_btree_search (
       cmp = compare_keys (currkey, key);
 #if 0
       FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d recnum=%d/%d cmp=%d kind=%d\n"),
-			      currnode, recnum, count, cmp, node->kind));
+            currnode, recnum, count, cmp, node->kind));
 #endif
 
       /* Leaf node */
@@ -683,7 +683,7 @@ fsw_hfs_btree_search (
       cmp = 0 - compare_keys (currkey, key);
 #if 0
       FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d lower/recnum/upper %d/%d/%d (%d) cmp=%d kind=%d\n"),
-			      currnode, lower, recnum, upper, count, cmp, node->kind));
+            currnode, lower, recnum, upper, count, cmp, node->kind));
 #endif
       if (cmp < 0)
         upper = recnum - 1;
@@ -1304,6 +1304,13 @@ fsw_hfs_readlink (
   struct fsw_string *link_target
 )
 {
+  /*
+   * Hardlinks for files -- done
+   * Symlinks for files -- not yet
+   * Hardlinks for directories -- not yet
+   * Symlinks for directories -- not yet
+   */
+
   if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
     return FSW_UNSUPPORTED;
   } else if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
