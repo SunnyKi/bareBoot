@@ -412,8 +412,6 @@ PartitionInstallGptChildHandles (
                );
   }
 
-  DEBUG ((EFI_D_INFO, "Prepare to Free Pool\n"));
-
 Done:
   if (ProtectiveMbr != NULL) {
     FreePool (ProtectiveMbr);
