@@ -437,14 +437,28 @@ OhciControlTransfer (
   HeadTd = NULL;
   DataTd = NULL;
 
-  if ((TransferDirection != EfiUsbDataOut && TransferDirection != EfiUsbDataIn &&
-       TransferDirection != EfiUsbNoData) || 
-      Request == NULL || DataLength == NULL || TransferResult == NULL ||
-      (TransferDirection == EfiUsbNoData && (*DataLength != 0 || Data != NULL)) ||
-      (TransferDirection != EfiUsbNoData && (*DataLength == 0 || Data == NULL)) ||
-      (DeviceSpeed == EFI_USB_SPEED_FULL && MaximumPacketLength != 8) ||
-      (MaximumPacketLength != 8 && MaximumPacketLength != 16 &&
-       MaximumPacketLength != 32 && MaximumPacketLength != 64)) {
+  //
+  // Parameters Checking
+  //
+  if (Request == NULL || TransferResult == NULL) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if (DeviceSpeed == EFI_USB_SPEED_LOW && (MaximumPacketLength != 8)) {
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((MaximumPacketLength != 8) &&  (MaximumPacketLength != 16) &&
+      (MaximumPacketLength != 32) && (MaximumPacketLength != 64)) {
+
+    return EFI_INVALID_PARAMETER;
+  }
+
+  if ((TransferDirection != EfiUsbNoData) && (Data == NULL || DataLength == NULL)) {
+    return EFI_INVALID_PARAMETER;
+  }
+  
+  if ((TransferDirection == EfiUsbNoData) && (Data != NULL || DataLength == NULL)) {
     return EFI_INVALID_PARAMETER;
   }
   
@@ -2195,6 +2209,8 @@ OhciDriverBindingStart (
   UINT64                  OriginalPciAttributes;
   BOOLEAN                 PciAttributesSaved;
 
+  DEBUG ((EFI_D_INFO, "%a: enter for %p/%p\n", __FUNCTION__, This, Controller));
+
   // Open PCIIO, then enable the HC device and turn off emulation
 
   Ohc = NULL;
@@ -2335,6 +2351,7 @@ OhciDriverBindingStart (
     FALSE
   );
 
+  DEBUG ((EFI_D_INFO, "%a: leave for %p/%p (Success)\n", __FUNCTION__, This, Controller));
   return EFI_SUCCESS;
 
 UNINSTALL_USBHC:
@@ -2368,6 +2385,7 @@ CLOSE_PCIIO:
          Controller
        );
 
+  DEBUG ((EFI_D_INFO, "%a: leave for %p/%p (%r)\n", __FUNCTION__, This, Controller, Status));
   return Status;
 }
 
