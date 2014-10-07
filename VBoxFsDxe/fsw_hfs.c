@@ -1306,7 +1306,9 @@ fsw_hfs_readlink (
 {
   /*
    * XXX: Hardlinks for files -- done
-   * Hardlinks for directories -- not yet
+   * Hardlinks for directories -- not yet. Hex dump visual inspection of Apple hfsplus{32,64}.efi
+   *   revealed no signs of directory hardlinks support. Manana ;-)
+   *
    * Symlinks -- symlink datum is in resource fork ;-(
    */
 
