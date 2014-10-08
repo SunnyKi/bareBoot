@@ -173,7 +173,7 @@ OhciFreeInterruptContext (
 **/
 
 UINT32
-ConvertErrorCode (
+OhciConvertErrorCode (
   IN  UINT32              ErrorCode
 )
 {
@@ -235,7 +235,7 @@ OhciCheckTDsResults (
   while (Td != NULL) {
     TdCompletionCode = Td->Word0.ConditionCode;
 
-    *Result |= ConvertErrorCode (TdCompletionCode);
+    *Result |= OhciConvertErrorCode (TdCompletionCode);
 
     // if any error encountered, stop processing the left TDs.
 
@@ -258,7 +258,7 @@ OhciCheckTDsResults (
 **/
 
 UINT32
-CheckEDStatus (
+OhciCheckEDStatus (
   IN  ED_DESCRIPTOR       *Ed,
   IN  TD_DESCRIPTOR       *HeadTd,
   OUT OHCI_ED_RESULT      *EdResult
@@ -295,7 +295,7 @@ CheckEDStatus (
 **/
 
 EFI_STATUS
-CheckIfDone (
+OhciCheckIfDone (
   IN  USB_OHCI_HC_DEV       *Ohc,
   IN  DESCRIPTOR_LIST_TYPE  ListType,
   IN  ED_DESCRIPTOR         *Ed,
@@ -320,7 +320,7 @@ CheckIfDone (
       break;
   }
 
-  EdResult->ErrorCode = CheckEDStatus (Ed, HeadTd, EdResult);
+  EdResult->ErrorCode = OhciCheckEDStatus (Ed, HeadTd, EdResult);
 
   if (EdResult->ErrorCode == TD_NO_ERROR) {
     return EFI_SUCCESS;

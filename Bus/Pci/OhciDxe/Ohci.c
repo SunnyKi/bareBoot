@@ -655,12 +655,12 @@ OhciControlTransfer (
   gBS->Stall(20 * 1000);
 
   TimeCount = 0;
-  Status = CheckIfDone (Ohc, CONTROL_LIST, Ed, HeadTd, &EdResult);
+  Status = OhciCheckIfDone (Ohc, CONTROL_LIST, Ed, HeadTd, &EdResult);
 
   while (Status == EFI_NOT_READY && TimeCount <= TimeOut) {
     gBS->Stall (1000);
     TimeCount++;
-    Status = CheckIfDone (Ohc, CONTROL_LIST, Ed, HeadTd, &EdResult);
+    Status = OhciCheckIfDone (Ohc, CONTROL_LIST, Ed, HeadTd, &EdResult);
   }
 #if 0
   //
@@ -668,7 +668,7 @@ OhciControlTransfer (
   //
   OhciDumpEdTdInfo (Ohc, Ed, HeadTd, FALSE);
 #endif
-  *TransferResult = ConvertErrorCode (EdResult.ErrorCode);
+  *TransferResult = OhciConvertErrorCode (EdResult.ErrorCode);
 
   if (EdResult.ErrorCode != TD_NO_ERROR) {
     if (EdResult.ErrorCode == TD_TOBE_PROCESSED) {
@@ -790,6 +790,11 @@ OhciBulkTransfer (
     return EFI_INVALID_PARAMETER;
   }
 
+  if (DataBuffersNumber != 1) {
+    DEBUG ((EFI_D_ERROR, "%a: OOPS! DataBuffersNumber != 1\n", __FUNCTION__));
+    return EFI_UNSUPPORTED;
+  }
+
   Ohc = USB2_OHCI_HC_DEV_FROM_THIS (This);
 
   if ((EndPointAddress & 0x80) != 0) {
@@ -809,11 +814,13 @@ OhciBulkTransfer (
 
   Status = OhciSetHcControl (Ohc, BULK_ENABLE, 0);
   if (EFI_ERROR(Status)) {
+    DEBUG ((EFI_D_ERROR, "%a: fail to disable BULK_ENABLE\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     return EFI_DEVICE_ERROR;
   }
   Status = OhciSetHcCommandStatus (Ohc, BULK_LIST_FILLED, 0);
   if (EFI_ERROR(Status)) {
+    DEBUG ((EFI_D_ERROR, "%a: fail to disable BULK_LIST_FILLED\n", __FUNCTION__));
     *TransferResult = EFI_USB_ERR_SYSTEM;
     return EFI_DEVICE_ERROR;
   }
@@ -839,13 +846,13 @@ OhciBulkTransfer (
   OhciSetEDField (Ed, ED_NEXT_EDPTR, 0);
   HeadEd = OhciAttachEDToList (Ohc, BULK_LIST, Ed, NULL);
 
-  if (Data != NULL) {
-    MapLength = *DataLength;
-    Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Data, &MapLength, &MapPyhAddr, &Mapping);
-    if (EFI_ERROR(Status)) {
-      goto FREE_ED_BUFF;
-    }
+  MapLength = *DataLength;
+  Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Data[0], &MapLength, &MapPyhAddr, &Mapping);
+  if (EFI_ERROR(Status)) {
+    DEBUG ((EFI_D_ERROR, "%a: Fail to Map Data Buffer for Bulk transfer\n", __FUNCTION__));		
+    goto FREE_ED_BUFF;
   }
+
   //
   //Data Stage
   //
@@ -860,6 +867,7 @@ OhciBulkTransfer (
     }
     DataTd = OhciCreateTD (Ohc);  
     if (DataTd == NULL) {
+      DEBUG ((EFI_D_ERROR, "%a: Fail to allocate buffer for Data Stage TD\n"));
       Status = EFI_OUT_OF_RESOURCES;  
       goto FREE_OHCI_TDBUFF;
     }
@@ -891,6 +899,7 @@ OhciBulkTransfer (
   //
   EmptyTd = OhciCreateTD (Ohc);
   if (EmptyTd == NULL) {
+    DEBUG ((EFI_D_ERROR, "%a: Fail to allocate buffer for Empty TD\n"));
     Status = EFI_OUT_OF_RESOURCES;
     goto FREE_OHCI_TDBUFF;
   }
@@ -918,36 +927,38 @@ OhciBulkTransfer (
   Status = OhciSetHcCommandStatus (Ohc, BULK_LIST_FILLED, 1);
   if (EFI_ERROR(Status)) {
     *TransferResult = EFI_USB_ERR_SYSTEM;
+    DEBUG ((EFI_D_ERROR, "%a: Fail to enable BULK_LIST_FILLED\n", __FUNCTION__));
     Status = EFI_DEVICE_ERROR;
     goto FREE_OHCI_TDBUFF;
   }
   Status = OhciSetHcControl (Ohc, BULK_ENABLE, 1);
   if (EFI_ERROR(Status)) {
     *TransferResult = EFI_USB_ERR_SYSTEM;
+    DEBUG ((EFI_D_ERROR, "%a: Fail to enable BULK_ENABLE\n", __FUNCTION__));
     Status = EFI_DEVICE_ERROR;
     goto FREE_OHCI_TDBUFF;
   }
   gBS->Stall(20 * 1000);
 
   TimeCount = 0;
-  Status = CheckIfDone (Ohc, BULK_LIST, Ed, HeadTd, &EdResult);
+  Status = OhciCheckIfDone (Ohc, BULK_LIST, Ed, HeadTd, &EdResult);
   while (Status == EFI_NOT_READY && TimeCount <= TimeOut) {
     gBS->Stall (1000);
     TimeCount++;
-    Status = CheckIfDone (Ohc, BULK_LIST, Ed, HeadTd, &EdResult);
+    Status = OhciCheckIfDone (Ohc, BULK_LIST, Ed, HeadTd, &EdResult);
   }
 
-  *TransferResult = ConvertErrorCode (EdResult.ErrorCode);
+  *TransferResult = OhciConvertErrorCode (EdResult.ErrorCode);
 
   if (EdResult.ErrorCode != TD_NO_ERROR) {
     if (EdResult.ErrorCode == TD_TOBE_PROCESSED) {
-      DEBUG ((EFI_D_INFO, "%a: Bulk pipe timeout, > %d mS\n", __FUNCTION__, TimeOut));
+      DEBUG ((EFI_D_ERROR, "%a: Bulk pipe timeout (%d mS)\n", __FUNCTION__, TimeOut));
     } else {
-      DEBUG ((EFI_D_INFO, "%a: Bulk pipe broken\n", __FUNCTION__));
+      DEBUG ((EFI_D_ERROR, "%a: Bulk pipe broken (0x%x)\n", __FUNCTION__, EdResult.ErrorCode));
       *DataToggle = EdResult.NextToggle;
     }
     *DataLength = 0;
-  }
+  } else
 #if 0
   *DataToggle = (UINT8) OhciGetEDField (Ed, ED_DTTOGGLE);
 #endif
@@ -1451,14 +1462,14 @@ OhciSyncInterruptTransfer (
            );
              
   if (!EFI_ERROR (Status)) {
-    Status = CheckIfDone (Ohc, INTERRUPT_LIST, Ed, HeadTd, &EdResult);
+    Status = OhciCheckIfDone (Ohc, INTERRUPT_LIST, Ed, HeadTd, &EdResult);
     while (Status == EFI_NOT_READY && TimeOut > 0) {
       gBS->Stall (1000);
       TimeOut--;
-      Status = CheckIfDone (Ohc, INTERRUPT_LIST, Ed, HeadTd, &EdResult);
+      Status = OhciCheckIfDone (Ohc, INTERRUPT_LIST, Ed, HeadTd, &EdResult);
     }
     
-    *TransferResult = ConvertErrorCode (EdResult.ErrorCode);
+    *TransferResult = OhciConvertErrorCode (EdResult.ErrorCode);
   }              
   CopyMem(Data, UCBuffer, *DataLength);
   Status = OhciInterruptTransfer (
@@ -1523,10 +1534,6 @@ OhciIsochronousTransfer (
   OUT    UINT32                             *TransferResult
 )
 {
-  if (Data == NULL || DataLength == 0 || TransferResult == NULL) {
-    return EFI_INVALID_PARAMETER;
-  }
-  
   return EFI_UNSUPPORTED;
 }
 
@@ -1574,11 +1581,6 @@ OhciAsyncIsochronousTransfer (
   IN     VOID                               *Context OPTIONAL
 )
 {
-
-  if (Data == NULL || DataLength == 0) {
-    return EFI_INVALID_PARAMETER;
-  }
-  
   return EFI_UNSUPPORTED;
 }
 
