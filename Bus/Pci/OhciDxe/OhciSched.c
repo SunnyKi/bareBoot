@@ -52,7 +52,7 @@ OhciAddInterruptContextEntry (
   EFI_TPL                  OriginalTPL;
 
   OriginalTPL = gBS->RaiseTPL (TPL_NOTIFY);
- 
+
   if (Ohc->InterruptContextList == NULL) {
     Ohc->InterruptContextList = NewEntry;
   } else {
@@ -99,7 +99,7 @@ OhciFreeInterruptContextEntry (
     Td = Entry->DataTd;
     Entry->DataTd = (TD_DESCRIPTOR *)(UINTN) (Entry->DataTd->NextTDPointer);
     UsbHcFreeMem (Ohc->MemPool, Td, sizeof (TD_DESCRIPTOR));
-  }  
+  }
   FreePool (Entry);
   return EFI_SUCCESS;
 }
@@ -126,7 +126,7 @@ OhciFreeInterruptContext (
   INTERRUPT_CONTEXT_ENTRY  *Entry;
   INTERRUPT_CONTEXT_ENTRY  *TempEntry;
   EFI_TPL                  OriginalTPL;
-  
+
   OriginalTPL = gBS->RaiseTPL (TPL_NOTIFY);
 
   while (Ohc->InterruptContextList != NULL &&
@@ -139,14 +139,14 @@ OhciFreeInterruptContext (
     }
     OhciFreeInterruptContextEntry (Ohc, TempEntry);
   }
-  
+
   Entry = Ohc->InterruptContextList;
   if (Entry == NULL) {
     gBS->RestoreTPL (OriginalTPL);
     return EFI_SUCCESS;
   }
   while (Entry->NextEntry != NULL) {
-    if (Entry->NextEntry->DeviceAddress == DeviceAddress && 
+    if (Entry->NextEntry->DeviceAddress == DeviceAddress &&
       Entry->NextEntry->EndPointAddress == EndPointAddress) {
       TempEntry = Entry->NextEntry;
       Entry->NextEntry = Entry->NextEntry->NextEntry;
@@ -156,11 +156,11 @@ OhciFreeInterruptContext (
       OhciFreeInterruptContextEntry (Ohc, TempEntry);
     } else {
       Entry = Entry->NextEntry;
-    }     
+    }
   }
-  
+
   gBS->RestoreTPL (OriginalTPL);
-  
+
   return EFI_SUCCESS;
 }
 
@@ -216,7 +216,7 @@ OhciConvertErrorCode (
   @Param  Ohc                   OHC private data
   @Param  Td                    TD_DESCRIPTOR
   @Param  Result                Result to return
- 
+
   @retval TRUE                  means OK
   @retval FLASE                 means Error or Short packet
 **/
@@ -231,7 +231,7 @@ OhciCheckTDsResults (
   UINT32                  TdCompletionCode;
 
   *Result   = EFI_USB_NOERROR;
-  
+
   while (Td != NULL) {
     TdCompletionCode = Td->Word0.ConditionCode;
 
@@ -304,7 +304,7 @@ OhciCheckIfDone (
 )
 {
   EdResult->ErrorCode = TD_TOBE_PROCESSED;
-  
+
   switch (ListType) {
     case CONTROL_LIST:
       if (OhciGetHcCommandStatus (Ohc, CONTROL_LIST_FILLED) != 0) {
@@ -316,7 +316,7 @@ OhciCheckIfDone (
         return EFI_NOT_READY;
       }
       break;
-    default: 
+    default:
       break;
   }
 
@@ -349,11 +349,11 @@ OhciTDConditionCodeToStatus (
   if (ConditionCode == TD_NO_ERROR) {
     return EFI_SUCCESS;
   }
-  
+
   if (ConditionCode == TD_TOBE_PROCESSED) {
     return EFI_NOT_READY;
   }
-  
+
   return EFI_DEVICE_ERROR;
 }
 
@@ -370,21 +370,21 @@ OhciInvokeInterruptCallBack (
   IN  UINT32                   Result
 )
 {
-  // Generally speaking, Keyboard driver should not 
-  // check the Keyboard buffer if an error happens, it will be robust 
+  // Generally speaking, Keyboard driver should not
+  // check the Keyboard buffer if an error happens, it will be robust
   // if we NULLed the buffer once error happens
 
   if (Result) {	
     Entry->CallBackFunction (
              NULL,
-             0, 
+             0,
              Entry->Context,
              Result
            );
   } else {
     Entry->CallBackFunction (
-             (UINT8 *)(UINTN) (Entry->DataTd->DataBuffer), 
-             Entry->DataTd->ActualSendLength, 
+             (UINT8 *)(UINTN) (Entry->DataTd->DataBuffer),
+             Entry->DataTd->ActualSendLength,
              Entry->Context,
              Result
            );
@@ -406,7 +406,7 @@ OhciHouseKeeper (
 )
 {
 
-  USB_OHCI_HC_DEV          *Ohc; 
+  USB_OHCI_HC_DEV          *Ohc;
   INTERRUPT_CONTEXT_ENTRY  *Entry;
   INTERRUPT_CONTEXT_ENTRY  *PreEntry;
   ED_DESCRIPTOR            *Ed;
@@ -416,13 +416,13 @@ OhciHouseKeeper (
   UINT8                    Toggle;
   EFI_TPL                  OriginalTPL;
   UINT32                   Result;
-  
+
   Ohc = (USB_OHCI_HC_DEV *) Context;
   OriginalTPL = gBS->RaiseTPL (TPL_NOTIFY);
-  
+
   Entry = Ohc->InterruptContextList;
   PreEntry = NULL;
-  
+
   while (Entry != NULL) {
     OhciCheckTDsResults (Ohc, Entry->DataTd, &Result);
     if (((Result & EFI_USB_ERR_STALL) == EFI_USB_ERR_STALL) ||
@@ -434,9 +434,9 @@ OhciHouseKeeper (
       PreEntry = Entry;
       Entry = Entry->NextEntry;
       continue;
-    } 
+    }
 
-    if (Entry->CallBackFunction != NULL) {   
+    if (Entry->CallBackFunction != NULL) {
       OhciInvokeInterruptCallBack (Entry, Result);
     }
     if (Entry->IsPeriodic) {
@@ -453,9 +453,9 @@ OhciHouseKeeper (
           Ed->Word0.Skip = 1;
         }
 
-        // From hcir1_0a.pdf 4.2.2 
+        // From hcir1_0a.pdf 4.2.2
         // ToggleCarry: This bit is the data toggle carry bit,
-        // Whenever a TD is retired, this bit is written to 
+        // Whenever a TD is retired, this bit is written to
         // contain the last data toggle value (LSb of data Toggel
         // file) from the retired TD.
         // This field is not used for Isochronous Endpoints
@@ -465,10 +465,10 @@ OhciHouseKeeper (
         }
         Toggle = (UINT8) OhciGetEDField (Ed, ED_DTTOGGLE);
         while (DataTd != NULL) {
-          if (DataTd->NextTDPointer == 0) {  
+          if (DataTd->NextTDPointer == 0) {
             DataTd->Word0.DataToggle = 0;
             break;
-          } else {    
+          } else {
             OhciSetTDField (DataTd, TD_DT_TOGGLE, Toggle);
           }
           DataTd = (TD_DESCRIPTOR *)(UINTN)(DataTd->NextTDPointer);
@@ -481,8 +481,8 @@ OhciHouseKeeper (
 
         DataTd = HeadTd;
         while (DataTd != NULL) {
-          if (DataTd->NextTDPointer == 0) {  
-            OhciSetTDField (DataTd, TD_ERROR_CNT | TD_COND_CODE | TD_CURR_BUFFER_PTR | TD_NEXT_PTR, 0);	  
+          if (DataTd->NextTDPointer == 0) {
+            OhciSetTDField (DataTd, TD_ERROR_CNT | TD_COND_CODE | TD_CURR_BUFFER_PTR | TD_NEXT_PTR, 0);	
             break;
           }
           OhciSetTDField (DataTd, TD_ERROR_CNT, 0);
@@ -492,7 +492,7 @@ OhciHouseKeeper (
           DataTd = (TD_DESCRIPTOR *)(UINTN)(DataTd->NextTDPointer);
         }
 
-        // Active current Ed, Td 
+        // Active current Ed, Td
         //
         // HC will only update Halted, ToggleCarry & TDQueueHeadPointer,
         // So we only need to update them once we want to active them again.
@@ -503,7 +503,7 @@ OhciHouseKeeper (
           Ed->Word0.Skip = 0;
         }
       }
-    } else {            
+    } else {
       if (PreEntry == NULL) {
         Ohc->InterruptContextList = Entry->NextEntry;
       } else {

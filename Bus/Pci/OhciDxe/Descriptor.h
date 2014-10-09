@@ -86,14 +86,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TD_BUFFER_OVERRUN     0x0C
 #define TD_BUFFER_UNDERRUN    0x0D
 #define TD_TOBE_PROCESSED     0x0E
-#define TD_TOBE_PROCESSED_2   0x0F  
-  
+#define TD_TOBE_PROCESSED_2   0x0F
+
 #define TD_NO_DELAY           0x7
 
 #define TD_INT                0x1
 #define TD_CTL                0x2
 #define TD_BLK                0x3
-  
+
 typedef struct {
   UINT32 Reserved:18;
   UINT32 BufferRounding:1;
@@ -145,10 +145,10 @@ typedef struct _ED_DESCRIPTOR {
 #define RIGHT_SHIFT_4(p)     ((UINT32)(p) >> 4)
 
 typedef enum {
-  CONTROL_LIST, 
+  CONTROL_LIST,
   BULK_LIST,
-  INTERRUPT_LIST, 
+  INTERRUPT_LIST,
   ISOCHRONOUS_LIST
-} DESCRIPTOR_LIST_TYPE; 
+} DESCRIPTOR_LIST_TYPE;
 
 #endif

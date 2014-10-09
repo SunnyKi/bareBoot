@@ -1,5 +1,5 @@
 /** @file
-  Provides the definition of Usb Hc Protocol and OHCI controller 
+  Provides the definition of Usb Hc Protocol and OHCI controller
   private data structure.
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.
@@ -91,27 +91,27 @@ struct _USB_OHCI_HC_DEV {
   UINTN                     Signature;
   EFI_USB2_HC_PROTOCOL      Usb2Hc;
   EFI_PCI_IO_PROTOCOL       *PciIo;
-  UINT64                    OriginalPciAttributes; 
+  UINT64                    OriginalPciAttributes;
 
   HCCA_MEMORY_BLOCK         *HccaMemoryBlock;
   VOID                      *HccaMemoryBuf;
   VOID                      *HccaMemoryMapping;
   UINTN                     HccaMemoryPages;
-  
+
   ED_DESCRIPTOR             *IntervalList[6][32];
   INTERRUPT_CONTEXT_ENTRY   *InterruptContextList;
   VOID                      *MemPool;
 
   UINT32                    ToggleFlag;
- 
+
   EFI_EVENT                 HouseKeeperTimer;
 
-  // ExitBootServicesEvent is used to stop the OHC DMA operation 
+  // ExitBootServicesEvent is used to stop the OHC DMA operation
   // after exit boot service.
 
   EFI_EVENT                  ExitBootServiceEvent;
 
-  EFI_UNICODE_STRING_TABLE  *ControllerNameTable;  
+  EFI_UNICODE_STRING_TABLE  *ControllerNameTable;
 };
 
 #define USB2_OHCI_HC_DEV_FROM_THIS(a)    CR(a, USB_OHCI_HC_DEV, Usb2Hc, USB_OHCI_HC_DEV_SIGNATURE)
@@ -616,7 +616,7 @@ OhciSetRootHubPortFeature (
                                 is requested to be cleared.
   @param  PortFeature           Indicates the feature selector associated with the
                                 feature clear request.
-                  
+
   @retval EFI_SUCCESS           The feature specified by PortFeature was cleared for the
                                 USB root hub port specified by PortNumber.
   @retval EFI_INVALID_PARAMETER PortNumber is invalid or PortFeature is invalid.

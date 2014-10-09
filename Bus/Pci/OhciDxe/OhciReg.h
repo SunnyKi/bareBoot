@@ -1,5 +1,5 @@
 /** @file
-  This file contains the definination for host controller 
+  This file contains the definination for host controller
   register operation routines.
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.
@@ -133,7 +133,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Operational Register Offsets
 
-// Command & Status Registers Offsets 
+// Command & Status Registers Offsets
 
 #define HC_REVISION             0x00
 #define HC_CONTROL              0x04
@@ -142,7 +142,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HC_INTERRUPT_ENABLE     0x10
 #define HC_INTERRUPT_DISABLE    0x14
 
-// Memory Pointer Offsets         
+// Memory Pointer Offsets
 
 #define HC_HCCA                 0x18
 #define HC_PERIODIC_CURRENT     0x1C
@@ -152,7 +152,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HC_BULK_CURRENT_PTR     0x2C
 #define HC_DONE_HEAD            0x30
 
-// Frame Register Offsets         
+// Frame Register Offsets
 
 #define HC_FRM_INTERVAL         0x34
 #define HC_FRM_REMAINING        0x38
@@ -160,14 +160,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HC_PERIODIC_START       0x40
 #define HC_LS_THREASHOLD        0x44
 
-// Root Hub Register Offsets      
+// Root Hub Register Offsets
 
 #define HC_RH_DESC_A            0x48
 #define HC_RH_DESC_B            0x4C
 #define HC_RH_STATUS            0x50
 #define HC_RH_PORT_STATUS       0x54
 
-#define OHC_BAR_INDEX           0  
+#define OHC_BAR_INDEX           0
 
 #pragma pack(1)
 
@@ -610,7 +610,7 @@ OhciGetFrameNumber (
 
 /**
   Set period start reg value
-  
+
   @param  Ohc                   OHC private data
   @param  Value                 Value to set
 

@@ -42,7 +42,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef struct _INTERRUPT_CONTEXT_ENTRY {
   UINT8                               DeviceAddress;
-  UINT8                               EndPointAddress;      
+  UINT8                               EndPointAddress;
   ED_DESCRIPTOR                       *Ed;
   TD_DESCRIPTOR                       *DataTd;
   UINT8                               DeviceSpeed;
@@ -50,8 +50,8 @@ typedef struct _INTERRUPT_CONTEXT_ENTRY {
   UINTN                               PollingInterval;
   EFI_ASYNC_USB_TRANSFER_CALLBACK     CallBackFunction;
   VOID                                *Context;
-  BOOLEAN                             IsPeriodic;      
-  VOID                                *Buffer;         
+  BOOLEAN                             IsPeriodic;
+  VOID                                *Buffer;
   UINTN                               DataLength;
   VOID                                *UCBuffer;
   VOID                                *UCBufferMapping;
@@ -133,7 +133,7 @@ OhciConvertErrorCode (
   @Param  Ohc                   OHC private data
   @Param  Td                    TD_DESCRIPTOR
   @Param  Result                Result to return
- 
+
   @retval TRUE                  means OK
   @retval FLASE                 means Error or Short packet
 **/
@@ -205,7 +205,7 @@ OhciTDConditionCodeToStatus (
   @Param  Entry                 Interrupt transfer transaction information data structure
   @Param  Result                ???
 **/
-  
+
 VOID
 OhciInvokeInterruptCallBack (
   IN  INTERRUPT_CONTEXT_ENTRY  *Entry,

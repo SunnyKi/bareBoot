@@ -59,7 +59,7 @@ OhciCreateTD (
 /**
   Free a TD
 	
-  @Param  Ohc                   Device private data  
+  @Param  Ohc                   Device private data
   @Param  Td                    Pointer to a TD to free
 
   @retval  EFI_SUCCESS          TD freed
@@ -106,7 +106,7 @@ OhciCreateED (
 
 /**
   Free a ED
-  
+
   @Param  Ohc                   Device private data
   @Param  Ed                    Pointer to a ED to free
 
@@ -121,7 +121,7 @@ OhciFreeED (
 {
   if (Ed == NULL) {
     return EFI_SUCCESS;
-  }  
+  }
   UsbHcFreeMem (Ohc->MemPool, Ed, sizeof (ED_DESCRIPTOR));
 
   return EFI_SUCCESS;
@@ -221,7 +221,7 @@ OhciInitializeInterruptList (
   for (Index = 0; Index < 32; Index++) {
     HccaInterruptTable[Index] = (UINT32)(UINTN) OhciCreateED (Ohc);
     if (HccaInterruptTable[Index] == 0) {
-      return EFI_OUT_OF_RESOURCES; 
+      return EFI_OUT_OF_RESOURCES;
     }
   }
 
@@ -236,7 +236,7 @@ OhciInitializeInterruptList (
     for (Index = 0; Index < Count; Index++) {
       Ohc->IntervalList[Level][Index] = OhciCreateED (Ohc);
       if (HccaInterruptTable[Index] == 0) {
-        return EFI_OUT_OF_RESOURCES; 
+        return EFI_OUT_OF_RESOURCES;
       }
       Ohc->IntervalList[Level - 1][Index * 2]->NextED =
               (UINT32)(UINTN) (Ohc->IntervalList[Level][Index]);
@@ -419,11 +419,11 @@ OhciFreeInterruptEdByEd (
   ED_DESCRIPTOR           *Ed;
   ED_DESCRIPTOR           *TempEd;
   UINTN                   Index;
-  
+
   if (IntEd == NULL) {
     return EFI_SUCCESS;
   }
-  
+
   for (Index = 0; Index < 32; Index++) {
     Ed = (ED_DESCRIPTOR *)(UINTN) (Ohc->HccaMemoryBlock->HccaInterruptTable[Index]);
     if (Ed == NULL) {
@@ -462,13 +462,13 @@ OhciFreeInterruptEdByAddr (
   ED_DESCRIPTOR           *Ed;
   ED_DESCRIPTOR           *TempEd;
   UINTN                   Index;
-  
+
   for (Index = 0; Index < 32; Index++) {
     Ed = (ED_DESCRIPTOR *)(UINTN) (Ohc->HccaMemoryBlock->HccaInterruptTable[Index]);
     if (Ed == NULL) {
       continue;
     }
-    
+
     while (Ed->NextED != 0) {
       if (((ED_DESCRIPTOR *)(UINTN) (Ed->NextED))->Word0.FunctionAddress == FunctionAddress &&
           ((ED_DESCRIPTOR *)(UINTN) (Ed->NextED))->Word0.EndPointNum == EndPointNum) {
@@ -480,7 +480,7 @@ OhciFreeInterruptEdByAddr (
       }
     }
   }
-  
+
   return EFI_SUCCESS;
 }
 
@@ -542,7 +542,7 @@ OhciAttachTDListToED (
 
   if (TempTd != NULL) {
     while (TempTd->NextTD != 0) {
-      TempTd = (TD_DESCRIPTOR *)(UINTN) (TempTd->NextTD);      
+      TempTd = (TD_DESCRIPTOR *)(UINTN) (TempTd->NextTD);
     }
     TempTd->NextTD = (UINT32)(UINTN) HeadTd;
     TempTd->NextTDPointer = (UINT32)(UINTN) HeadTd;
@@ -786,9 +786,9 @@ OhciGetTDField (
 **/
 
 VOID
-OhciFreeDynamicIntMemory ( 
+OhciFreeDynamicIntMemory (
   IN USB_OHCI_HC_DEV      *Ohc
-) 
+)
 {
   INTERRUPT_CONTEXT_ENTRY *Entry;
 
@@ -796,7 +796,7 @@ OhciFreeDynamicIntMemory (
     return;
   }
 
-  while (Ohc->InterruptContextList != NULL) {	  
+  while (Ohc->InterruptContextList != NULL) {	
     Entry = Ohc->InterruptContextList;
     OhciFreeInterruptEdByEd (Ohc, Entry->Ed);
     Ohc->InterruptContextList = Entry->NextEntry;
@@ -811,11 +811,11 @@ OhciFreeDynamicIntMemory (
   @Param  Ohc                   Device private data
 **/
 
-VOID 
+VOID
 OhciFreeFixedIntMemory (
   IN USB_OHCI_HC_DEV      *Ohc
-) 
-{       
+)
+{
   static UINT32           Leaf[] = { 32, 16, 8, 4, 2, 1 };
   UINTN                   Index;
   UINTN                   Level;
@@ -825,7 +825,7 @@ OhciFreeFixedIntMemory (
       if (Ohc->IntervalList[Level][Index] != NULL) {
         UsbHcFreeMem (Ohc->MemPool, Ohc->IntervalList[Level][Index], sizeof (ED_DESCRIPTOR));
       }
-    } 
+    }
   }
 }
 
@@ -841,7 +841,7 @@ EFI_STATUS
 OhciFreeIntTransferMemory (
   IN USB_OHCI_HC_DEV           *Ohc
 )
-{ 
+{
   // Free the Ed, Td & buffer that were created during transferring
 
   OhciFreeDynamicIntMemory (Ohc);

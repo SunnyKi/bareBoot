@@ -37,10 +37,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /**
   Print the data of ED and the TDs attached to the ED
 
-  @param  Ohc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data
   @param  Ed                    Pointer to a ED to free
   @param  Td                    Pointer to the Td head
-  
+
   @retval EFI_SUCCESS
 **/
 
@@ -96,7 +96,7 @@ OhciDumpEdTdInfo (
 /**
   Print controller registers
 
-  @param  Ohc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data
 **/
 
 VOID
@@ -118,7 +118,7 @@ OhciDumpRegs (
 /**
   Print HCCA fields
 
-  @param  Ohc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data
 **/
 
 VOID

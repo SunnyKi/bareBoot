@@ -1,5 +1,5 @@
 /** @file
-  This file contains the definination for host controller memory 
+  This file contains the definination for host controller memory
   management routines.
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.

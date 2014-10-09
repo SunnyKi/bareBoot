@@ -34,7 +34,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _OHCI_URB_H
 #define _OHCI_URB_H
 
-#include "Descriptor.h" 
+#include "Descriptor.h"
 
 // Func List
 
@@ -49,12 +49,12 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 TD_DESCRIPTOR *
 OhciCreateTD (
   IN USB_OHCI_HC_DEV      *Ohc
-); 
+);
 
 /**
   Free a TD
 	
-  @Param  Ohc                   OHC private data  
+  @Param  Ohc                   OHC private data
   @Param  Td                    Pointer to a TD to free
 
   @retval  EFI_SUCCESS          TD freed
@@ -64,7 +64,7 @@ EFI_STATUS
 OhciFreeTD (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN TD_DESCRIPTOR        *Td
-); 
+);
 
 /**
   Create a ED
@@ -77,11 +77,11 @@ OhciFreeTD (
 ED_DESCRIPTOR *
 OhciCreateED (
   USB_OHCI_HC_DEV          *Ohc
-); 
+);
 
 /**
   Free a ED
-  
+
   @Param  Ohc                   OHC private data
   @Param  Ed                    Pointer to a ED to free
 
@@ -127,7 +127,7 @@ OhciFindWorkingEd (
   IN UINT8               DeviceAddress,
   IN UINT8               EndPointNum,
   IN UINT8               EdDir
-); 
+);
 
 /**
   Initialize interrupt list.
@@ -140,7 +140,7 @@ OhciFindWorkingEd (
 EFI_STATUS
 OhciInitializeInterruptList (
   USB_OHCI_HC_DEV          *Ohc
-); 
+);
 
 /**
   Attach an ED
@@ -156,7 +156,7 @@ EFI_STATUS
 OhciAttachED (
   IN ED_DESCRIPTOR        *Ed,
   IN ED_DESCRIPTOR        *NewEd
-); 
+);
 
 /**
   Count ED number on a ED chain
@@ -169,7 +169,7 @@ OhciAttachED (
 UINTN
 CountEdNum (
   IN ED_DESCRIPTOR      *Ed
-); 
+);
 
 /**
   Find the minimal burn ED list on a specific depth level
@@ -184,7 +184,7 @@ ED_DESCRIPTOR *
 OhciFindMinInterruptEDList (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT32               Depth
-); 
+);
 
 /**
   Attach an ED to an ED list
@@ -235,7 +235,7 @@ OhciFreeInterruptEdByAddr (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN UINT8                FunctionAddress,
   IN UINT8                EndPointNum
-); 
+);
 
 /**
   Link Td2 to the end of Td1
@@ -251,7 +251,7 @@ EFI_STATUS
 OhciLinkTD (
   IN TD_DESCRIPTOR        *Td1,
   IN TD_DESCRIPTOR        *Td2
-); 
+);
 
 /**
   Attach TD list to ED
@@ -266,7 +266,7 @@ EFI_STATUS
 OhciAttachTDListToED (
   IN ED_DESCRIPTOR        *Ed,
   IN TD_DESCRIPTOR        *HeadTd
-); 
+);
 
 /**
   Set value to ED specific field
@@ -283,7 +283,7 @@ OhciSetEDField (
   IN ED_DESCRIPTOR        *Ed,
   IN UINT32               Field,
   IN UINT32               Value
-); 
+);
 
 /**
   Get value from an ED's specific field
@@ -298,7 +298,7 @@ UINT32
 OhciGetEDField (
   IN ED_DESCRIPTOR        *Ed,
   IN UINT32               Field
-); 
+);
 
 /**
   Set value to TD specific field
@@ -315,7 +315,7 @@ OhciSetTDField (
   IN TD_DESCRIPTOR        *Td,
   IN UINT32               Field,
   IN UINT32               Value
-); 
+);
 
 /**
   Get value from ED specific field
@@ -330,7 +330,7 @@ UINT32
 OhciGetTDField (
   IN TD_DESCRIPTOR      *Td,
   IN UINT32             Field
-); 
+);
 
 /**
   Free the Ed, Td & buffer that were created during transferring
@@ -339,9 +339,9 @@ OhciGetTDField (
 **/
 
 VOID
-OhciFreeDynamicIntMemory ( 
+OhciFreeDynamicIntMemory (
   IN USB_OHCI_HC_DEV      *Ohc
-); 
+);
 
 /**
   Free the Ed that were initilized during driver was starting,
@@ -350,10 +350,10 @@ OhciFreeDynamicIntMemory (
   @Param  Ohc                   Device private data
 **/
 
-VOID 
+VOID
 OhciFreeFixedIntMemory (
   IN USB_OHCI_HC_DEV      *Ohc
-); 
+);
 
 /**
   Release all OHCI used memory when OHCI going to quit

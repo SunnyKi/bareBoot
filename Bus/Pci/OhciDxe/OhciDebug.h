@@ -1,5 +1,5 @@
 /** @file
-  This file contains the definination for host controller 
+  This file contains the definination for host controller
   debug support routines.
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.
@@ -37,11 +37,11 @@ Routine Description:
 
   Print the data of ED and the TDs attached to the ED
 
-  @param  Ohc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data
   @param  Ed                    Pointer to a ED to free
   @param  Td                    Pointer to the Td head
-  
-  @retval EFI_SUCCESS           ED 
+
+  @retval EFI_SUCCESS           ED
 **/
 
 EFI_STATUS
@@ -55,7 +55,7 @@ OhciDumpEdTdInfo (
 /**
   Print controller registers
 
-  @param  Ohc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data
 **/
 
 VOID
@@ -66,7 +66,7 @@ OhciDumpRegs (
 /**
   Print HCCA fields
 
-  @param  Ohc                   Pointer to OHCI private data 
+  @param  Ohc                   Pointer to OHCI private data
 **/
 
 VOID

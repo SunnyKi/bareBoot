@@ -44,7 +44,7 @@
 #
 #  VALID_ARCHITECTURES           = IA32 X64 IPF EBC
 #
-#  DRIVER_BINDING                =  gOhciDriverBinding                        
+#  DRIVER_BINDING                =  gOhciDriverBinding
 #  COMPONENT_NAME                =  gOhciComponentName
 #  COMPONENT_NAME2               =  gOhciComponentName2
 
@@ -55,7 +55,7 @@
   Ohci.c
   Ohci.h
   OhciDebug.c
-  OhciDebug.h   
+  OhciDebug.h
   OhciReg.c
   OhciReg.h
   OhciSched.c

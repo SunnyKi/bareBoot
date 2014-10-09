@@ -743,7 +743,7 @@ OhciGetFrameNumber (
 
 /**
   Set period start reg value
-  
+
   @param  Ohc                   OHC private data
   @param  Value                 Value to set
 
