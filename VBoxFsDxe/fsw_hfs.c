@@ -1149,6 +1149,7 @@ create_hfs_dnode (
     baby->creator = file_info->creator;
     baby->crtype = file_info->crtype;
     baby->ilink = file_info->ilink;
+    fsw_memcpy(baby->extents, &file_info->extents, sizeof file_info->extents);
   }
 
   *child_dno_out = baby;
@@ -1305,11 +1306,9 @@ fsw_hfs_readlink (
 )
 {
   /*
-   * XXX: Hardlinks for files -- done
-   * Hardlinks for directories -- not yet. Hex dump visual inspection of Apple hfsplus{32,64}.efi
-   *   revealed no signs of directory hardlinks support. Manana ;-)
-   *
-   * Symlinks -- symlink datum is in resource fork ;-(
+   * XXX: Hardlinks for directories -- not yet.
+   * Hex dump visual inspection of Apple hfsplus{32,64}.efi
+   * revealed no signs of directory hardlinks support. Manana ;-)
    */
 
   if(dno->creator == kHFSPlusCreator && dno->crtype == kHardLinkFileType) {
@@ -1327,7 +1326,7 @@ fsw_hfs_readlink (
 #undef MPRFINUM
 #undef MPRFSIZE
   } else if (dno->creator == kSymLinkCreator && dno->crtype == kSymLinkFileType) {
-    return FSW_UNSUPPORTED;
+    return fsw_dnode_readlink_data(dno, link_target);
   }
   /* Unknown link type */
   return FSW_UNSUPPORTED;
