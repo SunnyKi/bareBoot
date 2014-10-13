@@ -173,6 +173,11 @@ Returns:
   // 1. BFV
   //
 #if 0
+  PrintString ("Prepare Cpu HOB information ...\n");
+#endif
+  PrepareHobCpu ();
+
+#if 0
   PrintString ("Prepare BFV HOB information ...\n");
 #endif
   PrepareHobBfv (Handoff->BfvBase, Handoff->BfvSize);
@@ -185,11 +190,6 @@ Returns:
 #endif
   MemoryTopOnDescriptor = PrepareHobMemory (Handoff->MemDescCount, Handoff->MemDesc);
   
-#if 0
-  PrintString ("Prepare Cpu HOB information ...\n");
-#endif
-  PrepareHobCpu ();
-
   //
   // 3. Put [NV], [Stack], [PageTable], [MemDesc], [HOB] just below the [top free address under 4GB]
   //
