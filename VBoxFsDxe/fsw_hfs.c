@@ -1320,7 +1320,7 @@ fsw_hfs_readlink (
     link_target->type = FSW_STRING_TYPE_ISO88591;
     link_target->size = MPRFSIZE;
     fsw_memdup (&link_target->data, metaprefix, link_target->size);
-    sz = fsw_snprintf(((fsw_u8 *) link_target->data) + MPRFINUM, 10, "%d", dno->ilink);
+    sz = fsw_snprintf(((char *) link_target->data) + MPRFINUM, 10, "%d", dno->ilink);
     link_target->len = MPRFINUM + sz;
     return FSW_SUCCESS;
 #undef MPRFINUM
