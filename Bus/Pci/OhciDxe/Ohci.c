@@ -595,7 +595,7 @@ OhciControlTransfer (
   OhciSetTDField (StatusTd, TD_PDATA, 0);
   OhciSetTDField (StatusTd, TD_BUFFER_ROUND, 1);
   OhciSetTDField (StatusTd, TD_DIR_PID, StatusPidDir);
-  OhciSetTDField (StatusTd, TD_DELAY_INT, 7);
+  OhciSetTDField (StatusTd, TD_DELAY_INT, TD_NO_DELAY);
   OhciSetTDField (StatusTd, TD_DT_TOGGLE, 3);
   OhciSetTDField (StatusTd, TD_ERROR_CNT, 0);
   OhciSetTDField (StatusTd, TD_COND_CODE, TD_TOBE_PROCESSED);
