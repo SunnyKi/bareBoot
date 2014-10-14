@@ -496,16 +496,10 @@ OhciControlTransfer (
   }
   OhciSetEDField (Ed, ED_SKIP, 1);
   OhciSetEDField (Ed, ED_FUNC_ADD, DeviceAddress);
-  OhciSetEDField (Ed, ED_ENDPT_NUM, 0);
   OhciSetEDField (Ed, ED_DIR, ED_FROM_TD_DIR);
   OhciSetEDField (Ed, ED_SPEED, DeviceSpeed);
-  OhciSetEDField (Ed, ED_FORMAT | ED_HALTED | ED_DTTOGGLE, 0);
   OhciSetEDField (Ed, ED_MAX_PACKET, MaximumPacketLength);
-  OhciSetEDField (Ed, ED_PDATA, 0);
-  OhciSetEDField (Ed, ED_ZERO, 0);
-  OhciSetEDField (Ed, ED_TDHEAD_PTR, 0);
-  OhciSetEDField (Ed, ED_TDTAIL_PTR, 0);
-  OhciSetEDField (Ed, ED_NEXT_EDPTR, 0);
+
   HeadEd = OhciAttachEDToList (Ohc, CONTROL_LIST, Ed, NULL);
   //
   // Setup Stage
@@ -524,19 +518,15 @@ OhciControlTransfer (
     goto UNMAP_SETUP_BUFF;
   }
   HeadTd = SetupTd;
-  OhciSetTDField (SetupTd, TD_PDATA, 0);
   OhciSetTDField (SetupTd, TD_BUFFER_ROUND, 1);
   OhciSetTDField (SetupTd, TD_DIR_PID, TD_SETUP_PID);
   OhciSetTDField (SetupTd, TD_DELAY_INT, TD_NO_DELAY);
   OhciSetTDField (SetupTd, TD_DT_TOGGLE, 2);
-  OhciSetTDField (SetupTd, TD_ERROR_CNT, 0);
   OhciSetTDField (SetupTd, TD_COND_CODE, TD_TOBE_PROCESSED);
   OhciSetTDField (SetupTd, TD_CURR_BUFFER_PTR, (UINT32)ReqMapPhyAddr);
-  OhciSetTDField (SetupTd, TD_NEXT_PTR, 0);
   OhciSetTDField (SetupTd, TD_BUFFER_END_PTR, (UINT32)(ReqMapPhyAddr + sizeof (EFI_USB_DEVICE_REQUEST) - 1));
   SetupTd->ActualSendLength = sizeof (EFI_USB_DEVICE_REQUEST);
   SetupTd->DataBuffer = (UINT32)(UINTN)ReqMapPhyAddr;
-  SetupTd->NextTDPointer = 0;
 
   if (TransferDirection == EfiUsbDataIn) {
     MapOp = EfiPciIoOperationBusMasterWrite;
@@ -566,19 +556,16 @@ OhciControlTransfer (
       Status = EFI_OUT_OF_RESOURCES;
       goto UNMAP_DATA_BUFF;
     }
-    OhciSetTDField (DataTd, TD_PDATA, 0);
     OhciSetTDField (DataTd, TD_BUFFER_ROUND, 1);
     OhciSetTDField (DataTd, TD_DIR_PID, DataPidDir);
     OhciSetTDField (DataTd, TD_DELAY_INT, TD_NO_DELAY);
     OhciSetTDField (DataTd, TD_DT_TOGGLE, DataToggle);
-    OhciSetTDField (DataTd, TD_ERROR_CNT, 0);
     OhciSetTDField (DataTd, TD_COND_CODE, TD_TOBE_PROCESSED);
     OhciSetTDField (DataTd, TD_CURR_BUFFER_PTR, (UINT32) DataMapPhyAddr);
     OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32) (DataMapPhyAddr + ActualSendLength - 1));
-    OhciSetTDField (DataTd, TD_NEXT_PTR, 0);
     DataTd->ActualSendLength = (UINT32) ActualSendLength;
     DataTd->DataBuffer = (UINT32)(UINTN) DataMapPhyAddr;
-    DataTd->NextTDPointer = 0;
+
     OhciLinkTD (HeadTd, DataTd);
     DataToggle ^= 1;
     DataMapPhyAddr += ActualSendLength;
@@ -592,19 +579,12 @@ OhciControlTransfer (
     Status = EFI_OUT_OF_RESOURCES;
     goto UNMAP_DATA_BUFF;
   }
-  OhciSetTDField (StatusTd, TD_PDATA, 0);
   OhciSetTDField (StatusTd, TD_BUFFER_ROUND, 1);
   OhciSetTDField (StatusTd, TD_DIR_PID, StatusPidDir);
   OhciSetTDField (StatusTd, TD_DELAY_INT, TD_NO_DELAY);
   OhciSetTDField (StatusTd, TD_DT_TOGGLE, 3);
-  OhciSetTDField (StatusTd, TD_ERROR_CNT, 0);
   OhciSetTDField (StatusTd, TD_COND_CODE, TD_TOBE_PROCESSED);
-  OhciSetTDField (StatusTd, TD_CURR_BUFFER_PTR, 0);
-  OhciSetTDField (StatusTd, TD_NEXT_PTR, 0);
-  OhciSetTDField (StatusTd, TD_BUFFER_END_PTR, 0);
-  StatusTd->ActualSendLength = 0;
-  StatusTd->DataBuffer = 0;
-  StatusTd->NextTDPointer = 0;
+
   OhciLinkTD (HeadTd, StatusTd);
   //
   // Empty Stage
@@ -614,31 +594,22 @@ OhciControlTransfer (
     Status = EFI_OUT_OF_RESOURCES;
     goto UNMAP_DATA_BUFF;
   }
-  OhciSetTDField (EmptyTd, TD_PDATA, 0);
-  OhciSetTDField (EmptyTd, TD_BUFFER_ROUND, 0);
-  OhciSetTDField (EmptyTd, TD_DIR_PID, 0);
-  OhciSetTDField (EmptyTd, TD_DELAY_INT, 0);
 #if 0
   OhciSetTDField (EmptyTd, TD_DT_TOGGLE, CurrentToggle);
 #endif
-  EmptyTd->Word0.DataToggle = 0;
-  OhciSetTDField (EmptyTd, TD_ERROR_CNT, 0);
-  OhciSetTDField (EmptyTd, TD_COND_CODE, 0);
-  OhciSetTDField (EmptyTd, TD_CURR_BUFFER_PTR, 0);
-  OhciSetTDField (EmptyTd, TD_BUFFER_END_PTR, 0);
-  OhciSetTDField (EmptyTd, TD_NEXT_PTR, 0);
-  EmptyTd->ActualSendLength = 0;
-  EmptyTd->DataBuffer = 0;
-  EmptyTd->NextTDPointer = 0;
+
   OhciLinkTD (HeadTd, EmptyTd);
+
   Ed->TdTailPointer = (UINT32)(UINTN) EmptyTd;
   OhciAttachTDListToED (Ed, HeadTd);
+
 #if 0
   //
   // For debugging, dump ED & TD buffer before transfer
   //
   OhciDumpEdTdInfo (Ohc, Ed, HeadTd, TRUE);
 #endif
+
   OhciSetEDField (Ed, ED_SKIP, 0);
   Status = OhciSetHcControl (Ohc, CONTROL_ENABLE, 1);
   if (EFI_ERROR(Status)) {
@@ -662,12 +633,14 @@ OhciControlTransfer (
     TimeCount++;
     Status = OhciCheckIfDone (Ohc, CONTROL_LIST, Ed, HeadTd, &EdResult);
   }
+
 #if 0
   //
   // For debugging, dump ED & TD buffer after transfer
   //
   OhciDumpEdTdInfo (Ohc, Ed, HeadTd, FALSE);
 #endif
+
   *TransferResult = OhciConvertErrorCode (EdResult.ErrorCode);
 
   if (EdResult.ErrorCode != TD_NO_ERROR) {
@@ -837,13 +810,8 @@ OhciBulkTransfer (
   OhciSetEDField (Ed, ED_ENDPT_NUM, EndPointNum);
   OhciSetEDField (Ed, ED_DIR, ED_FROM_TD_DIR);
   OhciSetEDField (Ed, ED_SPEED, HI_SPEED);
-  OhciSetEDField (Ed, ED_FORMAT | ED_HALTED | ED_DTTOGGLE, 0);
   OhciSetEDField (Ed, ED_MAX_PACKET, MaximumPacketLength);
-  OhciSetEDField (Ed, ED_PDATA, 0);
-  OhciSetEDField (Ed, ED_ZERO, 0);
-  OhciSetEDField (Ed, ED_TDHEAD_PTR, 0);
-  OhciSetEDField (Ed, ED_TDTAIL_PTR, 0);
-  OhciSetEDField (Ed, ED_NEXT_EDPTR, 0);
+
   HeadEd = OhciAttachEDToList (Ohc, BULK_LIST, Ed, NULL);
 
   MapLength = *DataLength;
@@ -871,19 +839,16 @@ OhciBulkTransfer (
       Status = EFI_OUT_OF_RESOURCES;
       goto FREE_OHCI_TDBUFF;
     }
-    OhciSetTDField (DataTd, TD_PDATA, 0);
     OhciSetTDField (DataTd, TD_BUFFER_ROUND, 1);
     OhciSetTDField (DataTd, TD_DIR_PID, DataPidDir);
     OhciSetTDField (DataTd, TD_DELAY_INT, TD_NO_DELAY);
     OhciSetTDField (DataTd, TD_DT_TOGGLE, *DataToggle);
-    OhciSetTDField (DataTd, TD_ERROR_CNT, 0);
     OhciSetTDField (DataTd, TD_COND_CODE, TD_TOBE_PROCESSED);
     OhciSetTDField (DataTd, TD_CURR_BUFFER_PTR, (UINT32) MapPyhAddr);
     OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32) (MapPyhAddr + ActualSendLength - 1));
-    OhciSetTDField (DataTd, TD_NEXT_PTR, 0);
     DataTd->ActualSendLength = (UINT32) ActualSendLength;
     DataTd->DataBuffer = (UINT32)(UINTN) MapPyhAddr;
-    DataTd->NextTDPointer = 0;
+
     if (FirstTD) {
       HeadTd = DataTd;
       FirstTD = FALSE;
@@ -903,22 +868,10 @@ OhciBulkTransfer (
     Status = EFI_OUT_OF_RESOURCES;
     goto FREE_OHCI_TDBUFF;
   }
-  OhciSetTDField (EmptyTd, TD_PDATA, 0);
-  OhciSetTDField (EmptyTd, TD_BUFFER_ROUND, 0);
-  OhciSetTDField (EmptyTd, TD_DIR_PID, 0);
-  OhciSetTDField (EmptyTd, TD_DELAY_INT, 0);
 #if 0
   OhciSetTDField (EmptyTd, TD_DT_TOGGLE, CurrentToggle);
 #endif
-  EmptyTd->Word0.DataToggle = 0;
-  OhciSetTDField (EmptyTd, TD_ERROR_CNT, 0);
-  OhciSetTDField (EmptyTd, TD_COND_CODE, 0);
-  OhciSetTDField (EmptyTd, TD_CURR_BUFFER_PTR, 0);
-  OhciSetTDField (EmptyTd, TD_BUFFER_END_PTR, 0);
-  OhciSetTDField (EmptyTd, TD_NEXT_PTR, 0);
-  EmptyTd->ActualSendLength = 0;
-  EmptyTd->DataBuffer = 0;
-  EmptyTd->NextTDPointer = 0;
+
   OhciLinkTD (HeadTd, EmptyTd);
   Ed->TdTailPointer = (UINT32)(UINTN) EmptyTd;
   OhciAttachTDListToED (Ed, HeadTd);
@@ -1138,12 +1091,8 @@ OhciInterruptTransfer (
     OhciSetEDField (Ed, ED_ENDPT_NUM, EndPointNum);
     OhciSetEDField (Ed, ED_DIR, ED_FROM_TD_DIR);
     OhciSetEDField (Ed, ED_SPEED, DeviceSpeed);
-    OhciSetEDField (Ed, ED_FORMAT, 0);
     OhciSetEDField (Ed, ED_MAX_PACKET, MaximumPacketLength);
-    OhciSetEDField (Ed, ED_PDATA | ED_ZERO | ED_HALTED | ED_DTTOGGLE, 0);
-    OhciSetEDField (Ed, ED_TDHEAD_PTR, 0);
-    OhciSetEDField (Ed, ED_TDTAIL_PTR, 0);
-    OhciSetEDField (Ed, ED_NEXT_EDPTR, 0);
+
     OhciAttachEDToList (Ohc, INTERRUPT_LIST, Ed, HeadEd);
   }
 
@@ -1163,19 +1112,16 @@ OhciInterruptTransfer (
       Status = EFI_OUT_OF_RESOURCES;
       goto FREE_OHCI_TDBUFF;
     }
-    OhciSetTDField (DataTd, TD_PDATA, 0);
     OhciSetTDField (DataTd, TD_BUFFER_ROUND, 1);
     OhciSetTDField (DataTd, TD_DIR_PID, DataPidDir);
     OhciSetTDField (DataTd, TD_DELAY_INT, TD_NO_DELAY);
     OhciSetTDField (DataTd, TD_DT_TOGGLE, *DataToggle);
-    OhciSetTDField (DataTd, TD_ERROR_CNT, 0);
     OhciSetTDField (DataTd, TD_COND_CODE, TD_TOBE_PROCESSED);
     OhciSetTDField (DataTd, TD_CURR_BUFFER_PTR, (UINT32) MapPyhAddr);
     OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32) (MapPyhAddr + ActualSendLength - 1));
-    OhciSetTDField (DataTd, TD_NEXT_PTR, 0);
     DataTd->ActualSendLength = (UINT32) ActualSendLength;
     DataTd->DataBuffer = (UINT32) (UINTN) MapPyhAddr;
-    DataTd->NextTDPointer = 0;
+
     if (FirstTD) {
       HeadTd = DataTd;
       FirstTD = FALSE;
@@ -1192,22 +1138,10 @@ OhciInterruptTransfer (
     Status = EFI_OUT_OF_RESOURCES;
     goto FREE_OHCI_TDBUFF;
   }
-  OhciSetTDField (EmptTd, TD_PDATA, 0);
-  OhciSetTDField (EmptTd, TD_BUFFER_ROUND, 0);
-  OhciSetTDField (EmptTd, TD_DIR_PID, 0);
-  OhciSetTDField (EmptTd, TD_DELAY_INT, 0);
 #if 0
   OhciSetTDField (EmptTd, TD_DT_TOGGLE, CurrentToggle);
 #endif
-  EmptTd->Word0.DataToggle = 0;
-  OhciSetTDField (EmptTd, TD_ERROR_CNT, 0);
-  OhciSetTDField (EmptTd, TD_COND_CODE, 0);
-  OhciSetTDField (EmptTd, TD_CURR_BUFFER_PTR, 0);
-  OhciSetTDField (EmptTd, TD_BUFFER_END_PTR, 0);
-  OhciSetTDField (EmptTd, TD_NEXT_PTR, 0);
-  EmptTd->ActualSendLength = 0;
-  EmptTd->DataBuffer = 0;
-  EmptTd->NextTDPointer = 0;
+
   OhciLinkTD (HeadTd, EmptTd);
   Ed->TdTailPointer = (UINT32)(UINTN) EmptTd;
   OhciAttachTDListToED (Ed, HeadTd);
@@ -1239,7 +1173,6 @@ OhciInterruptTransfer (
     Entry->UCBufferMapping = Mapping;
     Entry->DataLength = DataLength;
     Entry->Toggle = DataToggle;
-    Entry->NextEntry = NULL;
     OhciAddInterruptContextEntry (Ohc, Entry);
   }
   OhciSetEDField (Ed, ED_SKIP, 0);
