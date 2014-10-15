@@ -893,20 +893,31 @@ OhciFreeIntTransferMemory (
 **/
 TD_DESCRIPTOR *
 OhciCreateSetupTD (
-  IN  USB_OHCI_HC_DEV          *Ohc,
+  IN  USB_OHCI_HC_DEV     *Ohc,
   IN  UINT8               DevAddr,
   IN  UINT8               *Request,
   IN  UINT8               *RequestPhy,
   IN  BOOLEAN             IsLow
   )
 {
-  TD_DESCRIPTOR              *Td;
+  TD_DESCRIPTOR           *Td;
 
   Td = OhciCreateTD (Ohc);
 
   if (Td == NULL) {
     return NULL;
   }
+
+  OhciSetTDField (Td, TD_BUFFER_ROUND, 1);
+  OhciSetTDField (Td, TD_DIR_PID, TD_SETUP_PID);
+  OhciSetTDField (Td, TD_DELAY_INT, TD_NO_DELAY);
+  OhciSetTDField (Td, TD_DT_TOGGLE, 2);
+  OhciSetTDField (Td, TD_COND_CODE, TD_TOBE_PROCESSED);
+  OhciSetTDField (Td, TD_CURR_BUFFER_PTR, (UINT32)RequestPhy);
+  OhciSetTDField (Td, TD_BUFFER_END_PTR, (UINT32)(RequestPhy + sizeof (EFI_USB_DEVICE_REQUEST) - 1));
+
+  Td->ActualSendLength = sizeof (EFI_USB_DEVICE_REQUEST);
+  Td->DataBuffer = (UINT32)(UINTN)RequestPhy;
 
   return Td;
 }
@@ -929,8 +940,8 @@ OhciCreateSetupTD (
 
 **/
 TD_DESCRIPTOR *
-OhciCreateDataTd (
-  IN  USB_OHCI_HC_DEV          *Ohc,
+OhciCreateDataTD (
+  IN  USB_OHCI_HC_DEV     *Ohc,
   IN  UINT8               DevAddr,
   IN  UINT8               Endpoint,
   IN  UINT8               *DataPtr,
@@ -949,6 +960,17 @@ OhciCreateDataTd (
     return NULL;
   }
 
+  OhciSetTDField (Td, TD_BUFFER_ROUND, 1);
+  OhciSetTDField (Td, TD_DIR_PID, PktId);
+  OhciSetTDField (Td, TD_DELAY_INT, TD_NO_DELAY);
+  OhciSetTDField (Td, TD_DT_TOGGLE, Toggle);
+  OhciSetTDField (Td, TD_COND_CODE, TD_TOBE_PROCESSED);
+  OhciSetTDField (Td, TD_CURR_BUFFER_PTR, (UINT32) DataPhyPtr);
+  OhciSetTDField (Td, TD_BUFFER_END_PTR, (UINT32) (DataPhyPtr + Len - 1));
+
+  Td->ActualSendLength = (UINT32) Len;
+  Td->DataBuffer = (UINT32)(UINTN) DataPhyPtr;
+
   return Td;
 }
 
@@ -965,8 +987,8 @@ OhciCreateDataTd (
 
 **/
 TD_DESCRIPTOR *
-OhciCreateStatusTd (
-  IN  USB_OHCI_HC_DEV          *Ohc,
+OhciCreateStatusTD (
+  IN  USB_OHCI_HC_DEV     *Ohc,
   IN  UINT8               DevAddr,
   IN  UINT8               PktId,
   IN  BOOLEAN             IsLow
@@ -979,6 +1001,12 @@ OhciCreateStatusTd (
   if (Td == NULL) {
     return NULL;
   }
+
+  OhciSetTDField (Td, TD_BUFFER_ROUND, 1);
+  OhciSetTDField (Td, TD_DIR_PID, PktId);
+  OhciSetTDField (Td, TD_DELAY_INT, TD_NO_DELAY);
+  OhciSetTDField (Td, TD_DT_TOGGLE, 3);
+  OhciSetTDField (Td, TD_COND_CODE, TD_TOBE_PROCESSED);
 
   return Td;
 }
@@ -1051,7 +1079,7 @@ OhciCreateCtrlTds (
     //
     ThisTdLen = (DataLen > MaxPacket ? MaxPacket : DataLen);
 
-    DataTd = OhciCreateDataTd (
+    DataTd = OhciCreateDataTD (
                Ohc,
                DeviceAddr,
                0,
@@ -1090,7 +1118,7 @@ OhciCreateCtrlTds (
     StatusPktId = TD_OUT_PID;
   }
 
-  StatusTd = OhciCreateStatusTd (Ohc, DeviceAddr, StatusPktId, IsLow);
+  StatusTd = OhciCreateStatusTD (Ohc, DeviceAddr, StatusPktId, IsLow);
 
   if (StatusTd == NULL) {
     goto FREE_TD;
@@ -1174,7 +1202,7 @@ OhciCreateBulkOrIntTds (
       ThisTdLen = MaxPacket;
     }
 
-    DataTd = OhciCreateDataTd (
+    DataTd = OhciCreateDataTD (
                Ohc,
                DevAddr,
                EndPoint,
