@@ -49,6 +49,14 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ED_PDATA        0x1000
 #define ED_ZERO         0x2000
 
+#define ED_FROM_TD_DIR        0x0
+#define ED_OUT_DIR            0x1
+#define ED_IN_DIR             0x2
+#define ED_FROM_TD_ALSO_DIR   0x3
+
+#define ED_HI_SPEED             0
+#define ED_LO_SPEED             1
+
 #define TD_BUFFER_ROUND     0x0001
 #define TD_DIR_PID          0x0002
 #define TD_DELAY_INT        0x0004
@@ -60,18 +68,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TD_BUFFER_END_PTR   0x0100
 #define TD_PDATA            0x0200
 
-#define ED_FROM_TD_DIR        0x0
-#define ED_OUT_DIR            0x1
-#define ED_IN_DIR             0x2
-#define ED_FROM_TD_ALSO_DIR   0x3
-
 #define TD_SETUP_PID          0x00
 #define TD_OUT_PID            0x01
 #define TD_IN_PID             0x02
 #define TD_NODATA_PID         0x03
-
-#define HI_SPEED              0
-#define LO_SPEED              1
 
 #define TD_NO_ERROR           0x00
 #define TD_CRC_ERROR          0x01
@@ -107,8 +107,9 @@ typedef struct {
 typedef struct _TD_DESCRIPTOR {
   TD_DESCRIPTOR_WORD0     Word0;
   UINT32                  CurrBufferPointer;
-  volatile UINT32         NextTD;
+  UINT32                  NextTD;
   UINT32                  BufferEndPointer;
+  /* Driver housekeeping stuff below */
   UINT32                  NextTDPointer;
   UINT32                  DataBuffer;
   UINT32                  ActualSendLength;
@@ -134,7 +135,7 @@ typedef struct {
 } ED_DESCRIPTOR_WORD2;
 
 typedef struct _ED_DESCRIPTOR {
-  ED_DESCRIPTOR_WORD0          Word0;
+  volatile ED_DESCRIPTOR_WORD0 Word0;
   volatile UINT32              TdTailPointer;
   volatile ED_DESCRIPTOR_WORD2 Word2;
   volatile UINT32              NextED;

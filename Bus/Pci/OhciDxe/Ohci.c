@@ -809,7 +809,7 @@ OhciBulkTransfer (
   OhciSetEDField (Ed, ED_FUNC_ADD, DeviceAddress);
   OhciSetEDField (Ed, ED_ENDPT_NUM, EndPointNum);
   OhciSetEDField (Ed, ED_DIR, ED_FROM_TD_DIR);
-  OhciSetEDField (Ed, ED_SPEED, HI_SPEED);
+  OhciSetEDField (Ed, ED_SPEED, ED_HI_SPEED);
   OhciSetEDField (Ed, ED_MAX_PACKET, MaximumPacketLength);
 
   HeadEd = OhciAttachEDToList (Ohc, BULK_LIST, Ed, NULL);
