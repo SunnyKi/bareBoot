@@ -80,6 +80,33 @@ OhciFreeTD (
 }
 
 /**
+  Delete a list of TDs.
+
+  @param  Ohc         The OHCI device.
+  @param  FirstTd     TD link list head.
+
+  @return None.
+**/
+
+VOID
+OhciDestroyTds (
+  IN USB_OHCI_HC_DEV      *Ohc,
+  IN TD_DESCRIPTOR        *FirstTd
+  )
+{
+  TD_DESCRIPTOR        *NextTd;
+  TD_DESCRIPTOR        *ThisTd;
+
+  NextTd = FirstTd;
+
+  while (NextTd != NULL) {
+    ThisTd  = NextTd;
+    NextTd  = (TD_DESCRIPTOR *)(UINTN) ThisTd->NextTDPointer;
+    OhciFreeTD (Ohc, ThisTd);
+  }
+}
+
+/**
   Create a ED
 
   @Param   Ohc                  Device private data
@@ -511,8 +538,8 @@ OhciLinkTD (
   } 	
 
   TempTd = Td1;
-  while (TempTd->NextTD != 0) {
-    TempTd = (TD_DESCRIPTOR *)(UINTN) (TempTd->NextTD);
+  while (TempTd->NextTDPointer != 0) {
+    TempTd = (TD_DESCRIPTOR *)(UINTN) (TempTd->NextTDPointer);
   }
 
   TempTd->NextTD = (UINT32)(UINTN) Td2;
@@ -850,4 +877,344 @@ OhciFreeIntTransferMemory (
 
   OhciFreeFixedIntMemory (Ohc);
   return EFI_SUCCESS;
+}
+
+/**
+  Create and initialize a TD for Setup Stage of a control transfer.
+
+  @param  Ohc         The OHCI device.
+  @param  DevAddr     Device address.
+  @param  Request     A pointer to cpu memory address of Device request.
+  @param  RequestPhy  A pointer to pci memory address of Device request.
+  @param  IsLow       Full speed or low speed.
+
+  @return The created setup Td Pointer.
+
+**/
+TD_DESCRIPTOR *
+OhciCreateSetupTD (
+  IN  USB_OHCI_HC_DEV          *Ohc,
+  IN  UINT8               DevAddr,
+  IN  UINT8               *Request,
+  IN  UINT8               *RequestPhy,
+  IN  BOOLEAN             IsLow
+  )
+{
+  TD_DESCRIPTOR              *Td;
+
+  Td = OhciCreateTD (Ohc);
+
+  if (Td == NULL) {
+    return NULL;
+  }
+
+  return Td;
+}
+
+
+/**
+  Create a TD for data.
+
+  @param  Ohc         The OHCI device.
+  @param  DevAddr     Device address.
+  @param  Endpoint    Endpoint number.
+  @param  DataPtr     A pointer to cpu memory address of Data buffer.
+  @param  DataPhyPtr  A pointer to pci memory address of Data buffer.
+  @param  Len         Data length.
+  @param  PktId       Packet ID.
+  @param  Toggle      Data toggle value.
+  @param  IsLow       Full speed or low speed.
+
+  @return Data Td pointer if success, otherwise NULL.
+
+**/
+TD_DESCRIPTOR *
+OhciCreateDataTd (
+  IN  USB_OHCI_HC_DEV          *Ohc,
+  IN  UINT8               DevAddr,
+  IN  UINT8               Endpoint,
+  IN  UINT8               *DataPtr,
+  IN  UINT8               *DataPhyPtr,
+  IN  UINTN               Len,
+  IN  UINT8               PktId,
+  IN  UINT8               Toggle,
+  IN  BOOLEAN             IsLow
+  )
+{
+  TD_DESCRIPTOR  *Td;
+
+  Td  = OhciCreateTD (Ohc);
+
+  if (Td == NULL) {
+    return NULL;
+  }
+
+  return Td;
+}
+
+
+/**
+  Create TD for the Status Stage of control transfer.
+
+  @param  Ohc         The OHCI device.
+  @param  DevAddr     Device address.
+  @param  PktId       Packet ID.
+  @param  IsLow       Full speed or low speed.
+
+  @return Status Td Pointer.
+
+**/
+TD_DESCRIPTOR *
+OhciCreateStatusTd (
+  IN  USB_OHCI_HC_DEV          *Ohc,
+  IN  UINT8               DevAddr,
+  IN  UINT8               PktId,
+  IN  BOOLEAN             IsLow
+  )
+{
+  TD_DESCRIPTOR              *Td;
+
+  Td = OhciCreateTD (Ohc);
+
+  if (Td == NULL) {
+    return NULL;
+  }
+
+  return Td;
+}
+
+
+/**
+  Create Tds list for Control Transfer.
+
+  @param  Ohc         The OHCI device.
+  @param  DeviceAddr  The device address.
+  @param  DataPktId   Packet Identification of Data Tds.
+  @param  Request     A pointer to cpu memory address of request structure buffer to transfer.
+  @param  RequestPhy  A pointer to pci memory address of request structure buffer to transfer.
+  @param  Data        A pointer to cpu memory address of user data buffer to transfer.
+  @param  DataPhy     A pointer to pci memory address of user data buffer to transfer.
+  @param  DataLen     Length of user data to transfer.
+  @param  MaxPacket   Maximum packet size for control transfer.
+  @param  IsLow       Full speed or low speed.
+
+  @return The Td list head for the control transfer.
+
+**/
+TD_DESCRIPTOR *
+OhciCreateCtrlTds (
+  IN USB_OHCI_HC_DEV      *Ohc,
+  IN UINT8                DeviceAddr,
+  IN UINT8                DataPktId,
+  IN UINT8                *Request,
+  IN UINT8                *RequestPhy,
+  IN UINT8                *Data,
+  IN UINT8                *DataPhy,
+  IN UINTN                DataLen,
+  IN UINT8                MaxPacket,
+  IN BOOLEAN              IsLow
+  )
+{
+  TD_DESCRIPTOR             *SetupTd;
+  TD_DESCRIPTOR             *FirstDataTd;
+  TD_DESCRIPTOR             *DataTd;
+  TD_DESCRIPTOR             *PrevDataTd;
+  TD_DESCRIPTOR             *StatusTd;
+  UINT8                     DataToggle;
+  UINT8                     StatusPktId;
+  UINTN                     ThisTdLen;
+
+
+  DataTd      = NULL;
+  SetupTd     = NULL;
+  FirstDataTd = NULL;
+  PrevDataTd  = NULL;
+  StatusTd    = NULL;
+
+  //
+  // Create setup packets for the transfer
+  //
+  SetupTd = OhciCreateSetupTD (Ohc, DeviceAddr, Request, RequestPhy, IsLow);
+
+  if (SetupTd == NULL) {
+    return NULL;
+  }
+
+  //
+  // Create data packets for the transfer
+  //
+  DataToggle = 1;
+
+  while (DataLen > 0) {
+    //
+    // PktSize is the data load size in each Td.
+    //
+    ThisTdLen = (DataLen > MaxPacket ? MaxPacket : DataLen);
+
+    DataTd = OhciCreateDataTd (
+               Ohc,
+               DeviceAddr,
+               0,
+               Data,  //cpu memory address
+               DataPhy, //Pci memory address
+               ThisTdLen,
+               DataPktId,
+               DataToggle,
+               IsLow
+               );
+
+    if (DataTd == NULL) {
+      goto FREE_TD;
+    }
+
+    if (FirstDataTd == NULL) {
+      FirstDataTd         = DataTd;
+      FirstDataTd->NextTDPointer = 0;
+    } else {
+      OhciLinkTD (PrevDataTd, DataTd);
+    }
+
+    DataToggle ^= 1;
+    PrevDataTd = DataTd;
+    Data += ThisTdLen;
+    DataPhy += ThisTdLen;
+    DataLen -= ThisTdLen;
+  }
+
+  //
+  // Status packet is on the opposite direction to data packets
+  //
+  if (DataPktId == TD_OUT_PID) {
+    StatusPktId = TD_IN_PID;
+  } else {
+    StatusPktId = TD_OUT_PID;
+  }
+
+  StatusTd = OhciCreateStatusTd (Ohc, DeviceAddr, StatusPktId, IsLow);
+
+  if (StatusTd == NULL) {
+    goto FREE_TD;
+  }
+
+  //
+  // Link setup Td -> data Tds -> status Td together
+  //
+  if (FirstDataTd != NULL) {
+    OhciLinkTD (SetupTd, FirstDataTd);
+    OhciLinkTD (PrevDataTd, StatusTd);
+  } else {
+    OhciLinkTD (SetupTd, StatusTd);
+  }
+
+  return SetupTd;
+
+FREE_TD:
+  if (SetupTd != NULL) {
+    OhciDestroyTds (Ohc, SetupTd);
+  }
+
+  if (FirstDataTd != NULL) {
+    OhciDestroyTds (Ohc, FirstDataTd);
+  }
+
+  return NULL;
+}
+
+
+/**
+  Create Tds list for Bulk/Interrupt Transfer.
+
+  @param  Ohc         USB_OHCI_HC_DEV.
+  @param  DevAddr     Address of Device.
+  @param  EndPoint    Endpoint Number.
+  @param  PktId       Packet Identification of Data Tds.
+  @param  Data        A pointer to cpu memory address of user data buffer to transfer.
+  @param  DataPhy     A pointer to pci memory address of user data buffer to transfer.
+  @param  DataLen     Length of user data to transfer.
+  @param  DataToggle  Data Toggle Pointer.
+  @param  MaxPacket   Maximum packet size for Bulk/Interrupt transfer.
+  @param  IsLow       Is Low Speed Device.
+
+  @return The Tds list head for the bulk transfer.
+
+**/
+TD_DESCRIPTOR *
+OhciCreateBulkOrIntTds (
+  IN USB_OHCI_HC_DEV      *Ohc,
+  IN UINT8                DevAddr,
+  IN UINT8                EndPoint,
+  IN UINT8                PktId,
+  IN UINT8                *Data,
+  IN UINT8                *DataPhy,
+  IN UINTN                DataLen,
+  IN OUT UINT8            *DataToggle,
+  IN UINT8                MaxPacket,
+  IN BOOLEAN              IsLow
+  )
+{
+  TD_DESCRIPTOR          *DataTd;
+  TD_DESCRIPTOR          *FirstDataTd;
+  TD_DESCRIPTOR          *PrevDataTd;
+  UINTN                  ThisTdLen;
+
+  DataTd      = NULL;
+  FirstDataTd = NULL;
+  PrevDataTd  = NULL;
+
+  //
+  // Create data packets for the transfer
+  //
+  while (DataLen > 0) {
+    //
+    // PktSize is the data load size that each Td.
+    //
+    ThisTdLen = DataLen;
+
+    if (DataLen > MaxPacket) {
+      ThisTdLen = MaxPacket;
+    }
+
+    DataTd = OhciCreateDataTd (
+               Ohc,
+               DevAddr,
+               EndPoint,
+               Data,
+               DataPhy,
+               ThisTdLen,
+               PktId,
+               *DataToggle,
+               IsLow
+               );
+
+    if (DataTd == NULL) {
+      goto FREE_TD;
+    }
+
+#if 0
+    if (PktId == INPUT_PACKET_ID) {
+      DataTd->TdHw.ShortPacket = TRUE;
+    }
+#endif
+
+    if (FirstDataTd == NULL) {
+      FirstDataTd         = DataTd;
+    } else {
+      OhciLinkTD (PrevDataTd, DataTd);
+    }
+
+    *DataToggle ^= 1;
+    PrevDataTd   = DataTd;
+    Data        += ThisTdLen;
+    DataPhy     += ThisTdLen;
+    DataLen     -= ThisTdLen;
+  }
+
+  return FirstDataTd;
+
+FREE_TD:
+  if (FirstDataTd != NULL) {
+    OhciDestroyTds (Ohc, FirstDataTd);
+  }
+
+  return NULL;
 }

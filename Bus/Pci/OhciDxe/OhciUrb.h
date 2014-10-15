@@ -368,4 +368,66 @@ OhciFreeIntTransferMemory (
   IN USB_OHCI_HC_DEV           *Ohc
 );
 
+/**
+  Create TD list for Control Transfer.
+
+  @param  Ohc         The OHCI device.
+  @param  DeviceAddr  The device address.
+  @param  DataPktId   Packet Identification of Data Tds.
+  @param  Request     A pointer to cpu memory address of request structure buffer to transfer.
+  @param  RequestPhy  A pointer to pci memory address of request structure buffer to transfer.
+  @param  Data        A pointer to cpu memory address of user data buffer to transfer.
+  @param  DataPhy     A pointer to pci memory address of user data buffer to transfer.
+  @param  DataLen     Length of user data to transfer.
+  @param  MaxPacket   Maximum packet size for control transfer.
+  @param  IsLow       Full speed or low speed.
+
+  @return The Td list head for the control transfer.
+**/
+
+TD_DESCRIPTOR *
+OhciCreateCtrlTds (
+  IN USB_OHCI_HC_DEV      *Ohc,
+  IN UINT8                DeviceAddr,
+  IN UINT8                DataPktId,
+  IN UINT8                *Request,
+  IN UINT8                *RequestPhy,
+  IN UINT8                *Data,
+  IN UINT8                *DataPhy,
+  IN UINTN                DataLen,
+  IN UINT8                MaxPacket,
+  IN BOOLEAN              IsLow
+);
+
+/**
+  Create TD list for Bulk/Interrupt Transfer.
+
+  @param  Ohc         The OHCI Device.
+  @param  DevAddr     Address of Device.
+  @param  EndPoint    Endpoint Number.
+  @param  PktId       Packet Identification of Data Tds.
+  @param  Data        A pointer to cpu memory address of user data buffer to transfer.
+  @param  DataPhy     A pointer to pci memory address of user data buffer to transfer.
+  @param  DataLen     Length of user data to transfer.
+  @param  DataToggle  Data Toggle Pointer.
+  @param  MaxPacket   Maximum packet size for Bulk/Interrupt transfer.
+  @param  IsLow       Is Low Speed Device.
+
+  @return The Tds list head for the bulk transfer.
+
+**/
+TD_DESCRIPTOR *
+OhciCreateBulkOrIntTds (
+  IN USB_OHCI_HC_DEV      *Ohc,
+  IN UINT8                DevAddr,
+  IN UINT8                EndPoint,
+  IN UINT8                PktId,
+  IN UINT8                *Data,
+  IN UINT8                *DataPhy,
+  IN UINTN                DataLen,
+  IN OUT UINT8            *DataToggle,
+  IN UINT8                MaxPacket,
+  IN BOOLEAN              IsLow
+);
+
 #endif
