@@ -120,6 +120,7 @@ EFI_STATUS EFIAPI fsw_efi_FileSystem_OpenVolume (
   IN EFI_SIMPLE_FILE_SYSTEM_PROTOCOL * This,
   OUT EFI_FILE ** Root
 );
+
 EFI_STATUS fsw_efi_dnode_to_FileHandle (
   IN struct fsw_dnode *dno,
   OUT EFI_FILE ** NewFileHandle
@@ -130,10 +131,12 @@ EFI_STATUS fsw_efi_file_read (
   IN OUT UINTN *BufferSize,
   OUT VOID *Buffer
 );
+
 EFI_STATUS fsw_efi_file_getpos (
   IN FSW_FILE_DATA * File,
   OUT UINT64 *Position
 );
+
 EFI_STATUS fsw_efi_file_setpos (
   IN FSW_FILE_DATA * File,
   IN UINT64 Position
@@ -146,11 +149,13 @@ EFI_STATUS fsw_efi_dir_open (
   IN UINT64 OpenMode,
   IN UINT64 Attributes
 );
+
 EFI_STATUS fsw_efi_dir_read (
   IN FSW_FILE_DATA * File,
   IN OUT UINTN *BufferSize,
   OUT VOID *Buffer
 );
+
 EFI_STATUS fsw_efi_dir_setpos (
   IN FSW_FILE_DATA * File,
   IN UINT64 Position
@@ -162,6 +167,7 @@ EFI_STATUS fsw_efi_dnode_getinfo (
   IN OUT UINTN *BufferSize,
   OUT VOID *Buffer
 );
+
 EFI_STATUS fsw_efi_dnode_fill_FileInfo (
   IN FSW_VOLUME_DATA * Volume,
   IN struct fsw_dnode *dno,
@@ -239,6 +245,7 @@ fsw_efi_ReleaseLock (
  * on the image's handle. Actually mounting a file system is initiated through
  * the Driver Binding protocol at the firmware's request.
  */
+
 EFI_STATUS EFIAPI
 fsw_efi_main (
   IN EFI_HANDLE ImageHandle,
@@ -484,14 +491,15 @@ fsw_efi_ComponentName_GetDriverName (
 {
   if (Language == NULL || DriverName == NULL)
     return EFI_INVALID_PARAMETER;
-#if 0
 
+#if 0
   if (Language[0] == 'e' && Language[1] == 'n' && Language[2] == 'g' &&
       Language[3] == 0) {
     *DriverName = FSW_EFI_DRIVER_NAME (FSTYPE);
     return EFI_SUCCESS;
   }
 #endif
+
   return EFI_UNSUPPORTED;
 }
 
