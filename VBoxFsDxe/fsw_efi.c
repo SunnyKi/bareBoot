@@ -1340,15 +1340,17 @@ fsw_efi_dnode_fill_FileInfo (
 
   // if the node is a symlink, resolve it
   Status = fsw_efi_map_status (fsw_dnode_resolve (dno, &target_dno), Volume);
-  fsw_dnode_release (dno);
   if (EFI_ERROR (Status))
     return Status;
-  dno = target_dno;
 
   // make sure the dnode has complete info
-  Status = fsw_efi_map_status (fsw_dnode_fill (dno), Volume);
-  if (EFI_ERROR (Status))
+  Status = fsw_efi_map_status (fsw_dnode_fill (target_dno), Volume);
+  if (EFI_ERROR (Status)) {
+    fsw_dnode_release (target_dno);
     return Status;
+  }
+  fsw_dnode_release (dno);
+  dno = target_dno;
 
   FileInfo->Size = RequiredSize;
   FileInfo->FileSize = dno->size;
