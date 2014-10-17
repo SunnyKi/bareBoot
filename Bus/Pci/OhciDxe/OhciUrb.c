@@ -1,6 +1,4 @@
 /** @file
-  This file contains URB request, each request is warpped in a
-  URB (Usb Request Block).
 
 Copyright(c) 2013 Intel Corporation. All rights reserved.
 
@@ -92,7 +90,7 @@ VOID
 OhciDestroyTds (
   IN USB_OHCI_HC_DEV      *Ohc,
   IN TD_DESCRIPTOR        *FirstTd
-  )
+)
 {
   TD_DESCRIPTOR        *NextTd;
   TD_DESCRIPTOR        *ThisTd;
@@ -116,17 +114,27 @@ OhciDestroyTds (
 
 ED_DESCRIPTOR *
 OhciCreateED (
-  USB_OHCI_HC_DEV          *Ohc
+  USB_OHCI_HC_DEV *Ohc,
+  IN UINT8        DeviceAddress,
+  IN UINT8        EndPointNum,
+  IN UINT8        DeviceSpeed,
+  IN UINTN        MaxPacket
 )
 {
   ED_DESCRIPTOR   *Ed;
+
   Ed = UsbHcAllocateMem (Ohc->MemPool, sizeof (ED_DESCRIPTOR));
   if (Ed == NULL) {
     DEBUG ((EFI_D_INFO, "%a: ED allocation failed!\n", __FUNCTION__));	
     return NULL;
   }
 
+  Ed->Word0.Direction = ED_FROM_TD_DIR;
+  Ed->Word0.EndPointNum = EndPointNum;
+  Ed->Word0.FunctionAddress = DeviceAddress;
+  Ed->Word0.MaxPacketSize = MaxPacket;
   Ed->Word0.Skip = 1;
+  Ed->Word0.Speed = DeviceSpeed;
 
   return Ed;
 }
@@ -242,11 +250,13 @@ OhciInitializeInterruptList (
   UINTN             Index;
   UINTN             Level;
   UINTN             Count;
+  ED_DESCRIPTOR     *Edp;
 
   HccaInterruptTable = Ohc->HccaMemoryBlock->HccaInterruptTable;
 
   for (Index = 0; Index < 32; Index++) {
-    HccaInterruptTable[Index] = (UINT32)(UINTN) OhciCreateED (Ohc);
+    Edp = UsbHcAllocateMem (Ohc->MemPool, sizeof (ED_DESCRIPTOR));
+    HccaInterruptTable[Index] = (UINT32)(UINTN) Edp;
     if (HccaInterruptTable[Index] == 0) {
       return EFI_OUT_OF_RESOURCES;
     }
@@ -261,7 +271,8 @@ OhciInitializeInterruptList (
     Count = Count >> 1;
 
     for (Index = 0; Index < Count; Index++) {
-      Ohc->IntervalList[Level][Index] = OhciCreateED (Ohc);
+      Edp = UsbHcAllocateMem (Ohc->MemPool, sizeof (ED_DESCRIPTOR));
+      Ohc->IntervalList[Level][Index] = Edp;
       if (HccaInterruptTable[Index] == 0) {
         return EFI_OUT_OF_RESOURCES;
       }
@@ -886,19 +897,17 @@ OhciFreeIntTransferMemory (
   @param  DevAddr     Device address.
   @param  Request     A pointer to cpu memory address of Device request.
   @param  RequestPhy  A pointer to pci memory address of Device request.
-  @param  IsLow       Full speed or low speed.
 
   @return The created setup Td Pointer.
-
 **/
+
 TD_DESCRIPTOR *
 OhciCreateSetupTD (
   IN  USB_OHCI_HC_DEV     *Ohc,
   IN  UINT8               DevAddr,
   IN  UINT8               *Request,
-  IN  UINT8               *RequestPhy,
-  IN  BOOLEAN             IsLow
-  )
+  IN  UINT8               *RequestPhy
+)
 {
   TD_DESCRIPTOR           *Td;
 
@@ -922,7 +931,6 @@ OhciCreateSetupTD (
   return Td;
 }
 
-
 /**
   Create a TD for data.
 
@@ -934,11 +942,10 @@ OhciCreateSetupTD (
   @param  Len         Data length.
   @param  PktId       Packet ID.
   @param  Toggle      Data toggle value.
-  @param  IsLow       Full speed or low speed.
 
   @return Data Td pointer if success, otherwise NULL.
-
 **/
+
 TD_DESCRIPTOR *
 OhciCreateDataTD (
   IN  USB_OHCI_HC_DEV     *Ohc,
@@ -948,9 +955,8 @@ OhciCreateDataTD (
   IN  UINT8               *DataPhyPtr,
   IN  UINTN               Len,
   IN  UINT8               PktId,
-  IN  UINT8               Toggle,
-  IN  BOOLEAN             IsLow
-  )
+  IN  UINT8               Toggle
+)
 {
   TD_DESCRIPTOR  *Td;
 
@@ -974,27 +980,24 @@ OhciCreateDataTD (
   return Td;
 }
 
-
 /**
   Create TD for the Status Stage of control transfer.
 
   @param  Ohc         The OHCI device.
   @param  DevAddr     Device address.
   @param  PktId       Packet ID.
-  @param  IsLow       Full speed or low speed.
 
   @return Status Td Pointer.
-
 **/
+
 TD_DESCRIPTOR *
 OhciCreateStatusTD (
   IN  USB_OHCI_HC_DEV     *Ohc,
   IN  UINT8               DevAddr,
-  IN  UINT8               PktId,
-  IN  BOOLEAN             IsLow
-  )
+  IN  UINT8               PktId
+)
 {
-  TD_DESCRIPTOR              *Td;
+  TD_DESCRIPTOR           *Td;
 
   Td = OhciCreateTD (Ohc);
 
@@ -1011,7 +1014,6 @@ OhciCreateStatusTD (
   return Td;
 }
 
-
 /**
   Create Tds list for Control Transfer.
 
@@ -1024,11 +1026,10 @@ OhciCreateStatusTD (
   @param  DataPhy     A pointer to pci memory address of user data buffer to transfer.
   @param  DataLen     Length of user data to transfer.
   @param  MaxPacket   Maximum packet size for control transfer.
-  @param  IsLow       Full speed or low speed.
 
   @return The Td list head for the control transfer.
-
 **/
+
 TD_DESCRIPTOR *
 OhciCreateCtrlTds (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -1039,9 +1040,8 @@ OhciCreateCtrlTds (
   IN UINT8                *Data,
   IN UINT8                *DataPhy,
   IN UINTN                DataLen,
-  IN UINT8                MaxPacket,
-  IN BOOLEAN              IsLow
-  )
+  IN UINTN                MaxPacket
+)
 {
   TD_DESCRIPTOR             *SetupTd;
   TD_DESCRIPTOR             *FirstDataTd;
@@ -1062,7 +1062,7 @@ OhciCreateCtrlTds (
   //
   // Create setup packets for the transfer
   //
-  SetupTd = OhciCreateSetupTD (Ohc, DeviceAddr, Request, RequestPhy, IsLow);
+  SetupTd = OhciCreateSetupTD (Ohc, DeviceAddr, Request, RequestPhy);
 
   if (SetupTd == NULL) {
     return NULL;
@@ -1087,8 +1087,7 @@ OhciCreateCtrlTds (
                DataPhy, //Pci memory address
                ThisTdLen,
                DataPktId,
-               DataToggle,
-               IsLow
+               DataToggle
                );
 
     if (DataTd == NULL) {
@@ -1118,7 +1117,7 @@ OhciCreateCtrlTds (
     StatusPktId = TD_OUT_PID;
   }
 
-  StatusTd = OhciCreateStatusTD (Ohc, DeviceAddr, StatusPktId, IsLow);
+  StatusTd = OhciCreateStatusTD (Ohc, DeviceAddr, StatusPktId);
 
   if (StatusTd == NULL) {
     goto FREE_TD;
@@ -1148,7 +1147,6 @@ FREE_TD:
   return NULL;
 }
 
-
 /**
   Create Tds list for Bulk/Interrupt Transfer.
 
@@ -1161,11 +1159,10 @@ FREE_TD:
   @param  DataLen     Length of user data to transfer.
   @param  DataToggle  Data Toggle Pointer.
   @param  MaxPacket   Maximum packet size for Bulk/Interrupt transfer.
-  @param  IsLow       Is Low Speed Device.
 
   @return The Tds list head for the bulk transfer.
-
 **/
+
 TD_DESCRIPTOR *
 OhciCreateBulkOrIntTds (
   IN USB_OHCI_HC_DEV      *Ohc,
@@ -1176,9 +1173,8 @@ OhciCreateBulkOrIntTds (
   IN UINT8                *DataPhy,
   IN UINTN                DataLen,
   IN OUT UINT8            *DataToggle,
-  IN UINT8                MaxPacket,
-  IN BOOLEAN              IsLow
-  )
+  IN UINTN                MaxPacket
+)
 {
   TD_DESCRIPTOR          *DataTd;
   TD_DESCRIPTOR          *FirstDataTd;
@@ -1210,19 +1206,12 @@ OhciCreateBulkOrIntTds (
                DataPhy,
                ThisTdLen,
                PktId,
-               *DataToggle,
-               IsLow
+               *DataToggle
                );
 
     if (DataTd == NULL) {
       goto FREE_TD;
     }
-
-#if 0
-    if (PktId == INPUT_PACKET_ID) {
-      DataTd->TdHw.ShortPacket = TRUE;
-    }
-#endif
 
     if (FirstDataTd == NULL) {
       FirstDataTd         = DataTd;

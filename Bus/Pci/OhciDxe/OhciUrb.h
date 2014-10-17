@@ -67,6 +67,21 @@ OhciFreeTD (
 );
 
 /**
+  Delete a list of TDs.
+
+  @param  Ohc         The OHCI device.
+  @param  FirstTd     TD link list head.
+
+  @return None.
+**/
+
+VOID
+OhciDestroyTds (
+  IN USB_OHCI_HC_DEV      *Ohc,
+  IN TD_DESCRIPTOR        *FirstTd
+);
+
+/**
   Create a ED
 
   @Param   Ohc                  Device private data
@@ -76,7 +91,11 @@ OhciFreeTD (
 
 ED_DESCRIPTOR *
 OhciCreateED (
-  USB_OHCI_HC_DEV          *Ohc
+  USB_OHCI_HC_DEV *Ohc,
+  IN UINT8        DeviceAddress,
+  IN UINT8        EndPointNum,
+  IN UINT8        DeviceSpeed,
+  IN UINTN        MaxPacket
 );
 
 /**
@@ -380,7 +399,6 @@ OhciFreeIntTransferMemory (
   @param  DataPhy     A pointer to pci memory address of user data buffer to transfer.
   @param  DataLen     Length of user data to transfer.
   @param  MaxPacket   Maximum packet size for control transfer.
-  @param  IsLow       Full speed or low speed.
 
   @return The Td list head for the control transfer.
 **/
@@ -395,8 +413,7 @@ OhciCreateCtrlTds (
   IN UINT8                *Data,
   IN UINT8                *DataPhy,
   IN UINTN                DataLen,
-  IN UINT8                MaxPacket,
-  IN BOOLEAN              IsLow
+  IN UINTN                MaxPacket
 );
 
 /**
@@ -411,7 +428,6 @@ OhciCreateCtrlTds (
   @param  DataLen     Length of user data to transfer.
   @param  DataToggle  Data Toggle Pointer.
   @param  MaxPacket   Maximum packet size for Bulk/Interrupt transfer.
-  @param  IsLow       Is Low Speed Device.
 
   @return The Tds list head for the bulk transfer.
 
@@ -426,8 +442,7 @@ OhciCreateBulkOrIntTds (
   IN UINT8                *DataPhy,
   IN UINTN                DataLen,
   IN OUT UINT8            *DataToggle,
-  IN UINT8                MaxPacket,
-  IN BOOLEAN              IsLow
+  IN UINTN                MaxPacket
 );
 
 #endif

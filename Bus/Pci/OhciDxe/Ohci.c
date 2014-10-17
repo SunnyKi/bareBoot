@@ -231,11 +231,6 @@ OhciReset (
   OhciSetRootHubDescriptor (Ohc, RH_PSWITCH_MODE, 0);
   OhciSetRootHubDescriptor (Ohc, RH_NO_PSWITCH | RH_NOC_PROT, 1);
 
-#if 0
-  OhciSetRootHubDescriptor (Hc, RH_PSWITCH_MODE | RH_NO_PSWITCH, 0);
-  OhciSetRootHubDescriptor (Hc, RH_PSWITCH_MODE | RH_NOC_PROT, 1);
-#endif
-
   OhciSetRootHubDescriptor (Ohc, RH_DEV_REMOVABLE, 0);
   OhciSetRootHubDescriptor (Ohc, RH_PORT_PWR_CTRL_MASK, 0xffff);
   OhciSetRootHubStatus (Ohc, RH_LOCAL_PSTAT_CHANGE);
@@ -410,21 +405,14 @@ OhciControlTransfer (
   ED_DESCRIPTOR                  *HeadEd;
   ED_DESCRIPTOR                  *Ed;
   TD_DESCRIPTOR                  *HeadTd;
-  TD_DESCRIPTOR                  *SetupTd;
   TD_DESCRIPTOR                  *DataTd;
-  TD_DESCRIPTOR                  *StatusTd;
-  TD_DESCRIPTOR                  *EmptyTd;
   EFI_STATUS                     Status;
-  UINT32                         DataPidDir;
+  UINT8                          DataPidDir;
   UINT32                         StatusPidDir;
   UINTN                          TimeCount;
   OHCI_ED_RESULT                 EdResult;
 
   EFI_PCI_IO_PROTOCOL_OPERATION  MapOp;
-
-  UINTN                          ActualSendLength;
-  UINTN                          LeftLength;
-  UINT8                          DataToggle;
 
   VOID                           *ReqMapping = NULL;
   UINTN                          ReqMapLength = 0;
@@ -489,21 +477,14 @@ OhciControlTransfer (
   gBS->Stall(20 * 1000);
 
   OhciSetMemoryPointer (Ohc, HC_CONTROL_HEAD, NULL);
-  Ed = OhciCreateED (Ohc);
+  Ed = OhciCreateED (Ohc, DeviceAddress, 0, DeviceSpeed, MaximumPacketLength);
   if (Ed == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto CTRL_EXIT;
   }
-  OhciSetEDField (Ed, ED_SKIP, 1);
-  OhciSetEDField (Ed, ED_FUNC_ADD, DeviceAddress);
-  OhciSetEDField (Ed, ED_DIR, ED_FROM_TD_DIR);
-  OhciSetEDField (Ed, ED_SPEED, DeviceSpeed);
-  OhciSetEDField (Ed, ED_MAX_PACKET, MaximumPacketLength);
 
   HeadEd = OhciAttachEDToList (Ohc, CONTROL_LIST, Ed, NULL);
-  //
-  // Setup Stage
-  //
+
   if (Request != NULL) {
     ReqMapLength = sizeof(EFI_USB_DEVICE_REQUEST);
     MapOp = EfiPciIoOperationBusMasterRead;
@@ -512,22 +493,6 @@ OhciControlTransfer (
       goto FREE_ED_BUFF;
     }
   }
-  SetupTd = OhciCreateTD (Ohc);
-  if (SetupTd == NULL) {
-    Status = EFI_OUT_OF_RESOURCES;
-    goto UNMAP_SETUP_BUFF;
-  }
-  HeadTd = SetupTd;
-  OhciSetTDField (SetupTd, TD_BUFFER_ROUND, 1);
-  OhciSetTDField (SetupTd, TD_DIR_PID, TD_SETUP_PID);
-  OhciSetTDField (SetupTd, TD_DELAY_INT, TD_NO_DELAY);
-  OhciSetTDField (SetupTd, TD_DT_TOGGLE, 2);
-  OhciSetTDField (SetupTd, TD_COND_CODE, TD_TOBE_PROCESSED);
-  OhciSetTDField (SetupTd, TD_CURR_BUFFER_PTR, (UINT32)ReqMapPhyAddr);
-  OhciSetTDField (SetupTd, TD_BUFFER_END_PTR, (UINT32)(ReqMapPhyAddr + sizeof (EFI_USB_DEVICE_REQUEST) - 1));
-  SetupTd->ActualSendLength = sizeof (EFI_USB_DEVICE_REQUEST);
-  SetupTd->DataBuffer = (UINT32)(UINTN)ReqMapPhyAddr;
-
   if (TransferDirection == EfiUsbDataIn) {
     MapOp = EfiPciIoOperationBusMasterWrite;
   } else {
@@ -540,67 +505,23 @@ OhciControlTransfer (
       goto FREE_TD_BUFF;
     }
   }
-  //
-  // Data Stage
-  //
-  LeftLength = DataMapLength;
-  ActualSendLength = DataMapLength;
-  DataToggle = 1;
-  while (LeftLength > 0) {
-    ActualSendLength = LeftLength;
-    if (LeftLength > MaximumPacketLength) {
-      ActualSendLength = MaximumPacketLength;
-    }
-    DataTd = OhciCreateTD (Ohc);
-    if (DataTd == NULL) {
-      Status = EFI_OUT_OF_RESOURCES;
-      goto UNMAP_DATA_BUFF;
-    }
-    OhciSetTDField (DataTd, TD_BUFFER_ROUND, 1);
-    OhciSetTDField (DataTd, TD_DIR_PID, DataPidDir);
-    OhciSetTDField (DataTd, TD_DELAY_INT, TD_NO_DELAY);
-    OhciSetTDField (DataTd, TD_DT_TOGGLE, DataToggle);
-    OhciSetTDField (DataTd, TD_COND_CODE, TD_TOBE_PROCESSED);
-    OhciSetTDField (DataTd, TD_CURR_BUFFER_PTR, (UINT32) DataMapPhyAddr);
-    OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32) (DataMapPhyAddr + ActualSendLength - 1));
-    DataTd->ActualSendLength = (UINT32) ActualSendLength;
-    DataTd->DataBuffer = (UINT32)(UINTN) DataMapPhyAddr;
 
-    OhciLinkTD (HeadTd, DataTd);
-    DataToggle ^= 1;
-    DataMapPhyAddr += ActualSendLength;
-    LeftLength -= ActualSendLength;
-  }
-  //
-  // Status Stage
-  //
-  StatusTd = OhciCreateTD (Ohc);
-  if (StatusTd == NULL) {
+  HeadTd = OhciCreateCtrlTds (
+             Ohc,
+             DeviceAddress,
+             DataPidDir,
+             (UINT8 *) Request,
+             (UINT8 *)(UINTN) ReqMapPhyAddr,
+             (UINT8 *) Data,
+             (UINT8 *)(UINTN) DataMapPhyAddr,
+             *DataLength,
+             MaximumPacketLength
+           ); 
+  if (HeadTd == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto UNMAP_DATA_BUFF;
   }
-  OhciSetTDField (StatusTd, TD_BUFFER_ROUND, 1);
-  OhciSetTDField (StatusTd, TD_DIR_PID, StatusPidDir);
-  OhciSetTDField (StatusTd, TD_DELAY_INT, TD_NO_DELAY);
-  OhciSetTDField (StatusTd, TD_DT_TOGGLE, 3);
-  OhciSetTDField (StatusTd, TD_COND_CODE, TD_TOBE_PROCESSED);
 
-  OhciLinkTD (HeadTd, StatusTd);
-  //
-  // Empty Stage
-  //
-  EmptyTd = OhciCreateTD (Ohc);
-  if (EmptyTd == NULL) {
-    Status = EFI_OUT_OF_RESOURCES;
-    goto UNMAP_DATA_BUFF;
-  }
-#if 0
-  OhciSetTDField (EmptyTd, TD_DT_TOGGLE, CurrentToggle);
-#endif
-
-  OhciLinkTD (HeadTd, EmptyTd);
-
-  Ed->TdTailPointer = (UINT32)(UINTN) EmptyTd;
   OhciAttachTDListToED (Ed, HeadTd);
 
 #if 0
@@ -659,24 +580,20 @@ UNMAP_DATA_BUFF:
   } else {
     HeadEd->NextED = Ed->NextED;
   }
+
   if (DataMapping != NULL) {
     Ohc->PciIo->Unmap(Ohc->PciIo, DataMapping);
   }
 
 FREE_TD_BUFF:
-  while (HeadTd) {
-    DataTd = HeadTd;
-    HeadTd = (TD_DESCRIPTOR *)(UINTN)(HeadTd->NextTDPointer);
-    UsbHcFreeMem(Ohc->MemPool, DataTd, sizeof(TD_DESCRIPTOR));
-  }
+  OhciDestroyTds (Ohc, HeadTd);
 
-UNMAP_SETUP_BUFF:
   if (ReqMapping != NULL) {
     Ohc->PciIo->Unmap(Ohc->PciIo, ReqMapping);
   }
 
 FREE_ED_BUFF:
-  UsbHcFreeMem(Ohc->MemPool, Ed, sizeof(ED_DESCRIPTOR));
+  OhciFreeED (Ohc, Ed);
 
 CTRL_EXIT:
   return Status;
@@ -732,10 +649,8 @@ OhciBulkTransfer (
   ED_DESCRIPTOR                  *HeadEd;
   ED_DESCRIPTOR                  *Ed;
   UINT8                          EdDir;
-  UINT32                         DataPidDir;
+  UINT8                          DataPidDir;
   TD_DESCRIPTOR                  *HeadTd;
-  TD_DESCRIPTOR                  *DataTd;
-  TD_DESCRIPTOR                  *EmptyTd;
   EFI_STATUS                     Status;
   EFI_USB_DATA_DIRECTION         TransferDirection;
   UINT8                          EndPointNum;
@@ -745,15 +660,11 @@ OhciBulkTransfer (
   EFI_PCI_IO_PROTOCOL_OPERATION  MapOp;
   VOID                           *Mapping;
   UINTN                          MapLength;
-  EFI_PHYSICAL_ADDRESS           MapPyhAddr;
-  UINTN                          LeftLength;
-  UINTN                          ActualSendLength;
-  BOOLEAN                        FirstTD;
+  EFI_PHYSICAL_ADDRESS           MapPhyAddr;
 
   Mapping = NULL;
   MapLength = 0;
-  MapPyhAddr = 0;
-  LeftLength = 0;
+  MapPhyAddr = 0;
   Status = EFI_SUCCESS;
 
   if (Data == NULL || DataLength == NULL || DataToggle == NULL || TransferResult == NULL ||
@@ -801,79 +712,36 @@ OhciBulkTransfer (
 
   OhciSetMemoryPointer (Ohc, HC_BULK_HEAD, NULL);
 
-  Ed = OhciCreateED (Ohc);
+  Ed = OhciCreateED (Ohc, DeviceAddress, EndPointNum, /* XXX */ ED_HI_SPEED, MaximumPacketLength);
   if (Ed == NULL) {
     return EFI_OUT_OF_RESOURCES;
   }
-  OhciSetEDField (Ed, ED_SKIP, 1);
-  OhciSetEDField (Ed, ED_FUNC_ADD, DeviceAddress);
-  OhciSetEDField (Ed, ED_ENDPT_NUM, EndPointNum);
-  OhciSetEDField (Ed, ED_DIR, ED_FROM_TD_DIR);
-  OhciSetEDField (Ed, ED_SPEED, ED_HI_SPEED);
-  OhciSetEDField (Ed, ED_MAX_PACKET, MaximumPacketLength);
 
   HeadEd = OhciAttachEDToList (Ohc, BULK_LIST, Ed, NULL);
 
   MapLength = *DataLength;
-  Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Data[0], &MapLength, &MapPyhAddr, &Mapping);
+  Status = Ohc->PciIo->Map (Ohc->PciIo, MapOp, (UINT8 *)Data[0], &MapLength, &MapPhyAddr, &Mapping);
   if (EFI_ERROR(Status)) {
-    DEBUG ((EFI_D_ERROR, "%a: Fail to Map Data Buffer for Bulk transfer\n", __FUNCTION__));		
+    DEBUG ((EFI_D_ERROR, "%a: Fail to Map Data Buffer for Bulk transfer\n", __FUNCTION__));    
     goto FREE_ED_BUFF;
   }
 
-  //
-  //Data Stage
-  //
-  LeftLength = MapLength;
-  ActualSendLength = MapLength;
-  HeadTd = NULL;
-  FirstTD = TRUE;
-  while (LeftLength > 0) {
-    ActualSendLength = LeftLength;
-    if (LeftLength > MaximumPacketLength) {
-      ActualSendLength = MaximumPacketLength;
-    }
-    DataTd = OhciCreateTD (Ohc);
-    if (DataTd == NULL) {
-      DEBUG ((EFI_D_ERROR, "%a: Fail to allocate buffer for Data Stage TD\n"));
-      Status = EFI_OUT_OF_RESOURCES;
-      goto FREE_OHCI_TDBUFF;
-    }
-    OhciSetTDField (DataTd, TD_BUFFER_ROUND, 1);
-    OhciSetTDField (DataTd, TD_DIR_PID, DataPidDir);
-    OhciSetTDField (DataTd, TD_DELAY_INT, TD_NO_DELAY);
-    OhciSetTDField (DataTd, TD_DT_TOGGLE, *DataToggle);
-    OhciSetTDField (DataTd, TD_COND_CODE, TD_TOBE_PROCESSED);
-    OhciSetTDField (DataTd, TD_CURR_BUFFER_PTR, (UINT32) MapPyhAddr);
-    OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32) (MapPyhAddr + ActualSendLength - 1));
-    DataTd->ActualSendLength = (UINT32) ActualSendLength;
-    DataTd->DataBuffer = (UINT32)(UINTN) MapPyhAddr;
-
-    if (FirstTD) {
-      HeadTd = DataTd;
-      FirstTD = FALSE;
-    } else {
-      OhciLinkTD (HeadTd, DataTd);
-    }
-    *DataToggle ^= 1;
-    MapPyhAddr += ActualSendLength;
-    LeftLength -= ActualSendLength;
-  }
-  //
-  // Empty Stage
-  //
-  EmptyTd = OhciCreateTD (Ohc);
-  if (EmptyTd == NULL) {
-    DEBUG ((EFI_D_ERROR, "%a: Fail to allocate buffer for Empty TD\n"));
+  HeadTd = OhciCreateBulkOrIntTds (
+             Ohc,
+             DeviceAddress,
+             EndPointNum,
+             DataPidDir,
+             (UINT8 *) Data[0],
+             (UINT8 *)(UINTN) MapPhyAddr,
+             *DataLength,
+             DataToggle,
+             MaximumPacketLength
+           ); 
+  if (HeadTd == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto FREE_OHCI_TDBUFF;
   }
-#if 0
-  OhciSetTDField (EmptyTd, TD_DT_TOGGLE, CurrentToggle);
-#endif
 
-  OhciLinkTD (HeadTd, EmptyTd);
-  Ed->TdTailPointer = (UINT32)(UINTN) EmptyTd;
   OhciAttachTDListToED (Ed, HeadTd);
 
   OhciSetEDField (Ed, ED_SKIP, 0);
@@ -911,10 +779,7 @@ OhciBulkTransfer (
       *DataToggle = EdResult.NextToggle;
     }
     *DataLength = 0;
-  } else
-#if 0
-  *DataToggle = (UINT8) OhciGetEDField (Ed, ED_DTTOGGLE);
-#endif
+  }
 
 FREE_OHCI_TDBUFF:
   OhciSetEDField (Ed, ED_SKIP, 1);
@@ -923,18 +788,15 @@ FREE_OHCI_TDBUFF:
   }else {
     HeadEd->NextED = Ed->NextED;
   }
-  while (HeadTd) {
-    DataTd = HeadTd;
-    HeadTd = (TD_DESCRIPTOR *)(UINTN)(HeadTd->NextTDPointer);
-    UsbHcFreeMem(Ohc->MemPool, DataTd, sizeof(TD_DESCRIPTOR));
-  }
+
+  OhciDestroyTds (Ohc, HeadTd);
 
   if (Mapping != NULL) {
     Ohc->PciIo->Unmap(Ohc->PciIo, Mapping);
   }
 
 FREE_ED_BUFF:
-  UsbHcFreeMem(Ohc->MemPool, Ed, sizeof(ED_DESCRIPTOR));
+  OhciFreeED (Ohc, Ed);
 
   return Status;
 }
@@ -952,7 +814,7 @@ FREE_ED_BUFF:
                                 It is the caller's responsibility to make sure that
                                 the EndPointAddress represents an interrupt endpoint.
   @param  DeviceSpeed           Indicates target device speed.
-  @param  MaximumPacketLength       Indicates the maximum packet size the target endpoint
+  @param  MaximumPacketLength   Indicates the maximum packet size the target endpoint
                                 is capable of sending or receiving.
   @param  IsNewTransfer         If TRUE, an asynchronous interrupt pipe is built between
                                 the host and the target interrupt endpoint.
@@ -1012,24 +874,18 @@ OhciInterruptTransfer (
   UINT8                    EdDir;
   ED_DESCRIPTOR            *HeadEd;
   TD_DESCRIPTOR            *HeadTd;
-  TD_DESCRIPTOR            *DataTd;
-  TD_DESCRIPTOR            *EmptTd;
   UINTN                    Depth;
   UINTN                    Index;
   EFI_STATUS               Status;
   UINT8                    EndPointNum;
-  UINT32                   DataPidDir;
+  UINT8                    DataPidDir;
   EFI_USB_DATA_DIRECTION   TransferDirection;
   INTERRUPT_CONTEXT_ENTRY  *Entry;
   EFI_TPL                  OldTpl;
-  BOOLEAN                  FirstTD;
 
- VOID                      *Mapping;
- UINTN                     MapLength;
- EFI_PHYSICAL_ADDRESS      MapPyhAddr;
- UINTN                     LeftLength;
- UINTN                     ActualSendLength;
-
+  VOID                     *Mapping;
+  UINTN                    MapLength;
+  EFI_PHYSICAL_ADDRESS     MapPhyAddr;
 
   if (DataLength > MAX_BYTES_PER_TD) {
     return EFI_INVALID_PARAMETER;
@@ -1062,7 +918,7 @@ OhciInterruptTransfer (
                          EfiPciIoOperationBusMasterWrite,
                          UCBuffer,
                          &MapLength,
-                         &MapPyhAddr,
+                         &MapPhyAddr,
                          &Mapping
                        );
   if (EFI_ERROR (Status)) {
@@ -1081,69 +937,31 @@ OhciInterruptTransfer (
   if ((Ed = OhciFindWorkingEd (HeadEd, DeviceAddress, EndPointNum, EdDir)) != NULL) {
     OhciSetEDField (Ed, ED_SKIP, 1);
   } else {
-    Ed = OhciCreateED (Ohc);
+    Ed = OhciCreateED (Ohc, DeviceAddress, EndPointNum, DeviceSpeed, MaximumPacketLength);
     if (Ed == NULL) {
       Status = EFI_OUT_OF_RESOURCES;
       goto UNMAP_OHCI_XBUFF;
     }
-    OhciSetEDField (Ed, ED_SKIP, 1);
-    OhciSetEDField (Ed, ED_FUNC_ADD, DeviceAddress);
-    OhciSetEDField (Ed, ED_ENDPT_NUM, EndPointNum);
-    OhciSetEDField (Ed, ED_DIR, ED_FROM_TD_DIR);
-    OhciSetEDField (Ed, ED_SPEED, DeviceSpeed);
-    OhciSetEDField (Ed, ED_MAX_PACKET, MaximumPacketLength);
 
     OhciAttachEDToList (Ohc, INTERRUPT_LIST, Ed, HeadEd);
   }
 
-  // Data Stage
-
-  LeftLength = MapLength;
-  ActualSendLength = MapLength;
-  HeadTd = NULL;
-  FirstTD = TRUE;
-  while (LeftLength > 0) {
-    ActualSendLength = LeftLength;
-    if (LeftLength > MaximumPacketLength) {
-      ActualSendLength = MaximumPacketLength;
-    }
-    DataTd = OhciCreateTD (Ohc);
-    if (DataTd == NULL) {
-      Status = EFI_OUT_OF_RESOURCES;
-      goto FREE_OHCI_TDBUFF;
-    }
-    OhciSetTDField (DataTd, TD_BUFFER_ROUND, 1);
-    OhciSetTDField (DataTd, TD_DIR_PID, DataPidDir);
-    OhciSetTDField (DataTd, TD_DELAY_INT, TD_NO_DELAY);
-    OhciSetTDField (DataTd, TD_DT_TOGGLE, *DataToggle);
-    OhciSetTDField (DataTd, TD_COND_CODE, TD_TOBE_PROCESSED);
-    OhciSetTDField (DataTd, TD_CURR_BUFFER_PTR, (UINT32) MapPyhAddr);
-    OhciSetTDField (DataTd, TD_BUFFER_END_PTR, (UINT32) (MapPyhAddr + ActualSendLength - 1));
-    DataTd->ActualSendLength = (UINT32) ActualSendLength;
-    DataTd->DataBuffer = (UINT32) (UINTN) MapPyhAddr;
-
-    if (FirstTD) {
-      HeadTd = DataTd;
-      FirstTD = FALSE;
-    } else {
-      OhciLinkTD (HeadTd, DataTd);
-    }
-    *DataToggle ^= 1;
-    MapPyhAddr += ActualSendLength;
-    LeftLength -= ActualSendLength;
-  }
-
-  EmptTd = OhciCreateTD (Ohc);
-  if (EmptTd == NULL) {
+  HeadTd = OhciCreateBulkOrIntTds (
+             Ohc,
+             DeviceAddress,
+             EndPointNum,
+             DataPidDir,
+             (UINT8 *) UCBuffer,
+             (UINT8 *)(UINTN) MapPhyAddr,
+             DataLength,
+             DataToggle,
+             MaximumPacketLength
+           ); 
+  if (HeadTd == NULL) {
     Status = EFI_OUT_OF_RESOURCES;
     goto FREE_OHCI_TDBUFF;
   }
-#if 0
-  OhciSetTDField (EmptTd, TD_DT_TOGGLE, CurrentToggle);
-#endif
 
-  OhciLinkTD (HeadTd, EmptTd);
-  Ed->TdTailPointer = (UINT32)(UINTN) EmptTd;
   OhciAttachTDListToED (Ed, HeadTd);
 
   if (OutputED != NULL) {
@@ -1185,21 +1003,14 @@ OhciInterruptTransfer (
   return EFI_SUCCESS;
 
 FREE_OHCI_TDBUFF:
-  while (HeadTd) {
-    DataTd = HeadTd;
-    HeadTd = (TD_DESCRIPTOR *)(UINTN) (HeadTd->NextTDPointer);
-    UsbHcFreeMem(Ohc->MemPool, DataTd, sizeof(TD_DESCRIPTOR));
-  }
+  OhciDestroyTds (Ohc, HeadTd);
 
-#if 0
-FREE_OHCI_EDBUFF:
-#endif
   if ((HeadEd != Ed) && HeadEd && Ed) {
     while (HeadEd->NextED != (UINT32)(UINTN) Ed) {
       HeadEd = (ED_DESCRIPTOR *)(UINTN) (HeadEd->NextED);
     }
-  HeadEd->NextED = Ed->NextED;
-    UsbHcFreeMem(Ohc->MemPool, Ed, sizeof(ED_DESCRIPTOR));
+    HeadEd->NextED = Ed->NextED;
+    OhciFreeED (Ohc, Ed);
   }
 
 UNMAP_OHCI_XBUFF:
