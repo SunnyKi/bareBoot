@@ -1310,6 +1310,7 @@ fsw_efi_dnode_fill_FileInfo (
   EFI_FILE_INFO *FileInfo;
   UINTN RequiredSize;
   struct fsw_dnode_stat sb;
+  struct fsw_dnode *target_dno;
 
   // make sure the dnode has complete info
   Status = fsw_efi_map_status (fsw_dnode_fill (dno), Volume);
@@ -1333,12 +1334,27 @@ fsw_efi_dnode_fill_FileInfo (
   // fill structure
   ZeroMem (Buffer, RequiredSize);
   FileInfo = (EFI_FILE_INFO *) Buffer;
+
+  // Use original name (name of symlink if any)
+  fsw_efi_strcpy (FileInfo->FileName, &dno->name);
+
+  // if the node is a symlink, resolve it
+  Status = fsw_efi_map_status (fsw_dnode_resolve (dno, &target_dno), Volume);
+  fsw_dnode_release (dno);
+  if (EFI_ERROR (Status))
+    return Status;
+  dno = target_dno;
+
+  // make sure the dnode has complete info
+  Status = fsw_efi_map_status (fsw_dnode_fill (dno), Volume);
+  if (EFI_ERROR (Status))
+    return Status;
+
   FileInfo->Size = RequiredSize;
   FileInfo->FileSize = dno->size;
   FileInfo->Attribute = 0;
   if (dno->type == FSW_DNODE_TYPE_DIR)
     FileInfo->Attribute |= EFI_FILE_DIRECTORY;
-  fsw_efi_strcpy (FileInfo->FileName, &dno->name);
 
   // get the missing info from the fs driver
   ZeroMem (&sb, sizeof (struct fsw_dnode_stat));
