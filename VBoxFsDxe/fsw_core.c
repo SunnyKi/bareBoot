@@ -504,8 +504,9 @@ fsw_status_t fsw_dnode_stat(struct fsw_dnode *dno, struct fsw_dnode_stat *sb)
  * Given a directory dnode and a file name, it looks up the named entry in the
  * directory.
  *
- * If the dnode is not a directory, the call will fail. The caller is responsible for
- * resolving symbolic links before calling this function.
+ * If the dnode is symlink it resolved.
+ *
+ * If the dnode is not a directory, the call will fail.
  *
  * If the function returns FSW_SUCCESS, *child_dno_out points to the requested directory
  * entry. The caller must call fsw_dnode_release on it.
