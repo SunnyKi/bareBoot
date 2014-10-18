@@ -16,53 +16,49 @@
 #
 
 [Defines]
-        INF_VERSION                = 0x00010005
-        BASE_NAME                  = VBoxHfs
-        FILE_GUID                  = 6E506CC2-65E0-4814-994A-08ECDA046987
-        MODULE_TYPE                = UEFI_DRIVER
-        VERSION_STRING             = 1.0
-        EDK_RELEASE_VERSION        = 0x00020000
-        EFI_SPECIFICATION_VERSION  = 0x00020000
+  INF_VERSION                = 0x00010005
+  BASE_NAME                  = VBoxHfs
+  FILE_GUID                  = 6E506CC2-65E0-4814-994A-08ECDA046987
+  MODULE_TYPE                = UEFI_DRIVER
+  VERSION_STRING             = 1.0
 
-        ENTRY_POINT                = fsw_efi_main
+  ENTRY_POINT                = fsw_efi_main
+#  UNLOAD_IMAGE               = fsw_efi_unload
 
-[Sources.common]
-        fsw_hfs.c
-        fsw_core.c
-        fsw_efi_lib.c
-        fsw_efi.c
-        fsw_lib.c
+[Sources]
+  fsw_core.c
+  fsw_efi.c
+  fsw_efi_lib.c
+  fsw_hfs.c
+  fsw_lib.c
 
 [Packages]
-        MdePkg/MdePkg.dec
-        MdeModulePkg/MdeModulePkg.dec
-        IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
-        bareBoot/bareBoot.dec
+  MdePkg/MdePkg.dec
 
 [LibraryClasses]
-   UefiRuntimeServicesTableLib
-   UefiBootServicesTableLib
-   MemoryAllocationLib
-   BaseMemoryLib
-   BaseLib
-   UefiLib
-   UefiDriverEntryPoint
-   DebugLib
-   PcdLib
-   DevicePathLib
+  UefiRuntimeServicesTableLib
+  UefiBootServicesTableLib
+  MemoryAllocationLib
+  BaseMemoryLib
+  BaseLib
+  UefiLib
+  UefiDriverEntryPoint
+  DebugLib
+  PcdLib
+  DevicePathLib
 
 [Guids]
-  gEfiFileInfoGuid
-  gEfiFileSystemInfoGuid
-  gEfiFileSystemVolumeLabelInfoIdGuid
+  gEfiFileInfoGuid                      ## SOMETIMES_CONSUMES   ## UNDEFINED
+  gEfiFileSystemInfoGuid                ## SOMETIMES_CONSUMES   ## UNDEFINED
+  gEfiFileSystemVolumeLabelInfoIdGuid   ## SOMETIMES_CONSUMES   ## UNDEFINED
 
 [Protocols]
-  gEfiDiskIoProtocolGuid
-  gEfiBlockIoProtocolGuid
-  gEfiSimpleFileSystemProtocolGuid
-  gEfiUnicodeCollationProtocolGuid
-  gEfiUnicodeCollation2ProtocolGuid
-  gEfiDevicePathToTextProtocolGuid                ## CONSUMED
+  gEfiDiskIoProtocolGuid                ## TO_START
+  gEfiDiskIo2ProtocolGuid               ## TO_START
+  gEfiBlockIoProtocolGuid               ## TO_START
+  gEfiSimpleFileSystemProtocolGuid      ## BY_START
+  gEfiUnicodeCollationProtocolGuid      ## TO_START
+  gEfiUnicodeCollation2ProtocolGuid     ## TO_START
 
 [Pcd]
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLang
