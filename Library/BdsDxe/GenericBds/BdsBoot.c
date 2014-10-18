@@ -19,13 +19,12 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "BootMaintLib.h"
 #include "Graphics.h"
 
-#define CLOVER_MEDIA_FILE_NAME_IA32    L"\\EFI\\CLOVER\\CLOVERIA32.EFI"
-#define CLOVER_MEDIA_FILE_NAME_X64     L"\\EFI\\CLOVER\\CLOVERX64.EFI"
-
 #if   defined (MDE_CPU_IA32)
-#define CLOVER_MEDIA_FILE_NAME   CLOVER_MEDIA_FILE_NAME_IA32
+#define CLOVER_MEDIA_FILE_NAME L"\\EFI\\CLOVER\\CLOVERIA32.EFI"
+#define SHELL_PATH             L"\\EFI\\TOOLS\\shell32.efi"
 #elif defined (MDE_CPU_X64)
-#define CLOVER_MEDIA_FILE_NAME   CLOVER_MEDIA_FILE_NAME_X64
+#define CLOVER_MEDIA_FILE_NAME L"\\EFI\\CLOVER\\CLOVERX64.EFI"
+#define SHELL_PATH             L"\\EFI\\TOOLS\\shell64.efi"
 #else
 #error Unknown Processor Type
 #endif
@@ -35,15 +34,6 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define MACOSX_INSTALL_PATH             L"\\OS X Install Data\\boot.efi"
 #define MACOSX_INSTALL_PATH2            L"\\.IABootFiles\\boot.efi"
 #define MACOSX_INSTALL_PATH3            L"\\Mac OS X Install Data\\boot.efi"
-#if 0
-#define WINDOWS_LOADER_PATH             L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi"
-#define SUSE_LOADER_PATH                L"\\EFI\\SuSE\\elilo.efi"
-#define OPENSUSE_LOADER_PATH            L"\\EFI\\opensuse\\grubx64.efi"
-#define UBUNTU_LOADER_PATH              L"\\EFI\\Ubuntu\\grubx64.efi"
-#define REDHAT_LOADER_PATH              L"\\EFI\\RedHat\\grub.efi"
-#define SHELL_PATH                      L"\\EFI\\TOOLS\\shell64.efi"
-#define ALT_WINDOWS_LOADER_PATH         L"\\EFI\\MS\\Boot\\bootmgfw.efi"
-#endif
 
 CHAR16* mLoaderPath[] = {
   CLOVER_MEDIA_FILE_NAME,
@@ -55,10 +45,12 @@ CHAR16* mLoaderPath[] = {
   MACOSX_INSTALL_PATH3,
   L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi",
   L"\\EFI\\SuSE\\elilo.efi",
+#if defined (MDE_CPU_X64)
   L"\\EFI\\opensuse\\grubx64.efi",
   L"\\EFI\\Ubuntu\\grubx64.efi",
+#endif
   L"\\EFI\\RedHat\\grub.efi",
-  L"\\EFI\\TOOLS\\shell64.efi",
+  SHELL_PATH,
   L"\\EFI\\MS\\Boot\\bootmgfw.efi"
 };
 
