@@ -271,6 +271,10 @@ struct fsw_dnode {
 
     struct fsw_dnode *next;         //!< Doubly-linked list of all dnodes: previous dnode
     struct fsw_dnode *prev;         //!< Doubly-linked list of all dnodes: next dnode
+
+#if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
+    struct fsw_dnode *cache[FSW_DNODE_CACHE_SIZE];         //!< Rudimentary cache for directory lookups
+#endif
 };
 
 /**
@@ -426,6 +430,8 @@ void         fsw_dnode_release(struct fsw_dnode *dno);
 fsw_status_t fsw_dnode_fill(struct fsw_dnode *dno);
 fsw_status_t fsw_dnode_stat(struct fsw_dnode *dno, struct fsw_dnode_stat *sb);
 
+fsw_status_t fsw_dnode_lookup_cache(struct fsw_dnode *dno,
+                              struct fsw_string *lookup_name, struct fsw_dnode **child_dno_out);
 fsw_status_t fsw_dnode_lookup(struct fsw_dnode *dno,
                               struct fsw_string *lookup_name, struct fsw_dnode **child_dno_out);
 fsw_status_t fsw_dnode_lookup_path(struct fsw_dnode *dno,

@@ -64,9 +64,12 @@
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultLang
   gEfiMdePkgTokenSpaceGuid.PcdUefiVariableDefaultPlatformLang
 
-[BuildOptions.common]
-  GCC:*_*_*_CC_FLAGS = -DHOST_EFI -DVBOX -DFSTYPE=hfs
-  INTEL:*_*_*_CC_FLAGS = -DHOST_EFI -DVBOX -DFSTYPE=hfs
-  MSFT:*_*_*_CC_FLAGS = -DHOST_EFI -DVBOX -DFSTYPE=hfs -DFSW_DEBUG_LEVEL=0
+[BuildOptions]
+#
+# If FSW_DNODE_CACHE_SIZE undefined or < 1 -- no cache support compiled in
+#
+  GCC:*_*_*_CC_FLAGS = -DHOST_EFI -DVBOX -DFSTYPE=hfs -DFSW_DNODE_CACHE_SIZE=5 -DFSW_DEBUG_LEVEL=0
+  INTEL:*_*_*_CC_FLAGS = -DHOST_EFI -DVBOX -DFSTYPE=hfs -DFSW_DNODE_CACHE_SIZE=5 -DFSW_DEBUG_LEVEL=0
+  MSFT:*_*_*_CC_FLAGS = -DHOST_EFI -DVBOX -DFSTYPE=hfs -DFSW_DNODE_CACHE_SIZE=5 -DFSW_DEBUG_LEVEL=0
 
 # -DFSW_DEBUG_LEVEL=3

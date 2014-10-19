@@ -500,6 +500,89 @@ fsw_status_t fsw_dnode_stat(struct fsw_dnode *dno, struct fsw_dnode_stat *sb)
 }
 
 /**
+ * Lookup a directory entry by name in directory cache.
+ * Given a directory dnode and a file name, it looks up the named entry in the
+ * directory cache. If miss, the function calls fstype lookup and cache positive results.
+ *
+ * If the dnode is not a directory, the call will fail.
+ *
+ * If the function returns FSW_SUCCESS, *child_dno_out points to the requested directory
+ * entry. The caller must call fsw_dnode_release on it.
+ */
+
+fsw_status_t fsw_dnode_lookup_cache(struct fsw_dnode *dno,
+                              struct fsw_string *lookup_name, struct fsw_dnode **child_dno_out)
+{
+    fsw_status_t    status;
+    struct fsw_volume *vol = dno->vol;
+    struct fsw_dnode *cache_dno = NULL;
+#if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
+    int i;
+#endif
+
+    fsw_dnode_retain(dno);
+  
+    // ensure we have full information
+    status = fsw_dnode_fill(dno);
+    if (status)
+        goto errorexit;
+  
+    // make sure we operate on a directory
+    if (dno->type != FSW_DNODE_TYPE_DIR) {
+        status = FSW_UNSUPPORTED;
+        goto errorexit;
+    }
+
+#if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
+    for (i = 0; i < FSW_DNODE_CACHE_SIZE; i++) {
+        struct fsw_dnode *cache_entry = dno->cache[i];
+
+        if (cache_entry == NULL)
+            continue;
+        if (fsw_streq(&cache_entry->name, lookup_name)) {
+            cache_dno = cache_entry;
+            break;
+        }
+    }
+    if (cache_dno != NULL) {
+        // move found entry to first slot
+        while (i > 0) {
+            dno->cache[i] = dno->cache[i - 1];
+            i--;
+	}
+        dno->cache[0] = cache_dno;
+        fsw_dnode_retain(cache_dno);
+        goto goodexit;
+    }
+#endif
+
+    // Cache miss (or no cache at all). Do real lookup
+    status = vol->fstype_table->dir_lookup(vol, dno, lookup_name, &cache_dno);
+    if (status)
+        goto errorexit;
+
+#if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
+    // cache found entry at first slot
+    for (i = FSW_DNODE_CACHE_SIZE - 1; i > 0; i--) {
+        dno->cache[i] = dno->cache[i - 1];
+    }
+    dno->cache[0] = cache_dno;
+    fsw_dnode_retain(cache_dno);
+#endif
+
+goodexit:
+    fsw_dnode_release(dno);
+    *child_dno_out = cache_dno;
+    return FSW_SUCCESS;
+
+errorexit:
+    fsw_dnode_release(dno);
+    if (cache_dno != NULL)
+        fsw_dnode_release(cache_dno);
+    return status;
+}
+
+/**
  * Lookup a directory entry by name. This function is called by the host driver.
  * Given a directory dnode and a file name, it looks up the named entry in the
  * directory.
@@ -516,7 +599,6 @@ fsw_status_t fsw_dnode_lookup(struct fsw_dnode *dno,
                               struct fsw_string *lookup_name, struct fsw_dnode **child_dno_out)
 {
     fsw_status_t    status;
-    struct fsw_volume *vol = dno->vol;
     struct fsw_dnode *child_dno = NULL;
 
     fsw_dnode_retain(dno);
@@ -565,8 +647,8 @@ fsw_status_t fsw_dnode_lookup(struct fsw_dnode *dno,
         fsw_dnode_retain(child_dno);
   
     } else {
-        // do an actual lookup
-        status = vol->fstype_table->dir_lookup(vol, dno, lookup_name, &child_dno);
+        // do an cached actual lookup
+        status = fsw_dnode_lookup_cache(dno, lookup_name, &child_dno);
         if (status)
             goto errorexit;
     }
