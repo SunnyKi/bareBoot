@@ -568,9 +568,10 @@ fsw_status_t fsw_dnode_lookup_cache(struct fsw_dnode *dno,
     }
     dno->cache[0] = cache_dno;
     fsw_dnode_retain(cache_dno);
-#endif
 
 goodexit:
+#endif
+
     fsw_dnode_release(dno);
     *child_dno_out = cache_dno;
     return FSW_SUCCESS;
