@@ -1,6 +1,7 @@
 .DS_Store
 Version.h
 Debug/
+Release/
 
 *.out
 *.sdf
