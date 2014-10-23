@@ -8,7 +8,7 @@ SRCS	= ${MAIN} \
 		${VSRC}/fsw_lib.c \
 		${VSRC}/fsw_hfs.c
 
-CFLAGS	= -g -Wall -I. -I${VSRC} -DHOST_POSIX -DFSTYPE=hfs -DFSW_DEBUG_LEVEL=3 -DITERATIONS=1
+CFLAGS	= -g -Wall -I. -I${VSRC} -DHOST_POSIX -DFSTYPE=hfs -DFSW_DEBUG_LEVEL=3 -DITERATIONS=1 -DFSW_DNODE_CACHE_SIZE=7
 
 hfstest:	${SRCS}
 	${CC} ${CFLAGS} ${SRCS}
