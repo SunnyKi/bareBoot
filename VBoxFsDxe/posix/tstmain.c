@@ -74,7 +74,7 @@ catfile(struct fsw_posix_volume *vol, char *path)
     while ((r = fsw_posix_read(file, buf, sizeof(buf))) > 0)
     {
         if (outfile != NULL)
-	    (void) fwrite(buf, r, 1, outfile);
+        (void) fwrite(buf, r, 1, outfile);
     }
     fsw_posix_close(file);
 
@@ -98,8 +98,8 @@ viewdir(struct fsw_posix_volume *vol, char *path, int level, int rflag, int doca
         if (outfile != NULL) {
             for (i = 0; i < level*2; i++)
                 fputc(' ', outfile);
-            fprintf(outfile, "%d  %s\n", dent->d_type, dent->d_name);
-	}
+            fprintf(outfile, "0x%04x %8d %s\n", dent->d_type, dent->d_reclen, dent->d_name);
+    }
 
         if (rflag && dent->d_type == DT_DIR) {
             snprintf(subpath, sizeof(subpath) - 1, "%s%s/", path, dent->d_name);
@@ -107,7 +107,7 @@ viewdir(struct fsw_posix_volume *vol, char *path, int level, int rflag, int doca
         } else if (docat && dent->d_type == DT_REG) {
             snprintf(subpath, sizeof(subpath) - 1, "%s%s", path, dent->d_name);
             catfile(vol, subpath);
-	}
+    }
     }
     fsw_posix_closedir(dir);
 
@@ -136,19 +136,19 @@ main(int argc, char **argv)
     lflag = cflag = rflag = 0;
 
     for (cp = argv[2]; *cp != '\0'; cp++) {
-	switch (*cp) {
+        switch (*cp) {
         case 'l':
-	    lflag = 1;
-	    break;
+            lflag = 1;
+            break;
         case 'c':
-	    cflag = 1;
-	    break;
+            cflag = 1;
+            break;
         case 'r':
-	    rflag = 1;
-	    break;
+            rflag = 1;
+            break;
         default:
-	    usage(argv[0]);
-	}
+            usage(argv[0]);
+        }
     }
 
     for (i = 0; fstypes[i] != NULL; i++) {
@@ -162,13 +162,6 @@ main(int argc, char **argv)
         fprintf(stderr, "Mounting failed.\n");
         return 1;
     }
-
-#if 0
-    listdir(vol, "/System/Library/Extensions/udf.kext/", 0);
-    listdir(vol, "/System/Library/Extensions/AppleACPIPlatform.kext/", 0);
-    listdir(vol, "/System/Library/Extensions/", 0);
-    catfile(vol, "/System/Library/Extensions/AppleHPET.kext/Contents/Info.plist");
-#endif
 
     outfile = stdout;
 

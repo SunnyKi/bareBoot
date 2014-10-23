@@ -181,7 +181,7 @@ off_t fsw_mswin_lseek(struct fsw_mswin_file *file, off_t offset, int whence)
     else
         file->shand.pos = base_offset + offset;
 
-	return (off_t)(file->shand.pos);
+    return (off_t)(file->shand.pos);
 }
 
 /**
@@ -234,9 +234,9 @@ struct dirent * fsw_mswin_readdir(struct fsw_mswin_dir *dir)
     // get next entry from file system
     status = fsw_dnode_dir_read(&dir->shand, &dno);
     if (status) {
-		if (status != FSW_NOT_FOUND) {
-			fprintf(stderr, "fsw_mswin_readdir: fsw_dnode_dir_read returned %d\n", status);
-		}
+        if (status != FSW_NOT_FOUND) {
+            fprintf(stderr, "fsw_mswin_readdir: fsw_dnode_dir_read returned %d\n", status);
+        }
         return NULL;
     }
     status = fsw_dnode_fill(dno);
@@ -265,7 +265,7 @@ struct dirent * fsw_mswin_readdir(struct fsw_mswin_dir *dir)
     }
 
     dent.d_namlen = dno->name.size;
-	memcpy(dent.d_name, dno->name.data, dno->name.size);
+    memcpy(dent.d_name, dno->name.data, dno->name.size);
     dent.d_name[dno->name.size] = '\0';
 
     return &dent;

@@ -375,7 +375,9 @@ fsw_status_t fsw_posix_read_block(struct fsw_volume *vol, fsw_u32 phys_bno, void
     off_t           block_offset, seek_result;
     ssize_t         read_result;
 
-    FSW_MSG_DEBUGV((FSW_MSGSTR("fsw_posix_read_block: %d  (%d)\n"), phys_bno, vol->phys_blocksize));
+#if 0
+    FSW_MSG_DEBUGV((FSW_MSGSTR("fsw_posix_read_block: %d (%d)\n"), phys_bno, vol->phys_blocksize));
+#endif
 
     // read from disk
     block_offset = (off_t)phys_bno * vol->phys_blocksize;
@@ -396,7 +398,7 @@ fsw_status_t fsw_posix_read_block(struct fsw_volume *vol, fsw_u32 phys_bno, void
  * appropriate member of the EFI_FILE_INFO structure that we're filling.
  */
 
-/*
+#if 0
 static void fsw_posix_store_time_posix(struct fsw_dnode_stat *sb, int which, fsw_u32 posix_time)
 {
     EFI_FILE_INFO       *FileInfo = (EFI_FILE_INFO *)sb->host_data;
@@ -408,7 +410,7 @@ static void fsw_posix_store_time_posix(struct fsw_dnode_stat *sb, int which, fsw
     else if (which == FSW_DNODE_STAT_ATIME)
         fsw_posix_decode_time(&FileInfo->LastAccessTime,   posix_time);
 }
-*/
+#endif
 
 /**
  * Mode mapping callback for the fsw_dnode_stat call. This function looks at
@@ -416,7 +418,7 @@ static void fsw_posix_store_time_posix(struct fsw_dnode_stat *sb, int which, fsw
  * adjustments to the EFI_FILE_INFO structure that we're filling.
  */
 
-/*
+#if 0
 static void fsw_posix_store_attr_posix(struct fsw_dnode_stat *sb, fsw_u16 posix_mode)
 {
     EFI_FILE_INFO       *FileInfo = (EFI_FILE_INFO *)sb->host_data;
@@ -424,13 +426,13 @@ static void fsw_posix_store_attr_posix(struct fsw_dnode_stat *sb, fsw_u16 posix_
     if ((posix_mode & S_IWUSR) == 0)
         FileInfo->Attribute |= EFI_FILE_READ_ONLY;
 }
-*/
+#endif
 
 /**
  * Common function to fill an EFI_FILE_INFO with information about a dnode.
  */
 
-/*
+#if 0
 EFI_STATUS fsw_posix_dnode_fill_FileInfo(IN FSW_VOLUME_DATA *Volume,
                                        IN struct fsw_dnode *dno,
                                        IN OUT UINTN *BufferSize,
@@ -481,6 +483,6 @@ EFI_STATUS fsw_posix_dnode_fill_FileInfo(IN FSW_VOLUME_DATA *Volume,
     *BufferSize = RequiredSize;
     return EFI_SUCCESS;
 }
-*/
+#endif
 
 // EOF
