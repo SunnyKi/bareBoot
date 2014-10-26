@@ -73,11 +73,13 @@ EFI_STATUS EFIAPI fsw_efi_DriverBinding_Supported (
   IN EFI_HANDLE ControllerHandle,
   IN EFI_DEVICE_PATH_PROTOCOL * RemainingDevicePath
 );
+
 EFI_STATUS EFIAPI fsw_efi_DriverBinding_Start (
   IN EFI_DRIVER_BINDING_PROTOCOL * This,
   IN EFI_HANDLE ControllerHandle,
   IN EFI_DEVICE_PATH_PROTOCOL * RemainingDevicePath
 );
+
 EFI_STATUS EFIAPI fsw_efi_DriverBinding_Stop (
   IN EFI_DRIVER_BINDING_PROTOCOL * This,
   IN EFI_HANDLE ControllerHandle,
@@ -90,6 +92,7 @@ EFI_STATUS EFIAPI fsw_efi_ComponentName_GetDriverName (
   IN CHAR8 *Language,
   OUT CHAR16 **DriverName
 );
+
 EFI_STATUS EFIAPI fsw_efi_ComponentName_GetControllerName (
   IN EFI_COMPONENT_NAME_PROTOCOL * This,
   IN EFI_HANDLE ControllerHandle,
@@ -105,6 +108,7 @@ void fsw_efi_change_blocksize (
   fsw_u32 new_phys_blocksize,
   fsw_u32 new_log_blocksize
 );
+
 fsw_status_t fsw_efi_read_block (
   struct fsw_volume *vol,
   fsw_u32 phys_bno,
