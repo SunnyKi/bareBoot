@@ -430,6 +430,9 @@ void fsw_dnode_release(struct fsw_dnode *dno)
 {
     struct fsw_volume *vol = dno->vol;
     struct fsw_dnode *parent_dno;
+#if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
+    int i;
+#endif
 
     dno->refcount--;
 
@@ -448,6 +451,15 @@ void fsw_dnode_release(struct fsw_dnode *dno)
         vol->fstype_table->dnode_free(vol, dno);
 
         fsw_strfree(&dno->name);
+#if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
+        for (i = 0; i < FSW_DNODE_CACHE_SIZE; i++) {
+            struct fsw_dnode *cache_entry = dno->cache[i];
+    
+            if (cache_entry == NULL)
+                continue;
+            fsw_dnode_release(cache_entry);
+        }
+#endif
         fsw_free(dno);
 
         // release our pointer to the parent, possibly deallocating it, too
