@@ -560,6 +560,9 @@ fsw_hfs_btree_rec (
   fsw_u32 offset;
 
   offset = fsw_hfs_btree_recoffset (btree, node, index);
+  if (offset < sizeof(BTNodeDescriptor) || offset > btree->node_size) {
+    return NULL;
+  }
   return (BTreeKey *) (cnode + offset);
 }
 
