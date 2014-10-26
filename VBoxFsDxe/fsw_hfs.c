@@ -652,20 +652,15 @@ fsw_hfs_btree_search (
         if (cmp > 0)
           break;
         currnode = fsw_hfs_btree_next_node (currkey);
-#if 0
-      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": candidate for the next currnode is %d\n"), currnode));
-#endif
-        match = 1;
       }
     }
 
-    if (node->kind == kBTLeafNode && cmp < 0 && node->fLink) {
-      currnode = be32_to_cpu (node->fLink);
-      continue;
-    }
-    else if (!match) {
+    if (node->kind == kBTLeafNode) {
       status = FSW_NOT_FOUND;
       break;
+    }
+    if (cmp <= 0 && node->fLink) {
+      currnode = be32_to_cpu (node->fLink);
     }
 #else
     /* Perform binary search */
@@ -683,32 +678,30 @@ fsw_hfs_btree_search (
 
       currkey = fsw_hfs_btree_rec (btree, node, recnum);
 
-      cmp = 0 - compare_keys (currkey, key);
-#if 0
-      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": currnode %d lower/recnum/upper %d/%d/%d (%d) cmp=%d kind=%d\n"),
-            currnode, lower, recnum, upper, count, cmp, node->kind));
-#endif
-      if (cmp < 0)
+      cmp = compare_keys (currkey, key);
+      if (cmp > 0) {
         upper = recnum - 1;
-      if (cmp > 0)
+      } else if (cmp < 0) {
         lower = recnum + 1;
-      if (cmp == 0) {
-        /* Found! */
-        *result = node;
-        *key_offset = recnum;
+      } else if (cmp == 0) {
+        if (node->kind == kBTLeafNode) {
+          // Found!
+          *result = node;
+          *key_offset = recnum;
+          return FSW_SUCCESS;
 
-        return FSW_SUCCESS;
+        } else if (node->kind == kBTIndexNode) {
+          currnode = fsw_hfs_btree_next_node (currkey);
+          break;
+        }
       }
     }
 
-    if (cmp < 0)
+    if (cmp > 0)
       currkey = fsw_hfs_btree_rec (btree, node, upper);
 
     if (node->kind == kBTIndexNode && currkey != NULL) {
       currnode = fsw_hfs_btree_next_node (currkey);
-#if 0
-      FSW_MSG_DEBUGV ((FSW_MSGSTR (__FUNCTION__ ": candidate for the next currnode is %d\n"), currnode));
-#endif
     }
     else {
       status = FSW_NOT_FOUND;
@@ -956,10 +949,7 @@ fsw_hfs_cmp_extkey (
 }
 
 static int
-fsw_hfs_cmp_catkey (
-  BTreeKey * key1,
-  BTreeKey * key2
-)
+fsw_hfs_cmp_catkey ( BTreeKey * key1, BTreeKey * key2)
 {
   HFSPlusCatalogKey *ckey1 = (HFSPlusCatalogKey *) key1;
   HFSPlusCatalogKey *ckey2 = (HFSPlusCatalogKey *) key2;
@@ -1016,6 +1006,7 @@ fsw_hfs_cmpi_catkey (
   fsw_u16 ac, bc;
   fsw_u32 parentId1;
   int key1Len;
+  int key2Len;
   fsw_u16 *p1;
   fsw_u16 *p2;
 
@@ -1027,9 +1018,10 @@ fsw_hfs_cmpi_catkey (
     return -1;
 
   key1Len = be16_to_cpu (ckey1->nodeName.length);
+  key2Len = ckey2->nodeName.length;
 
-  if (key1Len == 0 && ckey2->nodeName.length == 0)
-    return 0;
+  if (key1Len == 0 || key2Len == 0)
+    return key1Len - key2Len;
 
   p1 = &ckey1->nodeName.unicode[0];
   p2 = &ckey2->nodeName.unicode[0];
@@ -1040,20 +1032,29 @@ fsw_hfs_cmpi_catkey (
     /* get next valid character from ckey1 */
     for (lc = 0; lc == 0 && apos < key1Len; apos++) {
       ac = be16_to_cpu (p1[apos]);
-      lc = fsw_to_lower (ac);
+      lc = ac ? fsw_to_lower (ac) : 0xFFFF;
     }
     ac = (fsw_u16) lc;
 
     /* get next valid character from ckey2 */
-    for (lc = 0; lc == 0 && bpos < ckey2->nodeName.length; bpos++) {
+    for (lc = 0; lc == 0 && bpos < key2Len; bpos++) {
       bc = p2[bpos];
-      lc = fsw_to_lower (bc);
+      lc = bc ? fsw_to_lower (bc) : 0xFFFF;
     }
     bc = (fsw_u16) lc;
 
-    if (ac != bc || (ac == 0 && bc == 0))
-      return ac - bc;
+    if (ac != bc)
+      break;
+
+    if (bpos == key1Len)
+      return 0;
   }
+  if (ac == bc)
+    return 0;
+  else if (ac < bc)
+    return -1;
+  else
+    return 1;
 }
 
 /**
@@ -1096,6 +1097,7 @@ fsw_hfs_get_extent (
     }
 
     /* Find appropriate overflow record */
+    overflowkey.forkType = 0; /* data fork */
     overflowkey.fileID = dno->g.dnode_id;
     overflowkey.startBlock = extent->log_start - lbno;
 
@@ -1278,6 +1280,10 @@ fsw_hfs_dir_read (
   param.vol = vol;
   param.shandle = shand;
   param.parent = dno->g.dnode_id;
+#if 0
+  if (dno->iLink != 0)
+    param.parent = 0;
+#endif
   param.cur_pos = 0;
   status =
     fsw_hfs_btree_iterate_node (&vol->catalog_tree, node, ptr,
