@@ -574,9 +574,14 @@ fsw_status_t fsw_dnode_lookup_cache(struct fsw_dnode *dno,
         goto errorexit;
 
 #if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
+    // release dnode pushed out of cache
+    i = FSW_DNODE_CACHE_SIZE - 1;
+    if (dno->cache[i] != NULL)
+        fsw_dnode_release(dno->cache[i]);
     // cache found entry at first slot
-    for (i = FSW_DNODE_CACHE_SIZE - 1; i > 0; i--) {
+    while (i > 0) {
         dno->cache[i] = dno->cache[i - 1];
+        i--;
     }
     dno->cache[0] = cache_dno;
     fsw_dnode_retain(cache_dno);
