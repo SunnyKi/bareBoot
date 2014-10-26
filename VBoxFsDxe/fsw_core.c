@@ -436,36 +436,38 @@ void fsw_dnode_release(struct fsw_dnode *dno)
 
     dno->refcount--;
 
-    if (dno->refcount == 0) {
-        parent_dno = dno->parent;
+    if (dno->refcount > 0)
+        return;
 
-        // de-register from volume's list
-        if (dno->next)
-            dno->next->prev = dno->prev;
-        if (dno->prev)
-            dno->prev->next = dno->next;
-        if (vol->dnode_head == dno)
-            vol->dnode_head = dno->next;
+    parent_dno = dno->parent;
 
-        // run fstype-specific cleanup
-        vol->fstype_table->dnode_free(vol, dno);
+    // de-register from volume's list
+    if (dno->next)
+        dno->next->prev = dno->prev;
+    if (dno->prev)
+        dno->prev->next = dno->next;
+    if (vol->dnode_head == dno)
+        vol->dnode_head = dno->next;
 
-        fsw_strfree(&dno->name);
 #if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
-        for (i = 0; i < FSW_DNODE_CACHE_SIZE; i++) {
-            struct fsw_dnode *cache_entry = dno->cache[i];
-    
-            if (cache_entry == NULL)
-                continue;
-            fsw_dnode_release(cache_entry);
-        }
-#endif
-        fsw_free(dno);
+    for (i = 0; i < FSW_DNODE_CACHE_SIZE; i++) {
+        struct fsw_dnode *cache_entry = dno->cache[i];
 
-        // release our pointer to the parent, possibly deallocating it, too
-        if (parent_dno)
-            fsw_dnode_release(parent_dno);
+        if (cache_entry == NULL)
+            continue;
+        fsw_dnode_release(cache_entry);
     }
+#endif
+
+    // run fstype-specific cleanup
+    vol->fstype_table->dnode_free(vol, dno);
+
+    fsw_strfree(&dno->name);
+    fsw_free(dno);
+
+    // release our pointer to the parent, possibly deallocating it, too
+    if (parent_dno)
+        fsw_dnode_release(parent_dno);
 }
 
 /**
@@ -653,7 +655,6 @@ fsw_status_t fsw_dnode_lookup(struct fsw_dnode *dno,
     if (fsw_streq_cstr(lookup_name, ".")) {    // self directory
         child_dno = dno;
         fsw_dnode_retain(child_dno);
-  
     } else if (fsw_streq_cstr(lookup_name, "..")) {   // parent directory
         if (dno->parent == NULL) {
             // We cannot go up from the root directory. Caution: Certain apps like the EFI shell
@@ -663,7 +664,6 @@ fsw_status_t fsw_dnode_lookup(struct fsw_dnode *dno,
         }
         child_dno = dno->parent;
         fsw_dnode_retain(child_dno);
-  
     } else {
         // do an cached actual lookup
         status = fsw_dnode_lookup_cache(dno, lookup_name, &child_dno);
@@ -719,7 +719,6 @@ fsw_status_t fsw_dnode_lookup_path(struct fsw_dnode *dno,
             else
                 child_dno = dno;
             fsw_dnode_retain(child_dno);
-
         } else {
             // do an actual directory lookup
           status = fsw_dnode_lookup(dno, &lookup_name, &child_dno);
