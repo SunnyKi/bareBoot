@@ -268,6 +268,8 @@ struct dirent * fsw_mswin_readdir(struct fsw_mswin_dir *dir)
     memcpy(dent.d_name, dno->name.data, dno->name.size);
     dent.d_name[dno->name.size] = '\0';
 
+    fsw_dnode_release(dno);
+
     return &dent;
 }
 
