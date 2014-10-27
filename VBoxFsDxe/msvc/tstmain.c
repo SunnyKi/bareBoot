@@ -99,7 +99,7 @@ viewdir(struct fsw_mswin_volume *vol, char *path, int level, int rflag, int doca
             for (i = 0; i < level*2; i++)
                 fputc(' ', outfile);
             fprintf(outfile, "0x%04x %8d %s\n", dent->d_type, dent->d_reclen, dent->d_name);
-    }
+        }
 
         if (rflag && dent->d_type == DT_DIR) {
             _snprintf(subpath, sizeof(subpath) - 1, "%s%s/", path, dent->d_name);
@@ -107,7 +107,7 @@ viewdir(struct fsw_mswin_volume *vol, char *path, int level, int rflag, int doca
         } else if (docat && dent->d_type == DT_REG) {
             _snprintf(subpath, sizeof(subpath) - 1, "%s%s", path, dent->d_name);
             catfile(vol, subpath);
-    }
+        }
     }
     fsw_mswin_closedir(dir);
 
