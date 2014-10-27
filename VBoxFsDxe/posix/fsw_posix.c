@@ -268,7 +268,7 @@ struct dirent * fsw_posix_readdir(struct fsw_posix_dir *dir)
             dent.d_type = DT_UNKNOWN;
             break;
     }
-#if 0
+#if 1
     dent.d_namlen = dno->name.size;
 #endif
     memcpy(dent.d_name, dno->name.data, dno->name.size);
