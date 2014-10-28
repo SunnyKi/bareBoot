@@ -228,7 +228,7 @@ fsw_status_t fsw_block_get(struct VOLSTRUCTNAME *vol, fsw_u32 phys_bno, fsw_u32 
             if (new_bcache != NULL)
               fsw_free(new_bcache);
             return status;
-	}
+        }
         if (vol->bcache_size > 0)
             fsw_memcpy(new_bcache, vol->bcache, vol->bcache_size * sizeof(struct fsw_blockcache));
         for (i = vol->bcache_size; i < new_bcache_size; i++) {
@@ -430,13 +430,11 @@ void fsw_dnode_release(struct fsw_dnode *dno)
 {
     struct fsw_volume *vol = dno->vol;
     struct fsw_dnode *parent_dno;
-#if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
-    int i;
-#endif
 
     dno->refcount--;
 
-    if (dno->refcount > 0)
+    // numcslots always zero for non dir dnodes
+    if (dno->refcount != dno->numcslots)
         return;
 
     parent_dno = dno->parent;
@@ -450,12 +448,17 @@ void fsw_dnode_release(struct fsw_dnode *dno)
         vol->dnode_head = dno->next;
 
 #if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
-    for (i = 0; i < FSW_DNODE_CACHE_SIZE; i++) {
-        struct fsw_dnode *cache_entry = dno->cache[i];
+    if (dno->type == FSW_DNODE_TYPE_DIR) {
+        int i;
 
-        if (cache_entry == NULL)
-            continue;
-        fsw_dnode_release(cache_entry);
+        for (i = 0; i < FSW_DNODE_CACHE_SIZE; i++) {
+            struct fsw_dnode *cache_entry = dno->cache[i];
+
+            if (cache_entry == NULL)
+                continue;
+            // numcslots not decremented on purpose
+            fsw_dnode_release(cache_entry);
+        }
     }
 #endif
 
@@ -535,12 +538,12 @@ fsw_status_t fsw_dnode_lookup_cache(struct fsw_dnode *dno,
 #endif
 
     fsw_dnode_retain(dno);
-  
+
     // ensure we have full information
     status = fsw_dnode_fill(dno);
     if (status)
         goto errorexit;
-  
+
     // make sure we operate on a directory
     if (dno->type != FSW_DNODE_TYPE_DIR) {
         status = FSW_UNSUPPORTED;
@@ -563,7 +566,7 @@ fsw_status_t fsw_dnode_lookup_cache(struct fsw_dnode *dno,
         while (i > 0) {
             dno->cache[i] = dno->cache[i - 1];
             i--;
-	}
+        }
         dno->cache[0] = cache_dno;
         fsw_dnode_retain(cache_dno);
         goto goodexit;
@@ -578,14 +581,17 @@ fsw_status_t fsw_dnode_lookup_cache(struct fsw_dnode *dno,
 #if defined(FSW_DNODE_CACHE_SIZE) && FSW_DNODE_CACHE_SIZE > 0
     // release dnode pushed out of cache
     i = FSW_DNODE_CACHE_SIZE - 1;
-    if (dno->cache[i] != NULL)
+    if (dno->cache[i] != NULL) {
+        dno->numcslots--;
         fsw_dnode_release(dno->cache[i]);
+    }
     // cache found entry at first slot
     while (i > 0) {
         dno->cache[i] = dno->cache[i - 1];
         i--;
     }
     dno->cache[0] = cache_dno;
+    dno->numcslots++;
     fsw_dnode_retain(cache_dno);
 
 goodexit:
@@ -622,35 +628,35 @@ fsw_status_t fsw_dnode_lookup(struct fsw_dnode *dno,
     struct fsw_dnode *child_dno = NULL;
 
     fsw_dnode_retain(dno);
-  
+
     // ensure we have full information
     status = fsw_dnode_fill(dno);
     if (status)
         goto errorexit;
-  
+
     // resolve symlink if necessary
     if (dno->type == FSW_DNODE_TYPE_SYMLINK) {
         status = fsw_dnode_resolve(dno, &child_dno);
         if (status)
             goto errorexit;
-  
+
         // symlink target becomes the new dno
         fsw_dnode_release(dno);
         dno = child_dno;   // is already retained
         child_dno = NULL;
-  
+
         // ensure we have full information
         status = fsw_dnode_fill(dno);
         if (status)
             goto errorexit;
     }
-  
+
     // make sure we operate on a directory
     if (dno->type != FSW_DNODE_TYPE_DIR) {
         status = FSW_UNSUPPORTED;
         goto errorexit;
     }
-  
+
     // check special paths
     if (fsw_streq_cstr(lookup_name, ".")) {    // self directory
         child_dno = dno;
