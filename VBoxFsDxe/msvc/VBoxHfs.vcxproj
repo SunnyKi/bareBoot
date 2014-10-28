@@ -49,7 +49,7 @@
     <ClCompile>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>HOST_MSWIN;FSTYPE=hfs;VBOXHFS_BTREE_BINSEARCH;FSW_DEBUG_LEVEL=0;FSW_DNODE_CACHE_SIZE=7;mode_t=int;off_t=int64;ssize_t=long;SwapBytes16=_byteswap_ushort;SwapBytes32=_byteswap_ulong;SwapBytes64=_byteswap_uint64;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.;..</AdditionalIncludeDirectories>
@@ -61,7 +61,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <Optimization>MaxSpeed</Optimization>
