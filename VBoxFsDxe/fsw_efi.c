@@ -402,8 +402,13 @@ fsw_efi_DriverBinding_Start (
   if (!EFI_ERROR (Status)) {
     LockedByMe = TRUE;
   }
+
   // open consumed protocols
-  Status = BS->OpenProtocol (ControllerHandle, &PROTO_NAME (BlockIoProtocol), (VOID **) &BlockIo, This->DriverBindingHandle, ControllerHandle, EFI_OPEN_PROTOCOL_GET_PROTOCOL); // NOTE: we only want to look at the MediaId
+ 
+  // NOTE: we only want to look at the MediaId
+  Status = BS->OpenProtocol (ControllerHandle, &PROTO_NAME (BlockIoProtocol),
+                             (VOID **) &BlockIo, This->DriverBindingHandle,
+                             ControllerHandle, EFI_OPEN_PROTOCOL_GET_PROTOCOL);
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
