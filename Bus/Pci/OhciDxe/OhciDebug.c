@@ -55,17 +55,16 @@ OhciDumpEdTdInfo (
   UINT32                  Index;
 
   if (Stage) {
-    DEBUG ((EFI_D_INFO, "\n Before executing command\n"));
+    DEBUG ((EFI_D_INFO, "Before executing command\n"));
   } else {
-    DEBUG ((EFI_D_INFO, "\n After executing command\n"));
+    DEBUG ((EFI_D_INFO, "After executing command\n"));
   }
   if (Ed != NULL) {
-    DEBUG ((EFI_D_INFO, "\nED Address: 0x%08x, ED buffer:\n", (UINT32)(UINTN) Ed));
+    DEBUG ((EFI_D_INFO, "ED Address: 0x%08x\n", (UINT32)(UINTN) Ed));
     DEBUG ((EFI_D_INFO, "DWord0  :TD Tail :TD Head :Next ED\n"));
     for (Index = 0; Index < sizeof (ED_DESCRIPTOR) / 4; Index++) {
       DEBUG ((EFI_D_INFO, "%08x ", *((UINT32*) (Ed) + Index)));
     }
-    DEBUG ((EFI_D_INFO, "\nNext TD buffer:\n", (UINT32)(UINTN) Td));
   }
   while (Td != NULL) {
     if (Td->Word0.DirPID == TD_SETUP_PID) {
@@ -77,7 +76,7 @@ OhciDumpEdTdInfo (
     }else if (Td->Word0.DirPID == TD_NODATA_PID) {
       DEBUG ((EFI_D_INFO, "\nNo data PID "));
     }
-    DEBUG ((EFI_D_INFO, "TD Address: 0x%08x, TD buffer:\n", (UINT32)(UINTN) Td));
+    DEBUG ((EFI_D_INFO, "TD Address: 0x%08x\n", (UINT32)(UINTN) Td));
     DEBUG ((EFI_D_INFO, "DWord0  :CuBuffer:Next TD :Buff End:Next TD :DataBuff:ActLength\n"));
     for (Index = 0; Index < sizeof (TD_DESCRIPTOR) / 4; Index++) {
       DEBUG ((EFI_D_INFO, "%08x ", *((UINT32*) (Td) + Index)));
@@ -88,7 +87,7 @@ OhciDumpEdTdInfo (
     }
   Td = (TD_DESCRIPTOR *)(UINTN) (Td->NextTDPointer);
   }
-  DEBUG ((EFI_D_INFO, "\n TD buffer End\n", (UINT32)(UINTN) Td));
+  DEBUG ((EFI_D_INFO, "\nTD buffer End\n", (UINT32)(UINTN) Td));
 
   return EFI_SUCCESS;
 }
