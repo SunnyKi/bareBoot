@@ -83,7 +83,7 @@ DumpEfiMemoryMap (
          Index,
          MemoryDescHob.MemDesc[Index].Type,
          MemoryDescHob.MemDesc[Index].PhysicalStart,
-         MemoryDescHob.MemDesc[Index].PhysicalStart + MemoryDescHob.MemDesc[Index].NumberOfPages * 4096 -1,
+         MemoryDescHob.MemDesc[Index].PhysicalStart + MultU64x32 (MemoryDescHob.MemDesc[Index].NumberOfPages, 4096) - 1,
          MemoryDescHob.MemDesc[Index].NumberOfPages,
          MemoryDescHob.MemDesc[Index].VirtualStart,
          MemoryDescHob.MemDesc[Index].Attribute);
