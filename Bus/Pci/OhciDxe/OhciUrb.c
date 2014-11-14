@@ -132,7 +132,7 @@ OhciCreateED (
   Ed->Word0.Direction = ED_FROM_TD_DIR;
   Ed->Word0.EndPointNum = EndPointNum;
   Ed->Word0.FunctionAddress = DeviceAddress;
-  Ed->Word0.MaxPacketSize = MaxPacket;
+  Ed->Word0.MaxPacketSize = (UINT32) MaxPacket;
   Ed->Word0.Skip = 1;
   Ed->Word0.Speed = DeviceSpeed;
 
