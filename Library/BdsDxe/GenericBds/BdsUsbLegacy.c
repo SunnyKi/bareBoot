@@ -28,11 +28,11 @@ DisableEhciLegacy (
   )
 {
   EFI_STATUS Status;
-  UINT64     pollResult;
-  UINT32     HcCapParams;
   UINT32     ExtendCap;
-  UINT32     UsbLegSup;
+  UINT32     HcCapParams;
+  UINT32     TimeOut;
   UINT32     UsbLegCtlSts;
+  UINT32     UsbLegSup;
   UINT8      ExtendCapPtr;
 
   DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
@@ -68,6 +68,7 @@ DisableEhciLegacy (
 #define BIOS_OWNED BIT16
 #define OS_OWNED   BIT24
 
+    DEBUG ((DEBUG_INFO, "%a: usblegsup before 0x%08x\n", __FUNCTION__, UsbLegSup));
     if ((UsbLegSup & BIOS_OWNED) != 0) {
       UsbLegSup |= OS_OWNED;
       (void) PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
@@ -76,19 +77,17 @@ DisableEhciLegacy (
         DEBUG ((DEBUG_INFO, "%a: bail out (flush: %r)\n", __FUNCTION__, Status));
         return;
       }
-      Status = PciIo->PollIo (
-                       PciIo,
-                       EfiPciIoWidthUint32,
-                       0,                   //EHCI_BAR_INDEX
-                       (UINT64) ExtendCapPtr, // USBLEGSUP
-                       (UINT64) (BIOS_OWNED | OS_OWNED),
-                       (UINT64) OS_OWNED,
-                       (UINT64) 10000,  // wait that number of 100ns units
-                       &pollResult
-                       );
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "%a: bail out (wating for ownership change: %r, result 0x%X)\n", __FUNCTION__, Status, pollResult));
+      TimeOut = 40;
+      while (TimeOut-- != 0) {
+        gBS->Stall (500);
+    
+        PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
+    
+        if ((UsbLegSup & (BIOS_OWNED | OS_OWNED)) == OS_OWNED) {
+          break;
+        }
       }
+      DEBUG ((DEBUG_INFO, "%a: usblegsup after 0x%08x\n", __FUNCTION__, UsbLegSup));
       /* Read back registers to dismiss pending interrupts */
       (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
       (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
