@@ -120,7 +120,7 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   PlatformHookLib|MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf
-!if "$(TARGET)" == "DEBUG"
+!if "$(TARGET)" == "DEBUG" || "$(TARGET)" == "NOOPT"
   SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
 !else
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
@@ -289,7 +289,7 @@
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseHardwareFlowControl|TRUE
 
-!if "$(TARGET)" == "DEBUG"
+!if "$(TARGET)" == "DEBUG" || "$(TARGET)" == "NOOPT"
   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x0F
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FEFCF
@@ -336,9 +336,10 @@
 !ifdef MEMLOG2SERIAL
   DEFINE DEF_MEMLOG2SERIAL = -DMEMLOG2SERIAL
 !endif
-!if "$(TARGET)" == "DEBUG"
-  DEFINE DEF_NDEBUG = -Os
+!if "$(TARGET)" == "RELEASE"
+  DEFINE DEF_NDEBUG = -DMDEPKG_NDEBUG
 !else
-  DEFINE DEF_NDEBUG = -DMDEPKG_NDEBUG -Os
+  DEFINE DEF_NDEBUG = 
 !endif
+
   *_*_*_CC_FLAGS   = $(DEF_NDEBUG) $(DEF_BLOCKIO) $(DEF_USB_FIXUP) $(DEF_SPEEDUP) $(DEF_MEMLOG2SERIAL)
