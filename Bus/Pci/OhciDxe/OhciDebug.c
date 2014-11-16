@@ -103,7 +103,8 @@ OhciDumpRegs (
   IN USB_OHCI_HC_DEV      *Ohc
 )
 {
-  UINTN i;
+  UINT32 i;
+
   DEBUG ((DEBUG_INFO, "%a: begin opregs dump for %p", __FUNCTION__, Ohc));
   for (i = 0; i <= 0x5C; i += 4) {
     if ((i % 0x10) == 0) {
