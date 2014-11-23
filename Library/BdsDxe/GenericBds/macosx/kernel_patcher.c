@@ -1424,10 +1424,10 @@ KernelAndKextsPatcherStart (
   }
 
   if (gSettings.CheckFakeSMC && PrelinkInfoAddr != 0) {
-    if ((AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr,
-         "<string>org.netkas.driver.FakeSMC</string>") != NULL) ||
-        (AsciiStrStr((CHAR8 *) (UINTN) PrelinkInfoAddr,
-         "<string>org.netkas.FakeSMC</string>") != NULL)) {
+    if (SearchAndCount ((CHAR8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,
+                        "<string>org.netkas.driver.FakeSMC</string>", 42) > 0 ||
+        SearchAndCount ((CHAR8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,
+                        "<string>org.netkas.FakeSMC</string>", 35) > 0) {
       WithKexts = FALSE;
     }
   }
