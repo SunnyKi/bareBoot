@@ -308,7 +308,7 @@ ICpuFamily06 (
   case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
   case CPU_MODEL_WESTMERE_EX: // Core i7, Nehalem-Ex Xeon, "Eagleton"
     msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
-    gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 0, 7);
+    gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 8, 15);
     gCPUStructure.TurboMsr = msr + 1;  /* XXX: suspicious action! */
     if (gCPUStructure.MaxRatio != 0) {
       gCPUStructure.FSBFrequency = DivU64x32 (gCPUStructure.CPUFrequency, gCPUStructure.MaxRatio);
