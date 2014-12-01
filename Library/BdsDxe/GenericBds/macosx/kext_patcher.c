@@ -343,7 +343,7 @@ UINT8   MLReplace[] = { 0xeb, 0x30, 0x89, 0xd8 };
 //
 // We can not rely on OSVersion global variable for OS version detection,
 // since in some cases it is not correct (install of ML from Lion, for example).
-// So, we'll use "brute-force" method - just try to pacth.
+// So, we'll use "brute-force" method - just try to patch.
 // Actually, we'll at least check that if we can find only one instance of code that
 // we are planning to patch.
 //
