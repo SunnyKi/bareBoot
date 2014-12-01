@@ -56,7 +56,7 @@ SearchAndCount (
   UINT8     *End;
 
   NumFounds = 0;
-  End = Source + SourceSize;
+  End = Source + SourceSize - SearchSize;
 
   while (Source < End) {   
     if (CompareMem (Source, Search, SearchSize) == 0) {
@@ -92,7 +92,7 @@ SearchAndReplace (
 
   NumReplaces = 0;
   NoReplacesRestriction = MaxReplaces <= 0;
-  End = Source + SourceSize;
+  End = Source + SourceSize - SearchSize;
 
   while (Source < End && (NoReplacesRestriction || MaxReplaces > 0)) {   
     if (CompareMem (Source, Search, SearchSize) == 0) {
