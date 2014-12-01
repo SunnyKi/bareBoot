@@ -262,7 +262,7 @@ ATIConnectorsPatch (
   ExtractKextBoundleIdentifier (InfoPlist);
   // number of occurences od Data should be 1
   Num = SearchAndCount (Driver, DriverSize, gSettings.KPATIConnectorsData, gSettings.KPATIConnectorsDataLen);
-  if (Num > 1) {
+  if (Num != 1) {
     return;
   }
   
