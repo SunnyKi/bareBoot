@@ -140,6 +140,18 @@ KextPatcherStart (
 
 //
 // Searches Source for Search pattern of size SearchSize
+// and returns pointer to found occurence or NULL.
+//
+UINT8 *
+SearchMemory (
+  UINT8   *Source,
+  UINT32  SourceSize,
+  CHAR8   *Search,
+  UINTN   SearchSize
+);
+
+//
+// Searches Source for Search pattern of size SearchSize
 // and returns the number of occurences.
 //
 UINTN

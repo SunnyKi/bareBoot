@@ -13,6 +13,35 @@
 
 //
 // Searches Source for Search pattern of size SearchSize
+// and returns pointer to found occurence or NULL.
+//
+UINT8 *
+SearchMemory (
+  UINT8   *Source,
+  UINT32  SourceSize,
+  CHAR8   *Search,
+  UINTN   SearchSize
+)
+{
+  UINT8     *End;
+
+  ASSERT ((Source != NULL && SourceSize > 0));
+  ASSERT ((Search != NULL && SearchSize > 0));
+
+  End = Source + SourceSize - SearchSize;
+
+  while (Source < End) {   
+    if (CompareMem (Source, Search, SearchSize) == 0) {
+      return Source;
+    } else {
+      Source++;
+    }
+  }
+  return NULL;
+}
+
+//
+// Searches Source for Search pattern of size SearchSize
 // and returns the number of occurences.
 //
 UINTN
@@ -488,8 +517,8 @@ PatchKext (
   }
 #endif
   for (i = 0; i < gSettings.NrKexts; i++) {
-    if ((gSettings.AnyKextDataLen[i] > 0) &&
-        (AsciiStrStr (InfoPlist, gSettings.AnyKext[i]) != NULL)) {
+    if (gSettings.AnyKextDataLen[i] > 0 &&
+        SearchMemory (InfoPlist, InfoPlistSize, gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]) != NULL) {
       AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
       DBG ("%a:  %d. name = %a, length = %d\n",__FUNCTION__,
            (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
