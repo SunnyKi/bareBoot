@@ -440,7 +440,7 @@ FixRegions (
       //this is region. Compare to bios tables
       p = gRegions;
       while (p)  {
-        if (AsciiStrStr(p->Name, Name)) {
+        if (AsciiStrStr(p->Name, Name) != NULL) {
           //apply patch
           if (p->Address != 0) {
             if (dsdt[i+7+shift] == 0x0C) {

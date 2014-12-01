@@ -301,7 +301,7 @@ MacOS:
     ImageInfo->LoadOptions      = buffer;
   }
 
-  if (AsciiStrStr(gSettings.BootArgs, "-v") == 0) {
+  if (AsciiStrStr(gSettings.BootArgs, "-v") == NULL) {
     gST->ConOut = NULL;
     if ((OSVersion != NULL) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
       if (gSettings.YoBlack) {

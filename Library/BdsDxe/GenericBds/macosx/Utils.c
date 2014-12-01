@@ -265,18 +265,18 @@ GetAdvancedCpuType (
           return 0x701; // Core i7
 
         case CPU_MODEL_FIELDS: // Lynnfield, Clarksfield, Jasper
-          if (AsciiStrStr (gCPUStructure.BrandString, "i5")) {
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") != NULL) {
             return 0x601; // Core i5
           }
 
           return 0x701; // Core i7
 
         case CPU_MODEL_DALES:  // Intel Core i5, i7 LGA1156 (45nm) (Havendale, Auburndale)
-          if (AsciiStrStr (gCPUStructure.BrandString, "Core(TM) i3")) {
+          if (AsciiStrStr (gCPUStructure.BrandString, "Core(TM) i3") != NULL) {
             return 0x901; // Core i3 //why not 902? Ask Apple
           }
 
-          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") != NULL ||
               (gCPUStructure.Cores <= 2)) {
             return 0x602; // Core i5
           }
@@ -285,11 +285,11 @@ GetAdvancedCpuType (
 
           //case CPU_MODEL_ARRANDALE:
         case CPU_MODEL_CLARKDALE:  // Intel Core i3, i5, i7 LGA1156 (32nm) (Clarkdale, Arrandale)
-          if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+          if (AsciiStrStr (gCPUStructure.BrandString, "i3") != NULL) {
             return 0x901; // Core i3
           }
 
-          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") != NULL ||
               (gCPUStructure.Cores <= 2)) {
             return 0x601; // Core i5 - (M540 -> 0x0602)
           }
@@ -301,11 +301,11 @@ GetAdvancedCpuType (
           return 0x701; // Core i7
 
         case CPU_MODEL_SANDY_BRIDGE:
-          if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+          if (AsciiStrStr (gCPUStructure.BrandString, "i3") != NULL) {
             return 0x903; // Core i3
           }
 
-          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") != NULL ||
               (gCPUStructure.Cores <= 2)) {
             return 0x603; // Core i5
           }
@@ -314,11 +314,11 @@ GetAdvancedCpuType (
 
         case CPU_MODEL_IVY_BRIDGE:
         case CPU_MODEL_IVY_BRIDGE_E5:
-          if (AsciiStrStr (gCPUStructure.BrandString, "i3")) {
+          if (AsciiStrStr (gCPUStructure.BrandString, "i3") != NULL) {
             return 0x903; // Core i3 - Apple doesn't use it
           }
 
-          if (AsciiStrStr (gCPUStructure.BrandString, "i5") ||
+          if (AsciiStrStr (gCPUStructure.BrandString, "i5") != NULL ||
               (gCPUStructure.Cores <= 2)) {
             return 0x604; // Core i5
           }
@@ -327,7 +327,7 @@ GetAdvancedCpuType (
 
         case CPU_MODEL_MEROM:  // Merom
           if (gCPUStructure.Cores >= 2) {
-            if (AsciiStrStr (gCPUStructure.BrandString, "Xeon")) {
+            if (AsciiStrStr (gCPUStructure.BrandString, "Xeon") != NULL) {
               return 0x402; // Quad-Core Xeon
             }
             else {
@@ -393,8 +393,8 @@ GetDefaultModel (
 
     case CPU_MODEL_JAKETOWN:
     case CPU_MODEL_SANDY_BRIDGE:
-      if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
-          (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
+      if (AsciiStrStr (gCPUStructure.BrandString, "i3") != NULL ||
+          AsciiStrStr (gCPUStructure.BrandString, "i5") != NULL) {
         DefaultType = MacBookPro81;
         break;
       }
@@ -473,13 +473,13 @@ GetDefaultModel (
         DefaultType = MacMini51;
       }
 
-      if ((AsciiStrStr (gCPUStructure.BrandString, "i3")) ||
-          (AsciiStrStr (gCPUStructure.BrandString, "i5"))) {
+      if (AsciiStrStr (gCPUStructure.BrandString, "i3") != NULL ||
+          AsciiStrStr (gCPUStructure.BrandString, "i5") != NULL) {
         DefaultType = iMac112;
         break;
       }
 
-      if (AsciiStrStr (gCPUStructure.BrandString, "i7")) {
+      if (AsciiStrStr (gCPUStructure.BrandString, "i7") != NULL) {
         DefaultType = iMac121;
         break;
       }
@@ -1335,7 +1335,7 @@ GetUserSettings (
     AsciiStrCat (gSettings.BootArgs, AddBootArgs);
   }
 #if 0
-  if (AsciiStrStr (gSettings.BootArgs, AddBootArgs) == 0) {
+  if (AsciiStrStr (gSettings.BootArgs, AddBootArgs) == NULL) {
   }
 #endif
   if (dictPointer != NULL) {
@@ -1513,7 +1513,7 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
   if (AsciiStrLen (gSettings.ProductName) > 0) {
     for (i = 0; i < sizeof (MACHINE_TYPES); i++) {
-      if (AsciiStrStr (gSettings.ProductName, AppleProductName[i]) != 0) {
+      if (AsciiStrStr (gSettings.ProductName, AppleProductName[i]) != NULL) {
         AsciiStrCpy (gSettings.VendorName, BiosVendor);
         AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[i]);
         AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[i]);
