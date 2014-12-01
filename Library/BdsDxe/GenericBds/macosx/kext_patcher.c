@@ -30,7 +30,7 @@ SearchMemory (
 
   End = Source + SourceSize - SearchSize;
 
-  while (Source < End) {   
+  while (Source <= End) {   
     if (CompareMem (Source, Search, SearchSize) == 0) {
       return Source;
     } else {
@@ -58,7 +58,7 @@ SearchAndCount (
   NumFounds = 0;
   End = Source + SourceSize - SearchSize;
 
-  while (Source < End) {   
+  while (Source <= End) {   
     if (CompareMem (Source, Search, SearchSize) == 0) {
       NumFounds++;
       Source += SearchSize;
@@ -94,7 +94,7 @@ SearchAndReplace (
   NoReplacesRestriction = MaxReplaces <= 0;
   End = Source + SourceSize - SearchSize;
 
-  while (Source < End && (NoReplacesRestriction || MaxReplaces > 0)) {   
+  while (Source <= End && (NoReplacesRestriction || MaxReplaces > 0)) {   
     if (CompareMem (Source, Search, SearchSize) == 0) {
 #ifdef KERNEL_PATCH_DEBUG
       Print (L"%a: found at 0x%x.\n", __FUNCTION__, Source);
