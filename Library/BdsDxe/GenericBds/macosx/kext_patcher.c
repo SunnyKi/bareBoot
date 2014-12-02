@@ -411,21 +411,10 @@ AnyKextPatch (
 {
   UINTN   Num = 0;
   
-  if (!gSettings.AnyKextInfoPlistPatch[N]) {
-    // kext binary patch
-    Num = SearchAndReplace (
-            Driver,
-            DriverSize,
-            gSettings.AnyKextData[N],
-            gSettings.AnyKextDataLen[N],
-            gSettings.AnyKextPatch[N],
-            -1
-          );
-    DBG ("%a: binary replaces %d times:\n",__FUNCTION__, Num);
-#ifdef KEXT_PATCH_DEBUG
-    Print (L"binary replaces %d times:\n", Num);
-#endif
-  } else {
+  if (gSettings.AnyKextInfoPlistPatch[N]) {
+    if (InfoPlist == NULL || InfoPlistSize == 0) {
+      return;
+    }
     // Info plist patch
     Num = SearchAndReplace (
             (UINT8 *) InfoPlist,
@@ -439,7 +428,25 @@ AnyKextPatch (
 #ifdef KEXT_PATCH_DEBUG
     Print (L"plist replaces %d times:\n", Num);
 #endif
+    return;
   }
+
+  if (Driver == NULL || DriverSize == 0) {
+    return;
+  }
+  // kext binary patch
+  Num = SearchAndReplace (
+          Driver,
+          DriverSize,
+          gSettings.AnyKextData[N],
+          gSettings.AnyKextDataLen[N],
+          gSettings.AnyKextPatch[N],
+          -1
+        );
+  DBG ("%a: binary replaces %d times:\n",__FUNCTION__, Num);
+#ifdef KEXT_PATCH_DEBUG
+  Print (L"binary replaces %d times:\n", Num);
+#endif
 }
 
 #if 0
@@ -550,9 +557,10 @@ PatchKext (
 //
 UINT64
 GetPlistHexValue (
-  CHAR8 *Plist,
-  CHAR8 *Key,
-  CHAR8 *WholePlist
+  CHAR8  *Plist,
+  CHAR8  *Key,
+  CHAR8  *WholePlist,
+  UINT32 WholeSize
 )
 {
   CHAR8     *Value;
@@ -601,20 +609,24 @@ GetPlistHexValue (
   AsciiStrnCat (Buffer, IDStart, IDLen);
   AsciiStrCat (Buffer, "\"");
   // and search whole plist for ID
-  IntTag = AsciiStrStr (WholePlist, Buffer);
+  IntTag = SearchMemory (WholePlist, WholeSize, Buffer, AsciiStrLen (Buffer));
   if (IntTag == NULL) {
     return 0;
   }
   // got it. find closing >
-  Value = AsciiStrStr (IntTag, ">");
+  Value = SearchMemory (IntTag, WholeSize - (IntTag - WholePlist), ">", 1);
   if (Value == NULL) {
     return 0;
   }
   if (Value[-1] == '/') {
     return 0;
   }
+  // ...Str..() functions like to call StrLen() with safety belts.
+  // Our datum is huge sometimes so reduce the risk.
+  CopyMem (Buffer, Value + 1, 20);
+  Buffer[20] = '\0';
   // we should have value now
-  NumValue = AsciiStrHexToUint64 (Value + 1);
+  NumValue = AsciiStrHexToUint64 (Buffer);
   
   return NumValue;
 }
@@ -659,6 +671,7 @@ PatchPrelinkedKexts (
   CHAR8     SavedValue;
   UINT32    KextAddr;
   UINT32    KextSize;
+  UINT32    range;
   
   InfoPlistStart = NULL;
   InfoPlistEnd = NULL;
@@ -666,8 +679,9 @@ PatchPrelinkedKexts (
 
   WholePlist = (CHAR8 *) (UINTN) PrelinkInfoAddr;
   DictPtr = WholePlist;
+  range = PrelinkInfoSize;
   
-  while ((DictPtr = AsciiStrStr (DictPtr, "dict>")) != NULL) {
+  while ((DictPtr = SearchMemory (DictPtr, range, "dict>", 5)) != NULL) {
     
     if (DictPtr[-1] == '<') {
       // opening dict
@@ -690,28 +704,29 @@ PatchPrelinkedKexts (
         
         // get kext address from _PrelinkExecutableSourceAddr
         // truncate to 32 bit to get physical addr
-        KextAddr = (UINT32) GetPlistHexValue (InfoPlistStart, kPrelinkExecutableSourceKey, WholePlist);
+        KextAddr = (UINT32) GetPlistHexValue (InfoPlistStart, kPrelinkExecutableSourceKey, WholePlist, PrelinkInfoSize);
         // KextAddr is always relative to 0x200000
         // and if KernelSlide is != 0 then KextAddr must be adjusted
         KextAddr += KernelSlide;
         // and adjust for AptioFixDrv's KernelRelocBase
         KextAddr += (UINT32) KernelRelocBase;
         
-        KextSize = (UINT32) GetPlistHexValue (InfoPlistStart, kPrelinkExecutableSizeKey, WholePlist);
+        KextSize = (UINT32) GetPlistHexValue (InfoPlistStart, kPrelinkExecutableSizeKey, WholePlist, PrelinkInfoSize);
         // patch it
-        PatchKext(
+        PatchKext (
           (UINT8 *) (UINTN) KextAddr,
           KextSize,
           InfoPlistStart,
           (UINT32) (InfoPlistEnd - InfoPlistStart)
         );
 
-        // return saved char
+        // restore saved char
         *InfoPlistEnd = SavedValue;
       }
       DictLevel--;
     }
     DictPtr += 5;
+    range = PrelinkInfoSize - (DictPtr - WholePlist);
   }
 }
 
