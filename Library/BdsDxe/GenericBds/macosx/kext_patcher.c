@@ -614,7 +614,7 @@ GetPlistHexValue (
     return 0;
   }
   // got it. find closing >
-  Value = SearchMemory (IntTag, WholeSize - (IntTag - WholePlist), ">", 1);
+  Value = SearchMemory (IntTag, (UINT32) (WholeSize - (IntTag - WholePlist)), ">", 1);
   if (Value == NULL) {
     return 0;
   }
@@ -726,7 +726,7 @@ PatchPrelinkedKexts (
       DictLevel--;
     }
     DictPtr += 5;
-    range = PrelinkInfoSize - (DictPtr - WholePlist);
+    range = (UINT32) (PrelinkInfoSize - (DictPtr - WholePlist));
   }
 }
 
