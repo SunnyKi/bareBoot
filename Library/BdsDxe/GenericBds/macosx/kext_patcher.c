@@ -215,10 +215,10 @@ ATIConnectorsPatchInit (
   ATIConnectorsPatchInited = TRUE;
 }
 
+#if 0
 //
 // Registers kexts that need force-load during WithKexts boot. 
 //
-#if 0
 VOID
 ATIConnectorsPatchRegisterKexts (
   FSINJECTION_PROTOCOL  *FSInject,
@@ -260,14 +260,14 @@ ATIConnectorsPatch (
   Num = 0;
   
   ExtractKextBoundleIdentifier (InfoPlist);
-  // number of occurences od Data should be 1
+  // number of Data occurences must be 1
   Num = SearchAndCount (Driver, DriverSize, gSettings.KPATIConnectorsData, gSettings.KPATIConnectorsDataLen);
   if (Num != 1) {
     return;
   }
   
   // patch
-  Num = SearchAndReplace(
+  Num = SearchAndReplace (
           Driver,
           DriverSize,
           gSettings.KPATIConnectorsData,
