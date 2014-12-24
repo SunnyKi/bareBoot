@@ -418,7 +418,9 @@ BiosKeyboardDriverBindingStart (
                   FeaturePcdGet (PcdPs2KbdExtendedVerification)
                   );
   if (EFI_ERROR (Status)) {
-//    DEBUG ((EFI_D_ERROR, "[KBD]Reset Failed. Status - %r\n", Status));
+#if 0
+    DEBUG ((EFI_D_ERROR, "[KBD]Reset Failed. Status - %r\n", Status));
+#endif
     StatusCode = EFI_PERIPHERAL_KEYBOARD | EFI_P_EC_NOT_DETECTED;
     goto Done;
   }
@@ -448,7 +450,9 @@ BiosKeyboardDriverBindingStart (
     //
     // Call Legacy BIOS Protocol to set whatever is necessary
     //
-  //  LegacyBios->UpdateKeyboardLedStatus (LegacyBios, Command);
+#if 0
+    LegacyBios->UpdateKeyboardLedStatus (LegacyBios, Command);
+#endif
   }
   //
   // Get Configuration
@@ -1777,7 +1781,9 @@ CheckKeyboardConnect (
              KBC_INPBUF_VIA60_KBEN
              );
   if (EFI_ERROR (Status)) {
-//    DEBUG ((EFI_D_ERROR, "[KBD]CheckKeyboardConnect - Keyboard enable failed!\n"));
+#if 0
+    DEBUG ((EFI_D_ERROR, "[KBD]CheckKeyboardConnect - Keyboard enable failed!\n"));
+#endif
     REPORT_STATUS_CODE (
       EFI_ERROR_CODE | EFI_ERROR_MINOR,
       EFI_PERIPHERAL_KEYBOARD | EFI_P_EC_CONTROLLER_ERROR
@@ -1792,7 +1798,9 @@ CheckKeyboardConnect (
              );
 
   if (EFI_ERROR (Status)) {
-//    DEBUG ((EFI_D_ERROR, "[KBD]CheckKeyboardConnect - Timeout!\n"));
+#if 0
+    DEBUG ((EFI_D_ERROR, "[KBD]CheckKeyboardConnect - Timeout!\n"));
+#endif
     REPORT_STATUS_CODE (
       EFI_ERROR_CODE | EFI_ERROR_MINOR,
       EFI_PERIPHERAL_KEYBOARD | EFI_P_EC_CONTROLLER_ERROR
@@ -2206,8 +2214,10 @@ BiosKeyboardSetState (
   EFI_STATUS                            Status;
   BIOS_KEYBOARD_DEV                     *BiosKeyboardPrivate;
   EFI_TPL                               OldTpl;
-//  EFI_LEGACY_BIOS_PROTOCOL              *LegacyBios;
   UINT8                                 Command;
+#if 0
+  EFI_LEGACY_BIOS_PROTOCOL              *LegacyBios;
+#endif
 
   if (KeyToggleState == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -2254,17 +2264,20 @@ BiosKeyboardSetState (
   Status = KeyboardWrite (BiosKeyboardPrivate, 0xed);
   if (EFI_ERROR (Status)) {
     gBS->RestoreTPL (OldTpl);
-    return EFI_DEVICE_ERROR;
+    Status = EFI_DEVICE_ERROR;
+    goto Exit;
   }
   Status = KeyboardWaitForValue (BiosKeyboardPrivate, 0xfa, KEYBOARD_WAITFORVALUE_TIMEOUT);
   if (EFI_ERROR (Status)) {
     gBS->RestoreTPL (OldTpl);
-    return EFI_DEVICE_ERROR;
+    Status = EFI_DEVICE_ERROR;
+    goto Exit;
   }
   Status = KeyboardWrite (BiosKeyboardPrivate, Command);
   if (EFI_ERROR (Status)) {
     gBS->RestoreTPL (OldTpl);
-    return EFI_DEVICE_ERROR;
+    Status = EFI_DEVICE_ERROR;
+    goto Exit;
   }
   //
   // Call Legacy BIOS Protocol to set whatever is necessary
@@ -2272,6 +2285,8 @@ BiosKeyboardSetState (
  // LegacyBios->UpdateKeyboardLedStatus (LegacyBios, Command);
 
   Status = EFI_SUCCESS;
+
+Exit:
 
   //
   // Leave critical section and return
