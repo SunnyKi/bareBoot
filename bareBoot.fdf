@@ -105,19 +105,25 @@ INF  bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !ifdef OHCI
 INF  bareBoot/Bus/Pci/OhciDxe/OhciDxe.inf
 !endif
+!ifndef NO_UHCI
 INF  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+!endif
 INF  MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+!ifndef NO_XHCI
 INF  MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+!endif
 INF  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF  MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !endif
 
-  # ISA Support
+!ifndef NO_ISA
+# ISA Support
 INF  PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
 INF  IntelFrameworkModulePkg/Bus/Isa/IsaBusDxe/IsaBusDxe.inf
 !ifdef PS2
 INF  IntelFrameworkModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2keyboardDxe.inf
+!endif
 !endif
 INF  bareBoot/BiosKeyboard/KeyboardDxe.inf
 
@@ -151,6 +157,7 @@ INF  RuleOverride=BINARY bareBoot/HFSPlus/HFSPlus.inf
 INF  RuleOverride=BINARY bareBoot/ION/IONDxe.inf
 !endif
 
+!ifndef NO_LOGO
 FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdAppleGrayLogoFile) {
     SECTION RAW = bareBoot/Logo/appleLogo_apple_gray.png
   }
@@ -162,10 +169,13 @@ FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdAppleWhiteLogoFile) {
 FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdBBLogoFile) {
     SECTION RAW = bareBoot/Logo/Logo.bmp
   }
+!endif
 
+!ifndef NO_FONT
 FILE FREEFORM = PCD(gEfiBareBootPkgGuid.PcdFontsFile) {
     SECTION RAW = bareBoot/Fonts/Monaco16.png
   }
+!endif
 
 [Rule.Common.DXE_CORE]
   FILE DXE_CORE = $(NAMED_GUID) {
