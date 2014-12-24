@@ -36,8 +36,19 @@ static UINT32 dti = 0;
 #if 0
 static CHAR8 pciName[15];
 #endif
-static CONST UINT32 ctm[] = { 0x02, 0x10, 0x800, 0x400 }; //mobile
-static CONST UINT32 ctd[] = { 0x04, 0x10, 0x800, 0x400 }; //desktop
+
+// Connector types
+
+//0x0002: LVDS  
+//0x0004: DVI-D
+//0x0010: VGA
+//0x0080: SVIDEO
+//0x0200: DVI-I
+//0x0400: DP
+//0x0800: HDMI
+
+static CONST UINT32 ctm[] = { 0x0002, 0x0010, 0x0800, 0x0400 }; //mobile
+static CONST UINT32 ctd[] = { 0x0004, 0x0010, 0x0800, 0x0400 }; //desktop
 static UINT32 cti = 0;
 
 card_t *card;
@@ -1335,13 +1346,16 @@ get_conntype_val (
 {
   UINT32 *ct;
 
-//Connector types:
-//0x10:  VGA
-//0x04:  DL DVI-I
-//0x800: HDMI
-//0x400: DisplayPort
-//0x02:  LVDS  
+// Connector types
 
+//0x0002: LVDS  
+//0x0004: DVI-D
+//0x0010: VGA
+//0x0080: SVIDEO
+//0x0200: DVI-I
+//0x0400: DP
+//0x0800: HDMI
+//
   if (gSettings.Mobile) {
     ct = (UINT32 *) &ctm[0];
   }
