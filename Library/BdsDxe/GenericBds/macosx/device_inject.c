@@ -386,7 +386,7 @@ get_pci_dev_path (
   DevicePath = NULL;
 
   DevicePath = DevicePathFromHandle (PciDt->DeviceHandle);
-  if (!DevicePath) {
+  if (DevicePath == NULL) {
     return NULL;
   }
   devpathstr = ConvertDevicePathToText (DevicePath, FALSE, FALSE);
@@ -681,7 +681,7 @@ patch_nvidia_rom (
 
   dcbptr = SwapBytes16 (dp_read16 (rom, 0x36));
 
-  if (!dcbptr) {
+  if (dcbptr == 0) {
     return PATCH_ROM_FAILED;
   }
 
@@ -1247,7 +1247,7 @@ get_edid_val (
     return FALSE;
   }
 
-  if (!gSettings.CustomEDID) {
+  if (gSettings.CustomEDID == NULL) {
     return FALSE;
   }
   v = 1;
@@ -1309,13 +1309,13 @@ get_name_pci_val (
 )
 {
 #if 0
-  if (!card->info->model_name || !gSettings.FakeATI) {
+  if (card->info->model_name == NULL || gSettings.FakeATI == 0) {
     return FALSE;
   }
-  AsciiSPrint (pciName, 15, "pci1002,%x", gSettings.FakeATI >> 16);
+  AsciiSPrint (pciName, 15, "pci1002,%04x", gSettings.FakeATI >> 16);
   LowCase (pciName);
   val->type = kStr;
-  val->size = 13;
+  val->size = 12;
   val->data = (UINT8 *) &pciName[0];
 
   return TRUE;
@@ -1329,12 +1329,12 @@ get_model_val (
   value_t * val
 )
 {
-  if (!card->info->model_name) {
+  if (card->info->model_name == NULL) {
     return FALSE;
   }
 
   val->type = kStr;
-  val->size = (UINT32) (AsciiStrLen (card->info->model_name) + 1);
+  val->size = (UINT32) AsciiStrLen (card->info->model_name);
   val->data = (UINT8 *) card->info->model_name;
   return TRUE;
 }
@@ -1400,7 +1400,7 @@ get_binimage_val (
   value_t * val
 )
 {
-  if (!card->rom) {
+  if (card->rom == NULL) {
     return FALSE;
   }
 
@@ -1436,14 +1436,14 @@ get_romrevision_val (
   UINT8 *rev;
   CHAR8 *cRev;
 
-  cRev = "109-B77101-00\0";
+  cRev = "109-B77101-00";
 
-  if (!card->rom) {
+  if (card->rom == NULL) {
     val->type = kPtr;
-    val->size = 14;
-    val->data = AllocateZeroPool (val->size);
+    val->size = 13;
+    val->data = AllocatePool (val->size);
 
-    if (!val->data) {
+    if (val->data == NULL) {
       return FALSE;
     }
 
@@ -1451,19 +1451,18 @@ get_romrevision_val (
     return TRUE;
   }
 
-  rev =
-    card->rom + *(UINT8 *) (card->rom + OFFSET_TO_GET_ATOMBIOS_STRINGS_START);
+  rev = card->rom + *((UINT8 *) (card->rom + OFFSET_TO_GET_ATOMBIOS_STRINGS_START));
   val->type = kPtr;
-  val->size = (UINT32) (AsciiStrLen ((CHAR8 *) rev + 1));
+  val->size = (UINT32) AsciiStrLen ((CHAR8 *) rev);
 
   if ((val->size < 3) || (val->size > 30)) {  //fool proof. Real value 13
     rev = (UINT8 *) cRev;
-    val->size = 14;
+    val->size = 13;
   }
 
-  val->data = AllocateZeroPool (val->size);
+  val->data = AllocatePool (val->size);
 
-  if (!val->data) {
+  if (val->data == NULL) {
     return FALSE;
   }
 
@@ -1513,16 +1512,13 @@ get_platforminfo_val (
 {
   val->data = AllocateZeroPool (0x80);
 
-  if (!val->data) {
+  if (val->data == NULL) {
     return FALSE;
   }
 
-#if 0
-  bzero (val->data, 0x80);
-#endif
   val->type = kPtr;
   val->size = 0x80;
-  val->data[0] = 1;
+  val->data[0] = '\x01';
   return TRUE;
 }
 
@@ -1673,7 +1669,7 @@ load_vbios_file (
 
   card->rom = AllocateCopyPool (bufferLen, buffer);
 
-  if (!card->rom) {
+  if (card->rom == NULL) {
     FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
     return FALSE;
   }
@@ -1752,13 +1748,13 @@ read_vbios (
 
   card->rom_size = rom_addr->rom_size * 512;
 
-  if (!card->rom_size) {
+  if (card->rom_size == 0) {
     return FALSE;
   }
 
   card->rom = AllocateZeroPool (card->rom_size);
 
-  if (!card->rom) {
+  if (card->rom == NULL) {
     return FALSE;
   }
 
@@ -1813,7 +1809,7 @@ read_disabled_vbios (
       // wait for SPLL_CHG_STATUS to change to 1
       cg_spll_status = 0;
 
-      while (!(cg_spll_status & R600_SPLL_CHG_STATUS)) {
+      while ((cg_spll_status & R600_SPLL_CHG_STATUS) == 0) {
         cg_spll_status = REG32 (card->mmio, R600_CG_SPLL_STATUS);
       }
 
@@ -1831,7 +1827,7 @@ read_disabled_vbios (
       // wait for SPLL_CHG_STATUS to change to 1
       cg_spll_status = 0;
 
-      while (!(cg_spll_status & R600_SPLL_CHG_STATUS)) {
+      while ((cg_spll_status & R600_SPLL_CHG_STATUS) == 0) {
         cg_spll_status = REG32 (card->mmio, R600_CG_SPLL_STATUS);
       }
     }
@@ -1975,7 +1971,7 @@ init_card (
     }
   }
 
-  if (!card->info->device_id || !card->info->cfg_name) {
+  if (card->info->device_id == 0 || card->info->cfg_name == kNull) {
     for (i = 0; radeon_cards[i].device_id; i++) {
       if ((radeon_cards[i].device_id & ~0xf) == (pci_dev->device_id & ~0xf)) {
         card->info = &radeon_cards[i];
@@ -1983,7 +1979,7 @@ init_card (
       }
     }
 
-    if (!card->info->cfg_name) {
+    if (card->info->cfg_name == kNull) {
       return FALSE;
     }
   }
@@ -2002,7 +1998,7 @@ init_card (
   if (add_vbios) {
     load_vbios_file (pci_dev->vendor_id, pci_dev->device_id);
 
-    if (!card->rom) {
+    if (card->rom == NULL) {
       if (card->posted) {
         read_vbios (FALSE);
       }
@@ -2091,7 +2087,7 @@ setup_ati_devprop (
   }
 
   devprop_add_list (ati_devprop_list);
-  devprop_add_value (card->device, "hda-gfx", (UINT8 *) "onboard-1\0", 10);
+  devprop_add_value (card->device, "hda-gfx", (UINT8 *) "onboard-1", 9);
 
   FreePool (card);
   return TRUE;
