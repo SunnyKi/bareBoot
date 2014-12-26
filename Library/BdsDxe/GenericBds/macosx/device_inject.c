@@ -1538,7 +1538,7 @@ get_vramtotalsize_val (
 }
 
 VOID
-free_val (
+clear_val (
   value_t * val
 )
 {
@@ -1551,59 +1551,54 @@ free_val (
 
 VOID
 devprop_add_list (
-  AtiDevProp devprop_list[]
+  AtiDevProp *devprop_list
 )
 {
   value_t *val;
-  int i, pnum;
+  AtiDevProp *dpe;
+  int pnum;
 
   val = AllocateZeroPool (sizeof (value_t));
 
-  for (i = 0; devprop_list[i].name != NULL; i++) {
-    if ((devprop_list[i].flags == FLAGTRUE) ||
-        (devprop_list[i].flags & card->flags)) {
-      if (devprop_list[i].get_value && devprop_list[i].get_value (val)) {
-        devprop_add_value (card->device, devprop_list[i].name, val->data,
-                           val->size);
-        free_val (val);
+  for (dpe = devprop_list; dpe != NULL && dpe->name != NULL; dpe++) {
+    if ((dpe->flags == FLAGTRUE) || (dpe->flags & card->flags)) {
+      if (dpe->get_value != NULL && dpe->get_value (val)) {
+        devprop_add_value (card->device, dpe->name, val->data, val->size);
+        clear_val (val);
 
-        if (devprop_list[i].all_ports) {
+        if (dpe->all_ports) {
           for (pnum = 1; pnum < card->ports; pnum++) {
-            if (devprop_list[i].get_value (val)) {
-              devprop_list[i].name[1] = (CHAR8) (0x30 + pnum);  // convert to ascii
-              devprop_add_value (card->device, devprop_list[i].name, val->data,
-                                 val->size);
-              free_val (val);
+            if (dpe->get_value (val)) {
+              dpe->name[1] = (CHAR8) ('0' + pnum);  // convert to ascii
+              devprop_add_value (card->device, dpe->name, val->data, val->size);
+              clear_val (val);
             }
           }
 
-          devprop_list[i].name[1] = 0x30; // write back our "@0," for a next possible card
+          dpe->name[1] = '0'; // write back our "@0," for a next possible card
         }
-      }
-      else {
-        if (devprop_list[i].default_val.type != kNul) {
-          devprop_add_value (card->device, devprop_list[i].name,
-                             devprop_list[i].default_val.type ==
-                             kCst ? (UINT8 *) &(devprop_list[i].default_val.
-                                                data) : devprop_list[i].
-                             default_val.data,
-                             devprop_list[i].default_val.size);
+      } else {
+        if (dpe->default_val.type != kNul) {
+          devprop_add_value (card->device, dpe->name,
+                              dpe->default_val.type == kCst ?
+                               (UINT8 *) &(dpe->default_val.data) :
+                               dpe->default_val.data,
+                              dpe->default_val.size);
         }
 
-        if (devprop_list[i].all_ports) {
+        if (dpe->all_ports) {
           for (pnum = 1; pnum < card->ports; pnum++) {
-            if (devprop_list[i].default_val.type != kNul) {
-              devprop_list[i].name[1] = (CHAR8) (0x30 + pnum);  // convert to ascii
-              devprop_add_value (card->device, devprop_list[i].name,
-                                 devprop_list[i].default_val.type ==
-                                 kCst ? (UINT8 *) &(devprop_list[i].default_val.
-                                                    data) : devprop_list[i].
-                                 default_val.data,
-                                 devprop_list[i].default_val.size);
+            if (dpe->default_val.type != kNul) {
+              dpe->name[1] = (CHAR8) ('0' + pnum);  // convert to ascii
+              devprop_add_value (card->device, dpe->name,
+                                  dpe->default_val.type == kCst ?
+                                   (UINT8 *) &(dpe->default_val.data) :
+                                   dpe->default_val.data,
+                                  dpe->default_val.size);
             }
           }
 
-          devprop_list[i].name[1] = 0x30; // write back our "@0," for a next possible card
+          dpe->name[1] = '0'; // write back our "@0," for a next possible card
         }
       }
     }
