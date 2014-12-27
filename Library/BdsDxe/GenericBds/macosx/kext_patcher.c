@@ -110,13 +110,15 @@ SearchAndReplace (
   return NumReplaces;
 }
 
-#if 0
-/** Global for storing KextBoundleIdentifier */
-CHAR8 gKextBoundleIdentifier[256];
+/** Global for storing KextBundleIdentifier */
 
-/** Extracts kext BoundleIdentifier from given Plist into gKextBoundleIdentifier */
+CHAR8 gKextBundleIdentifier[256];
+UINT32 gKextBundleIdLength;
+
+/** Extracts kext BundleIdentifier from given Plist into gKextBundleIdentifier */
+
 VOID
-ExtractKextBoundleIdentifier (
+ExtractKextBundleIdentifier (
   CHAR8   *Plist
 )
 {
@@ -126,7 +128,8 @@ ExtractKextBoundleIdentifier (
   INTN      DictLevel;
   
   DictLevel = 0;
-  gKextBoundleIdentifier[0] = '\0';
+  gKextBundleIdentifier[0] = '\0';
+  gKextBundleIdLength = 0;
   
   // start with first <dict>
   Tag = AsciiStrStr(Plist, "<dict>");
@@ -137,7 +140,7 @@ ExtractKextBoundleIdentifier (
   Tag += 6;
   DictLevel++;
   
-  while (Tag != '\0') {
+  while (*Tag != '\0') {
     if (AsciiStrnCmp(Tag, "<dict>", 6) == 0) {
       // opening dict
       DictLevel++;
@@ -152,9 +155,10 @@ ExtractKextBoundleIdentifier (
       if (BIStart != NULL) {
         BIStart += 8; // skip "<string>"
         BIEnd = AsciiStrStr (BIStart, "</string>");
-        if ((BIEnd != NULL) && ((BIEnd - BIStart + 1) < sizeof (gKextBoundleIdentifier))) {
-          CopyMem (gKextBoundleIdentifier, BIStart, (BIEnd - BIStart));
-          gKextBoundleIdentifier[BIEnd - BIStart] = '\0';
+        gKextBundleIdLength = (UINT32) (BIEnd - BIStart);
+        if (BIEnd != NULL && gKextBundleIdLength < sizeof (gKextBundleIdentifier)) {
+          CopyMem (gKextBundleIdentifier, BIStart, gKextBundleIdLength);
+          gKextBundleIdentifier[gKextBundleIdLength] = '\0';
           return;
         }
       }
@@ -170,6 +174,7 @@ ExtractKextBoundleIdentifier (
   }
 }
 
+#if 0
 ////////////////////////////////////
 //
 // ATIConnectors patch
@@ -183,10 +188,10 @@ BOOLEAN ATIConnectorsPatchInited = FALSE;
 // ATIConnectorsController's boundle IDs for
 // 0: ATI version - Lion, SnowLeo 10.6.7 2011 MBP
 // 1: AMD version - ML
-CHAR8 ATIKextBoundleId[2][64];
+CHAR8 ATIKextBundleId[2][64];
 
 //
-// Inits patcher: prepares ATIKextBoundleIds.
+// Inits patcher: prepares ATIKextBundleIds.
 //
 VOID
 ATIConnectorsPatchInit (
@@ -199,15 +204,15 @@ ATIConnectorsPatchInit (
   
   // Lion, SnowLeo 10.6.7 2011 MBP
   AsciiSPrint (
-    ATIKextBoundleId[0],
-    sizeof(ATIKextBoundleId[0]),
+    ATIKextBundleId[0],
+    sizeof(ATIKextBundleId[0]),
     "com.apple.kext.ATI%sController",
     gSettings.KPATIConnectorsController
   );
   // ML
   AsciiSPrint (
-    ATIKextBoundleId[1],
-    sizeof (ATIKextBoundleId[1]),
+    ATIKextBundleId[1],
+    sizeof (ATIKextBundleId[1]),
     "com.apple.kext.AMD%sController",
     gSettings.KPATIConnectorsController
   );
@@ -259,7 +264,7 @@ ATIConnectorsPatch (
 
   Num = 0;
   
-  ExtractKextBoundleIdentifier (InfoPlist);
+  ExtractKextBundleIdentifier (InfoPlist);
   // number of Data occurences must be 1
   Num = SearchAndCount (Driver, DriverSize, gSettings.KPATIConnectorsData, gSettings.KPATIConnectorsDataLen);
   if (Num != 1) {
@@ -409,10 +414,11 @@ AnyKextPatch (
   INT32   N
 )
 {
-  UINTN   Num = 0;
+  UINTN   Num;
   
   if (gSettings.AnyKextInfoPlistPatch[N]) {
     if (InfoPlist == NULL || InfoPlistSize == 0) {
+      DEBUG ((DEBUG_INFO, "%a: kext plist is not good (0x%p, %d)\n", __FUNCTION__, InfoPlist, InfoPlistSize));
       return;
     }
     // Info plist patch
@@ -424,14 +430,15 @@ AnyKextPatch (
             gSettings.AnyKextPatch[N],
             -1
           );
-    DBG ("%a: plist replaces %d times:\n",__FUNCTION__, Num);
+    DBG ("%a: patch #%d (%a) applied %d times\n", __FUNCTION__, N + 1, gSettings.AnyKext[N], Num);
 #ifdef KEXT_PATCH_DEBUG
-    Print (L"plist replaces %d times:\n", Num);
+    Print (L"%a: patch #%d (%a) applied %d times\n", __FUNCTION__, N + 1, gSettings.AnyKext[N], Num);
 #endif
     return;
   }
 
   if (Driver == NULL || DriverSize == 0) {
+      DEBUG ((DEBUG_INFO, "%a: kext binary is not good (0x%p, %d)\n", __FUNCTION__, Driver, DriverSize));
     return;
   }
   // kext binary patch
@@ -443,9 +450,9 @@ AnyKextPatch (
           gSettings.AnyKextPatch[N],
           -1
         );
-  DBG ("%a: binary replaces %d times:\n",__FUNCTION__, Num);
+  DBG ("%a: patch #%d (%a) applied %d times\n", __FUNCTION__, N + 1, gSettings.AnyKext[N], Num);
 #ifdef KEXT_PATCH_DEBUG
-  Print (L"binary replaces %d times:\n", Num);
+  Print (L"%a: patch #%d (%a) applied %d times\n", __FUNCTION__, N + 1, gSettings.AnyKext[N], Num);
 #endif
 }
 
@@ -498,8 +505,8 @@ PatchKext (
     if (!ATIConnectorsPatchInited) {
       ATIConnectorsPatchInit ();
     }
-    if (AsciiStrStr (InfoPlist, ATIKextBoundleId[0]) != NULL ||             // ATI boundle id
-        AsciiStrStr (InfoPlist, ATIKextBoundleId[1]) != NULL ||             // AMD boundle id
+    if (AsciiStrStr (InfoPlist, ATIKextBundleId[0]) != NULL ||             // ATI boundle id
+        AsciiStrStr (InfoPlist, ATIKextBundleId[1]) != NULL ||             // AMD boundle id
         AsciiStrStr (InfoPlist, "com.apple.kext.ATIFramebuffer") != NULL) { // SnowLeo
       ATIConnectorsPatch (Driver, DriverSize, InfoPlist, InfoPlistSize);
       return;
@@ -523,16 +530,22 @@ PatchKext (
     //
   }
 #endif
+
+  ExtractKextBundleIdentifier (InfoPlist);
+  DBG ("%a: kext (%a)\n", __FUNCTION__, gKextBundleIdentifier);
+
   for (i = 0; i < gSettings.NrKexts; i++) {
-    if (gSettings.AnyKextDataLen[i] > 0 &&
-        SearchMemory (InfoPlist, InfoPlistSize, gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]) != NULL) {
-      AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
-      DBG ("%a:  %d. name = %a, length = %d\n",__FUNCTION__,
-           (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
-#ifdef KEXT_PATCH_DEBUG
-      Print (L"  %d. name = %a, length = %d\n", (i + 1), gSettings.AnyKext[i], gSettings.AnyKextDataLen[i]);
-#endif
+    UINT32 namLen;
+
+    if (gSettings.AnyKextDataLen[i] < 1) {
+      continue;
     }
+    namLen = (UINT32) AsciiStrLen (gSettings.AnyKext[i]);
+    if (SearchMemory (gKextBundleIdentifier, gKextBundleIdLength, gSettings.AnyKext[i], namLen) == NULL) {
+      continue;
+    }
+
+    AnyKextPatch (Driver, DriverSize, InfoPlist, InfoPlistSize, i);
   }    
 }
 
@@ -712,6 +725,7 @@ PatchPrelinkedKexts (
         KextAddr += (UINT32) KernelRelocBase;
         
         KextSize = (UINT32) GetPlistHexValue (InfoPlistStart, kPrelinkExecutableSizeKey, WholePlist, PrelinkInfoSize);
+
         // patch it
         PatchKext (
           (UINT8 *) (UINTN) KextAddr,
