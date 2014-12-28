@@ -749,6 +749,7 @@ BOOLEAN get_name_pci_val(value_t *val);
 
 AtiDevProp ati_devprop_list[] = {
 #if 0
+  { FLAGTRUE, FALSE, "@0,AAPL,boot-display", get_bootdisplay_val, NULVAL },
   { FLAGTRUE, FALSE, "@0,ATY,EFIDisplay", NULL, STRVAL ("TMDSA") },
   { FLAGTRUE, FALSE, "@0,display-connect-flags", NULL, DWRVAL ((UINT32) 0) },
   { FLAGTRUE, FALSE, "ATY,MCLK", get_mclk_val, NULVAL },
@@ -756,8 +757,11 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, FALSE, "VRAM,totalsize", get_vramtotalsize_val, NULVAL },
 
   { FLAGTRUE, TRUE, "@0,AAPL,vram-memory", get_vrammemory_val, NULVAL },
+  { FLAGTRUE, TRUE, "@0,compatible", get_name_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,connector-type", get_conntype_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,display-type", NULL, STRVAL ("NONE") },
+
+  { FLAGOLD, FALSE, "compatible", get_name_pci_val, NULVAL },
 #endif
   { FLAGMOBILE, FALSE, "@0,backlight-control", NULL, DWRVAL(1) },
   { FLAGMOBILE, FALSE, "@0,display-dither-support", NULL, DWRVAL(0) },
@@ -766,9 +770,6 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGMOBILE, FALSE, "AAPL,HasLid", NULL, DWRVAL(1) },
   { FLAGMOBILE, FALSE, "AAPL,HasPanel", NULL, DWRVAL(1) },
 
-  { FLAGOLD, FALSE, "compatible", get_name_pci_val, NULVAL },
-
-  { FLAGTRUE, FALSE, "@0,AAPL,boot-display", get_bootdisplay_val, NULVAL },
   { FLAGTRUE, FALSE, "AAPL,aux-power-connected", NULL, DWRVAL ((UINT32) 1) },
   { FLAGTRUE, FALSE, "AAPL,backlight-control", NULL, DWRVAL ((UINT32) 0) },
   { FLAGTRUE, FALSE, "AAPL,overwrite_binimage", get_binimage_owr, NULVAL  },
@@ -786,7 +787,6 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, FALSE, "model", get_model_val, STRVAL ("ATI Radeon") },
   { FLAGTRUE, FALSE, "name", get_nameparent_val, NULVAL },
 
-  { FLAGTRUE, TRUE, "@0,compatible", get_name_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,device_type", NULL, STRVAL ("display") },
   { FLAGTRUE, TRUE, "@0,name", get_name_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,VRAM,memsize", get_vrammemsize_val, NULVAL },
