@@ -119,7 +119,8 @@ UINT32 gKextBundleIdLength;
 
 VOID
 ExtractKextBundleIdentifier (
-  CHAR8   *Plist
+  CHAR8   *Plist,
+  UINT32  PlistSize
 )
 {
   CHAR8     *Tag;
@@ -132,7 +133,7 @@ ExtractKextBundleIdentifier (
   gKextBundleIdLength = 0;
   
   // start with first <dict>
-  Tag = AsciiStrStr(Plist, "<dict>");
+  Tag = SearchMemory (Plist, PlistSize, "<dict>", 6);
   if (Tag == NULL) {
     return;
   }
@@ -141,20 +142,20 @@ ExtractKextBundleIdentifier (
   DictLevel++;
   
   while (*Tag != '\0') {
-    if (AsciiStrnCmp(Tag, "<dict>", 6) == 0) {
+    if (CompareMem (Tag, "<dict>", 6) == 0) {
       // opening dict
       DictLevel++;
       Tag += 6;
-    } else if (AsciiStrnCmp(Tag, "</dict>", 7) == 0) {
+    } else if (CompareMem (Tag, "</dict>", 7) == 0) {
       // closing dict
       DictLevel--;
       Tag += 7;
-    } else if ((DictLevel == 1) && (AsciiStrnCmp (Tag, "<key>CFBundleIdentifier</key>", 29) == 0)) {
+    } else if ((DictLevel == 1) && (CompareMem (Tag, "<key>CFBundleIdentifier</key>", 29) == 0)) {
       // BundleIdentifier is next <string>...</string>
-      BIStart = AsciiStrStr (Tag + 29, "<string>");
+      BIStart = SearchMemory (Tag + 29, (UINT32) (PlistSize - 29 - (Tag - Plist)), "<string>", 8);
       if (BIStart != NULL) {
         BIStart += 8; // skip "<string>"
-        BIEnd = AsciiStrStr (BIStart, "</string>");
+        BIEnd = SearchMemory (BIStart, (UINT32) (PlistSize - (BIStart - Plist)), "</string>", 9);
         gKextBundleIdLength = (UINT32) (BIEnd - BIStart);
         if (BIEnd != NULL && gKextBundleIdLength < sizeof (gKextBundleIdentifier)) {
           CopyMem (gKextBundleIdentifier, BIStart, gKextBundleIdLength);
@@ -264,7 +265,7 @@ ATIConnectorsPatch (
 
   Num = 0;
   
-  ExtractKextBundleIdentifier (InfoPlist);
+  ExtractKextBundleIdentifier (InfoPlist, InfoPlistSize);
   // number of Data occurences must be 1
   Num = SearchAndCount (Driver, DriverSize, gSettings.KPATIConnectorsData, gSettings.KPATIConnectorsDataLen);
   if (Num != 1) {
@@ -531,13 +532,14 @@ PatchKext (
   }
 #endif
 
-  ExtractKextBundleIdentifier (InfoPlist);
+  ExtractKextBundleIdentifier (InfoPlist, InfoPlistSize);
   DBG ("%a: kext (%a)\n", __FUNCTION__, gKextBundleIdentifier);
 
   for (i = 0; i < gSettings.NrKexts; i++) {
     UINT32 namLen;
 
     if (gSettings.AnyKextDataLen[i] < 1) {
+      DBG ("%a: bizzare patch #%d\n", __FUNCTION__, i);
       continue;
     }
     namLen = (UINT32) AsciiStrLen (gSettings.AnyKext[i]);
@@ -571,6 +573,7 @@ PatchKext (
 UINT64
 GetPlistHexValue (
   CHAR8  *Plist,
+  UINT32 PlistSize,
   CHAR8  *Key,
   CHAR8  *WholePlist,
   UINT32 WholeSize
@@ -587,17 +590,17 @@ GetPlistHexValue (
   NumValue = 0;
 
   // search for Key
-  Value = AsciiStrStr (Plist, Key);
+  Value = SearchMemory (Plist, PlistSize, Key, AsciiStrLen(Key));
   if (Value == NULL) {
     return 0;
   }
   // search for <integer
-  IntTag = AsciiStrStr (Value, "<integer");
+  IntTag = SearchMemory (Value, (UINT32) (Value - Plist), "<integer", 8);
   if (IntTag == NULL) {
     return 0;
   }
   // find <integer end
-  Value = AsciiStrStr (IntTag, ">");
+  Value = SearchMemory (IntTag, (UINT32) (IntTag - Plist),  ">", 1);
   if (Value == NULL) {
     return 0;
   }
@@ -607,13 +610,13 @@ GetPlistHexValue (
     return NumValue;
   }
   // it might be a reference: IDREF="173"/>
-  Value = AsciiStrStr (IntTag, "<integer IDREF=\"");
+  Value = SearchMemory (IntTag, (UINT32) (IntTag - Plist), "<integer IDREF=\"", 16);
   if (Value != IntTag) {
     return 0;
   }
   // compose <integer ID="xxx" in the Buffer
-  IDStart = AsciiStrStr (IntTag, "\"") + 1;
-  IDEnd = AsciiStrStr (IDStart, "\"");
+  IDStart = SearchMemory (IntTag, (UINT32) (IntTag - Plist),  "\"", 1) + 1;
+  IDEnd = SearchMemory (IDStart, (UINT32) (IDStart - Plist),  "\"", 1);
   IDLen = IDEnd - IDStart;
   if (IDLen > 8) {
     return 0;
@@ -680,6 +683,7 @@ PatchPrelinkedKexts (
   CHAR8     *DictPtr;
   CHAR8     *InfoPlistStart;
   CHAR8     *InfoPlistEnd;
+  UINT32    InfoPlistSize;
   INTN      DictLevel;
   CHAR8     SavedValue;
   UINT32    KextAddr;
@@ -714,24 +718,25 @@ PatchPrelinkedKexts (
         // terminate Info.plist with 0
         SavedValue = *InfoPlistEnd;
         *InfoPlistEnd = '\0';
+        InfoPlistSize = (UINT32) (InfoPlistEnd - InfoPlistStart);
         
         // get kext address from _PrelinkExecutableSourceAddr
         // truncate to 32 bit to get physical addr
-        KextAddr = (UINT32) GetPlistHexValue (InfoPlistStart, kPrelinkExecutableSourceKey, WholePlist, PrelinkInfoSize);
+        KextAddr = (UINT32) GetPlistHexValue (InfoPlistStart, InfoPlistSize, kPrelinkExecutableSourceKey, WholePlist, PrelinkInfoSize);
         // KextAddr is always relative to 0x200000
         // and if KernelSlide is != 0 then KextAddr must be adjusted
         KextAddr += KernelSlide;
         // and adjust for AptioFixDrv's KernelRelocBase
         KextAddr += (UINT32) KernelRelocBase;
         
-        KextSize = (UINT32) GetPlistHexValue (InfoPlistStart, kPrelinkExecutableSizeKey, WholePlist, PrelinkInfoSize);
+        KextSize = (UINT32) GetPlistHexValue (InfoPlistStart, InfoPlistSize, kPrelinkExecutableSizeKey, WholePlist, PrelinkInfoSize);
 
         // patch it
         PatchKext (
           (UINT8 *) (UINTN) KextAddr,
           KextSize,
           InfoPlistStart,
-          (UINT32) (InfoPlistEnd - InfoPlistStart)
+          InfoPlistSize
         );
 
         // restore saved char
