@@ -177,7 +177,7 @@
           </array>
         <key>Mobile</key>
           <false/>
-        <key>NoSPDScan</key>
+        <key>SPDScan</key>
           <false/>
         <key>ProductName</key>
           <string>iMac9,1</string>
