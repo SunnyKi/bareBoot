@@ -749,7 +749,6 @@ BOOLEAN get_name_pci_val(value_t *val);
 
 AtiDevProp ati_devprop_list[] = {
 #if 0
-  { FLAGTRUE, FALSE, "@0,AAPL,boot-display", get_bootdisplay_val, NULVAL },
   { FLAGTRUE, FALSE, "@0,ATY,EFIDisplay", NULL, STRVAL ("TMDSA") },
   { FLAGTRUE, FALSE, "@0,display-connect-flags", NULL, DWRVAL ((UINT32) 0) },
   { FLAGTRUE, FALSE, "ATY,MCLK", get_mclk_val, NULVAL },
@@ -760,6 +759,7 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, TRUE, "@0,compatible", get_name_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,connector-type", get_conntype_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,display-type", NULL, STRVAL ("NONE") },
+  { FLAGTRUE, TRUE, "AAPL00,override-no-connect", get_edid_val, NULVAL },
 
   { FLAGOLD, FALSE, "compatible", get_name_pci_val, NULVAL },
 #endif
@@ -770,11 +770,12 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGMOBILE, FALSE, "AAPL,HasLid", NULL, DWRVAL(1) },
   { FLAGMOBILE, FALSE, "AAPL,HasPanel", NULL, DWRVAL(1) },
 
+  { FLAGTRUE, FALSE, "@0,AAPL,boot-display", get_bootdisplay_val, NULVAL },
   { FLAGTRUE, FALSE, "AAPL,aux-power-connected", NULL, DWRVAL ((UINT32) 1) },
   { FLAGTRUE, FALSE, "AAPL,backlight-control", NULL, DWRVAL ((UINT32) 0) },
   { FLAGTRUE, FALSE, "AAPL,overwrite_binimage", get_binimage_owr, NULVAL  },
   { FLAGTRUE, FALSE, "AAPL00,Dither", NULL, DWRVAL(0) },
-  { FLAGTRUE, FALSE, "AAPL00,DualLink", get_dual_link_val, NULVAL  },
+  { FLAGTRUE, FALSE, "AAPL,DualLink", get_dual_link_val, NULVAL  },
   { FLAGTRUE, FALSE, "ATY,bin_image", get_binimage_val, NULVAL },
   { FLAGTRUE, FALSE, "ATY,Card#", get_romrevision_val, NULVAL },
   { FLAGTRUE, FALSE, "ATY,Copyright", NULL, STRVAL ("Copyright AMD Inc. All Rights Reserved. 2005-2011") },
@@ -790,7 +791,6 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, TRUE, "@0,device_type", NULL, STRVAL ("display") },
   { FLAGTRUE, TRUE, "@0,name", get_name_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,VRAM,memsize", get_vrammemsize_val, NULVAL },
-  { FLAGTRUE, TRUE, "AAPL00,override-no-connect", get_edid_val, NULVAL },
 
   { FLAGTRUE, FALSE, NULL, NULL, NULVAL }
 };
