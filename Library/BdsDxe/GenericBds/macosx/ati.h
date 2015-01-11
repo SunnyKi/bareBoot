@@ -751,7 +751,9 @@ AtiDevProp ati_devprop_list[] = {
 #if 0
   { FLAGTRUE, FALSE, "@0,ATY,EFIDisplay", NULL, STRVAL ("TMDSA") },
   { FLAGTRUE, FALSE, "@0,display-connect-flags", NULL, DWRVAL ((UINT32) 0) },
+  { FLAGTRUE, FALSE, "AAPL00,Dither", NULL, DWRVAL(0) },
   { FLAGTRUE, FALSE, "ATY,MCLK", get_mclk_val, NULVAL },
+  { FLAGTRUE, FALSE, "ATY,RefCLK", get_refclk_val, DWRVAL ((UINT32) 0x0a8c) },
   { FLAGTRUE, FALSE, "ATY,SCLK", get_sclk_val, NULVAL },
   { FLAGTRUE, FALSE, "VRAM,totalsize", get_vramtotalsize_val, NULVAL },
 
@@ -759,6 +761,7 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, TRUE, "@0,compatible", get_name_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,connector-type", get_conntype_val, NULVAL },
   { FLAGTRUE, TRUE, "@0,display-type", NULL, STRVAL ("NONE") },
+  { FLAGTRUE, TRUE, "@0,VRAM,memsize", get_vrammemsize_val, NULVAL },
   { FLAGTRUE, TRUE, "AAPL00,override-no-connect", get_edid_val, NULVAL },
 
   { FLAGOLD, FALSE, "compatible", get_name_pci_val, NULVAL },
@@ -772,9 +775,7 @@ AtiDevProp ati_devprop_list[] = {
 
   { FLAGTRUE, FALSE, "@0,AAPL,boot-display", get_bootdisplay_val, NULVAL },
   { FLAGTRUE, FALSE, "AAPL,aux-power-connected", NULL, DWRVAL ((UINT32) 1) },
-  { FLAGTRUE, FALSE, "AAPL,backlight-control", NULL, DWRVAL ((UINT32) 0) },
   { FLAGTRUE, FALSE, "AAPL,overwrite_binimage", get_binimage_owr, NULVAL  },
-  { FLAGTRUE, FALSE, "AAPL00,Dither", NULL, DWRVAL(0) },
   { FLAGTRUE, FALSE, "AAPL,DualLink", get_dual_link_val, NULVAL  },
   { FLAGTRUE, FALSE, "ATY,bin_image", get_binimage_val, NULVAL },
   { FLAGTRUE, FALSE, "ATY,Card#", get_romrevision_val, NULVAL },
@@ -782,7 +783,6 @@ AtiDevProp ati_devprop_list[] = {
   { FLAGTRUE, FALSE, "ATY,DeviceID", get_deviceid_val, NULVAL },
   { FLAGTRUE, FALSE, "ATY,EFIVersion", NULL, STRVAL("01.00.3180")                  },
   { FLAGTRUE, FALSE, "ATY,PlatformInfo", get_platforminfo_val, NULVAL },
-  { FLAGTRUE, FALSE, "ATY,RefCLK", get_refclk_val, DWRVAL ((UINT32) 0x0a8c) },
   { FLAGTRUE, FALSE, "ATY,VendorID", NULL, WRDVAL ((UINT32)0x1002) },
   { FLAGTRUE, FALSE, "device_type", get_nameparent_val, NULVAL },
   { FLAGTRUE, FALSE, "model", get_model_val, STRVAL ("ATI Radeon") },
@@ -790,7 +790,6 @@ AtiDevProp ati_devprop_list[] = {
 
   { FLAGTRUE, TRUE, "@0,device_type", NULL, STRVAL ("display") },
   { FLAGTRUE, TRUE, "@0,name", get_name_val, NULVAL },
-  { FLAGTRUE, TRUE, "@0,VRAM,memsize", get_vrammemsize_val, NULVAL },
 
   { FLAGTRUE, FALSE, NULL, NULL, NULVAL }
 };
