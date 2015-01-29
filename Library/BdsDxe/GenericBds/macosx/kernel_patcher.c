@@ -1424,9 +1424,9 @@ KernelAndKextsPatcherStart (
   }
 
   if (gSettings.CheckFakeSMC && PrelinkInfoAddr != 0) {
-    if (SearchMemory ((CHAR8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,
+    if (SearchMemory ((UINT8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,
                         "<string>org.netkas.driver.FakeSMC</string>", 42) != NULL ||
-        SearchMemory ((CHAR8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,
+        SearchMemory ((UINT8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,
                         "<string>org.netkas.FakeSMC</string>", 35) != NULL) {
       WithKexts = FALSE;
     }

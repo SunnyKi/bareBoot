@@ -123,9 +123,9 @@ ExtractKextBundleIdentifier (
   UINT32  PlistSize
 )
 {
-  CHAR8     *Tag;
-  CHAR8     *BIStart;
-  CHAR8     *BIEnd;
+  UINT8     *Tag;
+  UINT8     *BIStart;
+  UINT8     *BIEnd;
   INTN      DictLevel;
   
   DictLevel = 0;
@@ -133,7 +133,7 @@ ExtractKextBundleIdentifier (
   gKextBundleIdLength = 0;
   
   // start with first <dict>
-  Tag = SearchMemory (Plist, PlistSize, "<dict>", 6);
+  Tag = SearchMemory ((UINT8 *)Plist, PlistSize, "<dict>", 6);
   if (Tag == NULL) {
     return;
   }
@@ -152,10 +152,10 @@ ExtractKextBundleIdentifier (
       Tag += 7;
     } else if ((DictLevel == 1) && (CompareMem (Tag, "<key>CFBundleIdentifier</key>", 29) == 0)) {
       // BundleIdentifier is next <string>...</string>
-      BIStart = SearchMemory (Tag + 29, (UINT32) (PlistSize - 29 - (Tag - Plist)), "<string>", 8);
+      BIStart = SearchMemory (Tag + 29, (UINT32) (PlistSize - 29 - (Tag - (UINT8 *)Plist)), "<string>", 8);
       if (BIStart != NULL) {
         BIStart += 8; // skip "<string>"
-        BIEnd = SearchMemory (BIStart, (UINT32) (PlistSize - (BIStart - Plist)), "</string>", 9);
+        BIEnd = SearchMemory (BIStart, (UINT32) (PlistSize - (BIStart - (UINT8 *)Plist)), "</string>", 9);
         gKextBundleIdLength = (UINT32) (BIEnd - BIStart);
         if (BIEnd != NULL && gKextBundleIdLength < sizeof (gKextBundleIdentifier)) {
           CopyMem (gKextBundleIdentifier, BIStart, gKextBundleIdLength);
@@ -543,7 +543,7 @@ PatchKext (
       continue;
     }
     namLen = (UINT32) AsciiStrLen (gSettings.AnyKext[i]);
-    if (SearchMemory (gKextBundleIdentifier, gKextBundleIdLength, gSettings.AnyKext[i], namLen) == NULL) {
+    if (SearchMemory ((UINT8 *)gKextBundleIdentifier, gKextBundleIdLength, gSettings.AnyKext[i], namLen) == NULL) {
       continue;
     }
 
@@ -579,58 +579,58 @@ GetPlistHexValue (
   UINT32 WholeSize
 )
 {
-  CHAR8     *Value;
-  CHAR8     *IntTag;
+  UINT8     *Value;
+  UINT8     *IntTag;
   UINT64    NumValue;
-  CHAR8     *IDStart;
-  CHAR8     *IDEnd;
+  UINT8     *IDStart;
+  UINT8     *IDEnd;
   UINTN     IDLen;
   CHAR8     Buffer[48];
 
   NumValue = 0;
 
   // search for Key
-  Value = SearchMemory (Plist, PlistSize, Key, AsciiStrLen(Key));
+  Value = SearchMemory ((UINT8 *)Plist, PlistSize, Key, AsciiStrLen(Key));
   if (Value == NULL) {
     return 0;
   }
   // search for <integer
-  IntTag = SearchMemory (Value, (UINT32) (Value - Plist), "<integer", 8);
+  IntTag = SearchMemory (Value, (UINT32) (Value - (UINT8 *)Plist), "<integer", 8);
   if (IntTag == NULL) {
     return 0;
   }
   // find <integer end
-  Value = SearchMemory (IntTag, (UINT32) (IntTag - Plist),  ">", 1);
+  Value = SearchMemory (IntTag, (UINT32) (IntTag - (UINT8 *)Plist),  ">", 1);
   if (Value == NULL) {
     return 0;
   }
   // normal case: value is here
   if (Value[-1] != '/') {
-    NumValue = AsciiStrHexToUint64 (Value + 1);
+    NumValue = AsciiStrHexToUint64 ((CHAR8 *)(Value + 1));
     return NumValue;
   }
   // it might be a reference: IDREF="173"/>
-  Value = SearchMemory (IntTag, (UINT32) (IntTag - Plist), "<integer IDREF=\"", 16);
+  Value = SearchMemory (IntTag, (UINT32) (IntTag - (UINT8 *)Plist), "<integer IDREF=\"", 16);
   if (Value != IntTag) {
     return 0;
   }
   // compose <integer ID="xxx" in the Buffer
-  IDStart = SearchMemory (IntTag, (UINT32) (IntTag - Plist),  "\"", 1) + 1;
-  IDEnd = SearchMemory (IDStart, (UINT32) (IDStart - Plist),  "\"", 1);
+  IDStart = SearchMemory (IntTag, (UINT32) (IntTag - (UINT8 *)Plist),  "\"", 1) + 1;
+  IDEnd = SearchMemory (IDStart, (UINT32) (IDStart - (UINT8 *)Plist),  "\"", 1);
   IDLen = IDEnd - IDStart;
   if (IDLen > 8) {
     return 0;
   }
   AsciiStrCpy (Buffer, "<integer ID=\"");
-  AsciiStrnCat (Buffer, IDStart, IDLen);
+  AsciiStrnCat (Buffer, (CHAR8 *)IDStart, IDLen);
   AsciiStrCat (Buffer, "\"");
   // and search whole plist for ID
-  IntTag = SearchMemory (WholePlist, WholeSize, Buffer, AsciiStrLen (Buffer));
+  IntTag = SearchMemory ((UINT8 *)WholePlist, WholeSize, Buffer, AsciiStrLen (Buffer));
   if (IntTag == NULL) {
     return 0;
   }
   // got it. find closing >
-  Value = SearchMemory (IntTag, (UINT32) (WholeSize - (IntTag - WholePlist)), ">", 1);
+  Value = SearchMemory (IntTag, (UINT32) (WholeSize - (IntTag - (UINT8 *)WholePlist)), ">", 1);
   if (Value == NULL) {
     return 0;
   }
@@ -698,7 +698,7 @@ PatchPrelinkedKexts (
   DictPtr = WholePlist;
   range = PrelinkInfoSize;
   
-  while ((DictPtr = SearchMemory (DictPtr, range, "dict>", 5)) != NULL) {
+  while ((DictPtr = (CHAR8 *)SearchMemory ((UINT8 *)DictPtr, range, "dict>", 5)) != NULL) {
     
     if (DictPtr[-1] == '<') {
       // opening dict
