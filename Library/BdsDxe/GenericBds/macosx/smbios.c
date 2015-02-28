@@ -355,10 +355,10 @@ PatchTableType1 (
   }
 
   gUuid = SmbiosTable.Type1->Uuid;
-	s = GetSmbiosString(SmbiosTable, SmbiosTable.Type1->ProductName);
-	CopyMem (gSettings.OEMProduct, s, AsciiStrSize (s));
+  s = GetSmbiosString(SmbiosTable, SmbiosTable.Type1->ProductName);
+  CopyMem (gSettings.OEMProduct, s, AsciiStrSize (s));
 
-  AsciiSPrint (Buffer, 100, "%02x%02x%02x%02x%02x%02x",
+  AsciiSPrint (Buffer, sizeof (Buffer), "%02x%02x%02x%02x%02x%02x",
     SmbiosTable.Type1->Uuid.Data4[2],
     SmbiosTable.Type1->Uuid.Data4[3],
     SmbiosTable.Type1->Uuid.Data4[4],
@@ -372,7 +372,7 @@ PatchTableType1 (
 
 #ifdef BOOT_DEBUG
   ZeroMem (Buffer, sizeof (Buffer));
-  AsciiSPrint (Buffer, 100, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+  AsciiSPrint (Buffer, sizeof (Buffer), "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
     SmbiosTable.Type1->Uuid.Data1,
     SmbiosTable.Type1->Uuid.Data2,
     SmbiosTable.Type1->Uuid.Data3,
@@ -504,7 +504,7 @@ PatchTableType2and3 (
   s = GetSmbiosString (SmbiosTable, SmbiosTable.Type2->ProductName);
   CopyMem (gSettings.OEMBoard, s, AsciiStrSize (s));
   s = GetSmbiosString(SmbiosTable, SmbiosTable.Type2->Manufacturer);
-	CopyMem (gSettings.OEMVendor, s, AsciiStrSize (s));
+  CopyMem (gSettings.OEMVendor, s, AsciiStrSize (s));
   
   Size = SmbiosTable.Type2->Hdr.Length; //old size
   TableSize = SmbiosTableLength (SmbiosTable); //including strings
