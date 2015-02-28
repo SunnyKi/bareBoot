@@ -1555,7 +1555,24 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
   GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
 
-  DBG ("Product Name used = %a\n", gSettings.ProductName);
+  DBG ("Product smbios datum start\n");
+  DBG ("ProductName = %a\n", gSettings.ProductName);
+  DBG ("Mobile = %a\n", gSettings.Mobile);
+
+  DBG ("%a = %a\n", "BiosReleaseDate", gSettings.ReleaseDate);
+  DBG ("%a = %a\n", "BiosVendor", gSettings.VendorName);
+  DBG ("%a = %a\n", "BiosVersion", gSettings.RomVersion);
+  DBG ("%a = %a\n", "Board-ID", gSettings.BoardNumber);
+  DBG ("%a = %a\n", "BoardManufacturer", gSettings.BoardManufactureName);
+  DBG ("%a = %a\n", "BoardSerialNumber", gSettings.BoardSerialNumber);
+  DBG ("%a = %a\n", "BoardVersion", gSettings.BoardVersion);
+  DBG ("%a = %a\n", "ChassisAssetTag", gSettings.ChassisAssetTag);
+  DBG ("%a = %a\n", "ChassisManufacturer", gSettings.ChassisManufacturer);
+  DBG ("%a = %a\n", "Family", gSettings.FamilyName);
+  DBG ("%a = %a\n", "LocationInChassis", gSettings.LocationInChassis);
+  DBG ("%a = %a\n", "Manufacturer", gSettings.ManufactureName);
+  DBG ("%a = %a\n", "SerialNumber", gSettings.SerialNr);
+  DBG ("%a = %a\n", "Version", gSettings.VersionNr);
 
   gSettings.SPDScan = GetBoolProperty (dictPointer, "SPDScan", FALSE);
 
@@ -1606,6 +1623,7 @@ GetUserSettings (
       }
     }
   }
+  DBG ("Product smbios datum end\n");
 
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 
