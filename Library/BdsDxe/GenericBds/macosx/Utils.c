@@ -1506,70 +1506,54 @@ GetUserSettings (
     }
   }
 
+  AsciiStrCpy (gSettings.BoardManufactureName, BiosVendor);
+  AsciiStrCpy (gSettings.ChassisManufacturer, BiosVendor);
+  AsciiStrCpy (gSettings.ManufactureName, BiosVendor);
+  AsciiStrCpy (gSettings.VendorName, BiosVendor);
+
+  AsciiStrCpy (gSettings.BoardSerialNumber, AppleBoardSN);
+  AsciiStrCpy (gSettings.LocationInChassis, AppleBoardLocation);
+
   dictPointer = plDictFind (gConfigPlist, "SMBIOS", 6, plKindDict);
 
   gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", FALSE);
 
   GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
+
+  Model = GetDefaultModel ();
   if (AsciiStrLen (gSettings.ProductName) > 0) {
     for (i = 0; i < sizeof (MACHINE_TYPES); i++) {
       if (AsciiStrStr (gSettings.ProductName, AppleProductName[i]) != NULL) {
-        AsciiStrCpy (gSettings.VendorName, BiosVendor);
-        AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[i]);
-        AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[i]);
-        AsciiStrCpy (gSettings.ManufactureName, BiosVendor);
-        AsciiStrCpy (gSettings.ProductName, AppleProductName[i]);
-        AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[i]);
-        AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[i]);
-        AsciiStrCpy (gSettings.FamilyName, AppleFamilies[i]);
-        AsciiStrCpy (gSettings.BoardManufactureName, BiosVendor);
-        AsciiStrCpy (gSettings.BoardSerialNumber, AppleBoardSN);
-        AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[i]);
-        AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[i]);
-        AsciiStrCpy (gSettings.LocationInChassis, AppleBoardLocation);
-        AsciiStrCpy (gSettings.ChassisManufacturer, BiosVendor);
-        AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[i]);
+        Model = i;
         break;
       }
     }
   }
-  else {
-    Model = GetDefaultModel ();
-    AsciiStrCpy (gSettings.VendorName, BiosVendor);
-    AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[Model]);
-    AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[Model]);
-    AsciiStrCpy (gSettings.ManufactureName, BiosVendor);
-    AsciiStrCpy (gSettings.ProductName, AppleProductName[Model]);
-    AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[Model]);
-    AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[Model]);
-    AsciiStrCpy (gSettings.FamilyName, AppleFamilies[Model]);
-    AsciiStrCpy (gSettings.BoardManufactureName, BiosVendor);
-    AsciiStrCpy (gSettings.BoardSerialNumber, AppleBoardSN);
-    AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[Model]);
-    AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[Model]);
-    AsciiStrCpy (gSettings.LocationInChassis, AppleBoardLocation);
-    AsciiStrCpy (gSettings.ChassisManufacturer, BiosVendor);
-    AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[Model]);
-  }
 
+  AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[Model]);
+  AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[Model]);
+  AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[Model]);
+  AsciiStrCpy (gSettings.FamilyName, AppleFamilies[Model]);
+  AsciiStrCpy (gSettings.ProductName, AppleProductName[Model]);
+  AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[Model]);
+  AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[Model]);
+  AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[Model]);
+  AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[Model]);
+
+  GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
   GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
   GetAsciiProperty (dictPointer, "BiosVersion", gSettings.RomVersion);
-  GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
-  GetAsciiProperty (dictPointer, "Manufacturer", gSettings.ManufactureName);
-  GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
-  GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
-  GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
-  GetAsciiProperty (dictPointer, "BoardManufacturer",
-                    gSettings.BoardManufactureName);
-  GetAsciiProperty (dictPointer, "BoardSerialNumber",
-                    gSettings.BoardSerialNumber);
   GetAsciiProperty (dictPointer, "Board-ID", gSettings.BoardNumber);
+  GetAsciiProperty (dictPointer, "BoardManufacturer", gSettings.BoardManufactureName);
+  GetAsciiProperty (dictPointer, "BoardSerialNumber", gSettings.BoardSerialNumber);
   GetAsciiProperty (dictPointer, "BoardVersion", gSettings.BoardVersion);
-  GetAsciiProperty (dictPointer, "LocationInChassis",
-                    gSettings.LocationInChassis);
-  GetAsciiProperty (dictPointer, "ChassisManufacturer",
-                    gSettings.ChassisManufacturer);
   GetAsciiProperty (dictPointer, "ChassisAssetTag", gSettings.ChassisAssetTag);
+  GetAsciiProperty (dictPointer, "ChassisManufacturer", gSettings.ChassisManufacturer);
+  GetAsciiProperty (dictPointer, "Family", gSettings.FamilyName);
+  GetAsciiProperty (dictPointer, "LocationInChassis", gSettings.LocationInChassis);
+  GetAsciiProperty (dictPointer, "Manufacturer", gSettings.ManufactureName);
+  GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
+  GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
 
   DBG ("Product Name used = %a\n", gSettings.ProductName);
 
@@ -1602,6 +1586,7 @@ GetUserSettings (
           GetStringProperty (prop, "SerialNumber");
         gSettings.cMemDevice[Slot].PartNumber =
           GetStringProperty (prop, "PartNumber");
+
         DBG (" gSettings.cMemDevice[%d].MemoryType = 0x%x\n", Slot,
              gSettings.cMemDevice[Slot].MemoryType);
         DBG (" gSettings.cMemDevice[%d].Speed = %d MHz\n", Slot,
@@ -1621,6 +1606,7 @@ GetUserSettings (
       }
     }
   }
+
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 
   gSettings.PatchLAPIC = GetBoolProperty (dictPointer, "PatchLAPIC", FALSE);
