@@ -1555,9 +1555,9 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
   GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
 
-  DBG ("Product smbios datum start\n");
+  DBG ("Product smbios datum START\n");
   DBG ("ProductName = %a\n", gSettings.ProductName);
-  DBG ("Mobile = %a\n", gSettings.Mobile);
+  DBG ("Mobile = %a\n", gSettings.Mobile ? "true" : "false");
 
   DBG ("%a = %a\n", "BiosReleaseDate", gSettings.ReleaseDate);
   DBG ("%a = %a\n", "BiosVendor", gSettings.VendorName);
@@ -1623,7 +1623,7 @@ GetUserSettings (
       }
     }
   }
-  DBG ("Product smbios datum end\n");
+  DBG ("Product smbios datum END\n");
 
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 
