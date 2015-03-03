@@ -1,12 +1,30 @@
 #include <Library/BaseLib.h>
 #include <Library/BaseMemoryLib.h>
 
+EFI_GUID gNil_Guid                    = { 0x00000000, 0x0000, 0x0000, { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }};
+
+VOID
+EraseGuid (
+  OUT EFI_GUID *Guid
+)
+{
+  ZeroMem (Guid, sizeof (*Guid));
+}
+
+BOOLEAN
+IsGuidValid (
+  IN EFI_GUID *Guid
+)
+{
+  return CompareMem (Guid, &gNil_Guid, sizeof (EFI_GUID)) == 0 ? FALSE : TRUE;
+}
+
 /*
  * RFC4112 was used
  */
 
 /*
- * Returns TRUE if Str is ascii UUID in format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+ * Returns TRUE if Str is in format xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
  */
 
 BOOLEAN
@@ -65,7 +83,13 @@ AsciiStrUuidToBinary (
   UINT8 *up;
   CHAR8 cb[4];
 
-  if (!IsValidUuidAsciiString (Str) || Guid == NULL) {
+  if (Guid == NULL) {
+    return EFI_UNSUPPORTED;
+  }
+
+  EraseGuid (Guid);
+
+  if (!IsValidUuidAsciiString (Str)) {
     return EFI_UNSUPPORTED;
   }
 
@@ -80,7 +104,7 @@ AsciiStrUuidToBinary (
 }
 
 /**
- Converts UUID looking string to binary value.
+ Converts UUID like string to binary value.
  UUID text format is xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
  @param Str              UUID text format string that contains

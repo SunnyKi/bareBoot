@@ -371,21 +371,7 @@ PatchTableType1 (
   gSettings.MacAddrLen = hex2bin (Buffer, gSettings.EthMacAddr, (INT32)(AsciiStrLen(Buffer) >> 1));
 
 #ifdef BOOT_DEBUG
-  ZeroMem (Buffer, sizeof (Buffer));
-  AsciiSPrint (Buffer, sizeof (Buffer), "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-    SmbiosTable.Type1->Uuid.Data1,
-    SmbiosTable.Type1->Uuid.Data2,
-    SmbiosTable.Type1->Uuid.Data3,
-    SmbiosTable.Type1->Uuid.Data4[0],
-    SmbiosTable.Type1->Uuid.Data4[1],
-    SmbiosTable.Type1->Uuid.Data4[2],
-    SmbiosTable.Type1->Uuid.Data4[3],
-    SmbiosTable.Type1->Uuid.Data4[4],
-    SmbiosTable.Type1->Uuid.Data4[5],
-    SmbiosTable.Type1->Uuid.Data4[6],
-    SmbiosTable.Type1->Uuid.Data4[7]
-  );
-  DBG ("Smbios: gUuid = %a\n", &Buffer);
+  DBG ("Smbios: gUuid = %g (rfc4112)\n", &SmbiosTable.Type1->Uuid);
 #endif
 
   //Increase table size
@@ -398,10 +384,10 @@ PatchTableType1 (
   newSmbiosTable.Type1->Hdr.Length = (UINT8) NewSize;
   newSmbiosTable.Type1->WakeUpType = SystemWakeupTypePowerSwitch;
 
-  if (!EFI_ERROR (SystemIDStatus)) {
+  if (IsGuidValid (&gSystemID)) {
     newSmbiosTable.Type1->Uuid = gSystemID;
   } else {
-    if (!EFI_ERROR (PlatformUuidStatus)) {
+    if (IsGuidValid (&gPlatformUuid)) {
       newSmbiosTable.Type1->Uuid = gPlatformUuid;
     } else {
       newSmbiosTable.Type1->Uuid = gUuid;

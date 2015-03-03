@@ -178,8 +178,7 @@ SetVariablesForOSX (
                   );
   }
 
-  if (EFI_ERROR (SystemIDStatus) &&
-      !EFI_ERROR (PlatformUuidStatus)) {
+  if (!IsGuidValid (&gSystemID) && IsGuidValid (&gPlatformUuid)) {
     Status = gRS->SetVariable (
                     L"platform-uuid",
                     &gEfiAppleBootGuid,
@@ -265,11 +264,11 @@ SetupDataForOSX (
   Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
   Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
   /* XXX: Double log due to Leopard bug (feature?) */
-  if (!EFI_ERROR (SystemIDStatus)) {
+  if (IsGuidValid (&gSystemID)) {
     Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
     Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
   } else {
-    if (EFI_ERROR (PlatformUuidStatus)) {
+    if (!IsGuidValid (&gPlatformUuid)) {
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
     }

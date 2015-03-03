@@ -344,29 +344,27 @@ struct _oper_region {
 };
 typedef struct _oper_region OPER_REGION;
 
-MEM_STRUCTURE                   *gRAM;
-EFI_RUNTIME_SERVICES            *gRS;
-EFI_FILE_HANDLE                 gRootFHandle;
-SETTINGS_DATA                   gSettings;
-EFI_GUID                        gUuid;
-EFI_GUID                        gSystemID;
-EFI_GUID                        gPlatformUuid;
-EFI_STATUS                      SystemIDStatus;
-EFI_STATUS                      PlatformUuidStatus;
-GFX_PROPERTIES                  gGraphics;
-CPU_STRUCTURE                   gCPUStructure;
-CHAR8                           *AddBootArgs;
-CHAR8                           *OSVersion;
-LIST_ENTRY                      gBootOptionList;
-CHAR16                          *gProductNameDir2;
-CHAR16                          *gProductNameDir;
-CHAR16                          *gPNConfigPlist;
-CHAR16                          *gPNAcpiDir;
+BOOLEAN                         gFronPage;
 BOOLEAN                         gPNDirExists;
 BOOLEAN                         WithKexts;
-VOID                            *gConfigPlist;
-BOOLEAN                         gFronPage;
+CHAR16                          *gPNAcpiDir;
+CHAR16                          *gPNConfigPlist;
+CHAR16                          *gProductNameDir;
+CHAR16                          *gProductNameDir2;
+CHAR8                           *AddBootArgs;
+CHAR8                           *OSVersion;
+CPU_STRUCTURE                   gCPUStructure;
+EFI_FILE_HANDLE                 gRootFHandle;
+EFI_GUID                        gPlatformUuid;
+EFI_GUID                        gSystemID;
+EFI_GUID                        gUuid;
+EFI_RUNTIME_SERVICES            *gRS;
+GFX_PROPERTIES                  gGraphics;
+LIST_ENTRY                      gBootOptionList;
+MEM_STRUCTURE                   *gRAM;
 OPER_REGION                     *gRegions;
+SETTINGS_DATA                   gSettings;
+VOID                            *gConfigPlist;
 
 extern CHAR8                    *gDevProp;
 extern CHAR8                    *cDevProp;
@@ -404,6 +402,16 @@ EFI_STATUS
 AsciiStrXuidToBinary (
   IN  CHAR8   *Str,
   OUT EFI_GUID *Guid
+);
+
+VOID
+EraseGuid (
+  OUT EFI_GUID *Guid
+);
+
+BOOLEAN
+IsGuidValid (
+  IN EFI_GUID *Guid
 );
 
 EFI_STATUS

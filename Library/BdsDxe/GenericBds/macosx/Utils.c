@@ -1181,8 +1181,7 @@ GetUserSettings (
   ZeroMem (gSettings.Language, sizeof (gSettings.Language));
   ZeroMem (gSettings.BootArgs, sizeof (gSettings.BootArgs));
   ZeroMem (gSettings.SerialNr, sizeof (gSettings.SerialNr));
-  SystemIDStatus = EFI_UNSUPPORTED;
-  PlatformUuidStatus = EFI_UNSUPPORTED;
+
   gSettings.CustomEDID = NULL;
   gSettings.ProcessorInterconnectSpeed = 0;
 
@@ -1204,11 +1203,11 @@ GetUserSettings (
      */
     cUUID[0] = '\0';
     GetAsciiProperty (dictPointer, "PlatformUUID", cUUID);
-    PlatformUuidStatus = AsciiStrXuidToBinary (cUUID, &gPlatformUuid);
+    (void) AsciiStrXuidToBinary (cUUID, &gPlatformUuid);
 
     cUUID[0] = '\0';
     GetAsciiProperty (dictPointer, "SystemID", cUUID);
-    SystemIDStatus = AsciiStrXuidToBinary (cUUID, &gSystemID);
+    (void) AsciiStrXuidToBinary (cUUID, &gSystemID);
   }
 
   dictPointer = plDictFind (gConfigPlist, "Graphics", 8, plKindDict);
@@ -1488,16 +1487,8 @@ GetUserSettings (
   }
   DBG ("Product smbios datum END\n");
 
-  if (EFI_ERROR (PlatformUuidStatus)) {
-    DBG ("No PlatformUUID\n");
-  } else {
-    DBG ("PlatformUUID is %g (rfc4112)\n", &gPlatformUuid);
-  }
-  if (EFI_ERROR (SystemIDStatus)) {
-    DBG ("No SystemID\n");
-  } else {
-    DBG ("SystemID is %g (rfc4112)\n", &gSystemID);
-  }
+  DBG ("PlatformUUID is %g (rfc4112)\n", &gPlatformUuid);
+  DBG ("SystemID is %g (rfc4112)\n", &gSystemID);
 
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 
