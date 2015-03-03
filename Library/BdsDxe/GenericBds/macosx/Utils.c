@@ -843,6 +843,15 @@ DirIterClose (
 
 //---------------------------------------------------------------------------------
 
+VOID *
+GetDictionary (
+  IN VOID *topDict,
+  IN CHAR8 *dictName
+)
+{
+  return plDictFind (topDict, dictName, (unsigned int) AsciiStrLen (dictName), plKindDict);
+}
+
 BOOLEAN
 IsHexDigit (
   CHAR8 c
@@ -1135,7 +1144,7 @@ GetBootDefault (
   plist2dbg (gConfigPlist);
   DBG ("%a: config.plist end\n", __FUNCTION__);
 
-  spdict = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
+  spdict = GetDictionary (gConfigPlist, "SystemParameters");
 
   gSettings.SaveVideoRom = GetBoolProperty (spdict, "SaveVideoRom", FALSE);
   gSettings.ScreenMode = (UINT32) GetNumProperty (spdict, "ScreenMode", 0xffff);
@@ -1185,7 +1194,7 @@ GetUserSettings (
   gSettings.CustomEDID = NULL;
   gSettings.ProcessorInterconnectSpeed = 0;
 
-  dictPointer = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
+  dictPointer = GetDictionary (gConfigPlist, "SystemParameters");
 
   if (dictPointer != NULL) {
     GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
@@ -1210,7 +1219,7 @@ GetUserSettings (
     (void) AsciiStrXuidToBinary (cUUID, &gSystemID);
   }
 
-  dictPointer = plDictFind (gConfigPlist, "Graphics", 8, plKindDict);
+  dictPointer = GetDictionary (gConfigPlist, "Graphics");
 
   if (dictPointer != NULL) {
     gSettings.GraphicsInjector =
@@ -1237,10 +1246,11 @@ GetUserSettings (
       FreePool (tmpval);
     }
 
+    /* Real custom edid size ignored, assume 128 bytes always */
     gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &len);
   }
 
-  dictPointer = plDictFind (gConfigPlist, "PCI", 3, plKindDict);
+  dictPointer = GetDictionary (gConfigPlist, "PCI");
 
   if (dictPointer != NULL) {
     gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0xFFFF);
@@ -1260,7 +1270,7 @@ GetUserSettings (
     }
   }
 
-  dictPointer = plDictFind (gConfigPlist, "ACPI", 4, plKindDict);
+  dictPointer = GetDictionary (gConfigPlist, "ACPI");
 
   gSettings.DropSSDT = GetBoolProperty (dictPointer, "DropOemSSDT", FALSE);
   gSettings.DropDMAR = GetBoolProperty (dictPointer, "DropDMAR", FALSE);
@@ -1376,7 +1386,7 @@ GetUserSettings (
   AsciiStrCpy (gSettings.BoardSerialNumber, AppleBoardSN);
   AsciiStrCpy (gSettings.LocationInChassis, AppleBoardLocation);
 
-  dictPointer = plDictFind (gConfigPlist, "SMBIOS", 6, plKindDict);
+  dictPointer = GetDictionary (gConfigPlist, "SMBIOS");
 
   gSettings.Mobile = GetBoolProperty (dictPointer, "Mobile", FALSE);
 
@@ -1490,7 +1500,7 @@ GetUserSettings (
   DBG ("PlatformUUID is %g (rfc4112)\n", &gPlatformUuid);
   DBG ("SystemID is %g (rfc4112)\n", &gSystemID);
 
-  dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
+  dictPointer = GetDictionary (gConfigPlist, "CPU");
 
   gSettings.PatchLAPIC = GetBoolProperty (dictPointer, "PatchLAPIC", FALSE);
   gSettings.PatchPM = GetBoolProperty (dictPointer, "PatchPM", FALSE);
