@@ -50,42 +50,6 @@ UINTN       Index, Size, NewSize, MaxSize;
 UINTN       stringNumber;
 UINTN       TableSize;
 
-UINTN
-iStrLen (
-  CHAR8* String,
-  UINTN MaxLen
-)
-{
-  UINTN Len;
-  CHAR8*  BA;
-
-  Len = 0;
-
-  if (MaxLen > 0) {
-    for (Len = 0; Len < MaxLen; Len++) {
-      if (String[Len] == 0) {
-        break;
-      }
-    }
-
-    BA = &String[Len - 1];
-
-    while ((Len != 0) && ((*BA == ' ') || (*BA == 0))) {
-      BA--;
-      Len--;
-    }
-  } else {
-    BA = String;
-
-    while (*BA) {
-      BA++;
-      Len++;
-    }
-  }
-
-  return Len;
-}
-
 VOID*
 GetSmbiosTablesFromHob (
   VOID
@@ -157,7 +121,7 @@ UpdateSmbiosString (
 )
 {
   CHAR8 *AString;
-  CHAR8 *C1; //pointers for copy
+  CHAR8 *C1; // pointers for copy
   CHAR8 *C2;
   UINTN Length;
   UINTN ALength, BLength;
@@ -170,29 +134,29 @@ UpdateSmbiosString (
     return EFI_NOT_FOUND;
   }
 
-  AString = (CHAR8*) (LSmbiosTable.Raw + LSmbiosTable.Hdr->Length); //first string
+  AString = (CHAR8*) (LSmbiosTable.Raw + LSmbiosTable.Hdr->Length); // first string
 
   while (LIndex != *Field) {
     if (*AString) {
       LIndex++;
     }
 
-    while (*AString != 0) {
-      AString++;  //skip string at index
+    while (*AString != '\0') {
+      AString++;  // skip string at index
     }
 
-    AString++; //next string
+    AString++; // next string
 
-    if (*AString == 0) {
-      //this is end of the table
-      if (*Field == 0) {
-        AString[1] = 0; //one more zero
+    if (*AString == '\0') {
+      // this is end of the table
+      if (*Field == '\0') {
+        AString[1] = '\0'; // one more zero
       }
 
-      *Field = LIndex; //index of the next string that  is empty
+      *Field = LIndex; // index of the next string that is empty
 
       if (LIndex == 1) {
-        AString--; //first string has no leading zero
+        AString--; // first string has no leading zero
       }
 
       break;
@@ -200,33 +164,33 @@ UpdateSmbiosString (
   }
 
   // AString is at place to copy
-  ALength = iStrLen (AString, 0);
-  BLength = iStrLen (Buffer, SMBIOS_STRING_MAX_LENGTH);
+  ALength = AsciiStrnLenS (AString, SMBIOS_STRING_MAX_LENGTH);
+  BLength = AsciiStrnLenS (Buffer, SMBIOS_STRING_MAX_LENGTH);
 
   if (BLength > ALength) {
-    //Shift right
-    C1 = (CHAR8*) LSmbiosTable.Raw + Length; //old end
-    C2 = C1  + BLength - ALength; //new end
-    *C2 = 0;
+    // Shift right
+    C1 = (CHAR8*) LSmbiosTable.Raw + Length; // old end
+    C2 = C1  + BLength - ALength; // new end
+    *C2 = '\0';
 
     while (C1 != AString) {
       *(--C2) = *(--C1);
     }
   } else if (BLength < ALength) {
-    //Shift left
-    C1 = AString + ALength; //old start
-    C2 = AString + BLength; //new start
+    // Shift left
+    C1 = AString + ALength; // old start
+    C2 = AString + BLength; // new start
 
     while (C1 != ((CHAR8*) LSmbiosTable.Raw + Length)) {
       *C2++ = *C1++;
     }
 
-    *C2 = 0;
-    *(--C2) = 0; //end of table
+    *C2 = '\0';
+    *(--C2) = '\0'; //end of table
   }
 
   CopyMem (AString, Buffer, BLength);
-  *(AString + BLength) = 0; // not sure there is 0
+  *(AString + BLength) = '\0'; // not sure there is 0
   Length = SmbiosTableLength (SmbiosTable);
   C1 = (CHAR8*) (LSmbiosTable.Raw + LSmbiosTable.Hdr->Length);
   return EFI_SUCCESS;
@@ -320,15 +284,15 @@ PatchTableType0 (
   newSmbiosTable.Type0->SystemBiosMinorRelease = 1;
   newSmbiosTable.Type0->BiosCharacteristics.BiosCharacteristicsNotSupported = 0;
 
-  if (iStrLen (gSettings.VendorName, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.VendorName, sizeof (gSettings.VendorName)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type0->Vendor, gSettings.VendorName);
   }
 
-  if (iStrLen (gSettings.RomVersion, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.RomVersion, sizeof (gSettings.RomVersion)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type0->BiosVersion, gSettings.RomVersion);
   }
 
-  if (iStrLen (gSettings.ReleaseDate, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.ReleaseDate, sizeof (gSettings.ReleaseDate)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type0->BiosReleaseDate, gSettings.ReleaseDate);
   }
 
@@ -355,32 +319,25 @@ PatchTableType1 (
   }
 
   gUuid = SmbiosTable.Type1->Uuid;
-  s = GetSmbiosString(SmbiosTable, SmbiosTable.Type1->ProductName);
-  CopyMem (gSettings.OEMProduct, s, AsciiStrSize (s));
-
-  AsciiSPrint (Buffer, sizeof (Buffer), "%02x%02x%02x%02x%02x%02x",
-    SmbiosTable.Type1->Uuid.Data4[2],
-    SmbiosTable.Type1->Uuid.Data4[3],
-    SmbiosTable.Type1->Uuid.Data4[4],
-    SmbiosTable.Type1->Uuid.Data4[5],
-    SmbiosTable.Type1->Uuid.Data4[6],
-    SmbiosTable.Type1->Uuid.Data4[7]
-  );
-
-  gSettings.EthMacAddr = AllocateZeroPool ((AsciiStrLen(Buffer) >> 1));
-  gSettings.MacAddrLen = hex2bin (Buffer, gSettings.EthMacAddr, (INT32)(AsciiStrLen(Buffer) >> 1));
 
 #ifdef BOOT_DEBUG
-  DBG ("Smbios: gUuid = %g (rfc4112)\n", &SmbiosTable.Type1->Uuid);
+  DBG ("Smbios: gUuid = %g (rfc4112)\n", &gUuid);
 #endif
 
-  //Increase table size
-  Size = SmbiosTable.Type1->Hdr.Length; //old size
-  TableSize = SmbiosTableLength (SmbiosTable); //including strings
+  s = GetSmbiosString(SmbiosTable, SmbiosTable.Type1->ProductName);
+
+  CopyMem (gSettings.OEMProduct, s, AsciiStrSize (s));
+
+  CopyMem (gSettings.EthMacAddr, &SmbiosTable.Type1->Uuid.Data4[2], 6);
+  gSettings.EthMacAddrLen = 6;
+
+  // Increase table size
+  Size = SmbiosTable.Type1->Hdr.Length; // old size
+  TableSize = SmbiosTableLength (SmbiosTable); // including strings
   NewSize = sizeof (SMBIOS_TABLE_TYPE1);
   ZeroMem ((VOID*) newSmbiosTable.Type1, MAX_TABLE_SIZE);
-  CopyMem ((VOID*) newSmbiosTable.Type1, (VOID*) SmbiosTable.Type1, Size); //copy main table
-  CopyMem ((CHAR8*) newSmbiosTable.Type1 + NewSize, (CHAR8*) SmbiosTable.Type1 + Size, TableSize - Size); //copy strings
+  CopyMem ((VOID*) newSmbiosTable.Type1, (VOID*) SmbiosTable.Type1, Size); // copy main table
+  CopyMem ((CHAR8*) newSmbiosTable.Type1 + NewSize, (CHAR8*) SmbiosTable.Type1 + Size, TableSize - Size); // copy strings
   newSmbiosTable.Type1->Hdr.Length = (UINT8) NewSize;
   newSmbiosTable.Type1->WakeUpType = SystemWakeupTypePowerSwitch;
 
@@ -394,27 +351,27 @@ PatchTableType1 (
     }
   }
 
-  if (iStrLen (gSettings.ManufactureName, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.ManufactureName, sizeof (gSettings.ManufactureName)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type1->Manufacturer, gSettings.ManufactureName);
   }
 
-  if (iStrLen (gSettings.ProductName, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.ProductName, sizeof (gSettings.ProductName)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type1->ProductName, gSettings.ProductName);
   }
 
-  if (iStrLen (gSettings.VersionNr, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.VersionNr, sizeof (gSettings.VersionNr)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type1->Version, gSettings.VersionNr);
   }
 
-  if (iStrLen (gSettings.SerialNr, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.SerialNr, sizeof (gSettings.SerialNr)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type1->SerialNumber, gSettings.SerialNr);
   }
 
-  if (iStrLen (gSettings.BoardNumber, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.BoardNumber, sizeof (gSettings.BoardNumber)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type1->SKUNumber, gSettings.BoardNumber);
   }
 
-  if (iStrLen (gSettings.FamilyName, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.FamilyName, sizeof (gSettings.FamilyName)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type1->Family, gSettings.FamilyName);
   }
 
@@ -459,19 +416,19 @@ PatchTableType2and3 (
   newSmbiosTable.Type3->ContainedElementCount = 0;
   newSmbiosTable.Type3->ContainedElementRecordLength = 0;
 #endif
-  if (iStrLen (gSettings.ChassisManufacturer, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.ChassisManufacturer, sizeof (gSettings.ChassisManufacturer)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type3->Manufacturer, gSettings.ChassisManufacturer);
   }
 
-  if (iStrLen (gSettings.BoardNumber, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.BoardNumber, sizeof (gSettings.BoardNumber)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type3->Version, gSettings.BoardNumber);
   }
 
-  if (iStrLen (gSettings.SerialNr, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.SerialNr, sizeof (gSettings.SerialNr)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type3->SerialNumber, gSettings.SerialNr);
   }
 
-  if (iStrLen (gSettings.ChassisAssetTag, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.ChassisAssetTag, sizeof (gSettings.ChassisAssetTag)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type3->AssetTag, gSettings.ChassisAssetTag);
   }
 
@@ -511,23 +468,23 @@ PatchTableType2and3 (
   newSmbiosTable.Type2->FeatureFlag.Motherboard = 1;
   newSmbiosTable.Type2->FeatureFlag.Replaceable = 1;
 
-  if (iStrLen (gSettings.BoardManufactureName, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.BoardManufactureName, sizeof (gSettings.BoardManufactureName)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->Manufacturer, gSettings.BoardManufactureName);
   }
 
-  if (iStrLen (gSettings.BoardNumber, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.BoardNumber, sizeof (gSettings.BoardNumber)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->ProductName, gSettings.BoardNumber);
   }
 
-  if (iStrLen (gSettings.BoardVersion, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.BoardVersion, sizeof (gSettings.BoardVersion)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->Version, gSettings.BoardVersion);
   }
 
-  if (iStrLen (gSettings.BoardSerialNumber, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.BoardSerialNumber, sizeof (gSettings.BoardSerialNumber)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->SerialNumber, gSettings.BoardSerialNumber);
   }
 
-  if (iStrLen (gSettings.LocationInChassis, 64) > 0) {
+  if (AsciiStrnLenS (gSettings.LocationInChassis, sizeof (gSettings.LocationInChassis)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->LocationInChassis, gSettings.LocationInChassis);
   }
 
@@ -771,6 +728,7 @@ PatchMemoryTables (
   UINT32  TotalEnd;
   UINT8   PartWidth;
   UINTN   j;
+  RAM_SLOT_INFO *slotPtr;
 
   TotalEnd  = 0;
   PartWidth = 1;
@@ -837,35 +795,35 @@ PatchMemoryTables (
     newSmbiosTable.Type17->MemoryArrayHandle = Handle16;
 
     if (gRAM->SpdDetected) {
-
-      if (gRAM->DIMM[Index].InUse) {
+      slotPtr = &gRAM->DIMM[Index];
+      if (slotPtr->InUse) {
 
         DBG ("Smbios: SPD detected and slot %d used\n", Index);
 
-        if ((gRAM->DIMM[Index].Type != MemoryTypeUnknown) &&
-            (gRAM->DIMM[Index].Type != MemoryTypeOther)  &&
-            (gRAM->DIMM[Index].Type != 0)) {
-          newSmbiosTable.Type17->MemoryType = gRAM->DIMM[Index].Type;
+        if ((slotPtr->Type != MemoryTypeUnknown) &&
+            (slotPtr->Type != MemoryTypeOther)  &&
+            (slotPtr->Type != 0)) {
+          newSmbiosTable.Type17->MemoryType = slotPtr->Type;
         }
 
-        if (iStrLen (gRAM->DIMM[Index].Vendor, 64) > 0) {
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, gRAM->DIMM[Index].Vendor);
+        if (AsciiStrnLenS (slotPtr->Vendor, sizeof (slotPtr->Vendor)) > 0) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, slotPtr->Vendor);
         }
 
-        if (iStrLen (gRAM->DIMM[Index].SerialNo, 64) > 0) {
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, gRAM->DIMM[Index].SerialNo);
+        if (AsciiStrnLenS (slotPtr->SerialNo, sizeof (slotPtr->SerialNo)) > 0) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, slotPtr->SerialNo);
         }
 
-        if (iStrLen (gRAM->DIMM[Index].PartNo, 64) > 0) {
-          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, gRAM->DIMM[Index].PartNo);
+        if (AsciiStrnLenS (slotPtr->PartNo, sizeof (slotPtr->PartNo)) > 0) {
+          UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, slotPtr->PartNo);
         }
 
-        if (gRAM->DIMM[Index].Frequency > 0) {
-          newSmbiosTable.Type17->Speed = (UINT16) gRAM->DIMM[Index].Frequency;
+        if (slotPtr->Frequency > 0) {
+          newSmbiosTable.Type17->Speed = (UINT16) slotPtr->Frequency;
         }
 
-        if (gRAM->DIMM[Index].ModuleSize > 0) {
-          newSmbiosTable.Type17->Size = (UINT16) gRAM->DIMM[Index].ModuleSize;
+        if (slotPtr->ModuleSize > 0) {
+          newSmbiosTable.Type17->Size = (UINT16) slotPtr->ModuleSize;
         }
       } else {
         newSmbiosTable.Type17->Speed = 0;
@@ -910,13 +868,13 @@ PatchMemoryTables (
         newSmbiosTable.Type17->MemoryType = MemoryTypeDdr;
       }
       
-      if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->Manufacturer), 64) == 0){
+      if (AsciiStrnLenS (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->Manufacturer), 64) == 0){
         UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->Manufacturer, "unknown");
       }
-      if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->SerialNumber), 64) == 0){
+      if (AsciiStrnLenS (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->SerialNumber), 64) == 0){
         UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->SerialNumber, "unknown");
       }
-      if (iStrLen (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->PartNumber), 64) == 0){
+      if (AsciiStrnLenS (GetSmbiosString (newSmbiosTable, newSmbiosTable.Type17->PartNumber), 64) == 0){
         UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type17->PartNumber, "unknown");
       }
 
