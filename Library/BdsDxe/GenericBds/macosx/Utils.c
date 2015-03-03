@@ -905,6 +905,9 @@ GetDataSetting (
   UINT32 len;
 
   data = NULL;
+  if (dataLen != NULL) {
+    *dataLen = 0;
+  }
 
   prop =
     plDictFind (dict, propName, (unsigned int) AsciiStrLen (propName),
@@ -917,154 +920,23 @@ GetDataSetting (
   case plKindData:
     len = plNodeGetSize (prop);
     data = AllocateCopyPool (len, plNodeGetBytes (prop));
-    if (dataLen != NULL) {
-      *dataLen = len;
-    }
     break;
   case plKindString:
     // assume data in hex encoded string property
     len = plNodeGetSize (prop) >> 1;  // 2 chars per byte
-    data = AllocateZeroPool (len);
+    data = AllocatePool (len);
     len = hex2bin (plNodeGetBytes (prop), data, len);
-
-    if (dataLen != NULL) {
-      *dataLen = len;
-    }
     break;
   default:
+    len = 0;
     break;
+  }
+
+  if (dataLen != NULL) {
+    *dataLen = len;
   }
 
   return data;
-}
-
-EFI_STATUS
-bbStrToBuf (
-  OUT UINT8 *Buf,
-  IN UINTN BufferLength,
-  IN CHAR16 *Str
-)
-{
-  UINTN Index;
-  UINTN StrLength;
-  UINT8 Digit;
-  UINT8 Byte;
-
-  Digit = 0;
-  //
-  // Two hex char make up one byte
-  //
-  StrLength = BufferLength * sizeof (CHAR16);
-
-  for (Index = 0; Index < StrLength; Index++, Str++) {
-    if ((*Str >= L'a') && (*Str <= L'f')) {
-      Digit = (UINT8) (*Str - L'a' + 0x0A);
-    }
-    else if ((*Str >= L'A') && (*Str <= L'F')) {
-      Digit = (UINT8) (*Str - L'A' + 0x0A);
-    }
-    else if ((*Str >= L'0') && (*Str <= L'9')) {
-      Digit = (UINT8) (*Str - L'0');
-    }
-    else {
-      return EFI_INVALID_PARAMETER;
-    }
-
-    //
-    // For odd characters, write the upper nibble for each buffer byte,
-    // and for even characters, the lower nibble.
-    //
-    if ((Index & 1) == 0) {
-      Byte = (UINT8) (Digit << 4);
-    }
-    else {
-      Byte = Buf[Index / 2];
-      Byte &= 0xF0;
-      Byte = (UINT8) (Byte | Digit);
-    }
-
-    Buf[Index / 2] = Byte;
-  }
-
-  return EFI_SUCCESS;
-}
-
-/**
- Converts a string to GUID value.
- Guid Format is xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-
- @param Str              The registry format GUID string that contains the GUID value.
- @param Guid             A pointer to the converted GUID value.
-
- @retval EFI_SUCCESS     The GUID string was successfully converted to the GUID value.
- @retval EFI_UNSUPPORTED The input string is not in registry format.
- @return others          Some error occurred when converting part of GUID value.
-
- **/
-
-EFI_STATUS
-StrToGuidLE (
-  IN CHAR16 *Str,
-  OUT EFI_GUID *Guid
-)
-{
-  UINT8 GuidLE[16];
-
-  bbStrToBuf (&GuidLE[0], 4, Str);
-
-  while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str++;
-  }
-
-  if (IS_HYPHEN (*Str)) {
-    Str++;
-  }
-  else {
-    return EFI_UNSUPPORTED;
-  }
-
-  bbStrToBuf (&GuidLE[4], 2, Str);
-
-  while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str++;
-  }
-
-  if (IS_HYPHEN (*Str)) {
-    Str++;
-  }
-  else {
-    return EFI_UNSUPPORTED;
-  }
-
-  bbStrToBuf (&GuidLE[6], 2, Str);
-
-  while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str++;
-  }
-
-  if (IS_HYPHEN (*Str)) {
-    Str++;
-  }
-  else {
-    return EFI_UNSUPPORTED;
-  }
-
-  bbStrToBuf (&GuidLE[8], 2, Str);
-
-  while (!IS_HYPHEN (*Str) && !IS_NULL (*Str)) {
-    Str++;
-  }
-
-  if (IS_HYPHEN (*Str)) {
-    Str++;
-  }
-  else {
-    return EFI_UNSUPPORTED;
-  }
-
-  bbStrToBuf (&GuidLE[10], 6, Str);
-  CopyMem ((UINT8 *) Guid, &GuidLE[0], 16);
-  return EFI_SUCCESS;
 }
 
 UINTN
@@ -1290,25 +1162,16 @@ GetUserSettings (
   VOID *dictPointer;
   VOID *array;
   VOID *prop;
-  CHAR16 cUUID[40];
+  VOID *tmpval;
   MACHINE_TYPES Model;
   UINTN len;
   UINT32 i;
+  CHAR8 cUUID[64];
 
   Status = EFI_NOT_FOUND;
   array = NULL;
-  len = 0;
   i = 0;
   size = 0;
-
-#if 0
-  if (gPNDirExists) {
-    plist = LoadPListFile (RootFileHandle, gPNConfigPlist);
-  }
-  else {
-    plist = LoadPListFile (RootFileHandle, L"\\EFI\\bareboot\\config.plist");
-  }
-#endif
 
   if (gConfigPlist == NULL) {
     Print (L"Error loading usersettings plist!\r\n");
@@ -1318,7 +1181,6 @@ GetUserSettings (
   ZeroMem (gSettings.Language, sizeof (gSettings.Language));
   ZeroMem (gSettings.BootArgs, sizeof (gSettings.BootArgs));
   ZeroMem (gSettings.SerialNr, sizeof (gSettings.SerialNr));
-  ZeroMem (cUUID, sizeof (cUUID));
   SystemIDStatus = EFI_UNSUPPORTED;
   PlatformUuidStatus = EFI_UNSUPPORTED;
   gSettings.CustomEDID = NULL;
@@ -1326,67 +1188,68 @@ GetUserSettings (
 
   dictPointer = plDictFind (gConfigPlist, "SystemParameters", 16, plKindDict);
 
-  GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
-  GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
-  gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
-  gSettings.NvRam = GetBoolProperty (dictPointer, "NvRam", FALSE);
-
-  if (AsciiStrLen (AddBootArgs) != 0) {
-    AsciiStrCat (gSettings.BootArgs, AddBootArgs);
-  }
-#if 0
-  if (AsciiStrStr (gSettings.BootArgs, AddBootArgs) == NULL) {
-  }
-#endif
   if (dictPointer != NULL) {
-    if (GetUnicodeProperty (dictPointer, "PlatformUUID", cUUID)) {
-      PlatformUuidStatus = StrToGuidLE (cUUID, &gPlatformUuid);
+    GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
+    gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
+    gSettings.NvRam = GetBoolProperty (dictPointer, "NvRam", FALSE);
+
+    GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
+    if (AsciiStrLen (AddBootArgs) != 0) {
+      AsciiStrCat (gSettings.BootArgs, AddBootArgs);
     }
-    if (GetUnicodeProperty (dictPointer, "SystemID", cUUID)) {
-      SystemIDStatus = StrToGuidLE (cUUID, &gSystemID);
-    }
+
+    /*
+     * XXX: previous implementation was not RFC4112 conforming.
+     * Uuid string was treated as linear byte dump, so do the same
+     */
+    cUUID[0] = '\0';
+    GetAsciiProperty (dictPointer, "PlatformUUID", cUUID);
+    PlatformUuidStatus = AsciiStrXuidToBinary (cUUID, &gPlatformUuid);
+
+    cUUID[0] = '\0';
+    GetAsciiProperty (dictPointer, "SystemID", cUUID);
+    SystemIDStatus = AsciiStrXuidToBinary (cUUID, &gSystemID);
   }
 
   dictPointer = plDictFind (gConfigPlist, "Graphics", 8, plKindDict);
 
-  gSettings.GraphicsInjector =
-    GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
-  gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
-  gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
-  gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
-  gSettings.DualLink = (UINT16) GetNumProperty (dictPointer, "DualLink", 0);
-  GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
-
   if (dictPointer != NULL) {
+    gSettings.GraphicsInjector =
+      GetBoolProperty (dictPointer, "GraphicsInjector", FALSE);
+    gSettings.VRAM = LShiftU64 (GetNumProperty (dictPointer, "VRAM", 0), 20);
+    gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
+    gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
+    gSettings.DualLink = (UINT16) GetNumProperty (dictPointer, "DualLink", 0);
+    GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
 
-    prop = plDictFind (dictPointer, "NVCAP", 5, plKindString);
-
-    if (prop != NULL) {
-      hex2bin (plNodeGetBytes (prop), (UINT8 *) &gSettings.NVCAP[0], 20);
+    tmpval = GetDataSetting (dictPointer, "NVCAP", &len);
+    if (tmpval != NULL) {
+      if (len == sizeof (gSettings.NVCAP)) {
+        CopyMem(gSettings.NVCAP, tmpval, sizeof (gSettings.NVCAP));
+      }
+      FreePool (tmpval);
     }
 
-    prop = plDictFind (dictPointer, "DisplayCfg", 10, plKindString);
-
-    if (prop != NULL) {
-      hex2bin (plNodeGetBytes (prop), (UINT8 *) &gSettings.Dcfg[0], 8);
+    tmpval = GetDataSetting (dictPointer, "DisplayCfg", &len);
+    if (tmpval != NULL) {
+      if (len == sizeof (gSettings.Dcfg)) {
+        CopyMem(gSettings.Dcfg, tmpval, sizeof (gSettings.Dcfg));
+      }
+      FreePool (tmpval);
     }
 
-    prop = plDictFind (dictPointer, "CustomEDID", 10, plKindData);
-
-    if (prop != NULL) {
-      gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &len);
-    }
+    gSettings.CustomEDID = GetDataSetting (dictPointer, "CustomEDID", &len);
   }
 
   dictPointer = plDictFind (gConfigPlist, "PCI", 3, plKindDict);
 
-  gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0xFFFF);
-  gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
-  gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-  gSettings.HDALayoutId =
-    (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
-
   if (dictPointer != NULL) {
+    gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0xFFFF);
+    gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
+    gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
+    gSettings.HDALayoutId =
+      (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
+
     prop = plDictFind (dictPointer, "DeviceProperties", 16, plKindString);
 
     if (prop != NULL) {
@@ -1394,7 +1257,7 @@ GetUserSettings (
       cDevProp = AllocatePool (len + 1);
       CopyMem (cDevProp, plNodeGetBytes (prop), len);
       cDevProp[len] = '\0';
-      DBG ("GetUserSettings: сDevProp = <%a>\n", cDevProp);
+      DBG ("GetUserSettings: cDevProp = <%a>\n", cDevProp);
     }
   }
 
@@ -1555,7 +1418,7 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
   GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
 
-  DBG ("Product smbios datum START\n");
+  DBG ("Product smbios datum BEGIN\n");
   DBG ("ProductName = %a\n", gSettings.ProductName);
   DBG ("Mobile = %a\n", gSettings.Mobile ? "true" : "false");
 
@@ -1624,6 +1487,17 @@ GetUserSettings (
     }
   }
   DBG ("Product smbios datum END\n");
+
+  if (EFI_ERROR (PlatformUuidStatus)) {
+    DBG ("No PlatformUUID\n");
+  } else {
+    DBG ("PlatformUUID is %g (rfc4112)\n", &gPlatformUuid);
+  }
+  if (EFI_ERROR (SystemIDStatus)) {
+    DBG ("No SystemID\n");
+  } else {
+    DBG ("SystemID is %g (rfc4112)\n", &gSystemID);
+  }
 
   dictPointer = plDictFind (gConfigPlist, "CPU", 3, plKindDict);
 

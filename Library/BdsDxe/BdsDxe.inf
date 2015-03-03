@@ -41,43 +41,47 @@
 
 [Sources]
   Bds.h
-  Strings.uni
-  String.c
-  BdsEntry.c
-  String.h
-  BmLib.c
-  BootMngr/BootManagerVfr.Vfr
-  BootMngr/BootManagerStrings.uni
-  BootMngr/BootManager.c
   BootMngr/BootManager.h
-  GenericBds/macosx/Console.c
-  GenericBds/macosx/Utils.c
-  GenericBds/macosx/cpu.c
-  GenericBds/macosx/smbios.c
-  GenericBds/macosx/spd.c
-  GenericBds/macosx/SetVarProto.c
-  GenericBds/macosx/AcpiPatcher.c
-  GenericBds/macosx/DataHubCpu.c
-  GenericBds/macosx/Events.c
-  GenericBds/macosx/device_inject.c
-  GenericBds/macosx/kernel_patcher.c
-  GenericBds/macosx/kext_patcher.c
-  GenericBds/macosx/kext_inject.c
-  GenericBds/macosx/device_tree.c
-  GenericBds/macosx/fixSDT.c
-  GenericBds/macosx/nvram.c
+  DuetBds/BdsPlatform.h
+  GenericBds/InternalBdsLib.h
+  String.h
+
+  BootMngr/BootManagerStrings.uni
+  Strings.uni
+
+  BootMngr/BootManagerVfr.Vfr
+
+  BdsEntry.c
+  BmLib.c
+  BootMngr/BootManager.c
+  DuetBds/BdsPlatform.c
+  DuetBds/PlatformData.c
   GenericBds/BdsBoot.c
   GenericBds/BdsConnect.c
   GenericBds/BdsConsole.c
   GenericBds/BdsMisc.c
   GenericBds/BdsUsbLegacy.c
-  GenericBds/InternalBdsLib.h
+  GenericBds/macosx/AcpiPatcher.c
+  GenericBds/macosx/Console.c
+  GenericBds/macosx/cpu.c
+  GenericBds/macosx/DataHubCpu.c
+  GenericBds/macosx/device_inject.c
+  GenericBds/macosx/device_tree.c
+  GenericBds/macosx/Events.c
+  GenericBds/macosx/fixSDT.c
+  GenericBds/macosx/kernel_patcher.c
+  GenericBds/macosx/kext_inject.c
+  GenericBds/macosx/kext_patcher.c
+  GenericBds/macosx/nvram.c
+  GenericBds/macosx/SetVarProto.c
+  GenericBds/macosx/smbios.c
+  GenericBds/macosx/spd.c
+  GenericBds/macosx/Utils.c
+  GenericBds/macosx/Xuid.c
   GenericBds/Performance.c
   Graphics/Graphics.c
   Graphics/picopng.c
-  DuetBds/BdsPlatform.c
-  DuetBds/PlatformData.c
-  DuetBds/BdsPlatform.h
+  String.c
 
 [Packages]
   bareBoot/bareBoot.dec

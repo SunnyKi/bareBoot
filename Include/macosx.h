@@ -378,6 +378,7 @@ extern EFI_UNICODE_COLLATION_PROTOCOL  *gUnicodeCollation;
 extern GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *EfiMemoryTypeDesc[14];
 
 // ----------------------------------------
+
 UINT32
 hex2bin (
   IN CHAR8 *hex,
@@ -385,16 +386,23 @@ hex2bin (
   INT32 len
 );
 
-#if 0
-UINT8
-hexstrtouint8 (
-  CHAR8* buf
-);
-#endif
+/*
+ * RFC4112 compliant
+ */
 
 EFI_STATUS
-StrToGuidLE (
-  IN  CHAR16   *Str,
+AsciiStrUuidToBinary (
+  IN  CHAR8   *Str,
+  OUT EFI_GUID *Guid
+);
+
+/*
+ * Binary byte stream version
+ */
+
+EFI_STATUS
+AsciiStrXuidToBinary (
+  IN  CHAR8   *Str,
   OUT EFI_GUID *Guid
 );
 
