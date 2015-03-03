@@ -480,12 +480,17 @@ PatchTableType2and3 (
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->Version, gSettings.BoardVersion);
   }
 
-  if (AsciiStrnLenS (gSettings.BoardSerialNumber, sizeof (gSettings.BoardSerialNumber)) > 0) {
-    UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->SerialNumber, gSettings.BoardSerialNumber);
-  }
-
   if (AsciiStrnLenS (gSettings.LocationInChassis, sizeof (gSettings.LocationInChassis)) > 0) {
     UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->LocationInChassis, gSettings.LocationInChassis);
+  }
+
+  /* MLB is higher priority */
+  if (AsciiStrnLenS (gSettings.MLB, sizeof (gSettings.MLB)) > 0) {
+    UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->SerialNumber, gSettings.MLB);
+  } else {
+    if (AsciiStrnLenS (gSettings.BoardSerialNumber, sizeof (gSettings.BoardSerialNumber)) > 0) {
+      UpdateSmbiosString (newSmbiosTable, &newSmbiosTable.Type2->SerialNumber, gSettings.BoardSerialNumber);
+    }
   }
 
   //Slice - for the table2 one patch more needed

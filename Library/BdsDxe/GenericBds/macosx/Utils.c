@@ -1217,6 +1217,11 @@ GetUserSettings (
     cUUID[0] = '\0';
     GetAsciiProperty (dictPointer, "SystemID", cUUID);
     (void) AsciiStrXuidToBinary (cUUID, &gSystemID);
+
+    /* MLB/ROM */
+    gSettings.MLB[0] = '\0';
+    GetAsciiProperty (dictPointer, "MLB", gSettings.MLB);
+    gSettings.ROM = GetDataSetting (dictPointer, "ROM", &gSettings.ROMLen);
   }
 
   dictPointer = GetDictionary (gConfigPlist, "Graphics");

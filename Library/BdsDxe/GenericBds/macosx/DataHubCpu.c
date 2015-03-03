@@ -112,6 +112,10 @@ SetVariablesForOSX (
   UINT32      FwFeatures;
   UINT32      FwFeaturesMask;
   UINT32      BackgroundClear;
+  CHAR8       *tmpMLB;
+  UINTN       tmpMLBLen;
+  UINT8       *tmpROM;
+  UINTN       tmpROMLen;
 #if 0
   UINT16      *BootNext;
   CHAR8       *None;
@@ -120,6 +124,23 @@ SetVariablesForOSX (
   FwFeatures      = 0xc0007417;
   FwFeaturesMask  = 0xc0007fff;
   BackgroundClear = 0x00000000;
+
+  tmpMLBLen = AsciiStrLen (gSettings.MLB);
+  if (tmpMLBLen > 0) {
+    tmpMLB = gSettings.MLB;
+  }  else {
+    tmpMLB = gSettings.BoardSerialNumber;
+    tmpMLBLen = AsciiStrLen (gSettings.BoardSerialNumber);
+  }
+
+  tmpROMLen = gSettings.ROMLen;
+  if (tmpROMLen > 0) {
+    tmpROM = gSettings.ROM;
+  }  else {
+    tmpROM = gSettings.EthMacAddr;
+    tmpROMLen = gSettings.EthMacAddrLen;
+  }
+
 #if 0
   BootNext = NULL; //it already presents in EFI FW. First GetVariable ?
   None = "none";
@@ -155,16 +176,16 @@ SetVariablesForOSX (
                   L"MLB",
                   &gEfiAppleNvramGuid,
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  AsciiStrLen (gSettings.BoardSerialNumber),
-                  &gSettings.BoardSerialNumber
+                  tmpMLBLen,
+                  tmpMLB
                 );
 
   Status = gRS->SetVariable (
                   L"ROM",
                   &gEfiAppleNvramGuid,
                   EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  gSettings.MacAddrLen,
-                  gSettings.EthMacAddr
+                  tmpROMLen,
+                  tmpROM
                 );
 
   if (gSettings.Language[0] != '\0') {

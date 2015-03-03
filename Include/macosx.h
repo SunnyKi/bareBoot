@@ -225,10 +225,8 @@ typedef struct {
   UINT8   NVCAP[20];
   UINT8   *CustomEDID;
   // PCI injections
-  UINTN   MacAddrLen;
   UINT16  PCIRootUID;
   UINT16  HDALayoutId;
-  UINT8   *EthMacAddr;
   BOOLEAN ETHInjection;
   BOOLEAN USBInjection;
   BOOLEAN SPDScan;
@@ -257,6 +255,14 @@ typedef struct {
   CUSTOM_SMBIOS_TYPE17 cMemDevice[MAX_RAM_SLOTS];
   // Table dropping
   ACPI_DROP_TABLE *ACPIDropTables;
+  // MLB/ROM
+  UINT8   EthMacAddr[32];
+  UINTN   EthMacAddrLen;
+
+  UINT8   *ROM;
+  UINTN   ROMLen;
+
+  CHAR8   MLB[64];
 } SETTINGS_DATA;
 
 typedef enum {
