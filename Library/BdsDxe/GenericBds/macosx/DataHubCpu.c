@@ -157,6 +157,32 @@ SetVariablesForOSX (
 #endif
 
   Status = gRS->SetVariable (
+                  L"MLB",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  tmpMLBLen,
+                  tmpMLB
+                );
+  DBG ("%a: MLB [%a] injected\n", __FUNCTION__, tmpMLB);
+
+  Status = gRS->SetVariable (
+                  L"ROM",
+                  &gEfiAppleNvramGuid,
+                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                  tmpROMLen,
+                  tmpROM
+                );
+  {
+    UINTN i;
+
+    DBG ("%a: ROM [", __FUNCTION__);
+    for (i = 0; i < tmpROMLen; i++) {
+      DBG ("%02x", tmpROM[i]);
+    }
+    DBG ("] injected\n");
+  }
+
+  Status = gRS->SetVariable (
                   L"FirmwareFeatures",
                   &gEfiAppleNvramGuid,
                   EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
@@ -170,22 +196,6 @@ SetVariablesForOSX (
                   EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
                   sizeof (FwFeaturesMask),
                   &FwFeaturesMask
-                );
-
-  Status = gRS->SetVariable (
-                  L"MLB",
-                  &gEfiAppleNvramGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  tmpMLBLen,
-                  tmpMLB
-                );
-
-  Status = gRS->SetVariable (
-                  L"ROM",
-                  &gEfiAppleNvramGuid,
-                  EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  tmpROMLen,
-                  tmpROM
                 );
 
   if (gSettings.Language[0] != '\0') {
@@ -207,6 +217,7 @@ SetVariablesForOSX (
                     16,
                     &gPlatformUuid
                   );
+    DBG ("%a: platform-uuid %g (rfc4112) injected\n", __FUNCTION__, &gPlatformUuid);
   }
 
   Status = gRS->SetVariable (
@@ -288,10 +299,12 @@ SetupDataForOSX (
   if (IsGuidValid (&gSystemID)) {
     Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
     Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
+    DBG ("%a: system-id %g (rfc4112) injected (systemid)\n", __FUNCTION__, &gSystemID);
   } else {
     if (!IsGuidValid (&gPlatformUuid)) {
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
+      DBG ("%a: system-id %g (rfc4112) injected (uuid)\n", __FUNCTION__, &gUuid);
     }
   }
   Status = LogDataHub(&gEfiMiscSubClassGuid, L"OEMVendor",  &gSettings.OEMVendor,  (UINT32) AsciiStrSize (gSettings.OEMVendor));
