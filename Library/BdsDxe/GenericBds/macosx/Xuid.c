@@ -76,8 +76,8 @@ AsciiStrUuidToBinary (
   OUT EFI_GUID *Guid
 )
 {
-  static const char ub[16] = { 3, 2, 1, 0, /*-*/ 5,  4, /*-*/  7,  6, /*-*/  8,  9, /*-*/ 10, 11, 12, 13, 14, 15 };
-  static const char sp[16] = { 0, 2, 4, 6, /*-*/ 9, 11, /*-*/ 14, 16, /*-*/ 19, 21, /*-*/ 24, 26, 28, 30, 32, 34 };
+  static const unsigned char ub[16] = { 3, 2, 1, 0, /*-*/ 5,  4, /*-*/  7,  6, /*-*/  8,  9, /*-*/ 10, 11, 12, 13, 14, 15 };
+  static const unsigned char sp[16] = { 0, 2, 4, 6, /*-*/ 9, 11, /*-*/ 14, 16, /*-*/ 19, 21, /*-*/ 24, 26, 28, 30, 32, 34 };
 
   UINTN i;
   UINT8 *up;
