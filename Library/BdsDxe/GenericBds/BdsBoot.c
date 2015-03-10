@@ -312,7 +312,11 @@ MacOS:
     }
   }
 
-  WithKexts = LoadKexts ();
+  if (gSettings.LoadExtraKexts) {
+    WithKexts = LoadKexts ();
+  } else {
+    WithKexts = FALSE;
+  }
 
 #if 0
   gBS->CalculateCrc32 ((VOID *)gST, sizeof(EFI_SYSTEM_TABLE), &gST->Hdr.CRC32);

@@ -1423,7 +1423,7 @@ KernelAndKextsPatcherStart (
     KextPatcherStart ();
   }
 
-  if (gSettings.CheckFakeSMC && PrelinkInfoAddr != 0) {
+  if (gSettings.LoadExtraKexts && gSettings.CheckFakeSMC && PrelinkInfoAddr != 0) {
     if (SearchMemory ((UINT8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,
                         "<string>org.netkas.driver.FakeSMC</string>", 42) != NULL ||
         SearchMemory ((UINT8 *) (UINTN) PrelinkInfoAddr, PrelinkInfoSize,

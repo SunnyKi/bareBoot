@@ -1198,6 +1198,7 @@ GetUserSettings (
 
   if (dictPointer != NULL) {
     GetAsciiProperty (dictPointer, "prev-lang", gSettings.Language);
+    gSettings.LoadExtraKexts = GetBoolProperty (dictPointer, "LoadExtraKexts", TRUE);
     gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
     gSettings.NvRam = GetBoolProperty (dictPointer, "NvRam", FALSE);
 
