@@ -1592,7 +1592,7 @@ BiosVideoCheckForVbe (
     }
 
     if (ModeFound &&
-        (BestMode < (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
+        (BestMode <= (UINT32) (BiosVideoPrivate->VbeModeInformationBlock->XResolution +
                               BiosVideoPrivate->VbeModeInformationBlock->YResolution))) {
       PreferMode = ModeNumber;
       BestMode = BiosVideoPrivate->VbeModeInformationBlock->XResolution +
