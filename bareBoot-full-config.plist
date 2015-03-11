@@ -194,12 +194,20 @@
           <true/>
         <key>DefaultBootVolume</key>
           <string>Mountain Lion</string>
+        <key>LoadExtraKexts</key>
+          <true/>
         <key>NvRam</key>
           <false/>
+        <key>MLB</key>
+          <string></string>
         <key>PlatformUUID</key>
           <string>0D2AE8C8-B6AA-5A79-B51A-15F9B0709EA1</string>
         <key>prev-lang</key>
           <string>ru:0</string>
+        <key>#ROM</key>
+          <data></data>
+        <key>ROM</key>
+          <string></string>
         <key>SaveVideoRom</key>
           <false/>
         <key>ScreenMode</key>
