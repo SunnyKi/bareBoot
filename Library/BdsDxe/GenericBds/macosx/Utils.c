@@ -1400,8 +1400,8 @@ GetUserSettings (
 
   Model = GetDefaultModel ();
   if (AsciiStrLen (gSettings.ProductName) > 0) {
-    for (i = 0; i < sizeof (MACHINE_TYPES); i++) {
-      if (AsciiStrStr (gSettings.ProductName, AppleProductName[i]) != NULL) {
+    for (i = 0; i < (sizeof (AppleProductName) / sizeof (CHAR8 *)); i++) {
+      if (AsciiStrStr (AppleProductName[i], gSettings.ProductName) != NULL) {
         Model = i;
         break;
       }
