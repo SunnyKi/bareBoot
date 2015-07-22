@@ -1379,23 +1379,36 @@ PNG_decode (
     }
   }
   else {  // interlaceMethod is 1 (Adam7)
+    UINT32 pattern[28] = {
+      0, 4, 0, 2, 0, 1, 0,
+      0, 0, 4, 0, 2, 0, 1,
+      8, 8, 4, 4, 2, 2, 1,
+      8, 8, 8, 4, 4, 2, 2
+    };  // values for the adam7 passes
     int i;
     vector8_t *scanlineo, *scanlinen; // "old" and "new" scanline
-    UINT32 passw[7] = {
-      (info->width + 7) / 8, (info->width + 3) / 8, (info->width + 3) / 4,
-      (info->width + 1) / 4, (info->width + 1) / 2, (info->width + 0) / 2,
-      (info->width + 0) / 1
-    };
-    UINT32 passh[7] = {
-      (info->height + 7) / 8, (info->height + 7) / 8, (info->height + 3) / 8,
-      (info->height + 3) / 4, (info->height + 1) / 4, (info->height + 1) / 2,
-      (info->height + 0) / 2
-    };
-    UINT32 passstart[7] = { 0, 0, 0, 0, 0, 0, 0 };
-    UINT32 pattern[28] =
-      { 0, 4, 0, 2, 0, 1, 0, 0, 0, 4, 0, 2, 0, 1, 8, 8, 4, 4, 2, 2, 1, 8, 8,
-      8, 4, 4, 2, 2
-    };  // values for the adam7 passes
+
+    UINT32 passw[7];
+    UINT32 passh[7];
+    UINT32 passstart[7];
+
+    passstart[0] = 0;
+
+    passw[0] = (info->width + 7) / 8;
+    passw[1] = (info->width + 3) / 8;
+    passw[2] = (info->width + 3) / 4;
+    passw[3] = (info->width + 1) / 4;
+    passw[4] = (info->width + 1) / 2;
+    passw[5] = (info->width + 0) / 2;
+    passw[6] = (info->width + 0) / 1;
+
+    passh[0] = (info->height + 7) / 8;
+    passh[1] = (info->height + 7) / 8;
+    passh[2] = (info->height + 3) / 8;
+    passh[3] = (info->height + 3) / 4;
+    passh[4] = (info->height + 1) / 4;
+    passh[5] = (info->height + 1) / 2;
+    passh[6] = (info->height + 0) / 2;
 
     for (i = 0; i < 6; i++)
       passstart[i + 1] =
