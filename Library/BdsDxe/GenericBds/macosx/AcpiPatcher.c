@@ -104,7 +104,7 @@ ScanXSDT (
   UINT64                        Entry64;
 
   EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-  BasePtr = (UINT64*) (& (Xsdt->Entry));
+  BasePtr = (UINT64*) ((CHAR8 *) (&(Xsdt->Entry)));
 
   for (Index = 0; Index < EntryCount; Index ++, BasePtr++) {
     CopyMem (&Entry64, (VOID*) BasePtr, sizeof (UINT64));
@@ -183,7 +183,7 @@ DropTableFromXSDT (
 //  UINT64                          Entry64;
 
   EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT64);
-  EntryPtr = &Xsdt->Entry;
+  EntryPtr = (UINT64 *) ((CHAR8 *) &(Xsdt->Entry));
 
   DBG ("DropTableFromXSDT: Signature = 0x%x, TableId = 0x%llx '%8.8a'\n",
        Signature,
@@ -384,7 +384,7 @@ PatchACPI (
     Xsdt->Header.CreatorId = Rsdt->Header.CreatorId;
     Xsdt->Header.CreatorRevision = Rsdt->Header.CreatorRevision;
     pEntryR = (UINT32*) (&(Rsdt->Entry));
-    pEntryX = (UINT64*) (&(Xsdt->Entry));
+    pEntryX = (UINT64*) ((CHAR8 *)(&(Xsdt->Entry)));
 
     for (Index = 0; Index < eCntR; Index ++) {
 #if 0
