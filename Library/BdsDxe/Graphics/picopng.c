@@ -17,6 +17,7 @@
 //      misrepresented as being the original software.
 //   3. This notice may not be removed or altered from any source distribution.
 
+#include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 
 #include "picopng.h"
@@ -184,12 +185,12 @@ vector32_resizev (
   UINT32 value
 )
 { // resize and give all new elements the value
-  UINT32 oldsize = p->size, i;
+  UINT32 oldsize = p->size;
 
   if (!vector32_resize (p, size))
     return 0;
-  for (i = oldsize; i < size; i++)
-    p->data[i] = value;
+
+  SetMem32 (&(p->data[oldsize]), size - oldsize, value);
   return 1;
 }
 
@@ -262,12 +263,12 @@ vector8_resizev (
   UINT8 value
 )
 { // resize and give all new elements the value
-  UINT32 oldsize = p->size, i;
+  UINT32 oldsize = p->size;
 
   if (!vector8_resize (p, size))
     return 0;
-  for (i = oldsize; i < size; i++)
-    p->data[i] = value;
+
+  SetMem (&(p->data[oldsize]), size - oldsize, value);
   return 1;
 }
 
