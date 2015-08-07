@@ -470,7 +470,8 @@ KernelBooterExtensionsPatch (
               1
               );
     }
-    if (AsciiStrnCmp (KernVersion, "14", 2) == 0) {
+    if ((AsciiStrnCmp (KernVersion, "14", 2) == 0) ||
+        (AsciiStrnCmp (KernVersion, "15", 2) == 0)) {
       Num = SearchAndReplace (
               (UINT8 *) (UINTN) addr,
               size,
