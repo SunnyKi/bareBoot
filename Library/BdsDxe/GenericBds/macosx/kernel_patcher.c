@@ -500,6 +500,7 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBEYReplace,
               1
               );
+      GetSection ("__TEXT", "__text", &addr, &size);
       Num += SearchAndReplace (
               (UINT8 *) (UINTN) addr,
               size,

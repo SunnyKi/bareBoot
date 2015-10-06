@@ -238,6 +238,16 @@ SetVariablesForOSX (
                   );
   }
 
+  if (gSettings.CsrActiveConfig != 0) {
+    Status = gRS->SetVariable (
+                    L"csr-active-config",
+                    &gEfiAppleBootGuid,
+                    EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
+                    sizeof (gSettings.CsrActiveConfig),
+                    &gSettings.CsrActiveConfig
+                  );
+  }
+
 #if 0
   Status = gRS->SetVariable (
                   L"security-mode",

@@ -1201,6 +1201,8 @@ GetUserSettings (
     gSettings.LoadExtraKexts = GetBoolProperty (dictPointer, "LoadExtraKexts", TRUE);
     gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
     gSettings.NvRam = GetBoolProperty (dictPointer, "NvRam", FALSE);
+    gSettings.CsrActiveConfig = (UINT32) GetNumProperty (dictPointer, "CsrActiveConfig", 0);
+    DBG ("GetUserSettings: CsrActiveConfig = %d\n", gSettings.CsrActiveConfig);
 
     GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
     if (AsciiStrLen (AddBootArgs) != 0) {

@@ -5,7 +5,7 @@
 export TARGET_TOOLS=GCC49
 export PROCESSOR=X64
 export TARGET=RELEASE
-export DEF=""
+export DEF="-D NO_LOGO -D NO_FONT"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
