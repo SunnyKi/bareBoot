@@ -357,8 +357,12 @@ LoadKexts (
   else if (AsciiStrStr (gSettings.BootArgs, "arch=i386") != NULL)
     archCpuType = CPU_TYPE_I386;
   else if (OSVersion != NULL) {
-    if ((AsciiStrLen (OSVersion) >= 5) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0))
-      archCpuType = CPU_TYPE_X86_64;
+    if (AsciiStrLen (OSVersion) >= 5) {
+      if (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)
+        archCpuType = CPU_TYPE_X86_64;
+      if (AsciiStrnCmp (OSVersion, "10.11", 5) == 0)
+        archCpuType = CPU_TYPE_X86_64;
+    }
     else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0)
       archCpuType = CPU_TYPE_X86_64;
     else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0)
