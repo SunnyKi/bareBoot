@@ -286,8 +286,13 @@ GetExtraKextsDir (
     else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
       OSTypeStr = L"10.9";
     }
-    else if ((AsciiStrLen (OSVersion) >= 5) && (AsciiStrnCmp (OSVersion, "10.10", 5) == 0)) {
-      OSTypeStr = L"10.10";
+    else if (AsciiStrLen (OSVersion) >= 5) {
+      if (AsciiStrnCmp (OSVersion, "10.10", 5) == 0) {
+        OSTypeStr = L"10.10";
+      }
+      if (AsciiStrnCmp (OSVersion, "10.11", 5) == 0) {
+        OSTypeStr = L"10.11";
+      }
     }
   } else {
     OSTypeStr = L"other";

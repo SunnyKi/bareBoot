@@ -413,6 +413,11 @@ UINT8 KBEYSearch[] =
 UINT8 KBEYReplace[] =
 { 0xC6, 0xE8, 0x25, 0x00, 0x00, 0x00, 0x90, 0x90, 0xE8, 0xCE, 0x02 };
 
+UINT8 KBEEntitlementSearch[] =
+{ 0xC3, 0x48, 0x85, 0xDB, 0x74, 0x70, 0x48, 0x8B, 0x03, 0x48, 0x89, 0xDF, 0xFF, 0x50, 0x28, 0x48 };
+UINT8 KBEEntitlementReplace[] =
+{ 0xC3, 0x48, 0x85, 0xDB, 0xEB, 0x12, 0x48, 0x8B, 0x03, 0x48, 0x89, 0xDF, 0xFF, 0x50, 0x28, 0x48 };
+
 VOID
 EFIAPI
 KernelBooterExtensionsPatch (
@@ -439,6 +444,7 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBESLReplace_1080_X64,
               1
               );
+      goto Exit;
     } else if (AsciiStrnCmp (KernVersion, "10", 2) == 0) {
       Num = SearchAndReplace (
               (UINT8 *) (UINTN) addr,
@@ -448,6 +454,7 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBESLReplace_X64,
               1
               );
+      goto Exit;
     }
     if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
       Num = SearchAndReplace (
@@ -458,6 +465,7 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBELionReplace_X64,
               1
               );
+      goto Exit;
     }
     if ((AsciiStrnCmp (KernVersion, "12", 2) == 0) ||
         (AsciiStrnCmp (KernVersion, "13", 2) == 0)) {
@@ -469,8 +477,20 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBEMLReplace,
               1
               );
+      goto Exit;
     }
-    if ((AsciiStrnCmp (KernVersion, "14", 2) == 0) ||
+    if (AsciiStrnCmp (KernVersion, "14", 2) == 0) {
+      Num = SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBEYSearch,
+              sizeof (KBEYSearch),
+              (CHAR8 *) KBEYReplace,
+              1
+              );
+      goto Exit;
+    }
+    if ((AsciiStrnCmp (KernVersion, "14.4", 4) == 0) ||
         (AsciiStrnCmp (KernVersion, "15", 2) == 0)) {
       Num = SearchAndReplace (
               (UINT8 *) (UINTN) addr,
@@ -480,6 +500,15 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBEYReplace,
               1
               );
+      Num += SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBEEntitlementSearch,
+              sizeof (KBEEntitlementSearch),
+              (CHAR8 *) KBEEntitlementReplace,
+              1
+              );
+      goto Exit;
     }
   } else {
       if (AsciiStrnCmp (KernVersion, "10", 2) == 0) {
@@ -491,6 +520,7 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBESLReplace_i386,
               1
               );
+      goto Exit;
     }
     if (AsciiStrnCmp (KernVersion, "11", 2) == 0) {
       Num = SearchAndReplace (
@@ -501,9 +531,11 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBELionReplace_i386,
               1
               );
+      goto Exit;
     }
   }
-  
+
+Exit:
   DBG ("%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
 #ifdef KERNEL_PATCH_DEBUG
   Print (L"%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
