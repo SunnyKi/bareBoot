@@ -219,6 +219,13 @@ Returns:
                 (UINT8) Func
                 );
 
+      if (EFI_ERROR (Status) && Func == 0) {
+        //
+        // go to next device if there is no Function 0
+        //
+        break;
+      }
+
       if (!EFI_ERROR (Status)) {
 
         //
