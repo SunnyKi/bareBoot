@@ -370,7 +370,7 @@ ClearScreen (
                );
     
     if (EFI_ERROR (Status)) {
-      DBG ("%a: GetSectionFromAnyFv  fail with status: %r", __FUNCTION__, Status);
+      DBG ("%a: GetSectionFromAnyFv  fail with status: %r\n", __FUNCTION__, Status);
       goto Down;
     }
     
@@ -379,7 +379,7 @@ ClearScreen (
                         &Width);
     
     if (EFI_ERROR (Status)) {
-      DBG ("%a: ConvertPngToGopBlt  fail with status: %r", __FUNCTION__, Status);
+      DBG ("%a: ConvertPngToGopBlt  fail with status: %r\n", __FUNCTION__, Status);
       goto Down;
     }
 
@@ -392,7 +392,7 @@ ClearScreen (
                     (UINTN) DestX, (UINTN) DestY, Width, Height,
                     Width * sizeof (EFI_GRAPHICS_OUTPUT_BLT_PIXEL), TRUE);
       if (EFI_ERROR (Status)) {
-        DBG ("%a: BltWithAlpha  fail with status: %r", __FUNCTION__, Status);
+        DBG ("%a: BltWithAlpha  fail with status: %r\n", __FUNCTION__, Status);
       }
     }
 
