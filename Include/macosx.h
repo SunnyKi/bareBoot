@@ -336,6 +336,7 @@ typedef enum {
   MacPro31,
   MacPro41,
   MacPro51,
+  Unknown,
 } MACHINE_TYPES;
 
 typedef struct {

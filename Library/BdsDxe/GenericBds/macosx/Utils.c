@@ -1400,7 +1400,7 @@ GetUserSettings (
 
   GetAsciiProperty (dictPointer, "ProductName", gSettings.ProductName);
 
-  Model = GetDefaultModel ();
+  Model = Unknown;
   if (AsciiStrLen (gSettings.ProductName) > 0) {
     for (i = 0; i < (sizeof (AppleProductName) / sizeof (CHAR8 *)); i++) {
       if (AsciiStrStr (AppleProductName[i], gSettings.ProductName) != NULL) {
@@ -1408,17 +1408,21 @@ GetUserSettings (
         break;
       }
     }
+  } else {
+    Model = GetDefaultModel ();
   }
 
-  AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[Model]);
-  AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[Model]);
-  AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[Model]);
-  AsciiStrCpy (gSettings.FamilyName, AppleFamilies[Model]);
-  AsciiStrCpy (gSettings.ProductName, AppleProductName[Model]);
-  AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[Model]);
-  AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[Model]);
-  AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[Model]);
-  AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[Model]);
+  if (Model != Unknown) {
+    AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[Model]);
+    AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[Model]);
+    AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[Model]);
+    AsciiStrCpy (gSettings.FamilyName, AppleFamilies[Model]);
+    AsciiStrCpy (gSettings.ProductName, AppleProductName[Model]);
+    AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[Model]);
+    AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[Model]);
+    AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[Model]);
+    AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[Model]);
+  }
 
   GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);
   GetAsciiProperty (dictPointer, "BiosVendor", gSettings.VendorName);
