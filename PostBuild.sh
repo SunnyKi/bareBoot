@@ -48,7 +48,7 @@ case "$1" in
      ;;
    *)
      echo Invalid Architecture string, should be only IA32 or X64
-     return 1
+     exit 1
 esac
 
 case "$2" in
@@ -63,7 +63,7 @@ case "$2" in
      ;;
    *)
      echo Invalid tool tag, should be only UNIXCLANG, UNIXGCC or GCC44
-     return 1
+     exit 1
 esac
 
 export BUILD_DIR=$WORKSPACE/Build/$PROJECTNAME/$PROCESSOR/DEBUG_$TOOLTAG
