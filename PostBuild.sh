@@ -36,7 +36,7 @@ if [ \
    ]
 then
   echo Error! Please specific the architecture.
-  echo Usage: "./PostBuild.sh [IA32|X64] [UNIXCLANG|UNIXGCC|GCC44]"
+  echo Usage: "./PostBuild.sh [IA32|X64] [GCC44|UNIXCLANG|UNIXGCC|XCODE5]"
 fi
 
 case "$1" in
@@ -52,17 +52,20 @@ case "$1" in
 esac
 
 case "$2" in
+   GCC44)
+     export TOOLTAG=GCC44
+     ;;
    UNIXCLANG)
      export TOOLTAG=UNIXCLANG
      ;;
    UNIXGCC)
      export TOOLTAG=UNIXGCC
      ;;
-   GCC44)
-     export TOOLTAG=GCC44
+   XCODE5)
+     export TOOLTAG=XCODE5
      ;;
    *)
-     echo Invalid tool tag, should be only UNIXCLANG, UNIXGCC or GCC44
+     echo Invalid tool tag, should be only GCC44, UNIXCLANG, UNIXGCC or XCODE5
      exit 1
 esac
 
@@ -73,8 +76,8 @@ export BUILD_DIR=$WORKSPACE/Build/$PROJECTNAME/$PROCESSOR/DEBUG_$TOOLTAG
 # Boot sector module could only be built under IA32 tool chain
 #
 
-echo Compressing DUETEFIMainFv.FV ...
-$BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DUETEFIMAINFV.z $BUILD_DIR/FV/DUETEFIMAINFV.Fv
+echo Compressing bareBootEFIMainFv.FV ...
+$BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/bareBootEFIMAINFV.z $BUILD_DIR/FV/bareBootEFIMAINFV.Fv
 
 echo Compressing DxeMain.efi ...
 $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/$PROCESSOR/DxeCore.efi
@@ -87,7 +90,7 @@ echo Generate Loader Image ...
 if [ $PROCESSOR = IA32 ]
 then
         $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/DUETEFIMAINFV.z
+  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
   cat $BOOTSECTOR_BIN_DIR/Start.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32   > $BUILD_DIR/FV/Efildr
   #
   # It is safe to use "bcat" to cat following binary file, if bcat command is avaiable for your system
@@ -103,7 +106,7 @@ fi
 if [ $PROCESSOR = X64 ]
 then
   $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/DUETEFIMAINFV.z
+  $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
   cat $BOOTSECTOR_BIN_DIR/Start64.com $BOOTSECTOR_BIN_DIR/efi64.com2 $BUILD_DIR/FV/Efildr64 > $BUILD_DIR/FV/EfildrPure
   #bcat -o $BUILD_DIR/FV/EfildrPure $BOOTSECTOR_BIN_DIR/start64.com $BOOTSECTOR_BIN_DIR/efi64.com2 $BUILD_DIR/FV/Efildr64
   $BASETOOLS_DIR/GenPage $BUILD_DIR/FV/EfildrPure -o $BUILD_DIR/FV/Efildr
