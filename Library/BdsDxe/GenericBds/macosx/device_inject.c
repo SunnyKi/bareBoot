@@ -707,7 +707,7 @@ patch_nvidia_rom (
     }
   }
   else if (dcbtable_version >= 0x14) {  /* some NV15/16, and NV11+ */
-    CHAR8 sig[8] = { 0 };
+    CHAR8 sig[8];
 
     AsciiStrnCpy (sig, (CHAR8 *) &dcbtable[-7], 7);
     recordlength = 10;
