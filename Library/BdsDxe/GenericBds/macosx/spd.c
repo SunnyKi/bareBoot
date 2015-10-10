@@ -467,7 +467,7 @@ read_smb_intel (
   if (gRAM->MaxMemorySlots == 2 &&
       gRAM->DIMM[1].InUse == FALSE &&
       gRAM->DIMM[2].InUse == TRUE) {
-    gRAM->DIMM[1] = gRAM->DIMM[2];
+    CopyMem ((VOID *) &gRAM->DIMM[1], (VOID *) &gRAM->DIMM[2], sizeof (gRAM->DIMM[1]));
     if (gRAM->DIMM[1].InUse) {
       DBG ("Spd: gRAM->DIMM[1].InUse = TRUE\n");
     } else {
