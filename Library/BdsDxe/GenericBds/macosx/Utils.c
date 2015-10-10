@@ -1333,7 +1333,7 @@ GetUserSettings (
         CHAR8 *TablStr;
         CHAR8 s1 = 0, s2 = 0, s3 = 0, s4 = 0;
         UINTN idi = 0;
-        CHAR8 id[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+        CHAR8 id[8];
 
         DBG (" Drop table %d", (i + 1));
         prop = plNodeGetItem (array, i);
@@ -1364,6 +1364,7 @@ GetUserSettings (
         DBG ("' (%8.8X)", Signature);
         // Get the table ids to drop
         TablStr = GetStringProperty (prop, "TableId");
+        ZeroMem (id, sizeof (id));
         if (TablStr) {
           DBG (" table-id = '");
           while (*TablStr && (idi < 8)) {
@@ -1371,7 +1372,7 @@ GetUserSettings (
             id[idi++] = *TablStr++;
           }
         }
-        CopyMem (&TableId, (CHAR8 *) &id[0], 8);
+        CopyMem (&TableId, id, 8);
         DBG ("' (%16.16lX)\n", TableId);
 
         DropTable = AllocateZeroPool (sizeof (ACPI_DROP_TABLE));
