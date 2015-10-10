@@ -1380,7 +1380,7 @@ PNG_decode (
     }
   }
   else {  // interlaceMethod is 1 (Adam7)
-    UINT32 pattern[28] = {
+    static UINT32 pattern[28] = {
       0, 4, 0, 2, 0, 1, 0,
       0, 0, 4, 0, 2, 0, 1,
       8, 8, 4, 4, 2, 2, 1,
