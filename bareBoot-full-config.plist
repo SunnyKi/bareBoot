@@ -192,14 +192,16 @@
           <string>debug=0x108</string>
         <key>CheckFakeSMC</key>
           <true/>
+        <key>CsrActiveConfig</key>
+          <integer>0x00000000</integer>
         <key>DefaultBootVolume</key>
           <string>Mountain Lion</string>
         <key>LoadExtraKexts</key>
           <true/>
-        <key>NvRam</key>
-          <false/>
         <key>MLB</key>
           <string></string>
+        <key>NvRam</key>
+          <false/>
         <key>PlatformUUID</key>
           <string>0D2AE8C8-B6AA-5A79-B51A-15F9B0709EA1</string>
         <key>prev-lang</key>
