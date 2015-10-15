@@ -60,12 +60,7 @@ INF  bareBoot/Library/BdsDxe/BdsDxe.inf
 
 #INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
-#!if ($(ARCH) == "X64")
-# INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
-# INF  bareBoot/Cpu/CpuDxe2/CpuDxe.inf
-#!elseif ($(ARCH) == "IA32")
- INF  bareBoot/Cpu/CpuDxe/Cpu.inf
-#!endif
+INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
 INF  bareBoot/AcpiResetDxe/Reset.inf
 INF  MdeModulePkg/Universal/Metronome/Metronome.inf
 
