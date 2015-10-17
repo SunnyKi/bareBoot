@@ -612,11 +612,11 @@ Return:
   // 0x18 pages is 72 KB.
   //
   EbdaAddress = (UINT64)((*(UINT16 *)(UINTN)(EBDA_VALUE_ADDRESS)) << 4);
+  //
+  // EBDA should not go below 0x9A000 in any implementation,
+  // so check here to make sure EBDA_VALUE_ADDRESS has a valid value.
+  //
   if (EbdaAddress < 0x9A000 || EbdaAddress > EFI_MEMORY_BELOW_1MB_END) {
-    //
-    // EBDA should not go below 0x9A000 in any implementation,
-    // so add check here to make sure EBDA_VALUE_ADDRESS has a valid value.
-    //
     EbdaAddress = EFI_MEMORY_BELOW_1MB_END;
   }
   gHob->MemoryFreeUnder1MB.ResourceLength = EbdaAddress - EFI_MEMORY_BELOW_1MB_START;
