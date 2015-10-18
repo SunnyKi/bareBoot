@@ -1,13 +1,13 @@
 /** @file
 
 Copyright (c) 2006 - 2007, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
   Paging.c
@@ -95,8 +95,8 @@ Routine Description:
   PageDirectoryEntry4KB->Bits.Present = 1;
   PageDirectoryEntry4KB->Bits.MustBeZero = 0;
 
-  for (PTEIndex = 0, PageAddress = 0; 
-       PTEIndex < ENTRY_NUM (EFI_MAX_ENTRY_BITS_NUM); 
+  for (PTEIndex = 0, PageAddress = 0;
+       PTEIndex < ENTRY_NUM (EFI_MAX_ENTRY_BITS_NUM);
        PTEIndex++, PageTableEntry4KB++, PageAddress += EFI_PAGE_SIZE_4K
       ) {
     //
@@ -140,7 +140,7 @@ X64Create2MPageTables (
   for (PML4Index = 0; PML4Index < ENTRY_NUM (gPML4BitsNum); PML4Index++, PageMapLevel4Entry++) {
     //
     // Each PML4 entry points to a page of Page Directory Pointer entires.
-    //  
+    //
     TempPageTable += EFI_PAGE_SIZE_4K;
     PageDirectoryPointerEntry = (X64_PAGE_MAP_AND_DIRECTORY_POINTER_2MB_4K *)TempPageTable;
 
@@ -154,7 +154,7 @@ X64Create2MPageTables (
     for (PDPTEIndex = 0; PDPTEIndex < ENTRY_NUM (gPDPTEBitsNum); PDPTEIndex++, PageDirectoryPointerEntry++) {
       //
       // Each Directory Pointer entries points to a page of Page Directory entires.
-      //       
+      //
       TempPageTable += EFI_PAGE_SIZE_4K;
       PageDirectoryEntry2MB = (X64_PAGE_TABLE_ENTRY_2M *)TempPageTable;
 
@@ -189,7 +189,7 @@ PreparePageTable (
   )
 /*++
 Description:
-  Generate pagetable below PageNumberTop, 
+  Generate pagetable below PageNumberTop,
   and return the bottom address of pagetable for putting other things later.
 --*/
 {
@@ -212,13 +212,13 @@ Description:
   //   EntryNum:     a              b               c
   // then
   //   Occupy4KPage: 1              a              a*b
-  // 
+  //
   // 2M 4KPage:
   //   Entry:       PTE    ->     Page
   //   EntryNum:    512
   // then
   //   Occupy4KPage: 1
-  //   
+  //
 
   gPageNum2M = 1 + ENTRY_NUM (gPML4BitsNum) + ENTRY_NUM (gPML4BitsNum + gPDPTEBitsNum);
   gPageNum4K = 1;

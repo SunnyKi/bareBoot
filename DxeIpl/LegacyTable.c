@@ -1,13 +1,13 @@
 /** @file
 
 Copyright (c) 2006 - 2010, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
   LegacyTable.c
@@ -130,11 +130,11 @@ ScanTableInRSDT (
   UINT32                        EntryCount;
   UINT32                        *EntryPtr;
   EFI_ACPI_DESCRIPTION_HEADER   *Table;
-  
+
   *FoundTable = NULL;
-  
+
   EntryCount = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT32);
-  
+
   EntryPtr = &Rsdt->Entry;
   for (Index = 0; Index < EntryCount; Index ++, EntryPtr ++) {
     Table = (EFI_ACPI_DESCRIPTION_HEADER*)((UINTN)(*EntryPtr));
@@ -143,7 +143,7 @@ ScanTableInRSDT (
       break;
     }
   }
-  
+
   return;
 }
 
@@ -159,11 +159,11 @@ ScanTableInXSDT (
   UINT64                       EntryPtr;
   UINTN                        BasePtr;
   EFI_ACPI_DESCRIPTION_HEADER  *Table;
-  
+
   *FoundTable = NULL;
-  
+
   EntryCount = (Xsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof(UINT64);
-  
+
   BasePtr = (UINTN)(&(Xsdt->Entry));
   for (Index = 0; Index < EntryCount; Index ++) {
     CopyMem (&EntryPtr, (VOID *)(BasePtr + Index * sizeof(UINT64)), sizeof(UINT64));
@@ -173,7 +173,7 @@ ScanTableInXSDT (
       break;
     }
   }
-  
+
   return;
 }
 
@@ -187,7 +187,7 @@ FindAcpiPtr (
   EFI_ACPI_3_0_ROOT_SYSTEM_DESCRIPTION_POINTER   *Rsdp;
   RSDT_TABLE                                     *Rsdt;
   XSDT_TABLE                                     *Xsdt;
- 
+
   AcpiTable = NULL;
 
   //
@@ -213,7 +213,7 @@ FindAcpiPtr (
       ScanTableInRSDT (Rsdt, Signature, &AcpiTable);
     }
   }
-  
+
   //
   // Check ACPI1.0 table
   //
@@ -293,7 +293,7 @@ PrepareFadtTable (
   //
   AcpiDescription->PM_TMR_LEN = Fadt->PmTmrLen;
   AcpiDescription->TMR_VAL_EXT = (UINT8)((Fadt->Flags & 0x100) != 0);
- 
+
   //
   // For fields not included in ACPI 1.0 spec, we get the value based on table length
   //
@@ -321,11 +321,10 @@ PrepareFadtTable (
   //
   // It's possible that the PM_TMR_BLK.RegisterBitWidth is always 32,
   //  we need to set the correct RegisterBitWidth value according to the TMR_VAL_EXT
-  //  A zero indicates TMR_VAL is implemented as a 24-bit value. 
+  //  A zero indicates TMR_VAL is implemented as a 24-bit value.
   //  A one indicates TMR_VAL is implemented as a 32-bit value
   //
   AcpiDescription->PM_TMR_BLK.RegisterBitWidth = (UINT8) ((AcpiDescription->TMR_VAL_EXT == 0) ? 24 : 32);
-  
 
   return ;
 }
@@ -341,18 +340,18 @@ PrepareHobLegacyTable (
 
   Hob->Acpi.Table   = (EFI_PHYSICAL_ADDRESS)(UINTN)FindAcpiRsdPtr ();
 #if 0
-  AsciiSPrint (PrintBuffer, 256, "\nAcpiTable=0x%x ", (UINT32)(UINTN)Hob->Acpi.Table);
+  AsciiSPrint (PrintBuffer,sizeof (PrintBuffer), "\nAcpiTable=0x%x ", (UINT32)(UINTN)Hob->Acpi.Table);
   PrintString (PrintBuffer);
 #endif
   Hob->Acpi20.Table = (EFI_PHYSICAL_ADDRESS)(UINTN)FindAcpiRsdPtr ();
   Hob->Smbios.Table = (EFI_PHYSICAL_ADDRESS)(UINTN)FindSMBIOSPtr ();
 #if 0
-  AsciiSPrint (PrintBuffer, 256, "SMBIOS Table=0x%x ", (UINT32)(UINTN)Hob->Smbios.Table);
+  AsciiSPrint (PrintBuffer,sizeof (PrintBuffer), "SMBIOS Table=0x%x ", (UINT32)(UINTN)Hob->Smbios.Table);
   PrintString (PrintBuffer);
 #endif
   Hob->Mps.Table    = (EFI_PHYSICAL_ADDRESS)(UINTN)FindMPSPtr ();
 #if 0
-  AsciiSPrint (PrintBuffer, 256, "MPS Table=0x%x\n", (UINT32)(UINTN)Hob->Mps.Table);
+  AsciiSPrint (PrintBuffer,sizeof (PrintBuffer), "MPS Table=0x%x\n", (UINT32)(UINTN)Hob->Mps.Table);
   PrintString (PrintBuffer);
 #endif
 

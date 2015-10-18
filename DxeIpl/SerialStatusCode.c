@@ -1,13 +1,13 @@
 /** @file
 
 Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
   SerialStatusCode.c
@@ -558,26 +558,26 @@ MatchString (
   )
 /*++
 
-Routine Description: 
+Routine Description:
 
   Search the input table for a matching value and return the token associated
-  with that value.  Well formed tables will have the last value == 0 and will 
+  with that value.  Well formed tables will have the last value == 0 and will
   return a default token.
 
-Arguments:  
+Arguments:
 
   Table     Pointer to first entry in an array of table entries.
   Value     Value to look up.
   Token     String to return.
 
-Returns:  
+Returns:
 
   EFI_SUCCESS   The function always returns success.
 
 --*/
 {
   UINTN         Current;
-  
+
   Current = 0;
   *Token = 0;
 
@@ -596,7 +596,7 @@ Returns:
 
 
 EFI_STATUS
-EFIAPI 
+EFIAPI
 SerialReportStatusCode (
   IN EFI_STATUS_CODE_TYPE     CodeType,
   IN EFI_STATUS_CODE_VALUE    Value,
@@ -613,7 +613,7 @@ Routine Description:
 Arguments:
 
   PeiServices - General purpose services available to every PEIM.
-    
+
 Returns:
 
   Status -  EFI_SUCCESS if the interface could be successfully
@@ -632,7 +632,7 @@ Returns:
 
   Buffer[0] = '\0';
 
-  if (Data != NULL && 
+  if (Data != NULL &&
       ReportStatusCodeExtractAssertInfo (CodeType, Value, Data, &Filename, &Description, &LineNumber)) {
     //
     // Processes PEI_ASSERT ()
@@ -653,7 +653,7 @@ Returns:
     //
     CharCount = AsciiBSPrint (Buffer, sizeof (Buffer), Format, Marker);
 
-  } else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE) { 
+  } else if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE) {
     //
     // Process Errors
     //
@@ -686,7 +686,7 @@ Returns:
       CHAR8       *SubClassToken;
       CHAR8       *OperationToken;
 
-      if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE) { 
+      if ((CodeType & EFI_STATUS_CODE_TYPE_MASK) == EFI_ERROR_CODE) {
         //
         // Get the severity token
         //
@@ -695,7 +695,7 @@ Returns:
           (CodeType & EFI_STATUS_CODE_SEVERITY_MASK),
           &SeverityToken
           );
-    
+
         //
         // Get the Class/SubClass token
         //
@@ -704,7 +704,7 @@ Returns:
           (Value & (EFI_STATUS_CODE_CLASS_MASK | EFI_STATUS_CODE_SUBCLASS_MASK)),
           &SubClassToken
           );
-    
+
         //
         // Get the operation token
         //
@@ -713,7 +713,7 @@ Returns:
           (Value & (EFI_STATUS_CODE_CLASS_MASK | EFI_STATUS_CODE_SUBCLASS_MASK | EFI_STATUS_CODE_OPERATION_MASK)),
           &OperationToken
           );
-    
+
         //
         // Concatenate the instance
         //
@@ -745,11 +745,11 @@ Routine Description:
 
   Initialize Serial Port and Status Code Handler
 
-Arguments: 
+Arguments:
 
   ReportStatusCode - A pointer to the handler
 
-Returns: 
+Returns:
 
   None
 

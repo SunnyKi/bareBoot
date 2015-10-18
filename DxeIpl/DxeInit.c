@@ -1,13 +1,13 @@
 /** @file
 
 Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
   DxeInit.c
@@ -80,7 +80,7 @@ MemoryAbove1MB.PhysicalStart <--------------------------------------------------
                         <- Phit.EfiMemoryTop ----------+-----------+---------------+
         NvFV (64K)                                                                 |
                                                                                  MMIO
-        FtwFV (128K)                                                               |  
+        FtwFV (128K)                                                               |
                         <----------------------------------------------------------+<---------+
         DxeCore                                                                    |          |
                                                                                 DxeCore       |
@@ -120,7 +120,7 @@ DxeInit (
 
   Routine Description:
 
-    This is the entry point after this code has been loaded into memory. 
+    This is the entry point after this code has been loaded into memory.
 
 Arguments:
 
@@ -189,11 +189,11 @@ Returns:
   PrintString ("Prepare Memory HOB information ...\n");
 #endif
   MemoryTopOnDescriptor = PrepareHobMemory (Handoff->MemDescCount, Handoff->MemDesc);
-  
+
   //
   // 3. Put [NV], [Stack], [PageTable], [MemDesc], [HOB] just below the [top free address under 4GB]
   //
-  
+
   //   3.1 NV data
 #if 0
   PrintString ("Prepare NV Storage information ...\n");
@@ -228,7 +228,7 @@ Returns:
     );
 
   PrepareHobLegacyTable (gHob);
-  
+
   PreparePpisNeededByDxeCore (gHob);
 
   CompleteHobGeneration ();
@@ -284,7 +284,7 @@ Returns:
 #endif
   EnterDxeMain (StackTop, Handoff->DxeCoreEntryPoint, gHob, PageTableBase);
   PrintString ("Fail to enter DXE main!\n");
- 
+
   //
   // Should never get here
   //
