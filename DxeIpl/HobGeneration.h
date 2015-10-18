@@ -1,13 +1,13 @@
 /** @file
 
 Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
   HobGeneration.h
@@ -92,17 +92,17 @@ typedef struct {
   MEMORY_DESC_HOB                   MemoryDescriptor;
   PCI_EXPRESS_BASE_HOB              PciExpress;
   ACPI_DESCRIPTION_HOB              AcpiInfo;
-  
+
   EFI_HOB_RESOURCE_DESCRIPTOR       NvStorageFvResource;
 
   FVB_HOB                           NvStorageFvb;
   FVB_HOB                           NvStorage;
-  
+
   EFI_HOB_RESOURCE_DESCRIPTOR       NvFtwFvResource;
   FVB_HOB                           NvFtwFvb;
   FVB_HOB                           NvFtwWorking;
   FVB_HOB                           NvFtwSpare;
-  
+
   EFI_HOB_GENERIC_HEADER            EndOfHobList;
 } HOB_TEMPLATE;
 

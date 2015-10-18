@@ -1,13 +1,13 @@
 /** @file
 
 Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
-This program and the accompanying materials                          
-are licensed and made available under the terms and conditions of the BSD License         
-which accompanies this distribution.  The full text of the license may be found at        
-http://opensource.org/licenses/bsd-license.php                                            
-                                                                                          
-THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
+This program and the accompanying materials
+are licensed and made available under the terms and conditions of the BSD License
+which accompanies this distribution.  The full text of the license may be found at
+http://opensource.org/licenses/bsd-license.php
+
+THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 Module Name:
   HobGeneration.c
@@ -41,7 +41,7 @@ HOB_TEMPLATE  gHobTemplate = {
     0,                                      // EfiFreeMemoryTop
     0,                                      // EfiFreeMemoryBottom
     0                                       // EfiEndOfHobList
-  }, 
+  },
   { // Bfv
     {
       EFI_HOB_TYPE_FV,                      // HobType
@@ -90,8 +90,8 @@ HOB_TEMPLATE  gHobTemplate = {
       EFI_HOB_MEMORY_ALLOC_STACK_GUID,
       0x0,                                          // EFI_PHYSICAL_ADDRESS  MemoryBaseAddress;
       0x0,                                          // UINT64                MemoryLength;
-      EfiBootServicesData,                          // EFI_MEMORY_TYPE       MemoryType;  
-      {0, 0, 0, 0}                                  // Reserved              Reserved[4]; 
+      EfiBootServicesData,                          // EFI_MEMORY_TYPE       MemoryType;
+      {0, 0, 0, 0}                                  // Reserved              Reserved[4];
     }
   },
   { // MemoryAllocation for HOB's & Images
@@ -106,9 +106,9 @@ HOB_TEMPLATE  gHobTemplate = {
       },
       0x0,                                          // EFI_PHYSICAL_ADDRESS  MemoryBaseAddress;
       0x0,                                          // UINT64                MemoryLength;
-      EfiBootServicesData,                          // EFI_MEMORY_TYPE       MemoryType;  
+      EfiBootServicesData,                          // EFI_MEMORY_TYPE       MemoryType;
       {
-        0, 0, 0, 0                                  // Reserved              Reserved[4]; 
+        0, 0, 0, 0                                  // Reserved              Reserved[4];
       }
     }
    },
@@ -125,10 +125,10 @@ HOB_TEMPLATE  gHobTemplate = {
     (EFI_RESOURCE_ATTRIBUTE_PRESENT                 |
      EFI_RESOURCE_ATTRIBUTE_TESTED                  |
      EFI_RESOURCE_ATTRIBUTE_INITIALIZED             |
-     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),     
+     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),
     0x0,                                            // PhysicalStart
     0                                               // ResourceLength
   },
@@ -145,10 +145,10 @@ HOB_TEMPLATE  gHobTemplate = {
     (EFI_RESOURCE_ATTRIBUTE_PRESENT                 |
      EFI_RESOURCE_ATTRIBUTE_TESTED                  |
      EFI_RESOURCE_ATTRIBUTE_INITIALIZED             |
-     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),     
+     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),
     0x0,                                            // PhysicalStart
     0                                               // ResourceLength
   },
@@ -164,10 +164,10 @@ HOB_TEMPLATE  gHobTemplate = {
     EFI_RESOURCE_SYSTEM_MEMORY,                     // ResourceType
     (EFI_RESOURCE_ATTRIBUTE_PRESENT                 |
      EFI_RESOURCE_ATTRIBUTE_INITIALIZED             |
-     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),     
+     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),
     0x0,                                            // PhysicalStart
     0                                               // ResourceLength
   },
@@ -181,9 +181,9 @@ HOB_TEMPLATE  gHobTemplate = {
       EFI_HOB_MEMORY_ALLOC_MODULE_GUID,
       0x0,                                          // EFI_PHYSICAL_ADDRESS  MemoryBaseAddress;
       0x0,                                          // UINT64                MemoryLength;
-      EfiBootServicesCode,                          // EFI_MEMORY_TYPE       MemoryType;  
+      EfiBootServicesCode,                          // EFI_MEMORY_TYPE       MemoryType;
       {
-        0, 0, 0, 0                                  // UINT8                 Reserved[4]; 
+        0, 0, 0, 0                                  // UINT8                 Reserved[4];
       },
     },
     DXE_CORE_FILE_NAME_GUID,
@@ -204,10 +204,10 @@ HOB_TEMPLATE  gHobTemplate = {
      EFI_RESOURCE_ATTRIBUTE_TESTED                  | // Do not mark as TESTED, or DxeCore will find it and use it before check Allocation
 #endif
      EFI_RESOURCE_ATTRIBUTE_INITIALIZED             |
-     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE | 
-     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),     
+     EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE             |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_COMBINEABLE       |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_THROUGH_CACHEABLE |
+     EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),
     0x0,                                            // PhysicalStart
     0                                               // ResourceLength
   },
@@ -276,7 +276,7 @@ HOB_TEMPLATE  gHobTemplate = {
   },
   { // Pointer to ACPI20 Table
     {
-      {  
+      {
         EFI_HOB_TYPE_GUID_EXTENSION,       // Hob type
         sizeof (TABLE_HOB),                // Hob size
         0                                  // reserved
@@ -436,7 +436,7 @@ HOB_TEMPLATE  gHobTemplate = {
           NV_STORAGE_FVB_SIZE,           // SubAreaData.Length
           EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL_GUID // SubAreaData.FileSystem
         }
-      }, 
+      },
       0,                               // VolumeSignature (Fixed later)
       NV_STORAGE_FILE_PATH,            // Mapped file without padding
                                        //  TotalFVBSize = FileSize + PaddingSize = multiple of BLOCK_SIZE
@@ -467,7 +467,7 @@ HOB_TEMPLATE  gHobTemplate = {
           NV_STORAGE_SIZE,               // SubAreaData.Length
           EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL_GUID // SubAreaData.FileSystem
         }
-      }, 
+      },
       0,
       NV_STORAGE_FILE_PATH,
       NV_STORAGE_SIZE,
@@ -490,7 +490,7 @@ HOB_TEMPLATE  gHobTemplate = {
      EFI_RESOURCE_ATTRIBUTE_WRITE_BACK_CACHEABLE),  // ResourceAttribute
     0,                                              // PhysicalStart (Fixed later)
     NV_FTW_FVB_SIZE                                 // ResourceLength
-  },  
+  },
   { // FVB holding FTW spaces including Working & Spare space
     {
       {
@@ -513,7 +513,7 @@ HOB_TEMPLATE  gHobTemplate = {
           NV_FTW_FVB_SIZE,               // SubAreaData.Length
           EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL_GUID   // SubAreaData.FileSystem
         }
-      }, 
+      },
       0,
       L"",                             // Empty String indicates using memory
       0,
@@ -542,7 +542,7 @@ HOB_TEMPLATE  gHobTemplate = {
           NV_FTW_WORKING_SIZE,           // SubAreaData.Length
           EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL_GUID // SubAreaData.FileSystem
         }
-      }, 
+      },
       0,                               // VolumeSignature
       L"",
       0,
@@ -571,7 +571,7 @@ HOB_TEMPLATE  gHobTemplate = {
           NV_FTW_SPARE_SIZE,             // SubAreaData.Length
           EFI_FIRMWARE_VOLUME_BLOCK_PROTOCOL_GUID // SubAreaData.FileSystem
         }
-      }, 
+      },
       0,
       L"",
       0,
@@ -668,7 +668,7 @@ Return:
           gHob->MemoryAbove4GB.PhysicalStart  = EfiMemoryDescriptor[Index].PhysicalStart;
           gHob->MemoryAbove4GB.ResourceLength = LShiftU64 (EfiMemoryDescriptor[Index].NumberOfPages, EFI_PAGE_SHIFT);
         }
-        if (gHob->MemoryAbove4GB.PhysicalStart + gHob->MemoryAbove4GB.ResourceLength == 
+        if (gHob->MemoryAbove4GB.PhysicalStart + gHob->MemoryAbove4GB.ResourceLength ==
             EfiMemoryDescriptor[Index].PhysicalStart) {
           gHob->MemoryAbove4GB.ResourceLength += LShiftU64 (EfiMemoryDescriptor[Index].NumberOfPages, EFI_PAGE_SHIFT);
         }
@@ -734,7 +734,7 @@ PrepareHobBfv (
   //
   BfvLengthPageSize = EFI_PAGES_TO_SIZE (EFI_SIZE_TO_PAGES (BfvLength));
 #endif
- 
+
   gHob->Bfv.BaseAddress = (EFI_PHYSICAL_ADDRESS)(UINTN)Bfv;
   gHob->Bfv.Length = BfvLength;
 
@@ -758,7 +758,7 @@ PrepareHobDxeCore (
 
 
   gHob->MemoryDxeCore.PhysicalStart   = DxeCoreImageBase;
-  gHob->MemoryDxeCore.ResourceLength  = DxeCoreLength;  
+  gHob->MemoryDxeCore.ResourceLength  = DxeCoreLength;
 }
 
 VOID *
@@ -798,7 +798,7 @@ PrepareHobNvStorage (
     0,
     0
   };
-  
+
   STATIC EFI_FIRMWARE_VOLUME_HEADER NvStorageFvbHeader = {
     {
       0,
@@ -879,14 +879,14 @@ PrepareHobNvStorage (
 #endif
   //
   // Relocate variable storage
-  // 
+  //
   //  1. Init FVB Header to valid header: First 0x48 bytes
   //     In real platform, these fields are fixed by tools
   //
   //
   Checksum = 0;
   for (
-    Ptr = (UINT16 *) &NvStorageFvbHeader; 
+    Ptr = (UINT16 *) &NvStorageFvbHeader;
     Ptr < (UINT16 *) ((UINTN) (UINT8 *) &NvStorageFvbHeader + sizeof (EFI_FIRMWARE_VOLUME_HEADER));
     ++Ptr
     ) {
@@ -900,7 +900,7 @@ PrepareHobNvStorage (
     &BlockMapEntryEnd,
     sizeof (EFI_FV_BLOCK_MAP_ENTRY)
   );
-  
+
   //
   //  2. Relocate variable data
   //
@@ -943,9 +943,9 @@ PrepareHobNvStorage (
   //
   // Put FTW Spare area after FTW Working area
   //
-  gHob->NvFtwSpare.FvbInfo.Entries[0].Base = 
+  gHob->NvFtwSpare.FvbInfo.Entries[0].Base =
     (EFI_PHYSICAL_ADDRESS)((UINTN) FtwFvbBase + EFI_RUNTIME_UPDATABLE_FV_HEADER_LENGTH + NV_FTW_WORKING_SIZE);
-  
+
   return (VOID *)(UINTN)StorageFvbBase;
 }
 
