@@ -1,0 +1,13 @@
+Index: DuetPkg/PciRootBridgeNoEnumerationDxe/PcatPciRootBridge.c
+===================================================================
+--- DuetPkg/PciRootBridgeNoEnumerationDxe/PcatPciRootBridge.c	(revision 1)
++++ DuetPkg/PciRootBridgeNoEnumerationDxe/PcatPciRootBridge.c	(working copy)
+@@ -135,7 +135,7 @@
+     //
+     PrivateData->PciExpressBaseAddress = GetPciExpressBaseAddressForRootBridge (PciSegmentIndex, PciRootBridgeIndex);
+     if (PrivateData->PciExpressBaseAddress != 0) {
+-      DEBUG ((EFI_D_ERROR, "PCIE Base - 0x%lx\n", PrivateData->PciExpressBaseAddress));
++      DEBUG ((EFI_D_INFO, "PCIE Base - 0x%lx\n", PrivateData->PciExpressBaseAddress));
+     }
+ 
+     //

@@ -190,6 +190,13 @@ LegacyBiosInt86 (
 
   Stack16 = (UINT16 *)((UINT8 *) ThunkContext->RealModeBuffer + ThunkContext->RealModeBufferSize - sizeof (UINT16));
 
+  // XXX: came from notabs.org
+  // Clear the eflags value that will be popped when the legacy BIOS code
+  // executes IRET to return control to the caller. It is important that
+  // trap flag is not set in this value because the resulting INT1 will
+  // stop execution.
+  Stack16 [0] = 0;
+
   ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
   ThunkRegSet.E.ESP  = (UINT16) (UINTN) Stack16;
 

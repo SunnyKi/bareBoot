@@ -1,0 +1,308 @@
+Index: DuetPkg/DxeIpl/DxeInit.c
+===================================================================
+--- DuetPkg/DxeIpl/DxeInit.c	(revision 1)
++++ DuetPkg/DxeIpl/DxeInit.c	(working copy)
+@@ -160,8 +160,6 @@
+   //   * Don't report FV as physical memory
+   //   * MemoryAllocation Hob should only cover physical memory
+   //   * Use ResourceDescriptor Hob to report physical memory or Firmware Device and they shouldn't be overlapped
+-  PrintString ("Prepare Cpu HOB information ...\n");
+-  PrepareHobCpu ();
+ 
+   //
+   // 1. BFV
+@@ -175,6 +173,9 @@
+   PrintString ("Prepare Memory HOB information ...\n");
+   MemoryTopOnDescriptor = PrepareHobMemory (Handoff->MemDescCount, Handoff->MemDesc);
+   
++  PrintString ("Prepare Cpu HOB information ...\n");
++  PrepareHobCpu ();
++
+   //
+   // 3. Put [NV], [Stack], [PageTable], [MemDesc], [HOB] just below the [top free address under 4GB]
+   //
+@@ -192,7 +193,7 @@
+   //   3.4 MemDesc (will be used in PlatformBds)
+   MemoryDescriptor = PrepareHobMemoryDescriptor (PageTableBase, Handoff->MemDescCount, Handoff->MemDesc);
+   //   3.5 Copy the Hob itself to EfiMemoryBottom, and update the PHIT Hob
+-  PrepareHobPhit (StackTop, MemoryDescriptor);
++  PrepareHobPhit (StackTop, MemoryDescriptor, (UINT8 *) MemoryTopOnDescriptor - (UINT8 *) MemoryDescriptor);
+ 
+   //
+   // 4. Register the memory occupied by DxeCore and DxeIpl together as DxeCore
+Index: DuetPkg/DxeIpl/HobGeneration.c
+===================================================================
+--- DuetPkg/DxeIpl/HobGeneration.c	(revision 1)
++++ DuetPkg/DxeIpl/HobGeneration.c	(working copy)
+@@ -743,8 +743,12 @@
+   gHob->DxeCore.EntryPoint = (EFI_PHYSICAL_ADDRESS)(UINTN)DxeCoreEntryPoint;
+ 
+ 
+-  gHob->MemoryDxeCore.PhysicalStart   = DxeCoreImageBase;
+-  gHob->MemoryDxeCore.ResourceLength  = DxeCoreLength;  
++  // Remove this to prevent a crash caused by freeing of dxecore.
++  // The memory containing gEventQueue was getting freed and
++  // reused (for disk DMA), leading to an assert. The problem
++  // can be demonstrated using the 6GB simnow shiner model.
++  //gHob->MemoryDxeCore.PhysicalStart   = DxeCoreImageBase;
++  //gHob->MemoryDxeCore.ResourceLength  = DxeCoreLength;
+ }
+ 
+ VOID *
+@@ -776,134 +780,11 @@
+            +-------------------+
+ */
+ {
+-  STATIC VARIABLE_STORE_HEADER VarStoreHeader = {
+-    VARIABLE_STORE_SIGNATURE,
+-    0xffffffff,                 // will be fixed in Variable driver
+-    VARIABLE_STORE_FORMATTED,
+-    VARIABLE_STORE_HEALTHY,
+-    0,
+-    0
+-  };
+-  
+-  STATIC EFI_FIRMWARE_VOLUME_HEADER NvStorageFvbHeader = {
+-    {
+-      0,
+-    },  // ZeroVector[16]
+-    EFI_SYSTEM_NV_DATA_FV_GUID,
+-    NV_STORAGE_FVB_SIZE,
+-    EFI_FVH_SIGNATURE,
+-    EFI_FVB_READ_ENABLED_CAP |
+-      EFI_FVB_READ_STATUS |
+-      EFI_FVB_WRITE_ENABLED_CAP |
+-      EFI_FVB_WRITE_STATUS |
+-      EFI_FVB_ERASE_POLARITY,
+-    EFI_RUNTIME_UPDATABLE_FV_HEADER_LENGTH,
+-    0,  // CheckSum
+-    0,  // ExtHeaderOffset
+-    {
+-      0,
+-    },  // Reserved[1]
+-    1,  // Revision
+-    {
+-      {
+-        NV_STORAGE_FVB_BLOCK_NUM,
+-        FV_BLOCK_SIZE,
+-      }
+-    }
+-  };
+-
+-  STATIC EFI_FV_BLOCK_MAP_ENTRY BlockMapEntryEnd = {0, 0};
+-
+   EFI_PHYSICAL_ADDRESS StorageFvbBase;
+   EFI_PHYSICAL_ADDRESS FtwFvbBase;
+ 
+-  UINT16               *Ptr;
+-  UINT16               Checksum;
+-
+-
+-  //
+-  // Use first 16-byte Reset Vector of FVB to store extra information
+-  //   UINT32 Offset 0 stores the volume signature
+-  //   UINT8  Offset 4 : should init the Variable Store Header if non-zero
+-  //
+-  gHob->NvStorageFvb.FvbInfo.VolumeId   = *(UINT32 *) (UINTN) (NV_STORAGE_STATE);
+-  gHob->NvStorage.   FvbInfo.VolumeId   = *(UINT32 *) (UINTN) (NV_STORAGE_STATE);
+-
+-  //
+-  // *(NV_STORAGE_STATE + 4):
+-  //   2 - Size error
+-  //   1 - File not exist
+-  //   0 - File exist with correct size
+-  //
+-  if (*(UINT8 *) (UINTN) (NV_STORAGE_STATE + 4) == 2) {
+-    ClearScreen ();
+-    PrintString ("Error: Size of Efivar.bin should be 16k!\n");
+-    CpuDeadLoop();
+-  }
+-  
+-  if (*(UINT8 *) (UINTN) (NV_STORAGE_STATE + 4) != 0) {
+-    //
+-    // Efivar.bin doesn't exist
+-    //  1. Init variable storage header to valid header
+-    //
+-    CopyMem (
+-      (VOID *) (UINTN) NV_STORAGE_START,
+-      &VarStoreHeader,
+-      sizeof (VARIABLE_STORE_HEADER)
+-    );
+-    //
+-    //  2. set all bits in variable storage body to 1
+-    //
+-    SetMem (
+-      (VOID *) (UINTN) (NV_STORAGE_START + sizeof (VARIABLE_STORE_HEADER)),
+-      NV_STORAGE_SIZE - sizeof (VARIABLE_STORE_HEADER),
+-      0xff
+-    );
+-  }
+-
+-  //
+-  // Relocate variable storage
+-  // 
+-  //  1. Init FVB Header to valid header: First 0x48 bytes
+-  //     In real platform, these fields are fixed by tools
+-  //
+-  //
+-  Checksum = 0;
+-  for (
+-    Ptr = (UINT16 *) &NvStorageFvbHeader; 
+-    Ptr < (UINT16 *) ((UINTN) (UINT8 *) &NvStorageFvbHeader + sizeof (EFI_FIRMWARE_VOLUME_HEADER));
+-    ++Ptr
+-    ) {
+-    Checksum = (UINT16) (Checksum + (*Ptr));
+-  }
+-  NvStorageFvbHeader.Checksum = (UINT16) (0x10000 - Checksum);
+   StorageFvbBase = (EFI_PHYSICAL_ADDRESS)(((UINTN)NvStorageTop - NV_STORAGE_FVB_SIZE - NV_FTW_FVB_SIZE) & ~EFI_PAGE_MASK);
+-  CopyMem ((VOID *) (UINTN) StorageFvbBase, &NvStorageFvbHeader, sizeof (EFI_FIRMWARE_VOLUME_HEADER));
+-  CopyMem (
+-    (VOID *) (UINTN) (StorageFvbBase + sizeof (EFI_FIRMWARE_VOLUME_HEADER)),
+-    &BlockMapEntryEnd,
+-    sizeof (EFI_FV_BLOCK_MAP_ENTRY)
+-  );
+-  
+   //
+-  //  2. Relocate variable data
+-  //
+-  CopyMem (
+-    (VOID *) (UINTN) (StorageFvbBase + EFI_RUNTIME_UPDATABLE_FV_HEADER_LENGTH),
+-    (VOID *) (UINTN) NV_STORAGE_START,
+-    NV_STORAGE_SIZE
+-  );
+-
+-  //
+-  //  3. Set the remaining memory to 0xff
+-  //
+-  SetMem (
+-    (VOID *) (UINTN) (StorageFvbBase + EFI_RUNTIME_UPDATABLE_FV_HEADER_LENGTH + NV_STORAGE_SIZE),
+-    NV_STORAGE_FVB_SIZE - NV_STORAGE_SIZE - EFI_RUNTIME_UPDATABLE_FV_HEADER_LENGTH,
+-    0xff
+-  );
+-
+-  //
+   // Create the FVB holding NV Storage in memory
+   //
+   gHob->NvStorageFvResource.PhysicalStart =
+@@ -919,6 +800,17 @@
+   FtwFvbBase = (EFI_PHYSICAL_ADDRESS)((UINTN) StorageFvbBase + NV_STORAGE_FVB_SIZE);
+   gHob->NvFtwFvResource.PhysicalStart =
+     gHob->NvFtwFvb.FvbInfo.Entries[0].Base = FtwFvbBase;
++
++  gHob->NvFtwFvResource.PhysicalStart = FAKE_NVRAM_BASE;
++  gHob->NvFtwFvResource.ResourceLength = FAKE_NVRAM_SIZE;
++  gHob->NvFtwFvResource.ResourceType = EFI_RESOURCE_MEMORY_MAPPED_IO;
++  gHob->NvFtwFvResource.ResourceAttribute = 
++    EFI_RESOURCE_ATTRIBUTE_PRESENT      |
++    EFI_RESOURCE_ATTRIBUTE_INITIALIZED  |
++    EFI_RESOURCE_ATTRIBUTE_TESTED       |
++    EFI_RESOURCE_ATTRIBUTE_UNCACHEABLE  |
++    0;
++
+   //
+   // Put FTW Working in front
+   //
+@@ -933,17 +825,24 @@
+   return (VOID *)(UINTN)StorageFvbBase;
+ }
+ 
++//  Maximum UEFI memory needed for page tables and other structures was
++//  hard-coded to 80 megs. Replace this with a proper runtime calculation.
++
+ VOID
+ PrepareHobPhit (
+   VOID *MemoryTop,
+-  VOID *FreeMemoryTop
++  VOID *FreeMemoryTop,
++  UINTN consumedMemory
+   )
+ {
+-  gHob->Phit.EfiMemoryTop        = (EFI_PHYSICAL_ADDRESS)(UINTN)MemoryTop;
+-  gHob->Phit.EfiMemoryBottom     = gHob->Phit.EfiMemoryTop - CONSUMED_MEMORY;
+-  gHob->Phit.EfiFreeMemoryTop    = (EFI_PHYSICAL_ADDRESS)(UINTN)FreeMemoryTop;
+-  gHob->Phit.EfiFreeMemoryBottom = gHob->Phit.EfiMemoryBottom + sizeof(HOB_TEMPLATE);
++  EFI_PHYSICAL_ADDRESS below4GbTop = (UINT64) MemoryTop;          // top of usable DRAM below 4GB
++  EFI_PHYSICAL_ADDRESS below4GbFreeTop = (UINT64) FreeMemoryTop;  // after page tables and other UEFI items allocated
+ 
++  gHob->Phit.EfiMemoryTop        = below4GbFreeTop;
++  gHob->Phit.EfiFreeMemoryTop    = below4GbFreeTop;
++  gHob->Phit.EfiMemoryBottom     = below4GbTop - consumedMemory;
++  gHob->Phit.EfiFreeMemoryBottom = below4GbTop - consumedMemory + sizeof(HOB_TEMPLATE);
++
+   CopyMem ((VOID *)(UINTN)gHob->Phit.EfiMemoryBottom, gHob, sizeof(HOB_TEMPLATE));
+   gHob = (HOB_TEMPLATE *)(UINTN)gHob->Phit.EfiMemoryBottom;
+ 
+@@ -950,23 +849,32 @@
+   gHob->Phit.EfiEndOfHobList = (EFI_PHYSICAL_ADDRESS)(UINTN)&gHob->EndOfHobList;
+ }
+ 
++static int highestSetBit64 (UINT64 value)
++    {
++    int bit;
++    for (bit = 63; bit >= 0; bit--)
++        if (value >> bit) return bit;
++    return 0;
++    }
++
++
+ VOID
+ PrepareHobCpu (
+   VOID
+   )
+ {
+-  UINT32  CpuidEax;
++  // Build page tables for the amount of installed DRAM memory
++  UINT64 topOfDram;
++  
++  topOfDram = gHob->MemoryAbove4GB.PhysicalStart + gHob->MemoryAbove4GB.ResourceLength;
+ 
+-  //
+-  // Create a CPU hand-off information
+-  //
+-  gHob->Cpu.SizeOfMemorySpace = 36;
++  // always build at least 4GB of page tables, even if less DRAM is installed
++  if (topOfDram < 0x100000000) topOfDram = 0x100000000;
+ 
+-  AsmCpuid (EFI_CPUID_EXTENDED_FUNCTION, &CpuidEax, NULL, NULL, NULL);
+-  if (CpuidEax >= CPUID_EXTENDED_ADD_SIZE) {
+-    AsmCpuid (CPUID_EXTENDED_ADD_SIZE, &CpuidEax, NULL, NULL, NULL);
+-    gHob->Cpu.SizeOfMemorySpace = (UINT8)(CpuidEax & 0xFF);
+-  }
++  // round up to the next GB, just in case E820 does not report the true top
++  topOfDram += 0x3FFFFFFF;
++
++  gHob->Cpu.SizeOfMemorySpace = (UINT8) highestSetBit64 (topOfDram) + 1; 
+ }
+ 
+ VOID
+Index: DuetPkg/DxeIpl/HobGeneration.h
+===================================================================
+--- DuetPkg/DxeIpl/HobGeneration.h	(revision 1)
++++ DuetPkg/DxeIpl/HobGeneration.h	(working copy)
+@@ -23,14 +23,10 @@
+ 
+ #include "DxeIpl.h"
+ 
+-#define EFI_MEMORY_BELOW_1MB_START     0x86000
+-#define EFI_MEMORY_BELOW_1MB_END       0x9F800
++#define EFI_MEMORY_BELOW_1MB_START     (X64_PAGE_TABLE_BASE + X64_PAGE_TABLE_SIZE)
++#define EFI_MEMORY_BELOW_1MB_END       (640 * 1024) // assume full 640KB available
+ #define EFI_MEMORY_STACK_PAGE_NUM      0x20
+-#define CONSUMED_MEMORY                0x100000 * 80
+ 
+-#define NV_STORAGE_START               0x15000
+-#define NV_STORAGE_STATE               0x19000
+-
+ #pragma pack(1)
+ 
+ typedef struct {
+@@ -150,7 +146,8 @@
+ VOID
+ PrepareHobPhit (
+   VOID *MemoryTop,
+-  VOID *FreeMemoryTop
++  VOID *FreeMemoryTop,
++  UINTN consumedMemory
+   );
+ 
+ VOID *

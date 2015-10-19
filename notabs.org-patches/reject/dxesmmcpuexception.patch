@@ -1,0 +1,17 @@
+Index: UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeSmmCpuException.c
+===================================================================
+--- UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeSmmCpuException.c	(revision 1)
++++ UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeSmmCpuException.c	(working copy)
+@@ -115,12 +115,6 @@
+     // Release Spinlock of output message
+     //
+     ReleaseSpinLock (&mDisplayMessageSpinLock);
+-    //
+-    // Enter a dead loop if needn't to execute old IDT handler further
+-    //
+-    if (mReservedVectors[ExceptionType].Attribute != EFI_VECTOR_HANDOFF_HOOK_BEFORE) {
+-      CpuDeadLoop ();
+-    }
+   }
+ }
+ 

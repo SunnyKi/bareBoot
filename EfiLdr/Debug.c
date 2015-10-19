@@ -56,7 +56,7 @@ PrintString (
   )
 {
   UINTN           Index;
-  CHAR8           PrintBuffer[256];
+  CHAR8           PrintBuffer[512];
   VA_LIST         Marker;
 
   VA_START (Marker, FormatString);
@@ -66,7 +66,7 @@ PrintString (
   for (Index = 0; PrintBuffer[Index] != 0; Index++) {
     if (PrintBuffer[Index] == '\n') {
       mCursor = (UINT8 *) (UINTN) (0xb8000 + (((((UINTN)mCursor - 0xb8000) + 160) / 160) * 160));
-    } else {
+    } else if (PrintBuffer[Index] != '\r') { // skip non-displayable character
       *mCursor = (UINT8) PrintBuffer[Index];
       mCursor += 2;
     }

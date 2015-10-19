@@ -1,0 +1,52 @@
+Index: DuetPkg/DxeIpl/X64/Paging.c
+===================================================================
+--- DuetPkg/DxeIpl/X64/Paging.c	(revision 1)
++++ DuetPkg/DxeIpl/X64/Paging.c	(working copy)
+@@ -20,6 +20,7 @@
+ 
+ #include "HobGeneration.h"
+ #include "VirtualMemory.h"
++#include "Debug.h"
+ 
+ //
+ // Create 2M-page table
+@@ -77,6 +78,7 @@
+   UINTN                                         PTEIndex;
+   X64_PAGE_DIRECTORY_ENTRY_4K                   *PageDirectoryEntry4KB;
+   X64_PAGE_TABLE_ENTRY_4K                       *PageTableEntry4KB;
++  UINTN                                         SizeOfVirtual;
+ 
+   //
+   //  Page Table structure 4 level 4K.
+@@ -95,8 +97,9 @@
+   PageDirectoryEntry4KB->Bits.Present = 1;
+   PageDirectoryEntry4KB->Bits.MustBeZero = 0;
+ 
++  SizeOfVirtual = 0x200000; // create 2MB of virtual address space
+   for (PTEIndex = 0, PageAddress = 0; 
+-       PTEIndex < ENTRY_NUM (EFI_MAX_ENTRY_BITS_NUM); 
++       PTEIndex < SizeOfVirtual / EFI_PAGE_SIZE_4K;
+        PTEIndex++, PageTableEntry4KB++, PageAddress += EFI_PAGE_SIZE_4K
+       ) {
+     //
+@@ -223,9 +226,18 @@
+   gPageNum2M = 1 + ENTRY_NUM (gPML4BitsNum) + ENTRY_NUM (gPML4BitsNum + gPDPTEBitsNum);
+   gPageNum4K = 1;
+ 
++  {
++  UINTN pageTableAllocation, efiMinimumMemory;
++  pageTableAllocation = (gPageNum2M + gPageNum4K) * EFI_PAGE_SIZE_4K;
++  efiMinimumMemory = 128 * 0x100000ull; // require 128 MB to remain after deducting memory for page tables
++  if (pageTableAllocation + efiMinimumMemory > (UINTN)PageNumberTop) {
++    PrintString ("PreparePageTable: not enough memory for page tables\n");
++    CpuDeadLoop();
++  }
+ 
+-  PageNumberBase = (VOID *)((UINTN)PageNumberTop - (gPageNum2M + gPageNum4K) * EFI_PAGE_SIZE_4K);
+-  ZeroMem (PageNumberBase, (gPageNum2M + gPageNum4K) * EFI_PAGE_SIZE_4K);
++  PageNumberBase = (VOID *)((UINTN)PageNumberTop - pageTableAllocation);
++  ZeroMem (PageNumberBase, pageTableAllocation);
++  }
+ 
+   X64Create2MPageTables (PageNumberBase);
+   X64Create4KPageTables (PageNumberBase);

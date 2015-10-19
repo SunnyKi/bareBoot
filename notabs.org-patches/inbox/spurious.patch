@@ -1,0 +1,42 @@
+Index: UefiCpuPkg/Library/CpuExceptionHandlerLib/X64/ExceptionHandlerAsm.S
+===================================================================
+--- UefiCpuPkg/Library/CpuExceptionHandlerLib/X64/ExceptionHandlerAsm.S	(revision 1)
++++ UefiCpuPkg/Library/CpuExceptionHandlerLib/X64/ExceptionHandlerAsm.S	(working copy)
+@@ -292,6 +292,18 @@
+ ASM_PFX(CommonInterruptEntry):
+     cli
+     popq    %rax
++
++
++    .intel_syntax noprefix
++    # ignore spurious interrupts
++    cmp     byte ptr [rsp], 0x6F # spurious from master 8259 PIC?
++    jne     notSpurious
++    add     rsp, 8
++    iretq
++notSpurious:
++    .att_syntax noprefix
++
++
+     #
+     # All interrupt handlers are invoked through interrupt gates, so
+     # IF flag automatically cleared at the entry point
+Index: UefiCpuPkg/Library/CpuExceptionHandlerLib/X64/ExceptionHandlerAsm.asm
+===================================================================
+--- UefiCpuPkg/Library/CpuExceptionHandlerLib/X64/ExceptionHandlerAsm.asm	(revision 15)
++++ UefiCpuPkg/Library/CpuExceptionHandlerLib/X64/ExceptionHandlerAsm.asm	(working copy)
+@@ -93,6 +93,14 @@
+ CommonInterruptEntry PROC PUBLIC  
+     cli
+     pop     rax
++
++    ; ignore spurious interrupts
++    cmp     byte ptr [rsp], 6Fh ; spurious from master 8259 PIC?
++    jne     notSpurious
++    add     rsp, 8
++    iretq
++
++notSpurious:
+     ;
+     ; All interrupt handlers are invoked through interrupt gates, so
+     ; IF flag automatically cleared at the entry point

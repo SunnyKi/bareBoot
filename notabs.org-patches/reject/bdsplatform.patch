@@ -1,0 +1,67 @@
+Index: DuetPkg/Library/DuetBdsLib/BdsPlatform.c
+===================================================================
+--- DuetPkg/Library/DuetBdsLib/BdsPlatform.c	(revision 1)
++++ DuetPkg/Library/DuetBdsLib/BdsPlatform.c	(working copy)
+@@ -167,10 +167,10 @@
+         (MemoryDescHob.MemDesc[Index].Type == EfiRuntimeServicesCode) ||
+         (MemoryDescHob.MemDesc[Index].Type == EfiACPIReclaimMemory) ||
+         (MemoryDescHob.MemDesc[Index].Type == EfiACPIMemoryNVS)) {
+-      DEBUG ((EFI_D_ERROR, "PhysicalStart - 0x%016lx, ", MemoryDescHob.MemDesc[Index].PhysicalStart));
+-      DEBUG ((EFI_D_ERROR, "PageNumber    - 0x%016lx, ", MemoryDescHob.MemDesc[Index].NumberOfPages));
+-      DEBUG ((EFI_D_ERROR, "Attribute     - 0x%016lx, ", MemoryDescHob.MemDesc[Index].Attribute));
+-      DEBUG ((EFI_D_ERROR, "Type          - 0x%08x\n", MemoryDescHob.MemDesc[Index].Type));
++      DEBUG ((EFI_D_INFO, "PhysicalStart - 0x%016lx, ", MemoryDescHob.MemDesc[Index].PhysicalStart));
++      DEBUG ((EFI_D_INFO, "PageNumber    - 0x%016lx, ", MemoryDescHob.MemDesc[Index].NumberOfPages));
++      DEBUG ((EFI_D_INFO, "Attribute     - 0x%016lx, ", MemoryDescHob.MemDesc[Index].Attribute));
++      DEBUG ((EFI_D_INFO, "Type          - 0x%08x\n", MemoryDescHob.MemDesc[Index].Type));
+       if ((MemoryDescHob.MemDesc[Index].Type == EfiRuntimeServicesData) ||
+           (MemoryDescHob.MemDesc[Index].Type == EfiRuntimeServicesCode)) {
+         //
+@@ -1177,7 +1177,7 @@
+   // Get current Boot Mode
+   //
+   Status = BdsLibGetBootMode (&BootMode);
+-  DEBUG ((EFI_D_ERROR, "Boot Mode:%x\n", BootMode));
++  DEBUG ((EFI_D_INFO, "Boot Mode:%x\n", BootMode));
+ 
+   //
+   // Go the different platform policy with different boot mode
+@@ -1221,34 +1221,14 @@
+   // Give one chance to enter the setup if we
+   // have the time out
+   //
+-  // BUGBUG: hard code timeout to 5 second to show logo in graphic mode.
+-  Timeout = 5;  
++  // BUGBUG: hard code timeout to 2 seconds to show logo in graphic mode.
++  Timeout = 2;  
+   if (Timeout != 0) {
+     PlatformBdsEnterFrontPage (Timeout, FALSE);
+   }
+ 
+-  //
+-  //BdsLibConnectAll ();
+-  //BdsLibEnumerateAllBootOption (BootOptionList);  
+-  
+-  //
+-  // Please uncomment above ConnectAll and EnumerateAll code and remove following first boot
+-  // checking code in real production tip.
+-  //          
+-  // In BOOT_WITH_FULL_CONFIGURATION boot mode, should always connect every device 
+-  // and do enumerate all the default boot options. But in development system board, the boot mode 
+-  // cannot be BOOT_ASSUMING_NO_CONFIGURATION_CHANGES because the machine box
+-  // is always open. So the following code only do the ConnectAll and EnumerateAll at first boot.
+-  //
+-  Status = BdsLibBuildOptionFromVar (BootOptionList, L"BootOrder");
+-  if (EFI_ERROR(Status)) {
+-    //
+-    // If cannot find "BootOrder" variable,  it may be first boot. 
+-    // Try to connect all devices and enumerate all boot options here.
+-    //
+-    BdsLibConnectAll ();
+-    BdsLibEnumerateAllBootOption (BootOptionList);
+-  } 
++  BdsLibConnectAll ();
++  BdsLibEnumerateAllBootOption (BootOptionList);
+ 
+   //
+   // To give the User a chance to enter Setup here, if user set TimeOut is 0.

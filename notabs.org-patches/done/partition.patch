@@ -1,0 +1,35 @@
+Index: MdeModulePkg/Universal/Disk/PartitionDxe/Partition.c
+===================================================================
+--- MdeModulePkg/Universal/Disk/PartitionDxe/Partition.c	(revision 1)
++++ MdeModulePkg/Universal/Disk/PartitionDxe/Partition.c	(working copy)
+@@ -18,6 +18,17 @@
+ 
+ #include "Partition.h"
+ 
++EFI_STATUS
++EFIAPI
++PartitionReadBlocks (
++  IN EFI_BLOCK_IO_PROTOCOL  *This,
++  IN UINT32                 MediaId,
++  IN EFI_LBA                Lba,
++  IN UINTN                  BufferSize,
++  OUT VOID                  *Buffer
++  );
++
++
+ //
+ // Partition Driver Global Variables.
+ //
+@@ -238,6 +249,12 @@
+     goto Exit;
+   }
+ 
++  // prevent trying to process a partition boot record as if it were a master boot record.
++  if (BlockIo->ReadBlocks == &PartitionReadBlocks) {
++    Status = EFI_ALREADY_STARTED;
++    goto Exit;
++  }
++
+   Status = gBS->OpenProtocol (
+                   ControllerHandle,
+                   &gEfiBlockIo2ProtocolGuid,

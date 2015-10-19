@@ -1,0 +1,20 @@
+Index: DuetPkg/BiosVideoThunkDxe/LegacyBiosThunk.c
+===================================================================
+--- DuetPkg/BiosVideoThunkDxe/LegacyBiosThunk.c	(revision 17)
++++ DuetPkg/BiosVideoThunkDxe/LegacyBiosThunk.c	(working copy)
+@@ -47,7 +47,14 @@
+   
+   ThunkContext->RealModeBuffer     = (VOID*)(UINTN)LegacyRegionBase;
+   ThunkContext->RealModeBufferSize = LegacyRegionSize;
+-  ThunkContext->ThunkAttributes    = THUNK_ATTRIBUTE_BIG_REAL_MODE|THUNK_ATTRIBUTE_DISABLE_A20_MASK_INT_15;
++
++  // Don't call INT 15h if no vector is installed. When coreboot runs Duet
++  // as a payload, there is no legacy BIOS and no INT 15h. In this case,
++  // coreboot is responsible for unmasking A20.
++  ThunkContext->ThunkAttributes = THUNK_ATTRIBUTE_BIG_REAL_MODE;
++  if (*(UINT32 *) (0x15 * 4ll) != 0)
++    ThunkContext->ThunkAttributes |= THUNK_ATTRIBUTE_DISABLE_A20_MASK_INT_15;
++
+   AsmPrepareThunk16(ThunkContext);
+ }
+ 

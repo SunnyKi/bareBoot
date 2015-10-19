@@ -1,0 +1,16 @@
+Index: PcAtChipsetPkg/8259InterruptControllerDxe/8259.c
+===================================================================
+--- PcAtChipsetPkg/8259InterruptControllerDxe/8259.c	(revision 1)
++++ PcAtChipsetPkg/8259InterruptControllerDxe/8259.c	(working copy)
+@@ -365,11 +365,6 @@
+     // Save the legacy mode mask/trigger level
+     //
+     Interrupt8259ReadMask (&mLegacyModeMask, &mLegacyModeEdgeLevel);
+-    //
+-    // Always force Timer to be enabled after return from 16-bit code.
+-    // This always insures that on next entry, timer is counting.
+-    //
+-    mLegacyModeMask &= 0xFFFE;
+ 
+     if (Mask != NULL) {
+       //

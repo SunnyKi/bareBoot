@@ -1,0 +1,361 @@
+Index: DuetPkg/BootSector/GNUmakefile
+===================================================================
+--- DuetPkg/BootSector/GNUmakefile	(revision 4)
++++ DuetPkg/BootSector/GNUmakefile	(working copy)
+@@ -20,6 +20,7 @@
+ PP_DEFS += -DEFI64CODESTART=$(EFI64CODESTART)
+ PP_DEFS += -DEFI64CODESIZE=$(EFI64CODESIZE)
+ PP_DEFS += -DX64_STACK_TOP=$(X64_STACK_TOP)
++PP_DEFS += -DBIOS_VIDEO=$(BIOS_VIDEO)
+ ASM=$(EDK_TOOLS_PATH)/Bin/linux/jwasm -bin $(PP_DEFS)
+ DLINK=ld
+ 
+Index: DuetPkg/BootSector/Makefile
+===================================================================
+--- DuetPkg/BootSector/Makefile	(revision 4)
++++ DuetPkg/BootSector/Makefile	(working copy)
+@@ -19,6 +19,7 @@
+ PP_DEFS = $(PP_DEFS) /DEFI64CODESTART=$(EFI64CODESTART)
+ PP_DEFS = $(PP_DEFS) /DEFI64CODESIZE=$(EFI64CODESIZE)
+ PP_DEFS = $(PP_DEFS) /DX64_STACK_TOP=$(X64_STACK_TOP)
++PP_DEFS = $(PP_DEFS) /DBIOS_VIDEO=$(BIOS_VIDEO)
+ ASM = $(EDK_TOOLS_PATH)\Bin\Win32\JWASM -bin $(PP_DEFS)
+ 
+ ASSEMBLY_CODE_FILE_LIST = $(MODULE_DIR)\bootsect.asm \
+Index: DuetPkg/BootSector/efi64.asm
+===================================================================
+--- DuetPkg/BootSector/efi64.asm	(revision 32)
++++ DuetPkg/BootSector/efi64.asm	(working copy)
+@@ -17,6 +17,9 @@
+ ; install serial debugger support
+ MKF_DEBUGGER_SUPPORT = 1
+ 
++; enable debug logging for INT10h calls when no legacy video option rom is installed
++MKF_LOG_INT10h = 1
++
+ JmpCommonIdtEntry  macro
+     ; jmp     commonIdtEntry - this must be hand coded to keep the assembler from
+     ;                          using a 8 bit reletive jump when the entries are
+@@ -881,6 +884,11 @@
+ ; output : edi - next available address
+ 
+ setupRmVectors proc near private
++    IF BIOS_VIDEO EQ 0                  ; if not using BIOS video, clear the
++    mov    ebx, 10h * 4                 ; INT10h vector (if present) so that
++    xor    ecx, ecx                     ; a debug handler will be installed
++    mov    [ebx], ecx 
++    ENDIF
+     xor    ecx, ecx                     ; INT number: start with zero
+ vecloop:
+     lea    ebx, [ecx * 4]               ; vector address from INT number
+@@ -909,6 +917,12 @@
+     cmp    cl, 8+7                      ; master PIC INT 7, spurious
+     je     installHandler
+    
++    ; INT10
++    mov    esi, text32start + text32size + (vgaHandlerStart - text16start)
++    mov    ebx, vgaHandlerEnd - vgaHandlerStart
++    cmp    cl, 10h                      ; INT 10h, legacy video software int
++    je     installHandler
++
+     ; use debug handler for all others
+     mov    esi, text32start + text32size + (debugHandlerStart - text16start)
+     mov    ebx, debugHandlerEnd - debugHandlerStart
+@@ -1094,7 +1108,217 @@
+     pop    ax
+     iret
+ PitHandlerEnd:
+-;=============================================================================
++;----------------------------------------------------------------------------
++
++vgaHandlerStart:
++    IF MKF_LOG_INT10h
++    call    regdumpNear
++    ENDIF
++
++    mov     al,0h
++    iret
++
++IF MKF_LOG_INT10h
++;----------------------------------------------------------------------------
++;
++; write al to com1
++
++writeCom1 proc near private uses ax dx
++        mov     dx, port
++        out     dx, al
++        add     dx, 5           ; lsr
++txwait:
++        in      al, dx
++        and     al, 1 SHL 5
++        je      txwait
++        
++        ret
++writeCom1       endp
++
++;-----------------------------------------------------------------------------
++; writeString - send string at cs:di to com port
++;               no registers are modified
++
++writeString proc near private uses ax di
++txbuffer1:
++        mov     al, cs:[di]
++        or      al, al
++        je      txbufferReturn
++        inc     di
++        call    writeCom1
++        jmp     txbuffer1
++txbufferReturn:
++        ret
++writeString endp
++
++;----------------------------------------------------------------------------
++; write al ls nibble to com1
++
++writeNibble proc near private uses ax
++        and     ax, 0Fh         ; 0-15
++        add     ax, '0'         ; '0' - '9', or...
++        cmp     ax, '9'
++        jle     digitOk
++        add     al, 'A' - '0' - 10
++digitOk:
++        call    writeCom1
++        ret
++writeNibble     endp
++
++;----------------------------------------------------------------------------
++
++writeByte proc near private uses ax
++        rol     al, 4
++        call    writeNibble
++        rol     al, 4
++        call    writeNibble
++        ret
++writeByte       endp
++
++;----------------------------------------------------------------------------
++
++writeWord proc near private uses ax
++        rol     ax, 4
++        call    writeNibble
++        rol     ax, 4
++        call    writeNibble
++        rol     ax, 4
++        call    writeNibble
++        rol     ax, 4
++        call    writeNibble
++        ret
++writeWord       endp
++
++;----------------------------------------------------------------------------
++
++writeDword proc near private uses eax
++        rol     eax, 4
++        call    writeNibble
++        rol     eax, 4
++        call    writeNibble
++        rol     eax, 4
++        call    writeNibble
++        rol     eax, 4
++        call    writeNibble
++        rol     eax, 4
++        call    writeNibble
++        rol     eax, 4
++        call    writeNibble
++        rol     eax, 4
++        call    writeNibble
++        rol     eax, 4
++        call    writeNibble
++        ret
++writeDword       endp
++
++;----------------------------------------------------------------------------
++
++writeDwordX proc near private uses eax
++	test	eax, 0FFFFFF00h
++	jnz	biggerThan8
++	call	writeByte
++	ret
++biggerThan8:
++	test	eax, 0FFFF0000h
++	jnz	biggerThan16
++	call	writeWord
++	ret
++biggerThan16:
++	call	writeDword
++	ret
++writeDwordX       endp
++
++;----------------------------------------------------------------------------
++
++writes macro string:REQ
++local str1, skip
++        push    di
++        call    skip
++str1:   
++        db      &string&
++        db      0
++skip proc near   
++        pop     di
++        call    writeString
++        pop     di
++skip endp
++        endm
++;----------------------------------------------------------------------------
++
++writesn macro string:REQ
++local str1, skip
++        push    di
++        jmp     short skip
++str1:   
++        db      &string&
++        db      0Ah, 0Dh, 0
++skip:   
++        mov     di, offset str1
++        call    writeString
++        pop     di
++        endm
++;----------------------------------------------------------------------------
++
++hexbyte macro reg:REQ
++        push    ax
++        mov     al, &reg&
++        call    writeByte
++        pop     ax
++        endm
++;----------------------------------------------------------------------------
++
++hexword macro reg:REQ
++        push    eax
++        mov     ax, &reg&
++	movzx	eax, ax
++        call    writeWord
++        pop     eax
++        endm
++;----------------------------------------------------------------------------
++
++hexdword macro reg:REQ
++        push    eax
++        mov     eax, &reg&
++        call    writeDword
++        pop     eax
++        endm
++;----------------------------------------------------------------------------
++
++newline macro
++        push    ax
++        mov     al, 0Dh
++        call    writeCom1
++        mov     al, 0Ah
++        call    writeCom1
++        pop     ax
++        endm
++
++;------------------------------------------------------------------------------
++;
++regdumpNear proc near private
++	writes 'AX '
++        hexword ax
++	writes ' BX '
++        hexword bx
++	writes ' CX '
++        hexword cx
++	writes ' DX '
++        hexword dx
++	writes ' SI '
++        hexword si
++	writes ' DI '
++        hexword di
++	newline
++	ret
++regdumpNear endp
++ENDIF ;MKF_LOG_INT10h
++
++vgaHandlerEnd:
++
++;----------------------------------------------------------------------------
++
++
++
+ IF MKF_DEBUGGER_SUPPORT
+ debuggerStart:
+ ;----------------------------------------------------------------------------
+Index: DuetPkg/DuetPkg.fdf
+===================================================================
+--- DuetPkg/DuetPkg.fdf	(revision 31)
++++ DuetPkg/DuetPkg.fdf	(working copy)
+@@ -103,7 +103,10 @@
+ INF  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+ INF  MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
+ INF  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
++
++!if $(BIOS_VIDEO)
+ INF  DuetPkg/BiosVideoThunkDxe/BiosVideo.inf
++!endif
+ 
+   # Binary INF file to support toggle among different CPU architectures.
+ INF  RuleOverride=BINARY USE=X64 FatBinPkg/EnhancedFatDxe/Fat.inf
+@@ -132,6 +135,16 @@
+ INF  NetworkPkg/Mtftp6Dxe/Mtftp6Dxe.inf
+ INF  NetworkPkg/UefiPxeBcDxe/UefiPxeBcDxe.inf
+ 
++!if $(GOP_VIDEO)
++#
++# AMD E359 GOP UEFI driver
++# the 999... GUID demonstrates that this GUID value is a dummy
++#
++FILE DRIVER = 99999999-9999-9999-9999-999999999999 {
++    SECTION PE32 = e350gop.efi
++}
++!endif
++
+ !if $(BUILD_NEW_SHELL)
+ INF  ShellPkg/Application/Shell/Shell.inf
+ !else
+Index: build-linux.sh
+===================================================================
+--- build-linux.sh	(revision 6)
++++ build-linux.sh	(working copy)
+@@ -7,6 +7,8 @@
+ IMAGE_BUFFER_HIGH=0x100000   ;export IMAGE_BUFFER_HIGH=$((IMAGE_BUFFER_HIGH))
+ START64CODESIZE=0x2000       ;export START64CODESIZE=$((START64CODESIZE))
+ EFI64CODESIZE=0x3000         ;export EFI64CODESIZE=$((EFI64CODESIZE))
++BIOS_VIDEO=1                 ;export BIOS_VIDEO=$((BIOS_VIDEO))
++GOP_VIDEO=0                  ;export GOP_VIDEO=$((GOP_VIDEO))
+ export EFI64CODESTART=$((IMAGE_BUFFER_HIGH+START64CODESIZE))
+ 
+ # -----coreboot payload logic assumes-----
+@@ -37,7 +39,7 @@
+ chmod +x BaseTools/BinWrappers/PosixLike/*
+ chmod +x BaseTools/Bin/linux/*
+ 
+-build -p $PLATFORMFILE -b $BUILDTARGET -t $TOOL_CHAIN_TAG -a $TARGETARCH -D DEBUG_PRINT_LEVEL=$DEBUG_PRINT_LEVEL -D BUILD_NEW_SHELL -D LOGO_FILE=DuetPkg/Coreboot_full_web.bmp -D X64_STACK_TOP=$X64_STACK_TOP -D FAKE_NVRAM_BASE=$FAKE_NVRAM_BASE -D FAKE_NVRAM_SIZE=$FAKE_NVRAM_SIZE -n 16
++build -p $PLATFORMFILE -b $BUILDTARGET -t $TOOL_CHAIN_TAG -a $TARGETARCH -D DEBUG_PRINT_LEVEL=$DEBUG_PRINT_LEVEL -D BUILD_NEW_SHELL -D LOGO_FILE=DuetPkg/Coreboot_full_web.bmp -DBIOS_VIDEO=$BIOS_VIDEO -DGOP_VIDEO=$GOP_VIDEO -D X64_STACK_TOP=$X64_STACK_TOP -D FAKE_NVRAM_BASE=$FAKE_NVRAM_BASE -D FAKE_NVRAM_SIZE=$FAKE_NVRAM_SIZE -n 16
+ 
+ cd $OUTPUT_DIR/FV
+ echo $BASETOOLS_DIR/GenFw -r --rebase 0x10000 $OUTPUT_DIR_PROC/EfiLoader.efi
+Index: build-windows.bat
+===================================================================
+--- build-windows.bat	(revision 5)
++++ build-windows.bat	(working copy)
+@@ -46,6 +46,11 @@
+ rem # optional: display logo during UEFI startup
+ set LOGO_FILE=DuetPkg/Coreboot_full_web.bmp
+ 
++rem # enable use of BIOS video or GOP video or both. Windows 7
++rem # and Server 2008 R2 requires BIOS video even if GOP video is present
++set BIOS_VIDEO=1
++set GOP_VIDEO=0
++
+ rem --------------end project settings-----------------
+ 
+ rem Make sure current dir is that of this batch file.
+@@ -84,6 +89,8 @@
+ -D DEBUG_PRINT_LEVEL=%DEBUG_PRINT_LEVEL% ^
+ -D BUILD_NEW_SHELL ^
+ -D LOGO_FILE=%LOGO_FILE% ^
++-D BIOS_VIDEO=%BIOS_VIDEO% ^
++-D GOP_VIDEO=%GOP_VIDEO% ^
+ -D X64_STACK_TOP=%X64_STACK_TOP% ^
+ -D FAKE_NVRAM_BASE=%FAKE_NVRAM_BASE% ^
+ -D FAKE_NVRAM_SIZE=%FAKE_NVRAM_SIZE% ^

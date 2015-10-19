@@ -1,0 +1,13 @@
+Index: MdeModulePkg/Core/Dxe/Mem/Page.c
+===================================================================
+--- MdeModulePkg/Core/Dxe/Mem/Page.c	(revision 1)
++++ MdeModulePkg/Core/Dxe/Mem/Page.c	(working copy)
+@@ -753,7 +753,7 @@
+     // Debug code - verify conversion is allowed
+     //
+     if (!(NewType == EfiConventionalMemory ? 1 : 0) ^ (Entry->Type == EfiConventionalMemory ? 1 : 0)) {
+-      DEBUG ((DEBUG_ERROR | DEBUG_PAGE, "ConvertPages: Incompatible memory types\n"));
++      DEBUG ((DEBUG_PAGE, "ConvertPages: Incompatible memory types\n"));
+       return EFI_NOT_FOUND;
+     }
+ 

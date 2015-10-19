@@ -1,0 +1,2385 @@
+Index: DuetPkg/BootSector/bootsect.asm
+===================================================================
+--- DuetPkg/BootSector/bootsect.asm	(revision 1)
++++ DuetPkg/BootSector/bootsect.asm	(working copy)
+@@ -165,7 +165,7 @@
+ FoundEFILDR:                                  ; 0x7cfe
+   mov     cx,bx                               ; cx = Start Cluster for EFILDR  <----------------------------------
+   mov     ax,cs                               ; Destination = 2000:0000
+-  add     ax,2000h
++  add     ax,IMAGE_BUFFER_LOW / 16
+   mov     es,ax
+   xor     di,di
+ ReadFirstClusterOfEFILDR:
+@@ -189,7 +189,7 @@
+ JumpOffset:
+   dw      0000h
+ JumpSegment:
+-  dw      2000h
++  dw      IMAGE_BUFFER_LOW / 16
+ 
+ 
+ PrintString:
+Index: DuetPkg/BootSector/bs16.asm
+===================================================================
+--- DuetPkg/BootSector/bs16.asm	(revision 1)
++++ DuetPkg/BootSector/bs16.asm	(working copy)
+@@ -152,7 +152,7 @@
+ FoundEFILDR:
+   mov     cx,bx                               ; cx = Start Cluster for EFILDR  <----------------------------------
+   mov     ax,cs                               ; Destination = 2000:0000
+-  add     ax,2000h
++  add     ax,IMAGE_BUFFER_LOW / 16
+   mov     es,ax
+   xor     di,di
+ ReadFirstClusterOfEFILDR:
+@@ -176,7 +176,7 @@
+ JumpOffset:
+   dw      0000h
+ JumpSegment:
+-  dw      2000h
++  dw      IMAGE_BUFFER_LOW / 16
+ 
+ 
+ PrintString:
+Index: DuetPkg/BootSector/efi64.asm
+===================================================================
+--- DuetPkg/BootSector/efi64.asm	(revision 1)
++++ DuetPkg/BootSector/efi64.asm	(working copy)
+@@ -14,19 +14,9 @@
+ ;*   Abstract:
+ ;*
+ ;------------------------------------------------------------------------------
++; install serial debugger support
++MKF_DEBUGGER_SUPPORT = 1
+ 
+-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+-; Now in 64-bit long mode.
+-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+-
+-        .486
+-        .model  flat        
+-        .stack
+-        .code
+-        org 21000h
+-        
+-DEFAULT_HANDLER_SIZE EQU INT1 - INT0
+-
+ JmpCommonIdtEntry  macro
+     ; jmp     commonIdtEntry - this must be hand coded to keep the assembler from
+     ;                          using a 8 bit reletive jump when the entries are
+@@ -33,29 +23,95 @@
+     ;                          within 255 bytes of the common entry.  This must
+     ;                          be done to maintain the consistency of the size
+     ;                          of entry points...
+-    db      0e9h                        ; jmp 16 bit reletive 
++    db      0e9h                        ; jmp 16 bit relative 
+     dd      commonIdtEntry - $ - 4      ;  offset to jump to
+ endm    
+ 
++;------------------------------------------------------------------------------
++; Now in 32-bit legacy mode [if launched as coreboot payload]
++;     or 64-bit long mode   [if launched from disk boot]
++; Write the following 32-bit code so that it is also valid
++; if executed in x64 mode (avoid INC, etc).
++;------------------------------------------------------------------------------
++
++        .586p
++        .model  flat        
++_TEXT32 SEGMENT USE32
++
++        org EFI64CODESTART
++text32start:
+         
+-Start:  
++DEFAULT_HANDLER_SIZE EQU INT1 - INT0
+ 
+-    mov     esp,0001fffe8h ; make final stack aligned
++        
++Start:
++    ; make final stack aligned
++    mov     esp,X64_STACK_TOP - 8
+ 
+-    ; set OSFXSR and OSXMMEXCPT because some code will use XMM register
+-    db 0fh
+-    db 20h
+-    db 0e0h
+-;    mov rax, cr4
+-    bts eax, 9
+-    bts eax, 0ah
+-    db 0fh
+-    db 22h
+-    db 0e0h
+-;    mov cr4, rax
++    ; enable OSFXSR and OSXMMEXCPT
++    mov     eax, cr4
++    bts     eax, 9
++    bts     eax, 10
++    mov     cr4, eax
+ 
+-    call    ClearScreen
++    ; switch to long mode if currently in 32-bit legacy mode
++    mov  ecx, 0c0000080h ; EFER MSR number
++    rdmsr
++    bt   eax, 8
++    jc   inLongMode
+ 
++;----------------------------------------------------------------------------
++; called as a coreboot payload, coreboot unique code goes here
++;----------------------------------------------------------------------------
++    ; the upper 64KB of DOS low memory will be used
++    ; for tmp page tables and real mode code
++    mov     edi, X64_PAGE_TABLE_BASE
++
++    ; build identity mapped page table needed for 64-bit mode
++    call    identityMapLongMode
++
++    ; setup 16-bit real mode vectors required by BiosVideoThunkDxe
++    call    setupRmVectors
++    call    setupDebug
++
++    call    readEip
++    lea     ebx, [eax + (dataStart - $)]  ; ebx is dataStart
++
++    ; load new GDT
++    lgdt    fword ptr [ebx + (gdtr - dataStart)]
++
++    ; load new IDT
++    lidt    fword ptr [ebx + (idtr - dataStart)]
++
++    ; enable PAE/PSE
++    mov     eax, cr4
++    bts     eax, 5
++    mov     cr4, eax
++
++    mov  eax, X64_PAGE_TABLE_BASE
++    mov  cr3, eax
++
++    ; LM enable
++    mov     ecx, 0c0000080h
++    rdmsr
++    or      eax, 100h
++    wrmsr
++
++    ; enable paging
++    mov     eax, cr0
++    bts     eax, 31
++    mov     cr0, eax
++
++    lea     eax, [ebx + (inLongMode - dataStart)]
++    push    8
++    push    eax
++    retf
++
++;---------------------------------------------
++;use64
++;---------------------------------------------
++
++inLongMode:
+     ; Populate IDT with meaningful offsets for exception handlers...
+     mov     eax, offset Idtr
+     sidt    fword ptr [eax]             ; get fword address of IDT
+@@ -78,45 +134,7 @@
+     add     bx, DEFAULT_HANDLER_SIZE            ; move to next entry point
+     loop    @b                                  ; loop back through again until all descriptors are initialized
+     
+-    ;; at this point edi contains the offset of the descriptor for INT 20
+-    ;; and bx contains the low 16 bits of the offset of the default handler
+-    ;; so initialize all the rest of the descriptors with these two values...
+-;    mov     ecx, 101                            ; there are 100 descriptors left (INT 20 (14h) - INT 119 (77h)
+-;@@:                                             ; loop through all IDT entries exception handlers and initialize to default handler
+-;    mov     word ptr [edi], bx                  ; write bits 15..0 of offset
+-;    mov     word ptr [edi+2], 38h               ; SYS_CODE64_SEL from GDT
+-;    mov     word ptr [edi+4], 0e00h OR 8000h    ; type = 386 interrupt gate, present
+-;    mov     word ptr [edi+6], ax                ; write bits 31..16 of offset
+-;    mov     dword ptr [edi+8], 0                ; write bits 63..32 of offset
+-;    add     edi, 16                             ; move up to next descriptor
+-;    loop    @b                                  ; loop back through again until all descriptors are initialized
+-    
+-    
+-;;  DUMP    location of IDT and several of the descriptors
+-;    mov     ecx, 8
+-;    mov     eax, [offset Idtr + 2]
+-;    mov     eax, [eax]
+-;    mov     edi, 0b8000h
+-;    call    PrintQword
+-;    mov     esi, eax
+-;    mov     edi, 0b80a0h
+-;    jmp     OuterLoop
+-    
+-;;    
+-;; just for fun, let's do a software interrupt to see if we correctly land in the exception handler...
+-;    mov     eax, 011111111h
+-;    mov     ebx, 022222222h
+-;    mov     ecx, 033333333h
+-;    mov     edx, 044444444h
+-;    mov     ebp, 055555555h
+-;    mov     esi, 066666666h
+-;    mov     edi, 077777777h
+-;    push    011111111h
+-;    push    022222222h
+-;    push    033333333h
+-;    int     119
+-
+-    mov     esi,022000h                 ; esi = 22000
++    mov     esi,EFI64CODESTART+EFI64CODESIZE
+     mov     eax,[esi+014h]              ; eax = [22014]
+     add     esi,eax                     ; esi = 22000 + [22014] = Base of EFILDR.C
+     mov     ebp,[esi+03ch]              ; ebp = [22000 + [22014] + 3c] = NT Image Header for EFILDR.C
+@@ -124,8 +142,7 @@
+     mov     edi,[ebp+030h]              ; edi = [[22000 + [22014] + 3c] + 2c] = ImageBase (63..32 is zero, ignore)
+     mov     eax,[ebp+028h]              ; eax = [[22000 + [22014] + 3c] + 24] = EntryPoint
+     add     eax,edi                     ; eax = ImageBase + EntryPoint
+-    mov     ebx, offset EfiLdrOffset
+-    mov     dword ptr [ebx],eax         ; Modify far jump instruction for correct entry point
++    push    eax                         ; save entry address
+ 
+     mov     bx,word ptr[ebp+6]          ; bx = Number of sections
+     xor     eax,eax
+@@ -148,34 +165,24 @@
+     pop     esi                         ; Restore Base of EFILDR.C
+ 
+     add     bp,028h                     ; ebp = ebp + 028h = Pointer to next section record
+-    db 66h
+-    db 0ffh
+-    db 0cbh
+-;    dec     bx
++    sub     ebx,1
+     cmp     bx,0
+     jne     SectionLoop
+ 
+     mov     edx, offset Idtr
+-    movzx   eax, word ptr [edx]          ; get size of IDT
+-    db 0ffh
+-    db 0c0h
+-;    inc     eax
++    movzx   eax, word ptr [edx]          ; size of IDT (-1)
++    add     eax,1                        ; size of IDT
+     add     eax, dword ptr [edx + 2]     ; add to base of IDT to get location of memory map...
+-    xor     ecx, ecx
++    mov     ecx, [eax]                   ; read start of E820 buffer
++    cmp     ecx, 0FFFFFFFFh              ; 0FFFFFFFFh: use coreboot table in place of E820 buffer
++    mov     ecx, corebootMemMap          ; pass mem map derived from coreboot table
++    je      coreboot                     ; jump if running as coreboot payload
+     mov     ecx, eax                     ; put argument to RCX
++    sub     ecx, IMAGE_BUFFER_HIGH       ; fix up memory map address (it is below 1MB)
++    add     ecx, IMAGE_BUFFER_LOW 
++coreboot:
++    ret                                  ; jump to entry address pushed by code above
+ 
+-    db 48h
+-    db 0c7h
+-    db 0c0h
+-EfiLdrOffset:
+-    dd      000401000h                  ; Offset of EFILDR
+-;   mov rax, 401000h
+-    db 50h
+-;   push rax
+-
+-; ret
+-    db 0c3h
+-
+ ;    db      "**** DEFAULT IDT ENTRY ***",0
+     align 02h
+ Halt:
+@@ -777,11 +784,1462 @@
+ StringSs          db  " SS =",0
+ StringRflags      db  "RFLAGS=",0
+ 
+-Idtr        df  0
+-            df  0
++;----------------------------------------------------------------------------
++readEip proc near
++   mov      eax, [esp]
++   ret
++readEip endp
++;----------------------------------------------------------------------------
++; identityMapLongMode - build identity mapped page tables for use in long mode
++;
++; input  : edi - starting address for page tables
++; output : edi - next available address
++;
++mappingSize equ 0FFFFFFFFh
+ 
+-    org 21ffeh
+-BlockSignature:
++count4      equ ((mappingSize - 1) SHR 39) + 1
++count3      equ ((mappingSize - 1) SHR 30) + 1
++count2      equ ((mappingSize - 1) SHR 21) + 1
++
++pageMapLevel4           STRUC
++lowPart  dd ?
++highPart dd ?
++pageMapLevel4           ENDS
++
++pageDirectoryPointer    STRUC
++lowPart  dd ?
++highPart dd ?
++pageDirectoryPointer    ENDS
++
++pageDirectory           STRUC
++lowPart  dd ?
++highPart dd ?
++pageDirectory           ENDS
++
++tableStruct             STRUC
++    align               4096
++    map                 pageMapLevel4           count4 dup (<>)
++    align               4096
++    pointer             pageDirectoryPointer    count3 dup (<>)
++    align               4096
++    directory           pageDirectory           count2 dup (<>)
++tableStruct             ENDS
++
++identityMapLongMode proc near private
++local index:dword
++        mov     ecx, sizeof tableStruct
++        push    edi
++        xor     al, al  
++        rep     stosb                                   ; clear the page table memory
++        pop     edi
++
++        mov     ebx, edi                                ; ebx = table base physical address
++        mov     index, 0
++        .while (index < count4)
++            lea   eax, [ebx].tableStruct.pointer
++            shr   eax, 12
++            add   eax, index
++            shl   eax, 12
++            or    al, 3                                 ; present, writable
++            or    (tableStruct ptr [edi]).map.lowPart, eax
++            inc   index
++            add   edi, sizeof pageMapLevel4
++        .endw
++
++        mov     index, 0
++        mov     edi, ebx
++        .while (index < count3)
++            lea   eax, [ebx].tableStruct.directory
++            shr   eax, 12
++            add   eax, index
++            shl   eax, 12
++            or    al, 3                                 ; present, writable
++            or    (tableStruct ptr [edi]).pointer.lowPart, eax
++            inc   index
++            add   edi, sizeof pageDirectoryPointer
++        .endw
++
++        mov     index, 0
++        mov     edi, ebx
++        .while (index < count2)
++            mov   eax, index
++            shl   eax, 21
++            or    al, 83h                               ; present, writable, big
++            or    (tableStruct ptr [edi]).directory.lowPart, eax
++            inc   index
++            add   edi, sizeof pageDirectory
++        .endw
++        lea     edi, [ebx + size tableStruct]           ; return next free address
++        ret
++identityMapLongMode endp
++
++;----------------------------------------------------------------------------
++; setupRmVectors - Replace coreboot real mode vectors with debug hooks
++;                  to make it apparent when one executes.
++;
++; input  : edi - starting address below 1MB for real mode ISR code
++; output : edi - next available address
++
++setupRmVectors proc near private
++    xor    ecx, ecx                     ; INT number: start with zero
++vecloop:
++    lea    ebx, [ecx * 4]               ; vector address from INT number
++    mov    eax, edi                     ; physical address of ISR code
++    shr    eax, 16                      ; segment value
++    shl    eax, 12
++
++    mov    si, [ebx + 2]                ; get segment of existing vector
++    cmp    si, 0                        ; segment=0 identifies coreboot vector
++    jne    skipit                       ; leave non-coreboot vectors (vga)
++
++    mov    [ebx + 2], ax                ; replace coreboot vector
++    mov    [ebx + 0], di
++
++    ; INT8: 8254 periodic interrupt
++    mov    esi, text32start + text32size + (PitHandlerStart - text16start)
++    mov    ebx, PitHandlerEnd - PitHandlerStart
++    cmp    cl, 8+0                      ; master PIC INT 0, 8254 periodic
++    je     installHandler
++
++    ; INT1 and INT7 (PS/2 KB and spurious): ignore
++    mov    esi, text32start + text32size + (nopHandlerStart - text16start)
++    mov    ebx, nopHandlerEnd - nopHandlerStart
++    cmp    cl, 8+1                      ; master PIC INT 1, PS/2 keyboard
++    je     installHandler
++    cmp    cl, 8+7                      ; master PIC INT 7, spurious
++    je     installHandler
++   
++    ; use debug handler for all others
++    mov    esi, text32start + text32size + (debugHandlerStart - text16start)
++    mov    ebx, debugHandlerEnd - debugHandlerStart
++    mov    [esi + (intno-debugHandlerStart)], cl ; patch in interrupt number
++
++    ; now copy the ISR code to address below 1MB
++installHandler:
++    push   ecx
++    mov    ecx, ebx
++    rep    movsb
++    pop    ecx
++
++skipit:
++    add    ecx, 1
++    cmp    ecx, 256
++    jne    vecloop
++
++    ; DuetPkg/BiosVideoThunkDxe will call INT 15h if it finds a vector.
++    ; Clear the vector to tell BiosVideoThunkDxe that INT 15h is not
++    ; available on this system.
++    mov    esi, 15h * 4
++    mov    dword ptr [esi], 0
++    ret
++setupRmVectors endp
++
++;-----------------------------------------------------------------------------
++
++installVector32f proc
++        mov     eax, ebx                     ; physical address of ISR code
++        shr     ebx, 16                      ; segment value
++        shl     ebx, 12
++        mov     [esi + 2], bx
++        mov     [esi + 0], ax
++        ret
++installVector32f endp
++
++installVector32 macro id
++        mov     esi, id * 4
++        lea     ebx, [ebp + handler&id - debuggerStart]
++        call    installVector32f
++        endm
++
++;----------------------------------------------------------------------------
++; setupDebug - Replace some real mode vectors with debug hooks
++;
++; input  : edi - starting address below 1MB for real mode ISR code
++; output : edi - next available address
++
++setupDebug proc public
++        IF MKF_DEBUGGER_SUPPORT
++        push    ebp
++        push    esi
++        push    ecx
++        push    ebx
++        push    eax
++
++        ; save address where debugger is copied to
++        mov     ebp, edi
++
++        ; copy real mode code to below 1MB
++        mov     ecx, debuggerEnd - debuggerStart
++        mov     esi, text32start + text32size + (debuggerStart - text16start)
++        rep     movsb
++        
++        installVector32 0
++        installVector32 1
++        installVector32 2
++        installVector32 3
++        installVector32 4
++        installVector32 5
++        installVector32 6
++        
++        mov     eax, cr4
++        bts     eax, 3     ; enable debug extensions
++        mov     cr4, eax
++        pop     eax
++        pop     ebx
++        pop     ecx
++        pop     esi
++        pop     ebp
++        ENDIF
++        ret
++setupDebug endp
++
++;----------------------------------------------------------------------------
++
++align 8
++dataStart:
++
++gdt64:
++    dd    0
++    dd    0
++gdt64_code:
++    dw    0
++    dw    0
++    db    0
++    db    98h
++    db    20h
++    db    0
++gdt64_data:
++    dw    0
++    dw    0
++    db    0
++    db    90h
++    db    0
++    db    0
++gdt64end:
++
++align 16
++gdtr:
++    dw    gdt64end - gdt64 - 1; length
++    dq    gdt64
++
++align 16
++idtr:
++    dw    idt64end - idt64 - 1; length
++    dq    idt64
++
++align 16
++idt64:
++    dq    78h dup (0,0) 
++idt64end:
++
++biosMemoryMapEntry STRUC
++baseAddress     dq ?
++byteCount       dq ?
++memType         dd ?
++biosMemoryMapEntry ENDS
++
++align 16
++e820map:
++    dd    0FFFFFFFFh ; SeaBIOS not present: E820 data not available
++
++align 16
++corebootMemMap:
++    dd  corebootMemMapEnd-corebootMemMapStart     ; maximum size
++corebootMemMapStart:
++    biosMemoryMapEntry 50 dup (<0, 0, 0FFFFFFFFh>)
++corebootMemMapEnd:
++
++;----------------------------------------------------------------------------
++align 8
++text32end:
++_TEXT32 ends
++_TEXT16 SEGMENT dword USE16
++text16start:
++
++debugHandlerStart:
++        db     0b0h         ; "mov al, hh" opcode byte 1 of 2
++intno   db     0            ; "mov al, hh" opcode byte 1 of 2: interrupt number
++        mov    dx, 3F8h     ; com1 base address
++        out    dx, al
++        jmp    $            ; if hang here, above reg AL has INT number 
++        iret
++debugHandlerEnd:
++
++;----------------------------------------------------------------------------
++
++nopHandlerStart:
++    push   ax
++    mov    al, 20h          ; send end of interrupt to 8259
++    out    20h, al
++    pop    ax
++    iret
++nopHandlerEnd:
++;----------------------------------------------------------------------------
++
++timerIntCount dd 0
++PitHandlerStart:
++    push   ax
++    push   ds
++    xor    ax, ax
++    mov    ds, ax
++    add    cs:timerIntCount, 59659   ; convert 100 Hz UEFI to 18.2 Hz DOS
++    cmp    cs:timerIntCount, 327675
++    jb     noDosUpdate
++    inc    dword ptr ds:[46Ch]
++    sub    cs:timerIntCount, 327675
++noDosUpdate:
++    mov    al, 20h          ; send end of interrupt to 8259
++    out    20h, al
++    pop    ds
++    pop    ax
++    iret
++PitHandlerEnd:
++;=============================================================================
++IF MKF_DEBUGGER_SUPPORT
++debuggerStart:
++;----------------------------------------------------------------------------
++;
++; change these as needed for debugging
++;
++
++port                    equ     3F8h
++baud                    equ     115200
++
++;-----------------------------------------------------------------------------
++; a message from the Windows system always starts with 01, and is followed by a command code and optional data
++; a response from the target system starts with 81. The second byte is the command code copied from the request.
++; On exception, the target system sends a message starting with 82
++;-----------------------------------------------------------------------------
++
++   _RD_LOCALDEBUG          = 01h
++   _RD_READ_CSEIP          = 02h
++   _RD_READ_FLAT_EIP       = 03h
++   _RD_READ_FLAT_ESP       = 04h
++   _RD_RUNTO_ADDRESS       = 05h
++   _RD_RUN                 = 06h
++   _RD_READ_MEMORY_BYTE    = 07h
++   _RD_READ_MEMORY_WORD    = 08h
++   _RD_READ_MEMORY_DWORD   = 09h
++   _RD_READ_MEMORY_QWORD   = 0Ah
++   _RD_WRITE_MEMORY_BYTE   = 0Bh
++   _RD_WRITE_MEMORY_WORD   = 0Ch
++   _RD_WRITE_MEMORY_DWORD  = 0Dh
++   _RD_WRITE_MEMORY_QWORD  = 0Eh
++   _RD_BACKUP_EIP          = 0Fh
++   _RD_READ_EXEBASE        = 10h
++   _RD_TRACE               = 11h
++   _RD_READ_EXCEPTION      = 12h
++   _RD_READ_MAIN_REGS      = 13h
++   _RD_WRITE_MAIN_REGS     = 14h
++   _RD_READ_MISC_REGS      = 15h
++   _RD_READ_MMX_REGS       = 16h
++   _RD_READ_XMM_REGS       = 17h
++   _RD_READ_CPUID          = 18h
++   _RD_EXIT_TO_DOS         = 19h
++   _RD_READ_MSR            = 1Ah
++   _RD_READ_IO_BYTE        = 1Bh
++   _RD_READ_IO_WORD        = 1Ch
++   _RD_READ_IO_DWORD       = 1Dh
++   _RD_WRITE_IO_BYTE       = 1Eh
++   _RD_WRITE_IO_WORD       = 1Fh
++   _RD_WRITE_IO_DWORD      = 20h
++   _RD_READ_PCI_CONFIG     = 21h
++   _RD_WRITE_PCI_CONFIG    = 22h
++   _RD_PCI_BUS_CHECK       = 23h
++   _RD_READ_DEBUG_REGS     = 24h
++   _RD_WRITE_DEBUG_REGS    = 25h
++   _RD_TEST_WRITABLE       = 26h
++   _RD_READ_CMOS           = 27h
++   _RD_WRITE_CMOS          = 28h
++   _RD_MEM_SEARCH          = 29h
++   _RD_MEM_FILL            = 2Ah
++   _RD_MEM_SUM             = 2Bh
++
++;-----------------------------------------------------------------------------
++; these registers are saved and restored by the debugger
++
++cpuregs struct
++xnumber word    0       ; the order of these must match the C code
++gsreg   word    0
++fsreg   word    0
++ssreg   word    0
++esreg   word    0
++dsreg   word    0
++ebpreg  dword   0
++espreg  dword   0
++edireg  dword   0
++esireg  dword   0
++edxreg  dword   0
++ecxreg  dword   0
++ebxreg  dword   0
++eaxreg  dword   0
++
++ipreg   word    0       ; do not re-order these 3, the cpu pushes them this way
++csreg   word    0
++flags   word    0
++cpuregs ends
++
++;-----------------------------------------------------------------------------
++; layout used when reading additional processor registers
++miscregs struct
++cr0reg  dword   0
++cr2reg  dword   0
++cr3reg  dword   0
++cr4reg  dword   0
++cr8reg  dword   0
++ldtr    dword   0
++tr      dword   0
++idtinfo byte    12 dup (0)
++gdtinfo byte    12 dup (0)
++ldtinfo byte    12 dup (0)
++miscregs ends
++
++;-----------------------------------------------------------------------------
++; layout used when reading debug registers
++debugregs struct
++dr0reg  dword   0
++dr1reg  dword   0
++dr2reg  dword   0
++dr3reg  dword   0
++dr6reg  dword   0
++dr7reg  dword   0
++debugregs ends
++
++;-----------------------------------------------------------------------------
++; layout used when reading mmx/xmm processor registers
++mmxregs struct
++fxsave1 byte 512 dup (0)
++mmxregs ends
++
++;-----------------------------------------------------------------------------
++; txbyte - send byte in al out the serial port
++;          no registers are modified
++
++txbyte  proc near private
++        push    ax
++        push    dx
++        mov     dx, port
++        out     dx, al
++        add     dx, 5
++txbyte1:
++        in      al, dx
++        and     al, 20h
++        je      txbyte1
++        pop     dx
++        pop     ax
++        ret
++txbyte endp
++
++;-----------------------------------------------------------------------------
++; txword - send byte in ax out the serial port
++;          no registers are modified
++
++txword proc near private
++        push    ax
++        call    txbyte
++        mov     al, ah
++        call    txbyte
++        pop     ax
++        ret
++txword endp
++
++;-----------------------------------------------------------------------------
++; txdword - send dword in eax out the serial port
++;           no registers are modified
++
++txdword proc near private
++        call    txword
++        ror     eax, 16
++        call    txword
++        ror     eax, 16
++        ret
++txdword endp
++
++;-----------------------------------------------------------------------------
++; rxbyte - read com port data into al
++;          no other registers are modified
++;
++rxbyte proc near private
++        push    dx
++        mov     dx, port+5
++rxbyte1:
++        in      al, dx
++        and     al, 1
++        je      rxbyte1
++        mov     dx, port
++        in      al, dx
++        pop     dx
++        ret
++rxbyte endp
++
++;-----------------------------------------------------------------------------
++; rxword - read com port data into ax
++;          no other registers are modified
++;
++rxword  proc    near    private
++        call    rxbyte
++        xchg    al, ah
++        call    rxbyte
++        xchg    al, ah
++        ret
++rxword  endp
++
++;-----------------------------------------------------------------------------
++; rxdword - read com port data into eax
++;           no other registers are modified
++;
++rxdword proc    near    private
++        call    rxword
++        ror     eax, 16
++        call    rxword
++        ror     eax, 16
++        ret
++rxdword endp
++
++;-----------------------------------------------------------------------------
++; txbuffer - send cx bytes of data at es:di to com port
++;            no registers are modified
++
++txbuffer proc    near    private
++        push    ax
++        push    cx
++txbuffer1:
++        sub     cx, 1
++        jc      txbufferReturn
++        mov     al, es:[di]
++        inc     di
++        call    txbyte
++        jmp     txbuffer1
++txbufferReturn:
++        pop     cx
++        pop     ax
++        ret
++txbuffer endp
++
++;-----------------------------------------------------------------------------
++; rxbuffer - receive cx bytes of data from com port and put in buffer at es:di
++;            no registers are modified
++
++rxbuffer proc near private
++        push    ax
++        push    cx
++rxbuffer1:
++        sub     cx, 1
++        jc      rxbufferReturn
++        call    rxbyte
++        mov     es:[di], al
++        inc     di
++        jmp     rxbuffer1
++rxbufferReturn:
++        pop     cx
++        pop     ax
++        ret
++rxbuffer endp
++
++;-----------------------------------------------------------------------------
++; remoteDebugReply - reply to command from Windows app
++;                    bl    command code to echo
++;                    cx    buffer size
++;                    es:di buffer address
++;                    no registers are modified
++
++remoteDebugReply proc near private
++        push    ax
++        mov     al, 81h         ; start of response byte
++        call    txbyte          ; send it
++        mov     al, bl          ; command code to echo
++        call    txbyte          ; echo command code
++        call    txbuffer        ; send the additional data
++        pop     ax
++        ret
++remoteDebugReply endp
++
++;-----------------------------------------------------------------------------
++; remoteDebugReportEvent - transmit a message on entry to exception handler
++;                          ebp points to registers
++;                          no registers are modified
++
++remoteDebugReportEvent proc near private
++        push    eax
++        push    ebx
++        mov     al, 82h                         ; flag start of remote message
++        call    txbyte
++        mov     ax, [ebp].cpuregs.xnumber
++        call    txbyte                          ; send exception number
++        mov     ax, 0FFh
++        call    txbyte                          ; no error code in real mode
++        mov     ax, [ebp].cpuregs.ipreg
++        call    txword                          ; send ip
++        movzx   eax, [ebp].cpuregs.csreg
++        call    txword                          ; send cs
++        movzx   ebx, [ebp].cpuregs.ipreg
++        shl     eax, 4
++        add     eax, ebx
++        call    txdword
++        movzx   eax, [ebp].cpuregs.csreg
++        shl     eax, 4
++        call    txdword
++        pop     ebx
++        pop     eax
++        ret
++remoteDebugReportEvent endp
++
++;-----------------------------------------------------------------------------
++; structures to access temporary gdt on stack
++
++DESCRIPTOR      struct
++lo      dword   0
++hi      dword   0
++DESCRIPTOR      ends
++
++FWORDMEM        struct
++limit    word   0
++physical dword  0
++FWORDMEM        ends
++
++gdtmem  struct
++desc0   DESCRIPTOR <>
++desc1   DESCRIPTOR <>
++address FWORDMEM   <>
++gdtmem  ends
++
++gdtlimit        equ     offset gdtmem.address - offset gdtmem.desc0 - 1
++;-----------------------------------------------------------------------------
++;
++; bigReal - set ds=0, es=0 with big real mode enabled
++;           no other registers are modified
++
++bigReal proc near private
++        push eax
++        push ebx
++        push ecx
++
++        cld                         ; set rep to go in normal (forward) direction
++        cli                         ; Interrupts clear throughout
++
++        mov     al, 2               ; turn on fast a20 so odd MBs address OK
++        out     92h, al
++        ;
++        ; build a GDT on the stack
++        ;
++        mov     ecx, esp
++        sub     sp, size gdtmem + 63    ; align
++        and     sp, (1000h-64)
++        mov     [esp].gdtmem.desc0.lo, 0
++        mov     [esp].gdtmem.desc0.hi, 0
++        mov     [esp].gdtmem.desc1.lo, 0000FFFFh
++        mov     [esp].gdtmem.desc1.hi, 00CF9200h
++
++        xor     ebx, ebx
++        mov     bx, ss
++        mov     ds, bx
++        shl     ebx, 4
++        add     ebx, esp                                ; ebx is physical address of gdt on stack
++        mov     [esp].gdtmem.address.physical,ebx       ; fill in offset part of fword
++        mov     [esp].gdtmem.address.limit,gdtlimit     ; fill in limit part of fword
++
++        ; Load the GDT descriptor
++        lgdt    [esp].gdtmem.address
++
++        ;
++        ; Switch to protected mode.
++        ;
++        mov ebx,CR0     ; Set protected mode
++        inc bx
++        mov CR0,ebx
++
++        jmp short to_pm_flush ; this is needed for older processors like the 80386
++        to_pm_flush:
++        ;
++        ; Load es & ds with big segs
++        ;
++        mov ax, offset gdtmem.desc1 - offset gdtmem.desc0 ; 8, the first usable selector
++        mov ds, ax
++        mov es, ax
++        ;
++        ; Switch back to real mode
++        ;
++        dec bx
++        mov CR0,ebx
++
++        ; now put zero in the segment registers so that they will be valid if saved and restored
++        xor  ax, ax
++        mov  ds, ax
++        mov  es, ax
++
++        mov  esp, ecx
++        pop  ecx
++        pop  ebx
++        pop  eax
++        cld
++        ret
++bigReal endp
++
++;-----------------------------------------------------------------------------
++; checkBus - returns carry if any pci config space is present for the given bus
++;            this operation is done here because it is slow to do over the serial link
++;            no registers are modified
++
++checkBus proc near private
++        push    eax
++        push    ebx
++        push    ecx
++        push    edx
++        push    esi
++
++        mov     dx, 0CF8h
++
++        ; build initial CF8 value
++        movzx   eax, al         ; eax is bus number
++        or      ax, 8000h
++        shl     eax, 16
++        mov     esi, eax        ; esi is initial CF8 value
++        xor     ebx, ebx        ; ebx is function number
++        xor     ecx, ecx        ; ecx is device number
++checkNextDevice:
++        mov     eax, esi        ; eax is initial CF8 value
++        or      eax, ecx        ; combine device number
++        or      eax, ebx        ; combine function number
++        out     dx, eax
++        add     dx, 4
++        in      eax, dx
++        sub     dx, 4
++        inc     eax             ; no config FFFFFFFF decrements to zero
++        jnz     busIsPresent
++
++        add     ebx, 1 shl 8    ; next function number
++        cmp     ebx, 8 shl 8    ; 0-7 complete?
++        jne     checkNextDevice
++        xor     ebx, ebx        ; reset function number
++        add     ecx, 1 shl 11   ; next device number
++        cmp     ecx, 32 shl 11  ; 0-31 complete?     
++        jne     checkNextDevice ; continue, or fall through to no bus found return
++noBusPresent:
++        clc
++        jmp     checkBusReturn
++busIsPresent:
++        stc
++checkBusReturn:
++        pop     esi
++        pop     edx
++        pop     ecx
++        pop     ebx
++        pop     eax
++        ret
++checkBus endp
++
++;-----------------------------------------------------------------------------
++; readCmos - read al from cmos offset ah (00-FF)
++;            no other registers are modified
++
++readCmos proc near private
++        push    bx
++        mov     bx, ax        ; save ah
++        btr     ax, 15        ; see if offset is in high bank
++        xchg    al, ah        ; al is index into bank
++        jc      highBank
++        out     70h, al
++        xchg    al, ah
++        in      al, 71h
++        jmp     readCmosDone
++highBank:
++        out     72h, al
++        xchg    al, ah
++        in      al, 73h
++readCmosDone:
++        mov     ah, bh        ; restore ah
++        pop     bx
++        ret
++readCmos endp
++              
++;-----------------------------------------------------------------------------
++; writeCmos - write al to cmos offset ah (00-FF)
++;             no registers are modified
++
++writeCmos proc near private
++        push    ax
++        btr     ax, 15
++        xchg    al, ah        
++        jc      highBank
++        out     70h, al
++        xchg    al, ah
++        out     71h, al
++        jmp     writeCmosDone
++highBank:
++        out     72h, al
++        xchg    al, ah
++        out     73h, al
++writeCmosDone:
++        pop     ax
++        ret
++writeCmos endp
++              
++;-----------------------------------------------------------------------------
++; remoteDebug - exception handler interface to remote debugger
++;               ebp points to main registers
++;               all other registers are modified
++;-----------------------------------------------------------------------------
++
++remoteDebug proc near private
++
++remoteDebugLoop:
++        mov     ax, ss
++        mov     es, ax                          ; es is stack segment, where registers are kept
++
++        call    rxbyte                          ; sync up to the (possible) start of message
++        cmp     al, 1
++        jne     remoteDebugLoop
++
++        call    rxbyte                          ; al is command code
++        mov     bl, al                          ; bl is command code
++        xor     cx, cx                          ; default amount of additional response data - zero bytes
++        ;---------------------------------------
++        cmp     bl, _RD_RUN
++        jne     @f
++        call    remoteDebugReply
++        jmp     remoteDebugReturn
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_TRACE
++        jne     @f
++        call    remoteDebugReply
++        or      [ebp].cpuregs.flags, 1 shl 8
++        jmp     remoteDebugReturn
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_CSEIP
++        jne     @f
++        mov     cx, 4                           ; size cpuregs.ipreg + size cpuregs.csreg
++        lea     di, [ebp].cpuregs.ipreg
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_EXIT_TO_DOS
++        jne     @f
++        call    remoteDebugReply
++        xor     al, al
++        out     92h, al
++        mov     ax, 4C00h
++        int     21h
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_MAIN_REGS
++        jne     @f
++        mov     di, bp                          ; address of registers
++        mov     cx, sizeof cpuregs              ; size of registers
++        call    rxbuffer                        ; accept new register data
++        xor     cx, cx
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_MAIN_REGS
++        jne     @f
++        mov     di, bp
++        mov     cx, sizeof cpuregs
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_MISC_REGS
++        jne     @f
++        sub     sp, size miscregs               ; allocate space for misc regs
++        mov     eax, cr0
++        mov     [esp].miscregs.cr0reg, eax
++        mov     eax, cr2
++        mov     [esp].miscregs.cr2reg, eax
++        mov     eax, cr3
++        mov     [esp].miscregs.cr3reg, eax
++        mov     eax, cr4
++        mov     [esp].miscregs.cr4reg, eax
++        mov     di, sp
++        mov     cx, sizeof miscregs
++        call    remoteDebugReply
++        add     sp, size miscregs               ; de-allocate space for misc regs
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_DEBUG_REGS
++        jne     @f
++        sub     sp, size debugregs               ; allocate space for misc regs
++        mov     eax, dr0
++        mov     [esp].debugregs.dr0reg, eax
++        mov     eax, dr1
++        mov     [esp].debugregs.dr1reg, eax
++        mov     eax, dr2
++        mov     [esp].debugregs.dr2reg, eax
++        mov     eax, dr3
++        mov     [esp].debugregs.dr3reg, eax
++        mov     eax, dr6
++        mov     [esp].debugregs.dr6reg, eax
++        mov     eax, dr7
++        mov     [esp].debugregs.dr7reg, eax
++        mov     di, sp
++        mov     cx, sizeof debugregs
++        call    remoteDebugReply
++        add     sp, size debugregs              ; de-allocate space for misc regs
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_DEBUG_REGS
++        jne     @f
++        sub     sp, size debugregs              ; allocate space for debug regs
++        mov     di, sp
++        mov     cx, sizeof debugregs            ; size of registers
++        call    rxbuffer                        ; accept new register data
++        mov     eax, [esp].debugregs.dr0reg
++        mov     dr0, eax
++        mov     eax, [esp].debugregs.dr1reg
++        mov     dr1, eax
++        mov     eax, [esp].debugregs.dr2reg
++        mov     dr2, eax
++        mov     eax, [esp].debugregs.dr3reg
++        mov     dr3, eax
++        mov     eax, [esp].debugregs.dr6reg
++        mov     dr6, eax
++        mov     eax, [esp].debugregs.dr7reg
++        mov     dr7, eax
++        add     sp, size debugregs              ; de-allocate space for debug regs
++        xor     cx, cx
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_MMX_REGS
++        jne     @f
++        sub     sp, size mmxregs                ; allocate space for mmx regs
++        mov     di, sp
++        mov     cx, sizeof mmxregs
++        call    remoteDebugReply
++        add     sp, size mmxregs                ; de-allocate space for mmx regs
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_FLAT_EIP           ; return cs * 16 + ip
++        jne     @f
++        movzx   eax, [ebp].cpuregs.csreg
++        movzx   ebx, [ebp].cpuregs.ipreg
++        shl     eax, 4
++        add     eax, ebx
++        push    eax
++        mov     cx, 4
++        mov     di, sp
++        call    remoteDebugReply
++        add     sp, 4                
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_FLAT_ESP           ; return ss * 16 + sp
++        jne     @f
++        movzx   eax, [ebp].cpuregs.ssreg
++        mov     ecx, [ebp].cpuregs.espreg
++        shl     eax, 4
++        add     eax, ecx
++        push    eax
++        mov     cx, 4
++        mov     di, sp
++        call    remoteDebugReply
++        add     sp, 4                
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_RUNTO_ADDRESS
++        jne     @f
++        call    rxdword
++        mov     dr0, eax
++        mov     eax, dr7
++        and     eax, not 0F0000h        ; set breakpoint zero type to execution breakpoint
++        or      eax, 303h               ; enable breakpoint zero
++        mov     dr7, eax
++        call    remoteDebugReply
++        jmp     remoteDebugReturn
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_BACKUP_EIP
++        jne     @f
++        dec     [ebp].cpuregs.ipreg
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_MEMORY_BYTE
++        je      readMemory
++        cmp     bl, _RD_READ_MEMORY_WORD
++        je      readMemory
++        cmp     bl, _RD_READ_MEMORY_DWORD
++        je      readMemory
++        cmp     bl, _RD_READ_MEMORY_QWORD
++        je      readMemory
++        jmp     @f
++readMemory:
++        call    rxdword
++        mov     esi, eax                ; eax, esi is addess
++        call    rxdword
++        call    remoteDebugReply        ; initial part of response
++        mov     ecx, eax                ; ecx is byte count, esi is address
++        call    bigReal                 ; put ds, es in big real mode
++        cmp     bl, _RD_READ_MEMORY_BYTE
++        je      readNextByte
++        cmp     bl, _RD_READ_MEMORY_WORD
++        je      readNextWord
++        jmp     readNextDword
++readNextByte:
++        mov     al, [esi]
++        call    txbyte
++        inc     esi
++        dec     ecx
++        ja      readNextByte
++        jmp     remoteDebugLoop
++readNextWord:
++        mov     ax, [esi]
++        call    txword
++        add     esi, 2
++        sub     ecx, 2
++        ja      readNextWord
++        jmp     remoteDebugLoop
++readNextDword:
++        mov     eax, [esi]
++        call    txdword
++        add     esi, 4
++        sub     ecx, 4
++        ja      readNextDword
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_MEMORY_BYTE
++        je      writeMemory
++        cmp     bl, _RD_WRITE_MEMORY_WORD
++        je      writeMemory
++        cmp     bl, _RD_WRITE_MEMORY_DWORD
++        je      writeMemory
++        cmp     bl, _RD_WRITE_MEMORY_QWORD
++        je      writeMemory
++        jmp     @f
++writeMemory:
++        mov     bl, al                  ; save command code
++        call    rxdword
++        mov     esi, eax                ; eax, esi is addess
++        call    rxdword
++        push    eax                     ; save byte count
++        call    remoteDebugReply        ; initial part of response
++        pop     ecx                     ; ecx is byte count, esi is address
++        call    bigReal                 ; put ds, es in big real mode
++        cmp     bl, _RD_WRITE_MEMORY_BYTE
++        je      writeNextByte
++        cmp     bl, _RD_WRITE_MEMORY_WORD
++        je      writeNextWord
++        jmp     writeNextDword
++writeNextByte:
++        call    rxbyte
++        mov     [esi], al
++        inc     esi
++        dec     ecx
++        ja      writeNextByte
++        jmp     remoteDebugLoop
++writeNextWord:
++        call    rxword
++        mov     [esi], ax
++        add     esi, 2
++        sub     ecx, 2
++        ja      writeNextWord
++        jmp     remoteDebugLoop
++writeNextDword:
++        call    rxdword
++        mov     [esi], eax
++        add     esi, 4
++        sub     ecx, 4
++        ja      writeNextDword
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_EXCEPTION
++        jne     @f
++        call    remoteDebugReply
++        call    remoteDebugReportEvent
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_IO_BYTE
++        jne     @f
++        call    rxword                  ; receive I/O address
++        mov     dx, ax                  ; dx = I/O address
++        in      al, dx
++        call    remoteDebugReply
++        call    txbyte                  ; data portion of response
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_IO_WORD
++        jne     @f
++        call    rxword                  ; receive I/O address
++        mov     dx, ax                  ; dx = I/O address
++        in      ax, dx
++        call    remoteDebugReply
++        call    txword                  ; data portion of response
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_IO_DWORD
++        jne     @f
++        call    rxword                  ; receive I/O address
++        mov     dx, ax                  ; dx = I/O address
++        in      eax, dx
++        call    remoteDebugReply
++        call    txdword                 ; data portion of response
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_IO_BYTE
++        jne     @f
++        call    rxword                  ; receive I/O address
++        mov     dx, ax                  ; dx = I/O address
++        call    rxbyte                  ; receive I/O data
++        out     dx, al
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_IO_WORD
++        jne     @f
++        call    rxword                  ; receive I/O address
++        mov     dx, ax                  ; dx = I/O address
++        call    rxword                  ; receive I/O data
++        out     dx, ax
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_IO_DWORD
++        jne     @f
++        call    rxword                  ; receive I/O address
++        mov     dx, ax                  ; dx = I/O address
++        call    rxdword                 ; receive I/O data
++        out     dx, eax
++        call    remoteDebugReply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_PCI_CONFIG
++        jne     @f
++        call    rxdword                 ; receive I/O address data
++        call    remoteDebugReply
++        mov     dx, 0CF8h
++        out     dx, eax
++        add     dx, 4
++        in      eax, dx
++        call    txdword                 ; return data
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_PCI_BUS_CHECK
++        jne     @f
++        call    rxbyte                  ; receive bus number in al
++        call    remoteDebugReply        ; initial part of reply
++        call    checkBus                ; returns carry status if bus is present
++        mov     al, 0
++        adc     al, 0                   ; make al non-zero if bus is present
++        call    txbyte                  ; return data: al is bus present status
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_PCI_CONFIG
++        jne     @f
++        push    bx                      ; save command code to echo
++        call    rxdword                 ; receive CF8 address data
++        mov     ecx, eax
++        call    rxdword                 ; receive and-mask for clearing write data
++        mov     ebx, eax
++        call    rxdword                 ; receive CF8 new data to write
++        mov     esi, eax
++        mov     dx, 0CF8h               ; write CF8 address data
++        mov     eax, ecx
++        out     dx, eax
++        add     dx, 4
++        in      eax, dx                 ; read current data
++        and     eax, ebx                ; clear data to write
++        or      eax, esi
++        out     dx, eax                 ; write the new data
++        pop     bx                      ; restore command code to echo
++        xor     cx, cx                  ; zero additional response bytes
++        call    remoteDebugReply        ; initial part of reply
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_TEST_WRITABLE
++        jne     @f
++        call    rxdword                 ; receive flat address
++        call    bigReal                 ; put ds, es in big real mode
++        mov     dl, [eax]               ; read current data
++        mov     dh, dl
++        not     dh                      ; create new data for test write
++        mov     [eax], dh               ; write, then read back
++        mov     dh, [eax]
++        mov     [eax], dl               ; write original data back
++        xor     dl, dh                  ; difference
++        mov     al, dl
++        call    remoteDebugReply
++        call    txbyte                  ; data portion of response
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_READ_CMOS
++        jne     @f
++        call    rxbyte                  ; receive cmos starting offset
++        mov     ah, al                  ; ah is starting offset
++        call    rxbyte                  ; al is ending offset
++        call    remoteDebugReply        ; initial part of reply, cx=0 bytes of data
++        mov     cl, al                  ; cl is ending offset        
++cmosloop1:
++        call    readCmos                ; read cmos location ah into al
++        call    txbyte                  ; send it out
++        cmp     ah, cl                  ; last byte?
++        je      remoteDebugLoop
++        inc     ah                      ; move offset to next location
++        jmp     cmosloop1
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_WRITE_CMOS
++        jne     @f
++        call    rxbyte                  ; receive cmos starting offset
++        mov     ah, al                  ; ah is starting offset
++        call    rxbyte                  ; al is ending offset
++        call    remoteDebugReply        ; initial part of reply, cx=0 bytes of data
++        mov     cl, al                  ; cl is ending offset        
++cmosloop2:
++        call    rxbyte                  ; get next byte from serial port
++        call    writeCmos               ; write al to cmos offset ah
++        cmp     ah, cl                  ; last byte?
++        je      remoteDebugLoop
++        inc     ah                      ; move offset to next location
++        jmp     cmosloop2
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_MEM_SEARCH
++        jne     @f
++        mov     dl, bl                  ; save command code to echo
++        call    rxdword                 ; receive start address
++        mov     esi, eax                ; esi is start address
++        call    rxdword                 ; receive last offset to search
++        mov     edi, eax                ; edi is last offset to search
++        call    rxbyte                  ; receive pattern byte count
++        movzx   ecx, al                 ; ecx is number of pattern bytes to receive
++        call    rxbyte                  ; receive match type
++        mov     dh, al                  ; dh is match type
++        sub     sp, cx                  ; allocate pattern buffer on stack
++        sub     sp, cx                  ; increase allocation from bytes to words
++        xor     ebx, ebx                ; initialize index into pattern buffer
++rxPatternLoop:
++        call    rxbyte                  ; receive next pattern byte
++        cbw                             ; expand bytes to words to avoid false match
++        mov     [esp+ebx*2], ax         ; save pattern data in stack buffer
++        inc     ebx
++        cmp     ebx, ecx
++        jne     rxPatternLoop
++        mov     ax, cx                  ; ax is number of pattern bytes
++        xor     cx, cx                  ; amount of extra data for remoteDebugReply
++        mov     bl, dl                  ; restore command code to echo
++        call    remoteDebugReply        ; initial part of reply, cx=0 bytes of data
++        mov     cx, ax                  ; cx is number of pattern bytes
++
++; esi is start address
++; edi is last address to search
++; dh is match type
++; ecx is number of pattern bytes
++
++        call    bigReal
++        or      dh, dh                  ; see if we are looking for match or no match
++        jne     searchLoop2
++        
++searchLoop1:
++        call    samePattern
++        jne     matchFound
++        inc     esi                     ; move to next position in buffer
++        cmp     esi, edi                ; see if all of the buffer has been searched
++        jbe     searchLoop1
++        jmp     patternNotFound
++
++searchLoop2:
++        call    samePattern
++        je      matchFound
++        inc     esi                     ; move to next position in buffer
++        cmp     esi, edi                ; see if all of the buffer has been searched
++        jbe     searchLoop2
++        jmp     patternNotFound
++
++patternNotFound:        
++        mov     esi, 0FFFFFFFFh         ; return code for pattern not found
++
++matchFound:
++        lea     esp, [esp+ecx*2]        ; de-allocate pattern buffer from stack
++        mov     eax, esi                ; address of match
++        call    txdword                 ; return address of match, or FFFFFFFF for no match
++        jmp     remoteDebugLoop
++@@:
++        ;---------------------------------------
++        cmp     bl, _RD_MEM_FILL
++        jne     @f
++        mov     dl, bl                  ; save command code to echo
++        call    rxdword                 ; receive start address
++        mov     esi, eax                ; esi is start address
++        call    rxdword                 ; receive last offset to fill
++        mov     edi, eax                ; edi is last offset to fill
++        call    rxbyte                  ; receive pattern byte count
++        movzx   ecx, al                 ; ecx is number of pattern bytes to receive
++        sub     sp, cx                  ; allocate pattern buffer on stack
++        xor     ebx, ebx                ; initialize index into pattern buffer
++rxPatternLoop2:
++        call    rxbyte                  ; receive next pattern byte
++        mov     [esp+ebx], al           ; save pattern data in stack buffer
++        inc     ebx
++        cmp     ebx, ecx
++        jne     rxPatternLoop2
++        mov     ax, cx                  ; save number of pattern bytes in ax
++        xor     cx, cx                  ; amount of extra data for remoteDebugReply
++        mov     bl, dl                  ; restore command code to echo
++        call    remoteDebugReply        ; initial part of reply, cx=0 bytes of data
++        mov     cx, ax                  ; restore number of pattern bytes
++
++; esi is start address
++; edi is last address to fill
++; ecx is number of pattern bytes
++
++        call    bigReal
++fillLoop2:
++        xor     bx, bx                  ; reset pattern index
++fillLoop1:
++        mov     al, [esp+ebx]           ; get next pattern byte
++        mov     [esi+ebx], al           ; write it to memory
++        inc     bx                      ; offset of next pattern byte
++        cmp     bx, cx                  ; all pattern bytes written
++        jne     fillLoop1               ; no - complete pattern write
++        add     esi, ecx                ; advance destination pointer
++        cmp     esi, edi                ; end of buffer reached?
++        jbe     fillLoop2               ; no - write another pattern
++        add     sp, cx                  ; de-allocate pattern buffer on stack
++        xor     al, al                  ; return a byte to signal completion
++        call    txbyte
++        jmp     remoteDebugLoop
++         
++@@:
++        ;---------------------------------------
++        jmp     remoteDebugLoop
++remoteDebugReturn:
++        ret
++remoteDebug endp
++
++;-----------------------------------------------------------------------------
++; samePattern - see if memory matches pattern
++;               esp+2 points to pattern
++;               esi is memory address
++;               ecx is number of pattern bytes
++;               return equal if pattern matches memory
++;               modified: al, ebx
++
++samePattern proc near private
++        xor     ebx, ebx                ; ebx is pattern index
++searchLoop1:
++        mov     al, [esp+ebx*2+2]       ; al is next pattern byte
++        cmp     al, [esi+ebx]           ; compare to memory
++        jne     noMatch
++        inc     bx
++        cmp     bx, cx                  ; all pattern bytes matched?
++        jne     searchLoop1             ; no - keep checking
++noMatch:
++        ret 
++samePattern endp
++
++;-----------------------------------------------------------------------------
++
++handler macro id
++handler&id:
++        sub     sp, offset cpuregs.ipreg        ; allocate space for registers not yet on stack
++        mov     [esp].cpuregs.xnumber, id
++        jmp     exception
++        endm
++
++;-----------------------------------------------------------------------------
++
++handler 0   ; divide error
++handler 1   ; debug exception
++handler 2   ; NMI
++handler 3   ; breakpoint exception
++handler 4   ; overflow exception
++handler 5   ; bound range exceeded
++handler 6   ; invalid opcode exception
++handler 7   ; device not available
++
++; exceptions 8 and above conflict with slave PIC interrupts, so enable with caution
++;handler 8   ; double fault
++;handler 13  ; GP fault
++
++
++;-----------------------------------------------------------------------------
++; 16-bit real mode exception common code
++
++exception       proc    private
++        ; save the general purpose registers on the stack
++        mov     [esp].cpuregs.eaxreg, eax
++        mov     [esp].cpuregs.ebxreg, ebx
++        mov     [esp].cpuregs.ecxreg, ecx
++        mov     [esp].cpuregs.edxreg, edx
++        mov     [esp].cpuregs.esireg, esi
++        mov     [esp].cpuregs.edireg, edi
++        mov     [esp].cpuregs.ebpreg, ebp
++        mov     [esp].cpuregs.dsreg, ds
++        mov     [esp].cpuregs.esreg, es
++        mov     [esp].cpuregs.ssreg, ss
++        mov     [esp].cpuregs.fsreg, fs
++        mov     [esp].cpuregs.gsreg, gs
++        mov     eax, esp
++        add     ax, size cpuregs                ; sp before exception        
++        mov     [esp].cpuregs.espreg, eax
++        mov     ebp, esp                        ; ebp points to saved registers
++
++        ; disable hardware breakpoints while the debugger is running
++        mov     eax, dr7
++        and     eax, not 3FFh
++        mov     dr7, eax
++        
++        ; clear single step for next time
++        and     [ebp].cpuregs.flags, not (1 shl 8)
++
++        call    remoteDebugReportEvent
++        call    remoteDebug
++
++        ; clear the cause of the debug exception for next time
++        xor     eax, eax
++        mov     dr6, eax
++
++        ; restore the general purpose registers from the stack
++        mov     eax, [esp].cpuregs.eaxreg
++        mov     ebx, [esp].cpuregs.ebxreg
++        mov     ecx, [esp].cpuregs.ecxreg
++        mov     edx, [esp].cpuregs.edxreg
++        mov     esi, [esp].cpuregs.esireg
++        mov     edi, [esp].cpuregs.edireg
++        mov     ebp, [esp].cpuregs.ebpreg
++        mov     ds, [esp].cpuregs.dsreg
++        mov     es, [esp].cpuregs.esreg
++        mov     fs, [esp].cpuregs.fsreg
++        mov     gs, [esp].cpuregs.gsreg
++        add     sp, offset cpuregs.ipreg        ; de-allocate space for registers added to stack
++        iret                                    ; return to the application
++
++exception       endp
++;----------------------------------------------------------------------------
++ENDIF ;MKF_DEBUGGER_SUPPORT
++debuggerEnd:
++;=============================================================================
++align 4
++text16end:
++;----------------------------------------------------------------------------
++
++text32size = text32end - text32start
++text16size = text16end - text16start
++padcount = (EFI64CODESIZE - 2) - text32size - text16size
++
++    db      padcount dup (0)
+     dw      0aa55h
+-    
++_TEXT16 ends
+     end
+Index: DuetPkg/BootSector/st16_64.asm
+===================================================================
+--- DuetPkg/BootSector/st16_64.asm	(revision 1)
++++ DuetPkg/BootSector/st16_64.asm	(working copy)
+@@ -27,6 +27,8 @@
+ BLOCK_SHIFT                 EQU     9
+ 
+         org 0h
++Start:
++
+ Ia32Jump:
+   jmp   BootSectorEntryPoint  ; JMP inst    - 3 bytes
+   nop
+@@ -62,83 +64,31 @@
+ ; Re use the BPB data stored in Boot Sector
+         mov     bp,07c00h
+ 
+-        push    cx
+-; Read Efivar.bin
+-;       1000:dx    = DirectoryEntry of Efivar.bin -> BS.com has filled already
+-        mov     ax,01900h
+-        mov     es,ax
+-        test    dx,dx
+-        jnz     CheckVarStoreSize
+ 
+-        mov     al,1
+-NoVarStore:
+-        push    es
+-; Set the 5th byte start @ 0:19000 to non-zero indicating we should init var store header in DxeIpl
+-        mov     byte ptr es:[4],al
+-        jmp     SaveVolumeId
++;      Remove code to free code space for 'copy high' code added below.
++;      The removed code was moved out of the boot sector. 
+ 
+-CheckVarStoreSize:
+-        mov     di,dx
+-        cmp     dword ptr ds:[di+2], 04000h
+-        mov     al,2
+-        jne     NoVarStore
+-
+-LoadVarStore:
+-        mov     al,0
+-        mov     byte ptr es:[4],al
+-        mov     cx,word ptr[di]
+-;       ES:DI = 1500:0
+-        xor     di,di
+-        push    es
+-        mov     ax,01500h
+-        mov     es,ax
+-        call    ReadFile
+-SaveVolumeId:
+-        pop     es
+-        mov     ax,word ptr [bp+VolId]
+-        mov     word ptr es:[0],ax                  ; Save Volume Id to 0:19000. we will find the correct volume according to this VolumeId
+-        mov     ax,word ptr [bp+VolId+2]
+-        mov     word ptr es:[2],ax
+-
+-; Read Efildr
+-        pop     cx
+ ;       cx    = Start Cluster of Efildr -> BS.com has filled already
+-;       ES:DI = 2000:0, first cluster will be read again
+-        xor     di,di                               ; di = 0
+-        mov     ax,02000h
++;       ES:0  = 2000:0, first cluster will be read again
++        mov     edi, IMAGE_BUFFER_HIGH     ; destination address
++        mov     ax,IMAGE_BUFFER_low / 16
+         mov     es,ax
++        push    es
++        push    dx
++        cmp     word ptr ss:[0],0EFEFh        ; is EFILDR16 already in memory?
++        je      skipRead
+         call    ReadFile
+-        mov     ax,cs
+-        mov     word ptr cs:[JumpSegment],ax
++skipRead:
++        pop     dx
++        jmp     continueBoot
+ 
+-CheckEm64T:
+-        mov  eax, 080000001h
+-;        cpuid
+-        dw   0A20Fh
+-        bt   edx, 29
+-        jc   CheckEm64TPass
+-        push cs
+-        pop  ds
+-        lea  si, [Em64String]
+-        mov  cx, 18
+-        jmp  PrintStringAndHalt
+-CheckEm64TPass:
+-JumpFarInstruction:
+-        db      0eah
+-JumpOffset:
+-        dw      0200h
+-JumpSegment:
+-        dw      2000h
+-
+-
+-
+ ; ****************************************************************************
+ ; ReadFile
+ ;
+ ; Arguments:
+ ;   CX    = Start Cluster of File
+-;   ES:DI = Buffer to store file content read from disk
+-;
++;   ES:0  = low memory buffer
++;   edi   = destination
+ ; Return:
+ ;   (ES << 4 + DI) = end of file content Buffer
+ ;
+@@ -150,7 +100,10 @@
+ ; ds:0000 = CacheFatSectorBuffer
+ ; es:di   = Buffer to load file
+ ; bx      = NextClusterNumber
+-        pusha
++        push    bx
++        push    dx
++        push    si
++
+         mov     si,1                                ; NumberOfClusters = 1
+         push    cx                                  ; Push Start Cluster onto stack
+         mov     dx,0fffh                            ; CachedFatSectorNumber = 0xfff
+@@ -168,11 +121,13 @@
+         and     si,BLOCK_MASK                       ; si = FatOffset & BLOCK_MASK
+         cmp     ax,dx                               ; Compare FatSectorNumber to CachedFatSectorNumber
+         je      SkipFatRead
+-        mov     bx,2                                
++        mov     bx,2                                ; read 2 sectors to address 1000h
+         push    es
+         push    ds
+         pop     es
++        push    edi                                 ; save destination address
+         call    ReadBlocks                          ; Read 2 blocks starting at AX storing at ES:DI
++        pop     edi                                 ; this is temp data, so do not return it
+         pop     es
+         mov     dx,ax                               ; CachedFatSectorNumber = FatSectorNumber
+ SkipFatRead:
+@@ -191,9 +146,9 @@
+         pop     ax                                  ; ax = StartCluster
+         push    bx                                  ; StartCluster = NextClusterNumber
+         mov     cx,bx                               ; ClusterNumber = NextClusterNumber
+-        sub     ax,2                                ; ax = StartCluster - 2
+-        xor     bh,bh                               
+-        mov     bl,byte ptr [bp+SectorsPerCluster]  ; bx = SectorsPerCluster
++        dec     ax
++        dec     ax
++        movzx   bx,byte ptr [bp+SectorsPerCluster]  ; bx = SectorsPerCluster
+         mul     bx                                  ; ax = (StartCluster - 2) * SectorsPerCluster
+         add     ax, word ptr [bp]                   ; ax = FirstClusterLBA + (StartCluster-2)*SectorsPerCluster
+         push    ax                                  ; save start sector
+@@ -205,8 +160,10 @@
+         mov     si,1                                ; NumberOfClusters = 1
+         jmp     FatChainLoop
+ FoundLastCluster:
++        pop     si
++        pop     dx
+         pop     cx
+-        popa
++        pop     bx
+         ret
+ 
+ 
+@@ -215,7 +172,12 @@
+ ;
+ ; AX    = Start LBA
+ ; BX    = Number of Blocks to Read
+-; ES:DI = Buffer to store sectors read from disk
++; ES:0  = temp buffer to store sectors read from disk
++; edi   = destination address
++; BP    = 7C00 (boot sector in memory)
++;
++; return: ES advanced
++;    return: edi advanced
+ ; ****************************************************************************
+ 
+ ; cx = Blocks
+@@ -223,17 +185,20 @@
+ ; si = StartLBA
+ 
+ ReadBlocks:
+-        pusha
+-        add     eax,dword ptr [bp+LBAOffsetForBootSector]    ; Add LBAOffsetForBootSector to Start LBA
+-        add     eax,dword ptr [bp+HiddenSectors]    ; Add HiddenSectors to Start LBA
+-        mov     esi,eax                             ; esi = Start LBA
++        push    cx
++        push    dx
++        push    si
++
++        add     ax,word ptr [bp+LBAOffsetForBootSector] ; Add LBAOffsetForBootSector to Start LBA
++        add     ax,word ptr [bp+HiddenSectors]      ; Add HiddenSectors to Start LBA
++        mov     si,ax                               ; esi = Start LBA
+         mov     cx,bx                               ; cx = Number of blocks to read
+ ReadCylinderLoop:
+         mov     bp,07bfch                           ; bp = 0x7bfc
+-        mov     eax,esi                             ; eax = Start LBA
+-        xor     edx,edx                             ; edx = 0
+-        movzx   ebx,word ptr [bp]                   ; bx = MaxSector
+-        div     ebx                                 ; ax = StartLBA / MaxSector
++        mov     ax,si                               ; eax = Start LBA
++        xor     dx,dx                               ; dx = 0
++        mov     bx,word ptr [bp]                    ; bx = MaxSector
++        div     bx                                  ; ax = StartLBA / MaxSector
+         inc     dx                                  ; dx = (StartLBA % MaxSector) + 1
+ 
+         mov     bx,word ptr [bp]                    ; bx = MaxSector
+@@ -268,10 +233,62 @@
+         mov     ch,al                               ; ch = Cylinder
+         mov     al,bl                               ; al = Blocks
+         mov     ah,2                                ; ah = Function 2
+-        mov     bx,di                               ; es:bx = Buffer address
++        xor     bx,bx                               ; es:bx = Buffer address
+         int     013h
+         jc      DiskError
+-        pop     bx
++        pop     bx                                  ; restore number of blocks to transfer
++
++        ; copy data read from temp buffer (es:0) to final buffer above 1MB (edi)
++        push    ds                                  ; save registers used (except for eax and esi)
++        push    esi
++        mov     si, di                              ; save lower half of final buffer address
++        mov     cx, 48                              ; gdt size
++        xor     eax, eax
++        sub     sp, cx                              ; allocate gdt buffer from stack
++        mov     di, sp                              ; es:si = gdt address
++        push    es
++        push    ss
++        pop     es
++        rep     stosb                               ; clear gdt
++        pop     es
++        mov     di, si                              ; restore lower half of final buffer address
++        mov     si, sp                              ; es:si = gdt address
++
++        mov     ax, es
++        shl     eax, 4                              ; convert rm selector value to 32-bit flat address
++        push    ss
++        pop     ds
++        mov     dword ptr [si+12h], eax             ; int 15-87: source address bits 0-23
++        mov     dword ptr [si+1Ah], edi             ; int 15-87: dest address bits 0-23
++        mov     eax, edi                            ; eax is 32-bit destination address
++        bswap   eax                                 ; al is dest address bits 24-31
++        mov     byte ptr  [si+1Fh], al              ; int 15-87: dest address bits 25-31 
++        mov     cx, 0CF93h                          ; access rights byte, lim 16-19 (max), gran=1, big=1
++        mov     word ptr [si+15h], cx               ; int 15-87: source access rights 
++        mov     word ptr [si+1Dh], cx               ; int 15-87: dest access rights 
++        mov     cx, 0FFFFh                          ; segment limit (max)
++        mov     word ptr  [si+10h], cx              ; int 15-87: source segment limit (max)
++        mov     word ptr  [si+18h], cx              ; int 15-87: dest segment limit (max)
++        mov     ah, 87h                             ; int 15h code for copy
++        push    es                                  ; save es before 15-87 use
++        push    ss
++        pop     es
++        mov     cx, bx                              ; cx is sector count
++        shl     cx, 8                               ; cx is word count
++        int     15h                                 ; do the copy operation
++        jc      $                                   ; debug: stop if error
++        pop     es                                  ; restore es after 15-87 use
++
++        add     sp, 48                              ; deallocate gdt
++        pop     esi                                 ; restore registers
++        pop     ds
++
++        ; advance final destination pointer
++        movzx   ecx, bx
++        shl     ecx, 9                              ; multiply by bytes per sector (512)
++        add     edi, ecx
++        ; end of copy high code
++
+         pop     cx
+         movzx   ebx,bx
+         add     esi,ebx                             ; StartLBA = StartLBA + NumberOfBlocks
+@@ -278,11 +295,25 @@
+         sub     cx,bx                               ; Blocks = Blocks - NumberOfBlocks
+         mov     ax,es
+         shl     bx,(BLOCK_SHIFT-4)
++
++        ; Efildr20 is too big to fit in the 20000h-8FFFFh buffer below 1MB. This is OK,
++        ; because the data is also getting copied to a bigger buffer above 1MB. However,
++        ; the first part is a small amount of uncompressed code that can continue to
++        ; execute from the low memory buffer. This first part (St32_64.com+Efi64.com2+
++        ; EfiLoader.efi) is around 41KB. So after we fill the low mem buffer to at least
++        ; 41KB, we can quit advancing the pointer to prevent overflow overflow. Give it
++        ; 64KB instead of 41KB so that the low mwmory code can grow if needed.
++        cmp     ax, IMAGE_BUFFER_low / 16 + 64 * 1024 / 16
++        jae     reuseBuffer
+         add     ax,bx
++reuseBuffer:
+         mov     es,ax                               ; es:di = es:di + NumberOfBlocks*BLOCK_SIZE
+-        cmp     cx,0
++        or      cx, cx
+         jne     ReadCylinderLoop
+-        popa
++        
++        pop     si
++        pop     dx
++        pop     cx
+         ret
+ 
+ DiskError:
+@@ -303,13 +334,23 @@
+ ErrorString:
+         db 'S', 0ch, 'E', 0ch, 'r', 0ch, 'r', 0ch, 'o', 0ch, 'r', 0ch, '!', 0ch
+ 
+-        org     01fah
++; make sure our code size is OK
++bootSectorSize equ 200h
++
++bytesRemaining = bootSectorSize - ($-Start)
++.ERRNZ bytesRemaining LT 6, <===code too big===>
++
++        org     bootSectorSize - 6
+ LBAOffsetForBootSector:
+         dd      0h
+ 
+-        org     01feh
+-        dw      0aa55h
++; put AA55 signature in the last two bytes
++sigAddress = bootSectorSize - 2
+ 
++    org     sigAddress
++    dw      0aa55h
++
++
+ ;******************************************************************************
+ ;******************************************************************************
+ ;******************************************************************************
+@@ -321,11 +362,10 @@
+ ENABLE_A20_CMD       equ     0dfh    ; 8042 command to enable A20
+ 
+         org     200h
+-        jmp start
+-Em64String:
+-        db 'E', 0ch, 'm', 0ch, '6', 0ch, '4', 0ch, 'T', 0ch, ' ', 0ch, 'U', 0ch, 'n', 0ch, 's', 0ch, 'u', 0ch, 'p', 0ch, 'p', 0ch, 'o', 0ch, 'r', 0ch, 't', 0ch, 'e', 0ch, 'd', 0ch, '!', 0ch
++continueBoot:
++        pop     es
++; (end of Read Efildr)
+ 
+-start:  
+         mov ax,cs
+         mov ds,ax
+         mov es,ax
+@@ -355,15 +395,6 @@
+         sub edi,eax                         ; Get the address of the memory map
+         mov dword ptr [MemoryMapSize],edi   ; Save the size of the memory map
+ 
+-        xor     ebx,ebx
+-        mov     bx,cs                       ; BX=segment
+-        shl     ebx,4                       ; BX="linear" address of segment base
+-        lea     eax,[GDT_BASE + ebx]        ; EAX=PHYSICAL address of gdt
+-        mov     dword ptr [gdtr + 2],eax    ; Put address of gdt into the gdtr
+-        lea     eax,[IDT_BASE + ebx]        ; EAX=PHYSICAL address of idt
+-        mov     dword ptr [idtr + 2],eax    ; Put address of idt into the idtr
+-        lea     edx,[MemoryMapSize + ebx]   ; Physical base address of the memory map
+-
+ ;        mov ax,0b800h
+ ;        mov es,ax
+ ;        mov byte ptr es:[162],'b'
+@@ -400,7 +431,19 @@
+ 
+ 
+ A20GateEnabled:
++        mov     ebx, IMAGE_BUFFER_HIGH
+ 
++        lea     eax,[GDT_BASE + ebx]        ; EAX=PHYSICAL address of gdt
++        mov     dword ptr [gdtr + 2], eax
++
++        lea     eax,[IDT_BASE + ebx]        ; EAX=PHYSICAL address of idt
++        mov     dword ptr [idtr + 2], eax
++
++        lea     edx,[MemoryMapSize + ebx]   ; Physical base address of the memory map
++
++; build identity mapped page table needed for 64-bit mode
++        call    identityMapLongMode         ; build identity mapped page tables for long mode
++
+ ;
+ ; DISABLE INTERRUPTS - Entering Protected Mode
+ ;
+@@ -414,11 +457,11 @@
+ ;        mov es,ax
+ 
+     lea eax, OffsetIn32BitProtectedMode
+-    add eax, 20000h + 6h
++    add eax, IMAGE_BUFFER_LOW + 6h
+     mov dword ptr[OffsetIn32BitProtectedMode], eax
+ 
+     lea eax, OffsetInLongMode
+-    add eax, 20000h + 6h
++    add eax, IMAGE_BUFFER_LOW + 6h
+     mov dword ptr[OffsetInLongMode], eax
+ 
+     ;
+@@ -471,13 +514,14 @@
+     ;
+     ; Address Map:
+     ;    10000 ~    12000 - efildr (loaded)
+-    ;    20000 ~    21000 - start64.com
+-    ;    21000 ~    22000 - efi64.com
+-    ;    22000 ~    90000 - efildr
++    ;    20000 ~    22000 - st32_64.com
++    ;    22000 ~    23000 - efi64.com2
++    ;    23000 ~    90000 - EfiLdr+DxeIpl.z+DxeMain.z+BFV.z
+     ;    90000 ~    96000 - 4G pagetable (will be reload later)
++    ;   100000 ~          - buffer for complete Efildr20 file
+     ;
+     db  0b8h
+-    dd  90000h
++    dd  X64_PAGE_TABLE_BASE
+ ;    mov eax, 90000h
+     mov cr3, eax
+ 
+@@ -529,13 +573,6 @@
+     mov     ss, ax
+     mov     ds, ax
+ 
+-    db 0bdh
+-    dd 400000h
+-;    mov ebp,000400000h                  ; Destination of EFILDR32
+-    db 0bbh
+-    dd 70000h
+-;    mov ebx,000070000h                  ; Length of copy
+-
+     ;
+     ; load idt later
+     ;
+@@ -547,7 +584,7 @@
+     mov ax, offset idtr
+     db 48h
+     db 05h
+-    dd 20000h
++    dd IMAGE_BUFFER_LOW
+ ;    add rax, 20000h
+ 
+     db 0fh
+@@ -558,13 +595,13 @@
+     db 48h
+     db 0c7h
+     db 0c0h
+-    dd 21000h
+-;   mov rax, 21000h
++    dd EFI64CODESTART
++;   mov rax, XX000h
+     db 50h
+ ;   push rax
+ 
+ ; ret
+-    db 0c3h
++    db 0c3h                                 ; to efi64.asm
+ 
+ Empty8042InputBuffer:
+         mov cx,0
+@@ -575,6 +612,99 @@
+         loopnz  Empty8042Loop               ; Loop until the input buffer is empty or a timout of 65536 uS
+         ret
+ 
++
++;----------------------------------------------------------------------------
++;
++;
++mappingSize equ 0FFFFFFFFh
++
++count4      equ ((mappingSize - 1) SHR 39) + 1
++count3      equ ((mappingSize - 1) SHR 30) + 1
++count2      equ ((mappingSize - 1) SHR 21) + 1
++
++pageMapLevel4           STRUC
++lowPart  dd ?
++highPart dd ?
++pageMapLevel4           ENDS
++
++pageDirectoryPointer    STRUC
++lowPart  dd ?
++highPart dd ?
++pageDirectoryPointer    ENDS
++
++pageDirectory           STRUC
++lowPart  dd ?
++highPart dd ?
++pageDirectory           ENDS
++
++tableStruct             STRUC
++    align               4096
++    map                 pageMapLevel4           count4 dup (<>)
++    align               4096
++    pointer             pageDirectoryPointer    count3 dup (<>)
++    align               4096
++    directory           pageDirectory           count2 dup (<>)
++tableStruct             ENDS
++
++identityMapLongMode proc near
++local index:dword
++        push    ds
++        push    es
++
++        mov     ax, X64_PAGE_TABLE_BASE / 16
++        mov     ds, ax
++        mov     es, ax
++        movzx   ebx, ax
++        shl     ebx, 4                                  ; ebx = table base physical address
++
++        mov     cx, sizeof tableStruct
++        mov     di, 0                                   ; table starts at beginning of segment
++        xor     al, al  
++        rep     stosb                                   ; clear the page table memory
++
++        mov     index, 0
++        mov     di, 0
++        .while (index < count4)
++            lea   eax, [ebx].tableStruct.pointer
++            shr   eax, 12
++            add   eax, index
++            shl   eax, 12
++            or    al, 3                                 ; present, writable
++            or    (tableStruct ptr [di]).map.lowPart, eax
++            inc   index
++            add   di, sizeof pageMapLevel4
++        .endw
++
++        mov     index, 0
++        mov     di, 0
++        .while (index < count3)
++            lea   eax, [ebx].tableStruct.directory
++            shr   eax, 12
++            add   eax, index
++            shl   eax, 12
++            or    al, 3                                 ; present, writable
++            or    (tableStruct ptr [di]).pointer.lowPart, eax
++            inc   index
++            add   di, sizeof pageDirectoryPointer
++        .endw
++
++        mov     index, 0
++        mov     di, 0
++        .while (index < count2)
++            mov   eax, index
++            shl   eax, 21
++            or    al, 83h                               ; present, writable, big
++            or    (tableStruct ptr [di]).directory.lowPart, eax
++            inc   index
++            add   di, sizeof pageDirectory
++        .endw
++
++        pop     es
++        pop     ds
++        ret
++identityMapLongMode endp
++;----------------------------------------------------------------------------
++
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ; data
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+@@ -1101,40 +1231,18 @@
+         dd  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+         dd  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+ 
+-        org 0fe0h
++        db  2048 dup (?) ; minumum stack buffer
++
++
++; make sure our code size is OK
++bytesRemaining = START64CODESIZE - ($-Start)
++.ERRNZ bytesRemaining LT 2, <===code too big===>
++    
++; put AA55 signature in the last two bytes
++sigAddress = START64CODESIZE - 2
++
++    org     sigAddress
+ MyStack:    
+-        ; below is the pieces of the IVT that is used to redirect INT 68h - 6fh
+-        ;    back to INT 08h - 0fh  when in real mode...  It is 'org'ed to a
+-        ;    known low address (20f00) so it can be set up by PlMapIrqToVect in
+-        ;    8259.c
+-                
+-        int 8
+-        iret
+-        
+-        int 9
+-        iret
+-        
+-        int 10
+-        iret
+-        
+-        int 11
+-        iret
+-        
+-        int 12
+-        iret
+-        
+-        int 13
+-        iret
+-        
+-        int 14
+-        iret
+-        
+-        int 15
+-        iret
+-        
+-        
+-        org 0ffeh
+-BlockSignature:
+-        dw  0aa55h
++    dw      0aa55h
+ 
+         end 
+Index: DuetPkg/DxeIpl/DxeIpl.inf
+===================================================================
+--- DuetPkg/DxeIpl/DxeIpl.inf	(revision 1)
++++ DuetPkg/DxeIpl/DxeIpl.inf	(working copy)
+@@ -68,3 +68,10 @@
+ 
+ [Depex]
+   TRUE
++
++[BuildOptions]
++  *_*_*_CC_FLAGS = -DFAKE_NVRAM_BASE=$(FAKE_NVRAM_BASE)ull
++  *_*_*_CC_FLAGS = -DFAKE_NVRAM_SIZE=$(FAKE_NVRAM_SIZE)ull
++  *_*_*_CC_FLAGS = -DDEBUG_PRINT_LEVEL=$(DEBUG_PRINT_LEVEL)ull
++  *_*_*_CC_FLAGS = -DX64_PAGE_TABLE_BASE=$(X64_PAGE_TABLE_BASE)ull
++  *_*_*_CC_FLAGS = -DX64_PAGE_TABLE_SIZE=$(X64_PAGE_TABLE_SIZE)ull
+Index: DuetPkg/EfiLdr/EfiLdrHandoff.h
+===================================================================
+--- DuetPkg/EfiLdr/EfiLdrHandoff.h	(revision 1)
++++ DuetPkg/EfiLdr/EfiLdrHandoff.h	(working copy)
+@@ -21,10 +21,6 @@
+ #ifndef _EFILDR_HANDOFF_H_
+ #define _EFILDR_HANDOFF_H_
+ 
+-#define EFILDR_BASE_SEGMENT 0x2000
+-#define EFILDR_LOAD_ADDRESS        (EFILDR_BASE_SEGMENT << 4)
+-#define EFILDR_HEADER_ADDRESS      (EFILDR_LOAD_ADDRESS+0x2000)
+-
+ #define EFILDR_CB_VA        0x00
+ 
+ typedef struct _EFILDRHANDOFF {

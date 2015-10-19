@@ -1,0 +1,74 @@
+Index: UefiCpuPkg/CpuDxe/X64/CpuAsm.S
+===================================================================
+--- UefiCpuPkg/CpuDxe/X64/CpuAsm.S	(revision 1)
++++ UefiCpuPkg/CpuDxe/X64/CpuAsm.S	(working copy)
+@@ -29,13 +29,26 @@
+ #------------------------------------------------------------------------------
+ ASM_GLOBAL ASM_PFX(SetCodeSelector)
+ ASM_PFX(SetCodeSelector):
+-    subq    $0x10, %rsp 
++    # save rsp because iret will align it to a 16 byte boundary
++    mov %rsp, %rdx
++
++    # use iret to jump to a 64-bit offset in a new code segment
++    # iret will pop cs:rip, flags, then ss:rsp
++    mov     %ss, %ax    # need to push ss..
++    push    %rax        # push ss instuction not valid in x64 mode, so use ax
++    push    %rsp
++    pushfq
++    push    %rcx        # cx is code segment selector from caller
+     leaq    L_setCodeSelectorLongJump(%rip), %rax 
+-    movq    %rax, (%rsp) 
+-    movw    %cx, 4(%rsp)
+-    .byte   0xFF, 0x2C, 0x24     # jmp (%rsp) note:fword jmp
++    push    %rax
++
++    # the iret will continue at next instruction, with the new cs value loaded
++    iretq
++
+ L_setCodeSelectorLongJump:
+-    addq    $0x10, %rsp
++    # restore rsp, it might not have been 16-byte aligned on entry
++    mov     %rdx, %rsp
++
+     ret
+ 
+ #------------------------------------------------------------------------------
+Index: UefiCpuPkg/CpuDxe/X64/CpuAsm.asm
+===================================================================
+--- UefiCpuPkg/CpuDxe/X64/CpuAsm.asm	(revision 1)
++++ UefiCpuPkg/CpuDxe/X64/CpuAsm.asm	(working copy)
+@@ -25,13 +25,27 @@
+ ;   );
+ ;------------------------------------------------------------------------------
+ SetCodeSelector PROC PUBLIC
+-    sub     rsp, 0x10
+-    lea     rax, setCodeSelectorLongJump
+-    mov     [rsp], rax
+-    mov     [rsp+4], cx
+-    jmp     fword ptr [rsp]
++
++    ; save rsp because iret will align it to a 16 byte boundary
++    mov rdx, rsp
++
++    ; use iret to jump to a 64-bit offset in a new code segment
++    ; iret will pop cs:rip, flags, then ss:rsp
++    mov     ax, ss      ; need to push ss..
++    push    rax         ; push ss instuction not valid in x64 mode, so use ax
++    push    rsp
++    pushfq
++    push    rcx         ; cx is code segment selector from caller
++    mov     rax, offset setCodeSelectorLongJump
++    push    rax
++
++    ; the iret will continue at next instruction, with the new cs value loaded
++    iretq
++
+ setCodeSelectorLongJump:
+-    add     rsp, 0x10
++    ; restore rsp, it might not have been 16-byte aligned on entry
++    mov     rsp, rdx
++
+     ret
+ SetCodeSelector ENDP
+ 

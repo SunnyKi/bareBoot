@@ -15,8 +15,17 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
-
 #include "Partition.h"
+
+EFI_STATUS
+EFIAPI
+PartitionReadBlocks (
+  IN EFI_BLOCK_IO_PROTOCOL  *This,
+  IN UINT32                 MediaId,
+  IN EFI_LBA                Lba,
+  IN UINTN                  BufferSize,
+  OUT VOID                  *Buffer
+);
 
 //
 // Partition Driver Global Variables.
@@ -226,6 +235,13 @@ PartitionDriverBindingStart (
       Status = EFI_SUCCESS;
       goto Exit;
     }
+  }
+
+  // XXX: this came from notabs.org
+  // prevent trying to process a partition boot record as if it were a master boot record.
+  if (BlockIo->ReadBlocks == &PartitionReadBlocks) {
+    Status = EFI_ALREADY_STARTED;
+    goto Exit;
   }
 
   //

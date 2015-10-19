@@ -1,0 +1,13 @@
+Index: UefiCpuPkg/CpuDxe/CpuGdt.c
+===================================================================
+--- UefiCpuPkg/CpuDxe/CpuGdt.c	(revision 1)
++++ UefiCpuPkg/CpuDxe/CpuGdt.c	(working copy)
+@@ -187,7 +187,7 @@
+   //
+   // Write GDT register
+   //
+-  gdtPtr.Base = (UINT32)(UINTN)(VOID*) gdt;
++  gdtPtr.Base = (UINTN)(VOID*) gdt;
+   gdtPtr.Limit = (UINT16) (sizeof (GdtTemplate) - 1);
+   AsmWriteGdtr (&gdtPtr);
+ 
