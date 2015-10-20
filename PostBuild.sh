@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/env bash
 
 ## @file
 #
@@ -19,35 +19,8 @@
 
 if [ $# = 2 ]
 then
-  case "$1" in
-     IA32)
-       PROCESSOR=IA32
-       ;;
-     X64)
-       PROCESSOR=X64
-       ;;
-     *)
-       echo Invalid Architecture string, should be only IA32 or X64
-       exit 1
-  esac
-
-  case "$2" in
-     GCC44)
-       TOOLTAG=GCC44
-       ;;
-     UNIXCLANG)
-       TOOLTAG=UNIXCLANG
-       ;;
-     UNIXGCC)
-       TOOLTAG=UNIXGCC
-       ;;
-     XCODE5)
-       TOOLTAG=XCODE5
-       ;;
-     *)
-       echo Invalid tool tag, should be only GCC44, UNIXCLANG, UNIXGCC or XCODE5
-       exit 1
-  esac
+  PROCESSOR=$1
+  TOOLTAG=$2
 fi
 
 source $WORKSPACE/Conf/target.txt
@@ -64,19 +37,19 @@ fi
 
 if [ -z "$PROJECTNAME" ]
 then
-  PROJECTNAME=$(echo $(basename $ACTIVE_PLATFORM .dsc) | tr '[a-z]' '[A-Z]')
+  PROJECTNAME=$(basename $ACTIVE_PLATFORM .dsc)
 fi
 
 BOOTSECTOR_BIN_DIR=$WORKSPACE/$PROJECTNAME/BootSector/bin
 
 BUILD_DIR=$WORKSPACE/Build/$PROJECTNAME/$PROCESSOR/${TARGET}_$TOOLTAG
 
-#
-# Boot sector module could only be built under IA32 tool chain
-#
+FVNAME=$(echo ${PROJECTNAME}EFIMAINFV | tr '[a-z]' '[A-Z]')
 
-echo Compressing ${PROJECTNAME}EFIMAIN.FV ...
-LzmaCompress -e -o $BUILD_DIR/FV/${PROJECTNAME}EFIMAINFV.z $BUILD_DIR/FV/${PROJECTNAME}EFIMAINFV.Fv
+# Boot sector module could only be built under IA32 tool chain
+
+echo Compressing ${FVNAME}.FV ...
+LzmaCompress -e -o $BUILD_DIR/FV/${FVNAME}.z $BUILD_DIR/FV/${FVNAME}.Fv
 
 echo Compressing DxeMain.efi ...
 LzmaCompress -e -o $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/$PROCESSOR/DxeCore.efi
@@ -89,7 +62,7 @@ echo Generate Loader Image ...
 case "$PROCESSOR" in
   IA32)
     GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-    EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${PROJECTNAME}EFIMAINFV.z
+    EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${FVNAME}.z
     cat $BOOTSECTOR_BIN_DIR/Start.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32   > $BUILD_DIR/FV/Efildr
     # It is safe to use "bcat" to cat following binary file, if bcat command is avaiable for your system
     #bcat -o $BUILD_DIR/FV/Efildr.bcat $BOOTSECTOR_BIN_DIR/start.com $BOOTSECTOR_BIN_DIR/efi32.com2 $BUILD_DIR/FV/Efildr32
@@ -101,7 +74,7 @@ case "$PROCESSOR" in
 
   X64)
     GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-    EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${PROJECTNAME}EFIMAINFV.z
+    EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${FVNAME}.z
     cat $BOOTSECTOR_BIN_DIR/Start64.com $BOOTSECTOR_BIN_DIR/efi64.com2 $BUILD_DIR/FV/Efildr64 > $BUILD_DIR/FV/EfildrPure
     #bcat -o $BUILD_DIR/FV/EfildrPure $BOOTSECTOR_BIN_DIR/start64.com $BOOTSECTOR_BIN_DIR/efi64.com2 $BUILD_DIR/FV/Efildr64
     GenPage $BUILD_DIR/FV/EfildrPure -o $BUILD_DIR/FV/Efildr
