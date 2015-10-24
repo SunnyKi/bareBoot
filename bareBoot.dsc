@@ -23,7 +23,7 @@
 ################################################################################
 [Defines]
   PLATFORM_NAME                  = bareBoot
-  PLATFORM_GUID                  = 199E24E0-0989-42aa-87F2-611A8C397E72
+  PLATFORM_GUID                  = 199E24E0-0989-42AA-87F2-611A8C397E72
   PLATFORM_VERSION               = 0.4
   DSC_SPECIFICATION              = 0x00010005
   OUTPUT_DIRECTORY               = Build/bareBoot/$(ARCH)
