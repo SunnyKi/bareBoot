@@ -1,16 +1,16 @@
 ;------------------------------------------------------------------------------
 ;*
 ;*   Copyright (c) 2006 - 2012, Intel Corporation. All rights reserved.<BR>
-;*   This program and the accompanying materials                          
-;*   are licensed and made available under the terms and conditions of the BSD License         
-;*   which accompanies this distribution.  The full text of the license may be found at        
-;*   http://opensource.org/licenses/bsd-license.php                                            
-;*                                                                                             
-;*   THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,                     
-;*   WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.             
-;*   
-;*    bs32.asm
-;*  
+;*   This program and the accompanying materials
+;*   are licensed and made available under the terms and conditions of the BSD License
+;*   which accompanies this distribution.  The full text of the license may be found at
+;*   http://opensource.org/licenses/bsd-license.php
+;*
+;*   THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+;*   WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+;*
+;*    bs32.nasmb
+;*
 ;*   Abstract:
 ;*
 ;------------------------------------------------------------------------------
@@ -45,11 +45,11 @@ SectorsPerFat     dw  0             ; Sectors Per FAT     - 16 bits
 SectorsPerTrack   dw  0             ; Sectors Per Track   - 16 bits - ignored
 Heads             dw  0             ; Heads               - 16 bits - ignored
 HiddenSectors     dd  0             ; Hidden Sectors      - 32 bits - ignored
-LargeSectors      dd  0             ; Large Sectors       - 32 bits 
+LargeSectors      dd  0             ; Large Sectors       - 32 bits
 
 ;******************************************************************************
 ;
-;The structure for FAT32 starting at offset 36 of the boot sector. (At this point, 
+;The structure for FAT32 starting at offset 36 of the boot sector. (At this point,
 ;the BPB/boot sector for FAT12 and FAT16 differs from the BPB/boot sector for FAT32.)
 ;
 ;******************************************************************************
@@ -82,50 +82,50 @@ BootSectorEntryPoint:
 ; Print over
 ; ****************************************************************************
 
-  mov   ax,cs         ; ax = 0
-  mov   ss,ax         ; ss = 0
-  add   ax,1000h
-  mov   ds,ax
+  mov   ax, cs         ; ax = 0
+  mov   ss, ax         ; ss = 0
+  add   ax, 1000h
+  mov   ds, ax
 
-  mov   sp,07c00h     ; sp = 0x7c00
-  mov   bp,sp         ; bp = 0x7c00
+  mov   sp, 07c00h     ; sp = 0x7c00
+  mov   bp, sp         ; bp = 0x7c00
 
-  mov   ah,8                                ; ah = 8 - Get Drive Parameters Function
-  mov   byte [bp+PhysicalDrive],dl      ; BBS defines that BIOS would pass the booting driver number to the loader through DL
+  mov   ah, 8                                ; ah = 8 - Get Drive Parameters Function
+  mov   byte [bp + PhysicalDrive], dl      ; BBS defines that BIOS would pass the booting driver number to the loader through DL
   int   13h                                 ; Get Drive Parameters
-  xor   ax,ax                   ; ax = 0
-  mov   al,dh                   ; al = dh
+  xor   ax, ax                   ; ax = 0
+  mov   al, dh                   ; al = dh
   inc   al                      ; MaxHead = al + 1
   push  ax                      ; 0000:7bfe = MaxHead
-  mov   al,cl                   ; al = cl
-  and   al,03fh                 ; MaxSector = al & 0x3f
+  mov   al, cl                   ; al = cl
+  and   al, 03fh                 ; MaxSector = al & 0x3f
   push  ax                      ; 0000:7bfc = MaxSector
 
-  cmp   word [bp+SectorSignature],0aa55h  ; Verify Boot Sector Signature
+  cmp   word [bp + SectorSignature], 0aa55h  ; Verify Boot Sector Signature
   jne   BadBootSector
-  mov   cx,word [bp+RootEntries]      ; cx = RootEntries
-  shl   cx,FAT_DIRECTORY_ENTRY_SHIFT      ; cx = cx * 32 = cx * sizeof(FAT_DIRECTORY_ENTRY) = Size of Root Directory in bytes
-  mov   bx,cx                             ; bx = size of the Root Directory in bytes
-  and   bx,BLOCK_MASK                     ; See if it is an even number of sectors long
+  mov   cx, word [bp + RootEntries]      ; cx = RootEntries
+  shl   cx, FAT_DIRECTORY_ENTRY_SHIFT      ; cx = cx * 32 = cx * sizeof(FAT_DIRECTORY_ENTRY) = Size of Root Directory in bytes
+  mov   bx, cx                             ; bx = size of the Root Directory in bytes
+  and   bx, BLOCK_MASK                     ; See if it is an even number of sectors long
   jne   BadBootSector                     ; If is isn't, then the boot sector is bad.
-  mov   bx,cx                             ; bx = size of the Root Directory in bytes
-  shr   bx,BLOCK_SHIFT                    ; bx = size of Root Directory in sectors
-  mov   al,byte [bp+NoFats]           ; al = NoFats
-  xor   ah,ah                             ; ah = 0  ==> ax = NoFats
-  mul   word [bp+SectorsPerFat32]     ; ax = NoFats * SectorsPerFat
-  add   ax,word [bp+ReservedSectors]  ; ax = NoFats * SectorsPerFat + ReservedSectors = RootLBA
-  add   ax,bx                             ; ax = NoFats * SectorsPerFat + ReservedSectors + RootDirSectors = FirstClusterLBA
-  mov   word [bp],ax                  ; Save FirstClusterLBA for later use
-  
-  mov   ax,word [bp+RootCluster]      ; ax = StartCluster of Root Directory
-  sub   ax,2                              ; ax = StartCluster - 2
-  xor   bh,bh                               
-  mov   bl,byte [bp+SectorsPerCluster]; bx = SectorsPerCluster
+  mov   bx, cx                             ; bx = size of the Root Directory in bytes
+  shr   bx, BLOCK_SHIFT                    ; bx = size of Root Directory in sectors
+  mov   al, byte [bp + NoFats]           ; al = NoFats
+  xor   ah, ah                             ; ah = 0  ==> ax = NoFats
+  mul   word [bp + SectorsPerFat32]     ; ax = NoFats * SectorsPerFat
+  add   ax, word [bp + ReservedSectors]  ; ax = NoFats * SectorsPerFat + ReservedSectors = RootLBA
+  add   ax, bx                             ; ax = NoFats * SectorsPerFat + ReservedSectors + RootDirSectors = FirstClusterLBA
+  mov   word [bp], ax                  ; Save FirstClusterLBA for later use
+
+  mov   ax, word [bp + RootCluster]      ; ax = StartCluster of Root Directory
+  sub   ax, 2                              ; ax = StartCluster - 2
+  xor   bh, bh
+  mov   bl, byte [bp + SectorsPerCluster]; bx = SectorsPerCluster
   mul   bx                                ; ax = (StartCluster - 2) * SectorsPerCluster
   add   ax, word [bp]                 ; ax = FirstClusterLBA + (StartCluster-2)*SectorsPerCluster
   push  ds
   pop   es
-  xor   di,di                             ; Store directory in es:di = 1000:0000
+  xor   di, di                             ; Store directory in es:di = 1000:0000
   call  ReadBlocks                        ; Read StartCluster of Root Directory
 
   ; dx - variable storage (initial value is 0)
@@ -134,13 +134,13 @@ BootSectorEntryPoint:
   xor   bx, bx
 
 FindEFILDR:
-  cmp   dword [di],LOADER_FILENAME_PART1         ; Compare to "EFIL"
+  cmp   dword [di], LOADER_FILENAME_PART1         ; Compare to "EFIL"
   jne   FindVARSTORE
-  cmp   dword [di+4],LOADER_FILENAME_PART2
+  cmp   dword [di + 4], LOADER_FILENAME_PART2
   jne   FindVARSTORE
-  cmp   dword [di+7],LOADER_FILENAME_PART3
+  cmp   dword [di + 7], LOADER_FILENAME_PART3
   jne   FindVARSTORE
-  mov   bx, word [di+26]              ; bx = Start Cluster for EFILDR  <----------------------------------
+  mov   bx, word [di + 26]              ; bx = Start Cluster for EFILDR  <----------------------------------
   test  dx, dx
   je    FindNext                          ; Efivar.bin is not loaded
   jmp   FoundAll
@@ -149,47 +149,47 @@ FindVARSTORE:
   ; if the file is not loader file, see if it's "EFIVAR  BIN"
   cmp   dword [di], 056494645h        ; Compare to "EFIV"
   jne   FindNext
-  cmp   dword [di+4], 020205241h      ; Compare to "AR  "
+  cmp   dword [di + 4], 020205241h      ; Compare to "AR  "
   jne   FindNext
-  cmp   dword [di+7], 04e494220h      ; Compare to " BIN"
+  cmp   dword [di + 7], 04e494220h      ; Compare to " BIN"
   jne   FindNext
   mov   dx, di                            ; dx = Offset of Start Cluster for Efivar.bin <---------------------
   add   dx, 26
   test  bx, bx
   je    FindNext                          ; Efildr is not loaded
   jmp   FoundAll
-  
+
 FindNext:
   ; go to next find
-  add   di,FAT_DIRECTORY_ENTRY_SIZE       ; Increment di
-  sub   cx,FAT_DIRECTORY_ENTRY_SIZE       ; Decrement cx
+  add   di, FAT_DIRECTORY_ENTRY_SIZE       ; Increment di
+  sub   cx, FAT_DIRECTORY_ENTRY_SIZE       ; Decrement cx
   ; TODO: jump to FindVarStore if ...
   jne   FindEFILDR
   jmp   NotFoundAll
 
 FoundAll:
 FoundEFILDR:
-  mov     cx,bx                               ; cx = Start Cluster for EFILDR  <----------------------------------
-  mov     ax,cs                               ; Destination = 2000:0000
-  add     ax,2000h
-  mov     es,ax
-  xor     di,di
+  mov     cx, bx                               ; cx = Start Cluster for EFILDR  <----------------------------------
+  mov     ax, cs                               ; Destination = 2000:0000
+  add     ax, 2000h
+  mov     es, ax
+  xor     di, di
 ReadFirstClusterOfEFILDR:
-  mov     ax,cx                               ; ax = StartCluster
-  sub     ax,2                                ; ax = StartCluster - 2
-  xor     bh,bh                               
-  mov     bl,byte [bp+SectorsPerCluster]  ; bx = SectorsPerCluster
+  mov     ax, cx                               ; ax = StartCluster
+  sub     ax, 2                                ; ax = StartCluster - 2
+  xor     bh, bh
+  mov     bl, byte [bp + SectorsPerCluster]  ; bx = SectorsPerCluster
   push    dx
   mul     bx
   pop     dx                                  ; ax = (StartCluster - 2) * SectorsPerCluster
   add     ax, word [bp]                   ; ax = FirstClusterLBA + (StartCluster-2)*SectorsPerCluster
-  xor     bh,bh
-  mov     bl,byte [bp+SectorsPerCluster]  ; bx = Number of Sectors in a cluster
+  xor     bh, bh
+  mov     bl, byte [bp + SectorsPerCluster]  ; bx = Number of Sectors in a cluster
   push    es
   call    ReadBlocks
   pop     ax
 JumpIntoFirstSectorOfEFILDR:
-  mov     word [bp+JumpSegment],ax
+  mov     word [bp + JumpSegment], ax
 JumpFarInstruction:
   db      0eah
 JumpOffset:
@@ -199,8 +199,8 @@ JumpSegment:
 
 
 PrintString:
-  mov  ax,0b800h
-  mov  es,ax
+  mov  ax, 0b800h
+  mov  es, ax
   mov  ax, 07c0h
   mov  ds, ax
   mov  cx, 6
@@ -221,49 +221,49 @@ PrintString:
 
 ReadBlocks:
   pusha
-  add     eax,dword [bp+LBAOffsetForBootSector]    ; Add LBAOffsetForBootSector to Start LBA
-  add     eax,dword [bp+HiddenSectors]    ; Add HiddenSectors to Start LBA
-  mov     esi,eax                             ; esi = Start LBA
-  mov     cx,bx                               ; cx = Number of blocks to read
+  add     eax, dword [bp + LBAOffsetForBootSector]    ; Add LBAOffsetForBootSector to Start LBA
+  add     eax, dword [bp + HiddenSectors]    ; Add HiddenSectors to Start LBA
+  mov     esi, eax                             ; esi = Start LBA
+  mov     cx, bx                               ; cx = Number of blocks to read
 ReadCylinderLoop:
-  mov     bp,07bfch                           ; bp = 0x7bfc
-  mov     eax,esi                             ; eax = Start LBA
-  xor     edx,edx                             ; edx = 0
-  movzx   ebx,word [bp]                   ; bx = MaxSector
+  mov     bp, 07bfch                           ; bp = 0x7bfc
+  mov     eax, esi                             ; eax = Start LBA
+  xor     edx, edx                             ; edx = 0
+  movzx   ebx, word [bp]                   ; bx = MaxSector
   div     ebx                                 ; ax = StartLBA / MaxSector
   inc     dx                                  ; dx = (StartLBA % MaxSector) + 1
-  sub     bx,dx                               ; bx = MaxSector - Sector
+  sub     bx, dx                               ; bx = MaxSector - Sector
   inc     bx                                  ; bx = MaxSector - Sector + 1
-  cmp     cx,bx                               ; Compare (Blocks) to (MaxSector - Sector + 1)
+  cmp     cx, bx                               ; Compare (Blocks) to (MaxSector - Sector + 1)
   jg      LimitTransfer
-  mov     bx,cx                               ; bx = Blocks
+  mov     bx, cx                               ; bx = Blocks
 LimitTransfer:
   push    cx
-  mov     cl,dl                               ; cl = (StartLBA % MaxSector) + 1 = Sector
-  xor     dx,dx                               ; dx = 0
-  div     word [bp+2]                     ; ax = ax / (MaxHead + 1) = Cylinder  
+  mov     cl, dl                               ; cl = (StartLBA % MaxSector) + 1 = Sector
+  xor     dx, dx                               ; dx = 0
+  div     word [bp + 2]                     ; ax = ax / (MaxHead + 1) = Cylinder
                                               ; dx = ax % (MaxHead + 1) = Head
 
   push    bx                                  ; Save number of blocks to transfer
-  mov     dh,dl                               ; dh = Head
-  mov     bp,07c00h                           ; bp = 0x7c00
-  mov     dl,byte [bp+PhysicalDrive]      ; dl = Drive Number
-  mov     ch,al                               ; ch = Cylinder
-  mov     al,bl                               ; al = Blocks
-  mov     ah,2                                ; ah = Function 2
-  mov     bx,di                               ; es:bx = Buffer address
+  mov     dh, dl                               ; dh = Head
+  mov     bp, 07c00h                           ; bp = 0x7c00
+  mov     dl, byte [bp + PhysicalDrive]      ; dl = Drive Number
+  mov     ch, al                               ; ch = Cylinder
+  mov     al, bl                               ; al = Blocks
+  mov     ah, 2                                ; ah = Function 2
+  mov     bx, di                               ; es:bx = Buffer address
   int     013h
   jc      DiskError
   pop     bx
   pop     cx
-  movzx   ebx,bx
-  add     esi,ebx                             ; StartLBA = StartLBA + NumberOfBlocks
-  sub     cx,bx                               ; Blocks = Blocks - NumberOfBlocks
-  mov     ax,es
-  shl     bx,(BLOCK_SHIFT-4)
-  add     ax,bx
-  mov     es,ax                               ; es:di = es:di + NumberOfBlocks*BLOCK_SIZE
-  cmp     cx,0
+  movzx   ebx, bx
+  add     esi, ebx                             ; StartLBA = StartLBA + NumberOfBlocks
+  sub     cx, bx                               ; Blocks = Blocks - NumberOfBlocks
+  mov     ax, es
+  shl     bx, (BLOCK_SHIFT-4)
+  add     ax, bx
+  mov     es, ax                               ; es:di = es:di + NumberOfBlocks*BLOCK_SIZE
+  cmp     cx, 0
   jne     ReadCylinderLoop
   popa
   ret
@@ -273,7 +273,7 @@ LimitTransfer:
 ; ****************************************************************************
 NotFoundAll:
   ; if we found EFILDR, continue
-  test bx,bx
+  test bx, bx
   jne  FoundEFILDR
 BadBootSector:
 DiskError:
