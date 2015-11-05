@@ -13,17 +13,17 @@
 OUTPUT_DIR=$(MODULE_DIR)/bin
 
 TARGET_FILES = \
+  $(OUTPUT_DIR)/Gpt.com \
+  $(OUTPUT_DIR)/Mbr.com \
   $(OUTPUT_DIR)/bootsect.com \
   $(OUTPUT_DIR)/bs16.com \
   $(OUTPUT_DIR)/bs32.com \
-  $(OUTPUT_DIR)/Gpt.com \
-  $(OUTPUT_DIR)/Mbr.com \
-  $(OUTPUT_DIR)/St16_64.com \
-  $(OUTPUT_DIR)/St32_64.com \
-  $(OUTPUT_DIR)/Start.com \
-  $(OUTPUT_DIR)/Start16.com \
-  $(OUTPUT_DIR)/Start32.com \
-  $(OUTPUT_DIR)/Start64.com \
+  $(OUTPUT_DIR)/st16_64.com \
+  $(OUTPUT_DIR)/st32_64.com \
+  $(OUTPUT_DIR)/start.com \
+  $(OUTPUT_DIR)/start16.com \
+  $(OUTPUT_DIR)/start32.com \
+  $(OUTPUT_DIR)/start64.com \
   $(OUTPUT_DIR)/efi32.com2 \
   $(OUTPUT_DIR)/efi64.com2 
 
@@ -32,48 +32,48 @@ all: $(TARGET_FILES)
 #=============
 
 $(OUTPUT_DIR)/bootsect.com: $(MODULE_DIR)/bootsect.nasmb
-  nasm -f bin -o $@ $?
+	nasm -f bin -o $@ $?
 
 $(OUTPUT_DIR)/bs16.com:     $(MODULE_DIR)/bs16.nasmb
-  nasm -f bin -o $@ $?
+	nasm -f bin -o $@ $?
 
 $(OUTPUT_DIR)/bs32.com:     $(MODULE_DIR)/bs32.nasmb
-  nasm -f bin -o $@ $?
+	nasm -f bin -o $@ $?
 
 $(OUTPUT_DIR)/Gpt.com:      $(MODULE_DIR)/Gpt.nasmb
-  nasm -f bin -o $@ $?
+	nasm -f bin -o $@ $?
 
 $(OUTPUT_DIR)/Mbr.com:      $(MODULE_DIR)/Mbr.nasmb
-  nasm -f bin -o $@ $?
+	nasm -f bin -o $@ $?
 
-$(OUTPUT_DIR)/Start.com:    $(MODULE_DIR)/Start.nasmb
-  nasm -f bin -o $@ $?
+$(OUTPUT_DIR)/start.com:    $(MODULE_DIR)/start.nasmb
+	nasm -f bin -o $@ $?
 
-$(OUTPUT_DIR)/Start16.com:  $(MODULE_DIR)/Start16.nasmb
-  nasm -f bin -o $@ $?
+$(OUTPUT_DIR)/start16.com:  $(MODULE_DIR)/start16.nasmb
+	nasm -f bin -o $@ $?
 
-$(OUTPUT_DIR)/Start32.com:  $(MODULE_DIR)/Start32.nasmb
-  nasm -f bin -o $@ $?
+$(OUTPUT_DIR)/start32.com:  $(MODULE_DIR)/start32.nasmb
+	nasm -f bin -o $@ $?
 
-$(OUTPUT_DIR)/Start64.com:  $(MODULE_DIR)/Start64.nasmb
-  nasm -f bin -o $@ $?
+$(OUTPUT_DIR)/start64.com:  $(MODULE_DIR)/start64.nasmb
+	nasm -f bin -o $@ $?
 
-$(OUTPUT_DIR)/St16_64.com:  $(MODULE_DIR)/St16_64.nasmb
-  nasm -f bin -o $@ $?
+$(OUTPUT_DIR)/st16_64.com:  $(MODULE_DIR)/st16_64.nasmb
+	nasm -f bin -o $@ $?
 
-$(OUTPUT_DIR)/St32_64.com:  $(MODULE_DIR)/St32_64.nasmb
-  nasm -f bin -o $@ $?
+$(OUTPUT_DIR)/st32_64.com:  $(MODULE_DIR)/st32_64.nasmb
+	nasm -f bin -o $@ $?
 
 $(OUTPUT_DIR)/efi32.com:    $(MODULE_DIR)/efi32.nasmb
-  nasm -f bin -o $@ $?
+	nasm -f bin -o $@ $?
 
 $(OUTPUT_DIR)/efi64.com:    $(MODULE_DIR)/efi64.nasmb
-  nasm -f bin -o $@ $?
+	nasm -f bin -o $@ $?
 
 #=============
 
 $(OUTPUT_DIR)/efi32.com2:$(OUTPUT_DIR)/efi32.com
-  Split -f $(OUTPUT_DIR)/efi32.com -t $(OUTPUT_DIR)/efi32.com2 -s 135168
+	Split -f $(OUTPUT_DIR)/efi32.com -t $(OUTPUT_DIR)/efi32.com2 -s 135168
 
 $(OUTPUT_DIR)/efi64.com2:$(OUTPUT_DIR)/efi64.com
-  Split -f $(OUTPUT_DIR)/efi64.com -t $(OUTPUT_DIR)/efi64.com2 -s 135168
+	Split -f $(OUTPUT_DIR)/efi64.com -t $(OUTPUT_DIR)/efi64.com2 -s 135168
