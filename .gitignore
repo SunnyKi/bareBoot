@@ -3,6 +3,7 @@ Version.h
 Debug/
 Release/
 
+*.com
 *.out
 *.sdf
 *.suo
