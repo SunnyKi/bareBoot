@@ -4,6 +4,7 @@ Debug/
 Release/
 
 *.com
+*.com2
 *.out
 *.sdf
 *.suo
