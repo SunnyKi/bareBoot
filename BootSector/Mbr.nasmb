@@ -36,7 +36,7 @@ Start:
         mov  es, ax
         mov  ax, 07c0h
         mov  ds, ax
-        lea  si, [cs:StartString]
+        lea  si, [StartString]
         mov  cx, 10
         mov  di, 160
         rep  movsw
@@ -75,32 +75,32 @@ RelocatedStart:
 ; Get Driver Parameters to 0x0000:0x7BFC
 ; ****************************************************************************
 
-        xor   ax, ax                               ; AX = 0
-        mov   ss, ax                               ; SS = 0
+        xor   ax, ax                      ; AX = 0
+        mov   ss, ax                      ; SS = 0
         add   ax, 1000h
         mov   ds, ax
 
-        mov   sp, 07c00h                           ; SP = 0x7c00
-        mov   bp, sp                               ; BP = 0x7c00
+        mov   sp, 07C00h                  ; SP = 0x7c00
+        mov   bp, sp                      ; BP = 0x7c00
 
-        mov   ah, 8                                ; AH = 8 - Get Drive Parameters Function
-        mov   [bp + PhysicalDrive], dl            ; BBS defines that BIOS would pass the booting driver number to the loader through DL
-        int   13h                                 ; Get Drive Parameters
-        xor   ax, ax                               ; AX = 0
-        mov   al, dh                               ; AL = DH
-        inc   al                                  ; MaxHead = AL + 1
-        push  ax                                  ; 0000:7bfe = MaxHead
-        mov   al, cl                               ; AL = CL
-        and   al, 03fh                             ; MaxSector = AL & 0x3f
-        push  ax                                  ; 0000:7bfc = MaxSector
+        mov   ah, 8                       ; AH = 8 - Get Drive Parameters Function
+        mov   [cs:bp + PhysicalDrive], dl ; BBS defines that BIOS would pass the booting driver number to the loader through DL
+        int   13h                         ; Get Drive Parameters
+        xor   ax, ax                      ; AX = 0
+        mov   al, dh                      ; AL = DH
+        inc   al                          ; MaxHead = AL + 1
+        push  ax                          ; 0000:7bfe = MaxHead
+        mov   al, cl                      ; AL = CL
+        and   al, 03Fh                    ; MaxSector = AL & 0x3f
+        push  ax                          ; 0000:7bfc = MaxSector
 
 ; ****************************************************************************
 ; Read Target DBR from hard disk to 0x0000:0x7C00
 ; ****************************************************************************
 
         xor   ax, ax
-        mov   al, byte [bp + MbrPartitionIndicator]  ; AX = MbrPartitionIndex
-        cmp   al, 0ffh                                 ; 0xFF means do legacy MBR boot
+        mov   al, byte [cs:bp + MbrPartitionIndicator]  ; AX = MbrPartitionIndex
+        cmp   al, 0FFh                                 ; 0xFF means do legacy MBR boot
         jnz   EfiDbr
 LegacyMbr:
         mov   eax, 00000600h                      ; Assume LegacyMBR is backuped in Sector 6
@@ -110,7 +110,7 @@ EfiDbr:
         cmp   al, 4                               ; MbrPartitionIndex should < 4
         jae   BadDbr
         shl   ax, 4                               ; AX  = MBREntrySize * Index
-        add   ax, 1beh                            ; AX  = MBREntryOffset
+        add   ax, 1BEh                            ; AX  = MBREntryOffset
         mov   di, ax                              ; DI  = MBREntryOffset
 
         ; Here we don't use the C/H/S information provided by Partition table
@@ -118,43 +118,41 @@ EfiDbr:
         ;       Ci: Cylinder number
         ;       Hi: Header number
         ;       Si: Sector number
-        mov   eax, dword [es:bp + di + 8]     ; Start LBA
+        mov   eax, dword [es:bp + di + 8] ; Start LBA
         mov   edx, eax
-        shr   edx, 16                             ; DX:AX = Start LBA
-                                                  ;       = Ci * (H * S) + Hi * S + (Si - 1)
+        shr   edx, 16                     ; DX:AX = Start LBA
+                                          ;       = Ci * (H * S) + Hi * S + (Si - 1)
 
         ; Calculate C/H/S according to LBA
-        mov   bp, 7bfah
-        div   word [bp + 2]                     ; AX = Hi + H*Ci
-                                                  ; DX = Si - 1
-        inc   dx                                  ; DX = Si
-        push  dx                                  ; 0000:7bfa = Si  <----
-        xor   dx, dx                              ; DX:AX = Hi + H*Ci
-        div   word [bp + 4]                     ; AX = Ci         <----
-                                                  ; DX = Hi         <----
+        mov   bp, 7BFAh
+        div   word [bp + 2]               ; AX = Hi + H*Ci
+                                          ; DX = Si - 1
+        inc   dx                          ; DX = Si
+        push  dx                          ; 0000:7bfa = Si  <----
+        xor   dx, dx                      ; DX:AX = Hi + H*Ci
+        div   word [bp + 4]               ; AX = Ci         <----
+                                          ; DX = Hi         <----
 
 StartReadTo7C00:
 
-        mov   cl, byte [bp]                   ; Si
-        mov   ch, al                              ; Ci[0-7]
-        or    cl, ah                              ; Ci[8, 9]
-        mov   bx, 7c00h                           ; ES:BX = 0000:7C00h
-        mov   ah, 2h                              ; Function 02h
-        mov   al, 1                               ; 1 Sector
-        mov   dh, dl                              ; Hi
+        mov   cl, byte [bp]               ; Si
+        mov   ch, al                      ; Ci[0-7]
+        or    cl, ah                      ; Ci[8, 9]
+        mov   bx, 7C00h                   ; ES:BX = 0000:7C00h
+        mov   ah, 2h                      ; Function 02h
+        mov   al, 1                       ; 1 Sector
+        mov   dh, dl                      ; Hi
         mov   bp, 0600h
-        mov   dl, byte [bp + PhysicalDrive]   ; Drive number
+        mov   dl, byte [cs:bp + PhysicalDrive]   ; Drive number
         int   13h
         jc    BadDbr
-
-
 
 ; ****************************************************************************
 ; Transfer control to BootSector - Jump to 0x0000:0x7C00
 ; ****************************************************************************
         xor   ax, ax
         push  ax                                  ; PUSH 0x0000 - Segment
-        mov   di, 07c00h
+        mov   di, 07C00h
         push  di                                  ; PUSH 0x7C00 - Offset
         retf                                      ; JMP 0x0000:0x7C00
 
@@ -164,11 +162,11 @@ StartReadTo7C00:
 
 BadDbr:
     push ax
-    mov  ax, 0b800h
+    mov  ax, 0B800h
     mov  es, ax
     mov  ax, 060h
     mov  ds, ax
-    lea  si, [cs:ErrorString]
+    lea  si, [ErrorString]
     mov  di, 320
     pop  ax
     call A2C
@@ -205,13 +203,13 @@ A2C:
 @2:
     ret
 
-
 ; ****************************************************************************
 ; PhysicalDrive - Used to indicate which disk to be boot
 ;                 Can be patched by tool
 ; ****************************************************************************
 ;???    org   01B6h
-PhysicalDrive         db  80h
+    times (01B6h - ($ - $$)) db 0
+PhysicalDrive db  80h
 
 ; ****************************************************************************
 ; MbrPartitionIndicator - Used to indicate which MBR partition to be boot
@@ -251,4 +249,4 @@ MbrPartitionIndicator db 0
 
 ;???  org 01FEh
 SectorSignature:
-  dw        0aa55h      ; Boot Sector Signature
+  dw        0AA55h      ; Boot Sector Signature
