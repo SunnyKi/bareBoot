@@ -214,7 +214,7 @@ ReadBlocks:
   mov     cx, bx                                 ; cx = Number of blocks to read
 
 ReadCylinderLoop:
-  mov     bp, 07bfch     ; bp = 0x7bfc
+  mov     bp, 07BFCh     ; bp = 0x7bfc (XXX: ???)
   mov     eax, esi       ; eax = Start LBA
   xor     edx, edx       ; edx = 0
   movzx   ebx, word [bp] ; bx = MaxSector
@@ -239,7 +239,7 @@ LimitTransfer:
   mov     dl, byte [bp + PhysicalDrive] ; dl = Drive Number
   mov     ch, al                        ; ch = Cylinder
   mov     al, bl                        ; al = Blocks
-  mov     ah, 2                         ; ah = Function 2
+  mov     ah, 2                         ; ah = Function 2 (XXX: 42h?)
   mov     bx, di                        ; es:bx = Buffer address
   int     013h
   jc      DiskError
