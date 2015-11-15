@@ -6,7 +6,7 @@ OemId             db  "INTEL   "    ; OemId               - 8 bytes
 SectorSize        dw  0             ; Sector Size         - 16 bits
 SectorsPerCluster db  0             ; Sector Per Cluster  - 8 bits
 ReservedSectors   dw  0             ; Reserved Sectors    - 16 bits
-NoFats            db  0             ; Number of FATs      - 8 bits
+NumFats           db  0             ; Number of FATs      - 8 bits
 RootEntries       dw  0             ; Root Entries        - 16 bits
 Sectors           dw  0             ; Number of Sectors   - 16 bits
 Media             db  0             ; Media               - 8 bits 
@@ -15,10 +15,7 @@ SectorsPerTrack   dw  0             ; Sectors Per Track   - 16 bits
 Heads             dw  0             ; Heads               - 16 bits
 HiddenSectors     dd  0             ; Hidden Sectors      - 32 bits
 LargeSectors      dd  0             ; Large Sectors       - 32 bits
-%if (%1 == 12) || (%1 == 16)
-PhysicalDrive     db  0             ; PhysicalDriveNumber - 8 bits 
-CurrentHead       db  0             ; Current Head        - 8 bits
-%elif (%1 == 32)
+%if (%1 == 32)
 ;******************************************************************************
 ;
 ;The structure for FAT32 starting at offset 36 of the boot sector. (At this point,
@@ -35,6 +32,9 @@ BkBootSector      dw  0             ; Sector Number of Bk BootSector  - 2 bytes
 Reserved          times 12 db 0     ; Reserved Field                  - 12 bytes
 PhysicalDrive     db  0             ; Physical Drive Number           - 1 byte
 Reserved1         db  0             ; Reserved Field                  - 1 byte
+%else
+PhysicalDrive     db  0             ; PhysicalDriveNumber - 8 bits 
+CurrentHead       db  0             ; Current Head        - 8 bits
 %endif
 Signature         db  0             ; Extended Boot Signature         - 1 byte
 VolId             db  "    "        ; Volume Serial Number            - 4 bytes

@@ -94,7 +94,7 @@ BootSectorEntryPoint:
   jne   BadBootSector                    ; If is isn't, then the boot sector is bad.
   mov   bx, cx                           ; bx = size of the Root Directory in bytes
   shr   bx, FAT_BLOCK_SHIFT              ; bx = size of Root Directory in sectors
-  mov   al, byte [bp + NoFats]           ; al = NoFats
+  mov   al, byte [bp + NumFats]          ; al = NoFats
   xor   ah, ah                           ; ah = 0  ==> ax = NoFats
 %if (FAT == 32)
   mul   word [bp + SectorsPerFat32]      ; ax = NoFats * SectorsPerFat
