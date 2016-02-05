@@ -17,8 +17,9 @@
   FILE_GUID                      = C89D72CE-E21A-4C71-BA79-770EF373D6DA
   MODULE_TYPE                    = USER_DEFINED
   VERSION_STRING                 = 1.0
-  CUSTOM_MAKEFILE                = MSFT|Makefile
-  CUSTOM_MAKEFILE                = GCC|GNUmakefile
+  CUSTOM_MAKEFILE                = Makefile.nasm
+#  CUSTOM_MAKEFILE                = GCC|GNUmakefile
+#  CUSTOM_MAKEFILE                = GCC|GNUmakefile
 
 [Packages]
   MdePkg/MdePkg.dec
