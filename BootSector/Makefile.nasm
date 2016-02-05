@@ -32,51 +32,51 @@ all: $(TARGET_FILES)
 #=============
 
 $(OUTPUT_DIR)/Gpt.com: $(MODULE_DIR)/Gpt.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 $(OUTPUT_DIR)/Mbr.com: $(MODULE_DIR)/Mbr.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 #=============
 
 $(OUTPUT_DIR)/boot1_12.com: $(MODULE_DIR)/boot1_XX.nasmb
-	nasm -DFAT=12 -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -DFAT=12 -f bin -o $@ $?
 
 $(OUTPUT_DIR)/boot1_16.com: $(MODULE_DIR)/boot1_XX.nasmb
-	nasm -DFAT=16 -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -DFAT=16 -f bin -o $@ $?
 
 $(OUTPUT_DIR)/boot1_32.com: $(MODULE_DIR)/boot1_XX.nasmb
-	nasm -DFAT=32 -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -DFAT=32 -f bin -o $@ $?
 
 #=============
 
 $(OUTPUT_DIR)/start12.com: $(MODULE_DIR)/start12.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 $(OUTPUT_DIR)/start16.com: $(MODULE_DIR)/start16.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 $(OUTPUT_DIR)/start32.com: $(MODULE_DIR)/start32.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 $(OUTPUT_DIR)/start64.com: $(MODULE_DIR)/start64.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 #=============
 
 $(OUTPUT_DIR)/st16_64.com: $(MODULE_DIR)/st16_64.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 $(OUTPUT_DIR)/st32_64.com: $(MODULE_DIR)/st32_64.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 #=============
 
 $(OUTPUT_DIR)/efi32.com: $(MODULE_DIR)/efi32.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 $(OUTPUT_DIR)/efi64.com: $(MODULE_DIR)/efi64.nasmb
-	nasm -f bin -o $@ $?
+	nasm -i $(MODULE_DIR)/ -f bin -o $@ $?
 
 #=============
 
