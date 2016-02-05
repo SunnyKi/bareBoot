@@ -150,6 +150,7 @@
 
 ###################################################################################################
 [Components]
+  bareBoot/BootSector/BootSector.inf 
   bareBoot/DxeIpl/DxeIpl.inf 
   MdeModulePkg/Core/Dxe/DxeMain.inf 
 
