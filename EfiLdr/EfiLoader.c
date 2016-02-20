@@ -57,7 +57,7 @@ EfiLoader (
 #if 0
   PrintHeader ('A');
   
-  PrintString ("Enter DUET Loader...\n");
+  PrintString ("Enter bareBoot Loader...\n");
   PrintString ("BiosMemoryMapBaseAddress = %x\n", (UINTN) BiosMemoryMapBaseAddress);
 #endif
   //
