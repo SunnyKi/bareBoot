@@ -39,8 +39,9 @@ Abstract:
 #include <Library/DebugLib.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/UefiHiiServicesLib.h>
 
-#define   PRODUCT_NAME                  L"DUET"
+#define   PRODUCT_NAME                  L"bareBoot"
 #define   PRODUCT_VERSION               L"Beta"
 
 #define   FIRMWARE_PRODUCT_NAME         (PRODUCT_NAME L": ")

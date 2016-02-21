@@ -19,7 +19,6 @@ Abstract:
 
 #include "SmbiosGen.h"
 
-extern EFI_HII_DATABASE_PROTOCOL   *gHiiDatabase;
 extern UINT8                SmbiosGenDxeStrings[];
 EFI_SMBIOS_PROTOCOL         *gSmbios;
 EFI_HII_HANDLE              gStringHandle;
@@ -236,16 +235,6 @@ SmbiosGenEntrypoint (
     return Status;
   }
 
-  Status = gBS->LocateProtocol (
-                  &gEfiHiiDatabaseProtocolGuid,
-                  NULL,
-                  (VOID**)&gHiiDatabase
-                  );
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-  
   gStringHandle = HiiAddPackages (
                     &gEfiCallerIdGuid,
                     NULL,
