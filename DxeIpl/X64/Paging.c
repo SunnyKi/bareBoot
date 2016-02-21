@@ -40,12 +40,12 @@ Revision History:
 #endif
 #define ENTRY_NUM(x)            ((UINTN)1 << (x))
 
-UINT8 gPML4BitsNum;
-UINT8 gPDPTEBitsNum;
-UINT8 gPDEBitsNum;
+static UINT8 gPML4BitsNum;
+static UINT8 gPDPTEBitsNum;
+static UINT8 gPDEBitsNum;
 
-UINTN gPageNum2M;
-UINTN gPageNum4K;
+static UINTN gPageNum2M;
+static UINTN gPageNum4K;
 
 VOID
 EnableNullPointerProtection (

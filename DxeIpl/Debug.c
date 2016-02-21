@@ -23,7 +23,8 @@ Revision History:
 #include "SerialStatusCode.h"
 #include "Debug.h"
 
-UINT8 *mCursor;
+static UINT8 *mCursor;
+
 UINT8 mHeaderIndex = 10;
 
 
