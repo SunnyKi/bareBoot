@@ -351,7 +351,7 @@ start:
 MemMapLoop:
         mov eax, 0E820h
         mov ecx, 20
-        mov edx, 'SMAP'
+        mov edx, 534D4150h		; 'SMAP'
         int 15h
         jc  MemMapDone
         add edi, 20
@@ -1027,11 +1027,11 @@ IRQ15_SEL            equ $-IDT_BASE
 
 IDT_END:
 
-        align 02h
+        align 4
 
 MemoryMapSize   dd  0
-;???        org 0fe0h
 MemoryMap   times (0FE0h - ($ - $$)) db 0
+;???        org 0fe0h
 MyStack:
         ; below is the pieces of the IVT that is used to redirect INT 68h - 6fh
         ;    back to INT 08h - 0fh  when in real mode...  It is 'org'ed to a
