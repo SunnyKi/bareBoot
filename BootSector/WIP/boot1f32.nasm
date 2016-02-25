@@ -220,13 +220,13 @@ nextdirent:
 	mov	cl, [si]
 	test	cl, cl
 	jz	dserror
-	mov	cx, 11
+	mov	cx, 11	; .nameext size
 	repe	cmpsb
 	jz	direntfound
 
 falsealert:
 	pop	ds
-	add	cl, 21
+	add	cl, 21	; (fatde_size - .nameext_size)
 	add	si, cx
 	cmp	si, bx
 	jz	nextdirclus
@@ -235,10 +235,10 @@ falsealert:
 direntfound:
 ;	test byte [ds:si + fatde.attr - 11], 0x18
 	lodsb
-	test	al, 0x18
+	test	al, FATDE_VOL_ID | FATDE_DIRECTORY
 	jnz	falsealert
-	push	WORD [si + fatde.hcluster - 12]
-	push	WORD [si + fatde.lcluster - 12]
+	push	word [si + fatde.hcluster - 12]
+	push	word [si + fatde.lcluster - 12]
 	pop	eax
 	pop	ds
 	mov	edx, (kBoot2Segment << 4) + kBoot2LoadAddr
@@ -392,7 +392,7 @@ readLBA:
 	; Create the Disk Address Packet structure for the
 	; INT13/F42 (Extended Read Sectors) on the stack.
 
-	; push	DWORD 0		; offset 12, upper 32-bit LBA
+	; push	dword 0		; offset 12, upper 32-bit LBA
 	push	ds		; For sake of saving memory,
 	push	ds		; push DS register, which is 0.
 	add	ecx, [gPartLBA]	; offset 8, lower 32-bit LBA
@@ -401,7 +401,7 @@ readLBA:
 	push	bx		; offset 4, memory offset
 	xor	ah, ah		; offset 3, must be 0
 	push	ax		; offset 2, number of sectors
-	push	WORD 16		; offset 0-1, packet size
+	push	word 16		; offset 0-1, packet size
 
 
 	; INT13 Func 42 - Extended Read Sectors
@@ -498,7 +498,7 @@ print_string:
 
 print_hex:
 	pushad
-	mov	cx, WORD 4
+	mov	cx, word 4
 	bswap	eax
 
 .loop:
