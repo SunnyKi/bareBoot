@@ -111,6 +111,9 @@ DIRBUFSEG	EQU	0x1000	; Cluster sizes >64KB aren't supported
 	jmp	start
 	times	3-($-$$) nop
 
+;--------------------------------------------------------------------------
+; BIOS Parameter Block
+
 gOEMName		times	8 db 0
 gBPS			dw	0
 gSPC			db	0
@@ -119,13 +122,17 @@ gNumFats		db	0
 gCrap1			times	11 db 0
 gPartLBA		dd	0
 gPartSize		dd	0
+
+;--------------------------------------------------------------------------
+; Extended Boot Record (FAT32)
+
 gSectPerFat		dd	0
 gCrap2			times	4 db 0
 gRootCluster		dd	0
 gCrap3			times	16 db 0
 gBIOSDriveNumber	db	0
 gExtInfo		times	25 db 0
-gFileName		db	"BOOT       "	; Used as a magic string in boot0
+gFileName		db	"BOOT       "	; Magic string for boot0 & boot file name
 
 ;--------------------------------------------------------------------------
 ; Boot code is loaded at 0:7C00h
