@@ -165,7 +165,13 @@ Returns:
                                     Pci
                                     );
 
-    return EFI_SUCCESS;
+    //
+    // Only return success if the device is enabled
+    //
+    if (Pci->Hdr.Command & (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)) {
+      return EFI_SUCCESS;
+    }
+
   }
 
   return EFI_NOT_FOUND;
