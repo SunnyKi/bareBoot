@@ -4,7 +4,6 @@ endif
 
 INCSRCS= \
 	 Include/bootxdefs.nasm \
-	 Include/fatXXhdr.nasm \
 	 Include/fatstruct.nasm \
 	 Include/gptstruct.nasm \
 	 Include/mbrstruct.nasm \
