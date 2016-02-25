@@ -203,7 +203,7 @@ find_boot:
 	; Check for boot block signature 0xAA55 following the 4 partition
 	; entries.
 
-	cmp	WORD [si + parte_size * kPartCount], kBootSignature
+	cmp	WORD [si + mbrpe_size * kPartCount], kBootSignature
 	jne	.exit				; boot signature not found.
 
 	xor	bx, bx				; BL will be set to 1 later in case of
@@ -222,17 +222,17 @@ find_boot:
 	; partition.
 
 %if DEBUG
-	mov	al, [si + parte.type]	; print partition type
+	mov	al, [si + mbrpe.type]	; print partition type
 	call	print_hex
 %endif
-	mov	eax, [si + parte.lba]		; save starting LBA of current
+	mov	eax, [si + mbrpe.lba]		; save starting LBA of current
 	mov	[my_lba], eax			; MBR partition entry for read_lba function
-	cmp	BYTE [si + parte.type], 0	; unused partition?
+	cmp	BYTE [si + mbrpe.type], 0	; unused partition?
 	je	.continue			; skip to next entry
-	cmp	BYTE [si + parte.type], kPartTypePMBR	; check for Protective MBR
+	cmp	BYTE [si + mbrpe.type], kPartTypePMBR	; check for Protective MBR
 	jne	.testPass
 
-	mov	BYTE [si + parte.bootid], kPartInactive	; found Protective MBR
+	mov	BYTE [si + mbrpe.bootid], kPartInactive	; found Protective MBR
 
 	; clear active flag to make sure this protective
 	; partition won't be used as a bootable partition.
@@ -259,7 +259,7 @@ find_boot:
 .tryToBootIfActive:
 	; We're going to try to boot a partition if it is active
 
-	cmp	BYTE [si + parte.bootid], kPartActive
+	cmp	BYTE [si + mbrpe.bootid], kPartActive
 	jne	.continue
 
 	xor	dh, dh		; Argument for loadBootSector to skip file system signature check.
@@ -271,13 +271,13 @@ find_boot:
 
 	mov	dh, 1		; Argument for loadBootSector to check file system signature.
 
-	cmp	BYTE [si + parte.type], kPartTypeHFS
+	cmp	BYTE [si + mbrpe.type], kPartTypeHFS
 	je	.tryToBoot
 
-	cmp	BYTE [si + parte.type], kPartTypeFAT32
+	cmp	BYTE [si + mbrpe.type], kPartTypeFAT32
 	je	.tryToBoot
 
-	cmp	BYTE [si + parte.type], kPartTypeEXFAT
+	cmp	BYTE [si + mbrpe.type], kPartTypeEXFAT
 	jne	.continue
 
 .tryToBoot:
@@ -288,7 +288,7 @@ find_boot:
 	jmp	SHORT initBootLoader
 
 .continue:
-	add	si, BYTE parte_size	; advance SI to next partition entry
+	add	si, BYTE mbrpe_size	; advance SI to next partition entry
 	loop	.loop			; loop through all partition entries
 
 	; Scanned all partitions but not found any with active flag enabled
@@ -398,8 +398,8 @@ checkGPT:
 	jne	.gpt_continue				; no boot loader signature
 
 	mov	si, kMBRPartTable			; fake the current GUID Partition
-	mov	[si + parte.lba], eax			; as MBR style partition for boot1h
-	mov	BYTE [si + parte.type], kPartTypeHFS	; with HFS+ filesystem type (0xAF)
+	mov	[si + mbrpe.lba], eax			; as MBR style partition for boot1h
+	mov	BYTE [si + mbrpe.type], kPartTypeHFS	; with HFS+ filesystem type (0xAF)
 	jmp	SHORT initBootLoader
 
 .gpt_continue:

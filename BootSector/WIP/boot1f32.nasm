@@ -147,7 +147,7 @@ start:
 
 	mov	ax, word [gReservedSectors]
 %if USESIDL
-	add	eax, [si + parte.lba]
+	add	eax, [si + mbrpe.lba]
 %else
 	add	eax, [gPartLBA]
 %endif
