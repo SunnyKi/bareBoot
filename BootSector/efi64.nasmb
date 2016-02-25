@@ -44,23 +44,23 @@ Start:
     sidt    [rax]             ; get fword address of IDT
 
     lea     rax, [Halt]
-    mov     rbx, rax                    ; use bx to copy 15..0 to descriptors
-    shr     rax, 16                     ; use ax to copy 31..16 to descriptors
+    mov     ebx, eax                    ; use bx to copy 15..0 to descriptors
+    shr     eax, 16                     ; use ax to copy 31..16 to descriptors
                                         ; 63..32 of descriptors are 0
-    mov     rcx, 78h                    ; 78h IDT entries to initialize with unique entry points (exceptions)
-    xor     rsi, rsi
-    mov     esi, [Idtr + 2]
-    mov     rdi, [rsi]
+    mov     ecx, 78h                    ; 78h IDT entries to initialize with unique entry points (exceptions)
+    xor     esi, esi
+    mov     esi, dword [Idtr + 2]
+    mov     edi, dword [rsi]
 
-.1:                                       ; loop through all IDT entries exception handlers and initialize to default handler
-    mov     word [rdi + 0], bx            ; write bits 15..0 of offset
-    mov     word [rdi + 2], 38h           ; SYS_CODE64_SEL from GDT
-    mov     word [rdi + 4], 0E00h | 8000h ; type = 386 interrupt gate, present
-    mov     word [rdi + 6], ax            ; write bits 31..16 of offset
-    mov     dword [rdi + 8], 0            ; write bits 63..32 of offset
-    add     rdi, 16                       ; move up to next descriptor
-    add     rbx, DEFAULT_HANDLER_SIZE     ; move to next entry point
-    loop    .1                            ; loop back through again until all descriptors are initialized
+.1:                                        ; loop through all IDT entries exception handlers and initialize to default handler
+    mov     word  [edi + 0], bx            ; write bits 15..0 of offset
+    mov     word  [edi + 2], 38h           ; SYS_CODE64_SEL from GDT
+    mov     word  [edi + 4], 0E00h | 8000h ; type = 386 interrupt gate, present
+    mov     word  [edi + 6], ax            ; write bits 31..16 of offset
+    mov     dword [edi + 8], 0             ; write bits 63..32 of offset
+    add     edi, byte 16                   ; move up to next descriptor
+    add     ebx, DEFAULT_HANDLER_SIZE      ; move to next entry point
+    loop    .1                             ; loop back through again until all descriptors are initialized
 
 ;;  DUMP    location of IDT and several of the descriptors
 ;    mov     ecx, 8
@@ -136,12 +136,12 @@ SectionLoop:
     push    rax
     ret
 
+    align 2
+
 EfiLdrEntry:
     dq 0
 
-Idtr times 6 db  0
-     times 6 db  0
-
+Idtr times 12 db  0
 
 %macro idtentry 1
     push 0
@@ -158,7 +158,7 @@ Idtr times 6 db  0
 
 ;    db      "**** DEFAULT IDT ENTRY ***", 0
 
-    align 02h
+    align 2
 
 Halt:
 
