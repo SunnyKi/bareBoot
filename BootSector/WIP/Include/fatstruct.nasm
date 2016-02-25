@@ -1,4 +1,4 @@
-	struc direntry
+	struc fatde
 .nameext	resb	11
 .attr		resb	1
 .nused1		resb	8

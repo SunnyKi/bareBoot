@@ -226,12 +226,12 @@ falsealert:
 	jmp	nextdirent
 
 direntfound:
-;	test byte [ds:si + direntry.attr - 11], 0x18
+;	test byte [ds:si + fatde.attr - 11], 0x18
 	lodsb
 	test	al, 0x18
 	jnz	falsealert
-	push	WORD [si + direntry.hcluster - 12]
-	push	WORD [si + direntry.lcluster - 12]
+	push	WORD [si + fatde.hcluster - 12]
+	push	WORD [si + fatde.lcluster - 12]
 	pop	eax
 	pop	ds
 	mov	edx, (kBoot2Segment << 4) + kBoot2LoadAddr
