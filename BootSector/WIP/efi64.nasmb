@@ -1,0 +1,522 @@
+;------------------------------------------------------------------------------
+;*
+;*   Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
+;*   This program and the accompanying materials
+;*   are licensed and made available under the terms and conditions of the BSD License
+;*   which accompanies this distribution.  The full text of the license may be found at
+;*   http://opensource.org/licenses/bsd-license.php
+;*
+;*   THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+;*   WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+;*
+;*    efi64.nasmb
+;*
+;*   Abstract:
+;*
+;------------------------------------------------------------------------------
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Now in 64-bit long mode.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    BITS 64
+
+THIS_BASE            equ 021000h
+
+DEFAULT_HANDLER_SIZE equ INT1 - INT0
+
+    times THIS_BASE db 0
+
+Start:
+    mov     rsp, 001FFFE8h ; make final stack aligned
+
+    ; set OSFXSR and OSXMMEXCPT because some code will use XMM register
+
+    mov rax, cr4
+    bts eax, 09h
+    bts eax, 0ah
+    mov cr4, rax
+
+    ; Populate IDT with meaningful offsets for exception handlers...
+    lea     eax, [Idtr]
+    sidt    [eax]             ; get fword address of IDT
+
+    lea     eax, [Halt]
+    mov     ebx, eax                    ; use bx to copy 15..0 to descriptors
+    shr     eax, 16                     ; use ax to copy 31..16 to descriptors
+                                        ; 63..32 of descriptors are 0
+    mov     ecx, 78h                    ; 78h IDT entries to initialize with unique entry points (exceptions)
+    mov     esi, [Idtr + 2]
+    mov     edi, [esi]
+
+.1:                                       ; loop through all IDT entries exception handlers and initialize to default handler
+    mov     word [edi + 0], bx            ; write bits 15..0 of offset
+    mov     word [edi + 2], 38h           ; SYS_CODE64_SEL from GDT
+    mov     word [edi + 4], 0E00h | 8000h ; type = 386 interrupt gate, present
+    mov     word [edi + 6], ax            ; write bits 31..16 of offset
+    mov     dword [edi + 8], 0            ; write bits 63..32 of offset
+    add     edi, 16                       ; move up to next descriptor
+    add     ebx, DEFAULT_HANDLER_SIZE     ; move to next entry point
+    loop    .1                            ; loop back through again until all descriptors are initialized
+
+;;  DUMP    location of IDT and several of the descriptors
+;    mov     ecx, 8
+;    mov     eax, [Idtr + 2]
+;    mov     eax, [eax]
+;    mov     edi, 0b8000h
+;    call    PrintQword
+;    mov     esi, eax
+;    mov     edi, 0b80a0h
+;    jmp     OuterLoop
+
+;; just for fun, let's do a software interrupt to see if we correctly land in the exception handler...
+;    mov     eax, 011111111h
+;    mov     ebx, 022222222h
+;    mov     ecx, 033333333h
+;    mov     edx, 044444444h
+;    mov     ebp, 055555555h
+;    mov     esi, 066666666h
+;    mov     edi, 077777777h
+;    push    011111111h
+;    push    022222222h
+;    push    033333333h
+;    int     119
+
+    mov     esi, THIS_BASE + 01000h      ; esi = 22000
+    mov     eax, [esi + 014h]            ; eax = [22014]
+    add     esi, eax                     ; esi = 22000 + [22014] = Base of EFILDR.C
+    mov     ebp, [esi + 03Ch]      ; ebp = [22000 + [22014] + 3c] = NT Image Header for EFILDR.C
+    add     ebp, esi
+    mov     edi, [ebp + 030h]      ; edi = [[22000 + [22014] + 3c] + 2c] = ImageBase (63..32 is zero, ignore)
+    mov     eax, [ebp + 028h]      ; eax = [[22000 + [22014] + 3c] + 24] = EntryPoint
+    add     eax, edi                     ; eax = ImageBase + EntryPoint
+
+    mov     [EfiLdrEntry], eax
+
+    mov     bx, word [ebp + 6]           ; bx = Number of sections
+    mov     ax, word [ebp + 014h]        ; ax = Optional Header Size
+    add     ebp, eax
+    add     ebp, 018h                    ; ebp = Start of 1st Section
+
+SectionLoop:
+    push    esi                         ; Save Base of EFILDR.C
+    push    edi                         ; Save ImageBase
+    add     esi, [ebp + 014h]     ; esi = Base of EFILDR.C + PointerToRawData
+    add     edi, [ebp + 00Ch]     ; edi = ImageBase + VirtualAddress
+    mov     ecx, [ebp + 010h]     ; ecs = SizeOfRawData
+
+    cld
+    shr     ecx, 2
+    rep     movsd
+
+    pop     edi                  ; Restore ImageBase
+    pop     esi                  ; Restore Base of EFILDR.C
+
+    add     ebp, 028h            ; ebp = ebp + 028h = Pointer to next section record
+    dec     ebx
+    cmp     ebx, 0
+    jne     SectionLoop
+
+    lea     edx, [Idtr]
+    movzx   eax, word [edx]      ; get size of IDT
+    inc     eax
+    add     eax, [edx + 2] ; add to base of IDT to get location of memory map...
+    mov     ecx, eax             ; put argument to RCX
+
+    mov     eax, [EfiLdrEntry]
+    push    eax
+    ret
+
+    align   2
+
+EfiLdrEntry:
+    dd 0
+    dd 0
+
+Idtr:
+    dw 0
+    dd 0
+    dw 0
+    dd 0
+
+%macro idtentry 1
+    push 0
+    push %1
+    jmp qword commonIdtEntry ; qword to keep the same entry length
+%endmacro
+
+%macro idtenerr 1
+    nop
+    nop
+    push %1
+    jmp qword commonIdtEntry ; qword to keep the same entry length
+%endmacro
+
+;    db      "**** DEFAULT IDT ENTRY ***", 0
+
+    align 02h
+
+Halt:
+
+INT0:
+    idtentry 0
+INT1:
+    idtentry 1
+    idtentry 2
+    idtentry 3
+    idtentry 4
+    idtentry 5
+    idtentry 6
+    idtentry 7
+    idtenerr 8  ; Double Fault
+    idtentry 9
+    idtenerr 10 ; Invalid TSS
+    idtenerr 11 ; Segment Not Present
+    idtenerr 12 ; Stack Fault
+    idtenerr 13 ; GP Fault
+    idtenerr 14 ; Page Fault
+    idtentry 15
+    idtentry 16
+    idtenerr 17 ; Alignment Check
+    idtentry 18
+    idtentry 19
+
+INTUnknown:
+
+%rep (078h - 20)
+    idtentry ($ - INTUnknown - 2) / 9 + 20 ; vector number
+%endrep
+
+commonIdtEntry:
+    push    rax
+    push    rcx
+    push    rdx
+    push    rbx
+    push    rsp
+    push    rbp
+    push    rsi
+    push    rdi
+    push    r8
+    push    r9
+    push    r10
+    push    r11
+    push    r12
+    push    r13
+    push    r14
+    push    r15
+    mov     rbp, rsp
+
+;;  At this point the stack looks like this:
+;;
+;;      Calling SS
+;;      Calling RSP
+;;      rflags
+;;      Calling CS
+;;      Calling RIP
+;;      Error code or 0
+;;      Int num or 0ffh for unknown int num
+;;      rax
+;;      rcx
+;;      rdx
+;;      rbx
+;;      rsp
+;;      rbp
+;;      rsi
+;;      rdi
+;;      r8
+;;      r9
+;;      r10
+;;      r11
+;;      r12
+;;      r13
+;;      r14
+;;      r15 <------- RSP, RBP
+
+%macro PrintRegister 2
+    mov     rsi, %1
+    call    PrintString
+    mov     rax, [rbp + %2 * 8]
+    call    PrintQword
+%endmacro
+
+    call    ClearScreen
+
+    mov     rsi, String1
+    call    PrintString
+    mov     rax, [rbp + 16 * 8] ;; move Int number into RAX
+    cmp     rax, 18
+    ja      PrintDefaultString
+
+PrintExceptionString:
+    shl     rax, 3              ;; multiply by 8 to get from StringTable to actual string address
+    add     rax, StringTable
+    mov     rsi, [rax]
+    jmp     PrintTheString
+
+PrintDefaultString:
+    mov     rsi, IntUnknownString
+    mov     rdx, rax            ; patch Int number
+    call    A2C
+    mov     [rsi + 1], al
+    mov     rax, rdx
+    shr     rax, 4
+    call    A2C
+    mov     [rsi], al
+
+PrintTheString:
+    call    PrintString
+
+    PrintRegister String2, 19      ; CS
+
+    mov     al, ':'
+    mov     byte [rdi], al
+    add     rdi, 2
+    mov     rax, [rbp + 18 * 8]    ; RIP
+    call    PrintQword
+    mov     rsi, String3
+    call    PrintString
+
+    mov     rdi, 0B8140h
+
+    PrintRegister StringRax, 15
+    PrintRegister StringRcx, 14
+    PrintRegister StringRdx, 13
+
+    mov     rdi, 0B81E0h
+
+    PrintRegister StringRbx, 12
+    PrintRegister StringRsp, 21
+    PrintRegister StringRbp, 10
+
+    mov     rdi, 0B8280h
+
+    PrintRegister StringRsi, 9
+    PrintRegister StringRdi, 8
+    PrintRegister StringEcode, 17
+
+    mov     rdi, 0B8320h
+
+    PrintRegister StringR8, 7
+    PrintRegister StringR9, 6
+    PrintRegister StringR10, 5
+
+    mov     rdi, 0B83C0h
+
+    PrintRegister StringR11, 4
+    PrintRegister StringR12, 3
+    PrintRegister StringR13, 2
+
+    mov     rdi, 0B8460h
+
+    PrintRegister StringR14, 1
+    PrintRegister StringR15, 0
+    PrintRegister StringSs, 22
+
+    mov     rdi, 0B8500h
+
+    PrintRegister StringRflags, 20
+
+    mov     rdi, 0B8640h
+
+    mov     rsi, rbp
+    add     rsi, 23 * 8
+    mov     rcx, 4
+
+
+OuterLoop:
+    push    rcx
+    mov     rcx, 4
+    mov     rdx, rdi
+
+InnerLoop:
+    mov     rax, [rsi]
+    call    PrintQword
+    add     rsi, 8
+    mov     al, ' '
+    mov     [rdi], al
+    add     rdi, 2
+    loop    InnerLoop
+
+    pop     rcx
+    add     rdx, 0A0h
+    mov     rdi, rdx
+    loop    OuterLoop
+
+    mov     rdi, 0B8960h
+
+    mov     rax, [rbp + 18 * 8]  ; RIP
+    sub     rax, 8 * 8
+    mov     rsi, rax             ; esi = rip - 8 QWORD linear (total 16 QWORD)
+
+    mov     rcx, 4
+
+OuterLoop1:
+    push    rcx
+    mov     rcx, 4
+    mov     rdx, rdi
+
+InnerLoop1:
+    mov     rax, [rsi]
+    call    PrintQword
+    add     rsi, 8
+    mov     al, ' '
+    mov     [rdi], al
+    add     rdi, 2
+    loop    InnerLoop1
+
+    pop     rcx
+    add     rdx, 0a0h
+    mov     rdi, rdx
+    loop    OuterLoop1
+    ;???wbinvd
+@2:
+    jmp     @2
+
+; return
+    mov    rsp, rbp
+    pop    r15
+    pop    r14
+    pop    r13
+    pop    r12
+    pop    r11
+    pop    r10
+    pop    r9
+    pop    r8
+    pop    rdi
+    pop    rsi
+    pop    rbp
+    pop    rax ; esp
+    pop    rbx
+    pop    rdx
+    pop    rcx
+    pop    rax
+
+    add    rsp, 16 ; error code and INT number
+    iretq
+
+PrintString:
+    push    rax
+@3:
+    mov     al, byte [rsi]
+    cmp     al, 0
+    je      @4
+    mov     byte [rdi], al
+    inc     rsi
+    add     rdi, 2
+    jmp     @3
+@4:
+    pop     rax
+    ret
+
+;; RAX contains qword to print
+;; RDI contains memory location (screen location) to print it to
+
+PrintQword:
+    push    rcx
+    push    rbx
+    push    rax
+
+    mov     rcx, dword 16
+looptop:
+    rol     rax, 4
+    mov     bl, al
+    and     bl, 0Fh
+    add     bl, '0'
+    cmp     bl, '9'
+    jle     @5
+    add     bl, 7
+@5:
+    mov     byte [rdi], bl
+    add     rdi, 2
+    loop    looptop
+    ;???wbinvd
+
+    pop     rax
+    pop     rbx
+    pop     rcx
+    ret
+
+ClearScreen:
+    push    rax
+    push    rcx
+
+    mov     al, ' '
+    mov     ah, 0Ch
+    mov     rdi, 0B8000h
+    mov     rcx, 80 * 24
+@6:
+    mov     word [rdi], ax
+    add     rdi, 2
+    loop    @6
+    mov     rdi, 0B8000h
+
+    pop     rcx
+    pop     rax
+    ret
+
+A2C:
+    and     al, 0Fh
+    add     al, '0'
+    cmp     al, '9'
+    jle     @7
+    add     al, 7
+@7:
+    ret
+
+String1           db  "*** INT ", 0
+
+Int0String        db  "00h Divide by 0 -", 0
+Int1String        db  "01h Debug exception -", 0
+Int2String        db  "02h NMI -", 0
+Int3String        db  "03h Breakpoint -", 0
+Int4String        db  "04h Overflow -", 0
+Int5String        db  "05h Bound -", 0
+Int6String        db  "06h Invalid opcode -", 0
+Int7String        db  "07h Device not available -", 0
+Int8String        db  "08h Double fault -", 0
+Int9String        db  "09h Coprocessor seg overrun (reserved) -", 0
+Int10String       db  "0Ah Invalid TSS -", 0
+Int11String       db  "0Bh Segment not present -", 0
+Int12String       db  "0Ch Stack fault -", 0
+Int13String       db  "0Dh General protection fault -", 0
+Int14String       db  "0Eh Page fault -", 0
+Int15String       db  "0Fh (Intel reserved) -", 0
+Int16String       db  "10h Floating point error -", 0
+Int17String       db  "11h Alignment check -", 0
+Int18String       db  "12h Machine check -", 0
+Int19String       db  "13h SIMD Floating-Point Exception -", 0
+IntUnknownString  db  "??h Unknown interrupt -", 0
+
+StringTable dq  Int0String, Int1String, Int2String, Int3String
+    dq  Int4String, Int5String, Int6String, Int7String
+    dq  Int8String, Int9String, Int10String, Int11String
+    dq  Int12String, Int13String, Int14String, Int15String
+    dq  Int16String, Int17String, Int18String, Int19String
+
+String2           db  " HALT!! *** (", 0
+String3           db  ")", 0
+StringRax         db  "RAX=", 0
+StringRcx         db  " RCX=", 0
+StringRdx         db  " RDX=", 0
+StringRbx         db  "RBX=", 0
+StringRsp         db  " RSP=", 0
+StringRbp         db  " RBP=", 0
+StringRsi         db  "RSI=", 0
+StringRdi         db  " RDI=", 0
+StringEcode       db  " ECODE=", 0
+StringR8          db  "R8 =", 0
+StringR9          db  " R9 =", 0
+StringR10         db  " R10=", 0
+StringR11         db  "R11=", 0
+StringR12         db  " R12=", 0
+StringR13         db  " R13=", 0
+StringR14         db  "R14=", 0
+StringR15         db  " R15=", 0
+StringSs          db  " SS =", 0
+StringRflags      db  "RFLAGS=", 0
+
+;???    org 21ffeh
+    times (021FFEh - ($ - $$)) db 0
+
+BlockSignature:
+    dw      0AA55h
