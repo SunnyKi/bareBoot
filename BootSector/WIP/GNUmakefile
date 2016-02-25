@@ -1,6 +1,4 @@
-ifeq ($(DESTDIR),)
-$(error Variable DESTDIR must be defined !)
-endif
+DESTDIR= bin
 
 INCSRCS= \
 	 Include/bootxdefs.nasm \
