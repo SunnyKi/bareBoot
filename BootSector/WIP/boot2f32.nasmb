@@ -15,14 +15,12 @@
 ;*
 ;------------------------------------------------------------------------------
 
-%include	"bpb-inc.nasm"
-
         BITS 16
 
 FAT_DIRECTORY_ENTRY_SIZE    EQU     020h
 FAT_DIRECTORY_ENTRY_SHIFT   EQU     5
 BLOCK_SIZE                  EQU     0200h
-BLOCK_MASK                  EQU     01ffh
+BLOCK_MASK                  EQU     01FFh
 BLOCK_SHIFT                 EQU     9
 
         org 0h
@@ -30,7 +28,6 @@ Ia32Jump:
   jmp   BootSectorEntryPoint  ; JMP inst    - 3 bytes
   nop
 
-%if 0
 OemId               db  "INTEL   "    ; OemId                           - 8 bytes
 SectorSize          dw  0             ; Sector Size                     - 2 bytes
 SectorsPerCluster   db  0             ; Sector Per Cluster              - 1 byte
@@ -58,19 +55,13 @@ FSVersion           dw  0             ; File System Version             - 2 byte
 RootCluster         dd  0             ; 1st Cluster Number of Root Dir  - 4 bytes
 FSInfo              dw  0             ; Sector Number of FSINFO         - 2 bytes
 BkBootSector        dw  0             ; Sector Number of Bk BootSector  - 2 bytes
-Reserved            times  12 db 0    ; Reserved Field                  - 12 bytes
+Reserved            times 12 db 0     ; Reserved Field                  - 12 bytes
 PhysicalDrive       db  0             ; Physical Drive Number           - 1 byte
 Reserved1           db  0             ; Reserved Field                  - 1 byte
 Signature           db  0             ; Extended Boot Signature         - 1 byte
 VolId               db  "    "        ; Volume Serial Number            - 4 bytes
 FatLabel            db  "           " ; Volume Label                    - 11 bytes
 FileSystemType      db  "FAT32   "    ; File System Type                - 8 bytes
-%else
-b2hdr:
-	istruc	ebpb32
-	at	ebpb32.systemId, db "FAT32   "
-	iend
-%endif
 
 BootSectorEntryPoint:
       ; ds = 1000, es = 2000 + x (size of first cluster >> 4)
@@ -78,13 +69,12 @@ BootSectorEntryPoint:
       ; dx = Start Cluster of Efivar.bin
 
 ; Re use the BPB data stored in Boot Sector
-        mov     bp, 0x7C00
-
+        mov     bp, 07C00h
 
         push    cx
 ; Read Efivar.bin
 ;       1000:dx    = DirectoryEntry of Efivar.bin -> BS.com has filled already
-        mov     ax, 0x1900
+        mov     ax, 01900h
         mov     es, ax
         test    dx, dx
         jnz     CheckVarStoreSize
@@ -98,7 +88,7 @@ NoVarStore:
 
 CheckVarStoreSize:
         mov     di, dx
-        cmp     dword [di + 2], 0x4000
+        cmp     dword [di + 2], 04000h
         mov     al, 2
         jne     NoVarStore
 
@@ -109,7 +99,7 @@ LoadVarStore:
 ;       ES:DI = 1500:0
         xor     di, di
         push    es
-        mov     ax, 0x1500
+        mov     ax, 01500h
         mov     es, ax
         call    ReadFile
 SaveVolumeId:
@@ -124,20 +114,31 @@ SaveVolumeId:
 ;       cx    = Start Cluster of Efildr -> BS.com has filled already
 ;       ES:DI = 2000:0, first cluster will be read again
         xor     di, di                               ; di = 0
-        mov     ax, 0x2000
+        mov     ax, 02000h
         mov     es, ax
         call    ReadFile
         mov     ax, cs
         mov     word [cs:JumpSegment], ax
+
+CheckEm64T:
+        mov  eax, 080000001h
+        cpuid
+        bt   edx, 29
+        jc   CheckEm64TPass
+        push cs
+        pop  ds
+        lea  si, [Em64String]
+        mov  cx, 18
+        jmp  PrintStringAndHalt
+
+CheckEm64TPass:
+
 JumpFarInstruction:
-        db      0xEA
+        db      0eah
 JumpOffset:
-        dw      0x0200
+        dw      0200h
 JumpSegment:
-        dw      0x2000
-
-
-
+        dw      2000h
 
 ; ****************************************************************************
 ; ReadFile
@@ -158,64 +159,63 @@ ReadFile:
 ; es:di   = Buffer to load file
 ; bx      = NextClusterNumber
         pusha
-        mov     si, 1                                ; NumberOfClusters = 1
-        push    cx                                  ; Push Start Cluster onto stack
-        mov     dx, 0x0FFF                            ; CachedFatSectorNumber = 0xfff
+        mov     si, 1                           ; NumberOfClusters = 1
+        push    cx                              ; Push Start Cluster onto stack
+        mov     dx, 0FFFh                       ; CachedFatSectorNumber = 0xfff
 FatChainLoop:
-        mov     ax, cx                               ; ax = ClusterNumber
-        and     ax, 0xFFF8                           ; ax = ax & 0xfff8
-        cmp     ax, 0xFFF8                           ; See if this is the last cluster
-        je      FoundLastCluster                    ; Jump if last cluster found
-        mov     ax, cx                               ; ax = ClusterNumber
-        shl     ax, 2                                ; FatOffset = ClusterNumber * 4
-        push    si                                  ; Save si
-        mov     si, ax                               ; si = FatOffset
-        shr     ax, BLOCK_SHIFT                      ; ax = FatOffset >> BLOCK_SHIFT
-        add     ax, word [bp + ReservedSectors]    ; ax = FatSectorNumber = ReservedSectors + (FatOffset >> BLOCK_OFFSET)
-        and     si, BLOCK_MASK                       ; si = FatOffset & BLOCK_MASK
-        cmp     ax, dx                               ; Compare FatSectorNumber to CachedFatSectorNumber
+        mov     ax, cx                          ; ax = ClusterNumber
+        and     ax, 0FFF8h                      ; ax = ax & 0xfff8
+        cmp     ax, 0FFF8h                      ; See if this is the last cluster
+        je      FoundLastCluster                ; Jump if last cluster found
+        mov     ax, cx                          ; ax = ClusterNumber
+        shl     ax, 2                           ; FatOffset = ClusterNumber * 4
+        push    si                              ; Save si
+        mov     si, ax                          ; si = FatOffset
+        shr     ax, BLOCK_SHIFT                 ; ax = FatOffset >> BLOCK_SHIFT
+        add     ax, word [bp + ReservedSectors] ; ax = FatSectorNumber = ReservedSectors + (FatOffset >> BLOCK_OFFSET)
+        and     si, BLOCK_MASK                  ; si = FatOffset & BLOCK_MASK
+        cmp     ax, dx                          ; Compare FatSectorNumber to CachedFatSectorNumber
         je      SkipFatRead
         mov     bx, 2
         push    es
         push    ds
         pop     es
-        call    ReadBlocks                          ; Read 2 blocks starting at AX storing at ES:DI
+        call    ReadBlocks                      ; Read 2 blocks starting at AX storing at ES:DI
         pop     es
-        mov     dx, ax                               ; CachedFatSectorNumber = FatSectorNumber
+        mov     dx, ax                          ; CachedFatSectorNumber = FatSectorNumber
 SkipFatRead:
-        mov     bx, word [si]                    ; bx = NextClusterNumber
-        mov     ax, cx                               ; ax = ClusterNumber
-        pop     si                                  ; Restore si
-        dec     bx                                  ; bx = NextClusterNumber - 1
-        cmp     bx, cx                               ; See if (NextClusterNumber-1)==ClusterNumber
+        mov     bx, word [si]                   ; bx = NextClusterNumber
+        mov     ax, cx                          ; ax = ClusterNumber
+        pop     si                              ; Restore si
+        dec     bx                              ; bx = NextClusterNumber - 1
+        cmp     bx, cx                          ; See if (NextClusterNumber-1)==ClusterNumber
         jne     ReadClusters
-        inc     bx                                  ; bx = NextClusterNumber
-        inc     si                                  ; NumberOfClusters + +
-        mov     cx, bx                               ; ClusterNumber = NextClusterNumber
+        inc     bx                              ; bx = NextClusterNumber
+        inc     si                              ; NumberOfClusters + +
+        mov     cx, bx                          ; ClusterNumber = NextClusterNumber
         jmp     FatChainLoop
 ReadClusters:
         inc     bx
-        pop     ax                                  ; ax = StartCluster
-        push    bx                                  ; StartCluster = NextClusterNumber
-        mov     cx, bx                               ; ClusterNumber = NextClusterNumber
-        sub     ax, 2                                ; ax = StartCluster - 2
+        pop     ax                              ; ax = StartCluster
+        push    bx                              ; StartCluster = NextClusterNumber
+        mov     cx, bx                          ; ClusterNumber = NextClusterNumber
+        sub     ax, 2                           ; ax = StartCluster - 2
         xor     bh, bh
-        mov     bl, byte [bp + SectorsPerCluster]  ; bx = SectorsPerCluster
-        mul     bx                                  ; ax = (StartCluster - 2) * SectorsPerCluster
+        mov     bl, byte [bp + SectorsPerCluster] ; bx = SectorsPerCluster
+        mul     bx                              ; ax = (StartCluster - 2) * SectorsPerCluster
         add     ax, word [bp]                   ; ax = FirstClusterLBA + (StartCluster-2)*SectorsPerCluster
-        push    ax                                  ; save start sector
-        mov     ax, si                               ; ax = NumberOfClusters
-        mul     bx                                  ; ax = NumberOfClusters * SectorsPerCluster
-        mov     bx, ax                               ; bx = Number of Sectors
-        pop     ax                                  ; ax = Start Sector
+        push    ax                              ; save start sector
+        mov     ax, si                          ; ax = NumberOfClusters
+        mul     bx                              ; ax = NumberOfClusters * SectorsPerCluster
+        mov     bx, ax                          ; bx = Number of Sectors
+        pop     ax                              ; ax = Start Sector
         call    ReadBlocks
-        mov     si, 1                                ; NumberOfClusters = 1
+        mov     si, 1                           ; NumberOfClusters = 1
         jmp     FatChainLoop
 FoundLastCluster:
         pop     cx
         popa
         ret
-
 
 ; ****************************************************************************
 ; ReadBlocks - Reads a set of blocks from a block device
@@ -231,63 +231,62 @@ FoundLastCluster:
 
 ReadBlocks:
         pusha
-        add     eax, dword [bp + LBAOffsetForBootSector]    ; Add LBAOffsetForBootSector to Start LBA
-        add     eax, dword [bp + HiddenSectors]    ; Add HiddenSectors to Start LBA
-        mov     esi, eax                             ; esi = Start LBA
-        mov     cx, bx                               ; cx = Number of blocks to read
+        add     eax, dword [bp + LBAOffsetForBootSector] ; Add LBAOffsetForBootSector to Start LBA
+        add     eax, dword [bp + HiddenSectors] ; Add HiddenSectors to Start LBA
+        mov     esi, eax                        ; esi = Start LBA
+        mov     cx, bx                          ; cx = Number of blocks to read
 ReadCylinderLoop:
-        mov     bp, 0x7BFC                           ; bp = 0x7bfc
-        mov     eax, esi                             ; eax = Start LBA
-        xor     edx, edx                             ; edx = 0
-        movzx   ebx, word [bp]                   ; bx = MaxSector
-        div     ebx                                 ; ax = StartLBA / MaxSector
-        inc     dx                                  ; dx = (StartLBA % MaxSector) + 1
+        mov     bp, 07bfch                      ; bp = 0x7bfc
+        mov     eax, esi                        ; eax = Start LBA
+        xor     edx, edx                        ; edx = 0
+        movzx   ebx, word [bp]                  ; bx = MaxSector
+        div     ebx                             ; ax = StartLBA / MaxSector
+        inc     dx                              ; dx = (StartLBA % MaxSector) + 1
 
-        mov     bx, word [bp]                    ; bx = MaxSector
-        sub     bx, dx                               ; bx = MaxSector - Sector
-        inc     bx                                  ; bx = MaxSector - Sector + 1
-        cmp     cx, bx                               ; Compare (Blocks) to (MaxSector - Sector + 1)
+        mov     bx, word [bp]                   ; bx = MaxSector
+        sub     bx, dx                          ; bx = MaxSector - Sector
+        inc     bx                              ; bx = MaxSector - Sector + 1
+        cmp     cx, bx                          ; Compare (Blocks) to (MaxSector - Sector + 1)
         jg      LimitTransfer
-        mov     bx, cx                               ; bx = Blocks
+        mov     bx, cx                          ; bx = Blocks
 LimitTransfer:
-        push    ax                                  ; save ax
-        mov     ax, es                               ; ax = es
-        shr     ax, (BLOCK_SHIFT - 4)                  ; ax = Number of blocks into mem system
-        and     ax, 0x7F                             ; ax = Number of blocks into current seg
-        add     ax, bx                               ; ax = End Block number of transfer
-        cmp     ax, 0x80                             ; See if it crosses a 64K boundry
-        jle     NotCrossing64KBoundry               ; Branch if not crossing 64K boundry
-        sub     ax, 0x80                             ; ax = Number of blocks past 64K boundry
-        sub     bx, ax                               ; Decrease transfer size by block overage
+        push    ax                              ; save ax
+        mov     ax, es                          ; ax = es
+        shr     ax, (BLOCK_SHIFT-4)             ; ax = Number of blocks into mem system
+        and     ax, 07fh                        ; ax = Number of blocks into current seg
+        add     ax, bx                          ; ax = End Block number of transfer
+        cmp     ax, 080h                        ; See if it crosses a 64K boundry
+        jle     NotCrossing64KBoundry           ; Branch if not crossing 64K boundry
+        sub     ax, 080h                        ; ax = Number of blocks past 64K boundry
+        sub     bx, ax                          ; Decrease transfer size by block overage
 NotCrossing64KBoundry:
-        pop     ax                                  ; restore ax
+        pop     ax                              ; restore ax
 
         push    cx
-        mov     cl, dl                               ; cl = (StartLBA % MaxSector) + 1 = Sector
-        xor     dx, dx                               ; dx = 0
-        div     word [bp + 2]                        ; ax = ax / (MaxHead + 1) = Cylinder
-                                                     ; dx = ax % (MaxHead + 1) = Head
+        mov     cl, dl                          ; cl = (StartLBA % MaxSector) + 1 = Sector
+        xor     dx, dx                          ; dx = 0
+        div     word [bp + 2]                   ; ax = ax / (MaxHead + 1) = Cylinder
+                                                ; dx = ax % (MaxHead + 1) = Head
 
-        push    bx                                   ; Save number of blocks to transfer
-        mov     dh, dl                               ; dh = Head
-        mov     bp, 0x07C00
-;        mov     dl, byte [bp + PhysicalDrive]   ; dl = Drive Number
-        mov     dl, byte [bp + b2hdr + ebpb32.driveNumber]   ; dl = Drive Number
-        mov     ch, al                               ; ch = Cylinder
-        mov     al, bl                               ; al = Blocks
-        mov     ah, 2                                ; ah = Function 2
-        mov     bx, di                               ; es:bx = Buffer address
-        int     0x13
+        push    bx                              ; Save number of blocks to transfer
+        mov     dh, dl                          ; dh = Head
+        mov     bp, 07c00h                      ; bp = 0x7c00
+        mov     dl, byte [bp + PhysicalDrive]   ; dl = Drive Number
+        mov     ch, al                          ; ch = Cylinder
+        mov     al, bl                          ; al = Blocks
+        mov     ah, 2                           ; ah = Function 2
+        mov     bx, di                          ; es:bx = Buffer address
+        int     013h
         jc      DiskError
         pop     bx
         pop     cx
         movzx   ebx, bx
-        add     esi, ebx                             ; StartLBA = StartLBA + NumberOfBlocks
-        sub     cx, bx                               ; Blocks = Blocks - NumberOfBlocks
+        add     esi, ebx                        ; StartLBA = StartLBA + NumberOfBlocks
+        sub     cx, bx                          ; Blocks = Blocks - NumberOfBlocks
         mov     ax, es
         shl     bx, (BLOCK_SHIFT - 4)
         add     ax, bx
-        mov     es, ax                               ; es:di = es:di + NumberOfBlocks*BLOCK_SIZE
+        mov     es, ax                          ; es:di = es:di + NumberOfBlocks*BLOCK_SIZE
         cmp     cx, 0
         jne     ReadCylinderLoop
         popa
@@ -301,7 +300,7 @@ DiskError:
         jmp  PrintStringAndHalt
 
 PrintStringAndHalt:
-        mov  ax, 0xB800
+        mov  ax, 0B800h
         mov  es, ax
         mov  di, 160
         rep  movsw
@@ -309,13 +308,13 @@ Halt:
         jmp   Halt
 
 ErrorString:
-        db 'S', 0x0C, 'E', 0x0C, 'r', 0x0C, 'r', 0x0C, 'o', 0x0C, 'r', 0x0C, '!', 0x0C
+        db 'S', 0ch, 'E', 0ch, 'r', 0ch, 'r', 0ch, 'o', 0ch, 'r', 0ch, '!', 0ch
 
 ;???        org     01fah
-	times (0x01FA - ($ - $$)) db 0
+        times (01FAh - ($ - $$)) db 0
 LBAOffsetForBootSector:
-        dd      0
+        dd      0h
 
 ;???        org     01feh
-	times (0x01FE - ($ - $$)) db 0
-        dw      0xAA55
+        times (01FEh - ($ - $$)) db 0
+        dw      0aa55h
