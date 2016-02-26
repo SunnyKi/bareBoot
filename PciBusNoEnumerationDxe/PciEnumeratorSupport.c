@@ -165,13 +165,7 @@ Returns:
                                     Pci
                                     );
 
-    //
-    // Only return success if the device is enabled
-    //
-    if (Pci->Hdr.Command & (EFI_PCI_COMMAND_IO_SPACE | EFI_PCI_COMMAND_MEMORY_SPACE)) {
-      return EFI_SUCCESS;
-    }
-
+    return EFI_SUCCESS;
   }
 
   return EFI_NOT_FOUND;
@@ -289,13 +283,14 @@ Returns:
             }
                 
             //
-            // Deep enumerate the next level bus
+            // If the PCI bridge is initialized then enumerate the next level bus
             //
-            Status = PciPciDeviceInfoCollector (
-                      PciIoDevice,
-                      (UINT8) (SecBus)
-                      );
-
+            if (SecBus != 0) {
+              Status = PciPciDeviceInfoCollector (
+                        PciIoDevice,
+                        (UINT8) (SecBus)
+                        );
+	    }
           }
         }
 
