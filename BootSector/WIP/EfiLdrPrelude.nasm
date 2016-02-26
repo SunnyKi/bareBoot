@@ -11,10 +11,20 @@
 ;*
 ;*    efildrprelude.nasm
 ;*
-;*   Abstract:
-;*
 ;------------------------------------------------------------------------------
 ; nms was here
+
+struc	idtdescr
+	.loffset	resw	1	; offset low bits (0..15)
+	.selector	resw	1	; code segment selector
+	.zero1		resb	1	; zero
+	.tattr		resb	1	; type and attributes
+	.moffset	resw	1	; offset middle bits (16..31)
+%ifdef X64
+	.hoffset	resd	1	; offset high bits (32..63)
+	.zero2		resd	1	; zero
+%endif
+endstruc
 
 	BITS	16
 
@@ -102,7 +112,7 @@ Timeout8042:
 
 A20GateEnabled:
 
-; DISABLE INTERRUPTS - Entering Protected Mode
+	; DISABLE INTERRUPTS - Entering Protected Mode
 
 	cli
 
@@ -219,469 +229,6 @@ Empty8042Loop:
 	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
 	ret
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; data
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-	align 2
-
-gdtr:
-	dw	GDT_END - GDT_BASE - 1	; GDT limit
-	dd	0			; (GDT base gets set above)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;   global descriptor table (GDT)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-%macro	gdtentry	4
-%[%1]_SEL	equ	$ - GDT_BASE
-	dw	%2
-	dw	0
-	db	0
-	db	%3
-	db	%4
-	db	0
-%endmacro
-
-	align 2
-
-GDT_BASE:
-
-	gdtentry	NULL, 0, 0, 0
-	gdtentry	LINEAR, 0xFFFF, 0x92, 0xCF
-	gdtentry	LINEAR_CODE, 0xFFFF, 0x9A, 0xCF
-	gdtentry	SYS_DATA, 0xFFFF, 0x92, 0xCF
-	gdtentry	SYS_CODE, 0xFFFF, 0x9A, 0xCF
-	gdtentry	SPARE3, 0, 0, 0
-	gdtentry	SYS_DATA64, 0xFFFF, 0x92, 0xCF
-	gdtentry	SYS_CODE64, 0xFFFF, 0x9A, 0xAF
-	gdtentry	SPARE4, 0, 0, 0
-
-GDT_END:
-
-	align 2
-
-idtr:
-	dw	IDT_END - IDT_BASE - 1	; IDT limit
-	dd	0			; (IDT base gets set above)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;   interrupt descriptor table (IDT)
-;
-;   Note: The hardware IRQ's specified in this table are the normal PC/AT IRQ
-;       mappings.  This implementation only uses the system timer and all other
-;       IRQs will remain masked.  The descriptors for vectors 33 + are provided
-;       for convenience.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-	align 2
-
-IDT_BASE:
-
-; divide by zero (INT 0)
-DIV_ZERO_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; debug exception (INT 1)
-DEBUG_EXCEPT_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; NMI (INT 2)
-NMI_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; soft breakpoint (INT 3)
-BREAKPOINT_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; overflow (INT 4)
-OVERFLOW_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; bounds check (INT 5)
-BOUNDS_CHECK_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; invalid opcode (INT 6)
-INVALID_OPCODE_SEL  equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; device not available (INT 7)
-DEV_NOT_AVAIL_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; double fault (INT 8)
-DOUBLE_FAULT_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; Coprocessor segment overrun - reserved (INT 9)
-RSVD_INTR_SEL1	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; invalid TSS (INT 0ah)
-INVALID_TSS_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; segment not present (INT 0bh)
-SEG_NOT_PRESENT_SEL equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; stack fault (INT 0ch)
-STACK_FAULT_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; general protection (INT 0dh)
-GP_FAULT_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; page fault (INT 0eh)
-PAGE_FAULT_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; Intel reserved - do not use (INT 0fh)
-RSVD_INTR_SEL2	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; floating point error (INT 10h)
-FLT_POINT_ERR_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; alignment check (INT 11h)
-ALIGNMENT_CHECK_SEL equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; machine check (INT 12h)
-MACHINE_CHECK_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; SIMD floating-point exception (INT 13h)
-SIMD_EXCEPTION_SEL  equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; 85 unspecified descriptors, First 12 of them are reserved, the rest are avail
-	times (85 * 16) db 0
-
-; IRQ 0 (System timer) - (INT 68h)
-IRQ0_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 1 (8042 Keyboard controller) - (INT 69h)
-IRQ1_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; Reserved - IRQ 2 redirect (IRQ 2) - DO NOT USE!!! - (INT 6ah)
-IRQ2_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 3 (COM 2) - (INT 6bh)
-IRQ3_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 4 (COM 1) - (INT 6ch)
-IRQ4_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 5 (LPT 2) - (INT 6dh)
-IRQ5_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 6 (Floppy controller) - (INT 6eh)
-IRQ6_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 7 (LPT 1) - (INT 6fh)
-IRQ7_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 8 (RTC Alarm) - (INT 70h)
-IRQ8_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 9 - (INT 71h)
-IRQ9_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 10 - (INT 72h)
-IRQ10_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 11 - (INT 73h)
-IRQ11_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 12 (PS/2 mouse) - (INT 74h)
-IRQ12_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 13 (Floating point error) - (INT 75h)
-IRQ13_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 14 (Secondary IDE) - (INT 76h)
-IRQ14_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-; IRQ 15 (Primary IDE) - (INT 77h)
-IRQ15_SEL	equ $-IDT_BASE
-	dw 0	; offset 15:0
-	dw SYS_CODE64_SEL	; selector 15:0
-	db 0	; 0 for interrupt gate
-	db 0eh | 80h	; (10001110)type = 386 interrupt gate, present
-	dw 0	; offset 31:16
-	dd 0	; offset 63:32
-	dd 0	; 0 for reserved
-
-IDT_END:
-
-	align 2
-
-MemoryMapSize:
-	dd  0
-
-MemoryMap:
-	times (0x0FE0 - ($ - $$)) db 0
-
-MyStack:
-	; below is the pieces of the IVT that is used to redirect INT 68h - 6fh
-	;    back to INT 08h - 0fh  when in real mode...  It is 'org'ed to a
-	;    known low address (20f00) so it can be set up by PlMapIrqToVect in
-	;    8259.c
-
-	int 8
-	iret
-
-	int 9
-	iret
-
-	int 10
-	iret
-
-	int 11
-	iret
-
-	int 12
-	iret
-
-	int 13
-	iret
-
-	int 14
-	iret
-
-	int 15
-	iret
-
-DEFAULT_HANDLER_SIZE equ INT1 - INT0
 
 Start2:
 	mov     esp, 0x001FFFE8	; make final stack aligned
@@ -702,20 +249,17 @@ Start2:
 	mov     ebx, eax	; use bx to copy 15..0 to descriptors
 	shr     eax, 16		; use ax to copy 31..16 to descriptors
 				; 63..32 of descriptors are 0
-	mov     ecx, 0x78	; 0x78 IDT entries to initialize with unique entry points (exceptions)
+	mov     ecx, (IDT_END - IDT_BASE) / idtdescr_size	; count of IDT entries to initialize
 	mov	esi, [idtr + 2]
 	mov	edi, [esi]
 
 	; loop through all IDT entries exception handlers and initialize to default handler
 
 .1:
-	mov     word [edi + 0], bx		; write bits 15..0 of offset
-	mov     word [edi + 2], SYS_CODE64_SEL
-	mov     word [edi + 4], 0x0E00 | 0x8000	; type = 386 interrupt gate, present
-	mov     word [edi + 6], ax		; write bits 31..16 of offset
-	mov     dword [edi + 8], 0		; write bits 63..32 of offset
-	add     edi, 16				; move up to next descriptor
-	add     ebx, DEFAULT_HANDLER_SIZE	; move to next entry point
+	mov     word [edi + idtdescr.loffset], bx	; write bits 15..0 of offset
+	mov     word [edi + idtdescr.moffset], ax	; write bits 31..16 of offset
+	add     edi, idtdescr_size			; move up to next descriptor
+	add     ebx, DEFAULT_HANDLER_SIZE		; move to next entry point
 	loop    .1
 
 	lea	esi, [EfiLdrCode]
@@ -769,57 +313,59 @@ EfiLdrEntry:
 	dd 0
 	dd 0
 
-; Interrupt handling
+; Interrupt Handling Table
 
-%macro intentry 1
+%macro ihtentry 1
 	push 0
 	push %1
-	jmp qword commonIdtEntry	; qword to keep the same entry length
+	jmp qword commonIhtEntry	; qword to keep the same entry length
 %endmacro
 
-%macro intenerr 1
+%macro ihtenerr 1
 	nop
 	nop
 	push %1
-	jmp qword commonIdtEntry	; qword to keep the same entry length
+	jmp qword commonIhtEntry	; qword to keep the same entry length
 %endmacro
 
 	align	2
 
 	BITS	64
 
-Halt:
+DEFAULT_HANDLER_SIZE equ INT1 - INT0
 
+Halt:
 INT0:
-	intentry 0
+	ihtentry 0
+
 INT1:
-	intentry 1
-	intentry 2
-	intentry 3
-	intentry 4
-	intentry 5
-	intentry 6
-	intentry 7
-	intenerr 8	; Double Fault
-	intentry 9
-	intenerr 10	; Invalid TSS
-	intenerr 11	; Segment Not Present
-	intenerr 12	; Stack Fault
-	intenerr 13	; GP Fault
-	intenerr 14	; Page Fault
-	intentry 15
-	intentry 16
-	intenerr 17	; Alignment Check
-	intentry 18
-	intentry 19
+	ihtentry 1
+	ihtentry 2
+	ihtentry 3
+	ihtentry 4
+	ihtentry 5
+	ihtentry 6
+	ihtentry 7
+	ihtenerr 8	; Double Fault
+	ihtentry 9
+	ihtenerr 10	; Invalid TSS
+	ihtenerr 11	; Segment Not Present
+	ihtenerr 12	; Stack Fault
+	ihtenerr 13	; GP Fault
+	ihtenerr 14	; Page Fault
+	ihtentry 15
+	ihtentry 16
+	ihtenerr 17	; Alignment Check
+	ihtentry 18
+	ihtentry 19
 
 INTUnknown:
 
 %rep (0x78 - 20)
-	intentry ($ - INTUnknown - 2) / 9 + 20	; vector number
+	ihtentry ($ - INTUnknown - 2) / 9 + 20	; vector number
 %endrep
 
-commonIdtEntry:
+commonIhtEntry:
 	push	rax
 	push	rcx
 	push	rdx
@@ -1146,6 +692,153 @@ StringR14	db	"R14=", 0
 StringR15	db	" R15=", 0
 StringSs	db	" SS =", 0
 StringRflags	db	"RFLAGS=", 0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;   global descriptor table (GDT)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+%macro	gdtentry	4
+%[%1]_SEL	equ	$ - GDT_BASE
+	dw	%2
+	dw	0
+	db	0
+	db	%3
+	db	%4
+	db	0
+%endmacro
+
+	align 2
+
+gdtr:
+	dw	GDT_END - GDT_BASE - 1	; GDT limit
+	dd	0			; (GDT base gets set above)
+
+	align 2
+
+GDT_BASE:
+	gdtentry	NULL, 0, 0, 0
+	gdtentry	LINEAR, 0xFFFF, 0x92, 0xCF
+	gdtentry	LINEAR_CODE, 0xFFFF, 0x9A, 0xCF
+	gdtentry	SYS_DATA, 0xFFFF, 0x92, 0xCF
+	gdtentry	SYS_CODE, 0xFFFF, 0x9A, 0xCF
+	gdtentry	SPARE3, 0, 0, 0
+	gdtentry	SYS_DATA64, 0xFFFF, 0x92, 0xCF
+	gdtentry	SYS_CODE64, 0xFFFF, 0x9A, 0xAF
+	gdtentry	SPARE4, 0, 0, 0
+
+GDT_END:
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;   interrupt descriptor table (IDT)
+;
+;   Note: The hardware IRQ's specified in this table are the normal PC/AT IRQ
+;       mappings.  This implementation only uses the system timer and all other
+;       IRQs will remain masked.  The descriptors for vectors 33 + are provided
+;       for convenience.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+%macro	idtentry	1
+%[%1]_SEL	equ	$ - IDT_BASE
+	istruc	idtdescr
+		at	idtdescr.selector
+%ifdef X64
+			dw SYS_CODE64_SEL
+%else
+			dw SYS_CODE_SEL
+%endif
+		at	idtdescr.tattr
+			db 0x8E	 ; 386 32-bit interrupt gate, present
+	iend
+%endmacro
+
+	align 2
+
+idtr:
+	dw	IDT_END - IDT_BASE - 1	; IDT limit
+	dd	0			; (IDT base gets set above)
+
+	align 2
+
+IDT_BASE:
+	idtentry	DIV_ZERO	; divide by zero (INT 0)
+	idtentry	DEBUG_EXCEPT	; debug exception (INT 1)
+	idtentry	NMI		; NMI (INT 2)
+	idtentry	BREAKPOINT	; soft breakpoint (INT 3)
+	idtentry	OVERFLOW	; overflow (INT 4)
+	idtentry	BOUNDS_CHECK	; bounds check (INT 5)
+	idtentry	INVALID_OPCODE	; invalid opcode (INT 6)
+	idtentry	DEV_NOT_AVAIL	; device not available (INT 7)
+	idtentry	DOUBLE_FAULT	; double fault (INT 8)
+	idtentry	RSVD_INTR1	; Coprocessor segment overrun - reserved (INT 9)
+	idtentry	INVALID_TSS	; invalid TSS (INT 0x0A)
+	idtentry	SEG_NOT_PRESENT	; segment not present (INT 0x0B)
+	idtentry	STACK_FAULT	; stack fault (INT 0x0C)
+	idtentry	GP_FAULT	; general protection (INT 0x0D)
+	idtentry	PAGE_FAULT	; page fault (INT 0x0E)
+	idtentry	RSVD_INTR2	; Intel reserved - do not use (INT 0x0F)
+	idtentry	FLT_POINT_ERR	; floating point error (INT 0x10)
+	idtentry	ALIGNMENT_CHECK	; alignment check (INT 0x11)
+	idtentry	MACHINE_CHECK	; machine check (INT 0x12)
+	idtentry	SIMD_EXCEPTION	; SIMD floating-point exception (INT 0x13)
+
+	; 85 unspecified descriptors, First 12 of them are reserved, the rest are avail
+	times (85 * idtdescr_size) db 0
+
+	idtentry	IRQ0	; IRQ 0 (System timer) - (INT 0x68)
+	idtentry	IRQ1	; IRQ 1 (8042 Keyboard controller) - (INT 0x69)
+	idtentry	IRQ2	; Reserved - IRQ 2 redirect (IRQ 2) - DO NOT USE!!! - (INT 0x6A)
+	idtentry	IRQ3	; IRQ 3 (COM 2) - (INT 0x6B)
+	idtentry	IRQ4	; IRQ 4 (COM 1) - (INT 0x6C)
+	idtentry	IRQ5	; IRQ 5 (LPT 2) - (INT 0x6D)
+	idtentry	IRQ6	; IRQ 6 (Floppy controller) - (INT 0x6E)
+	idtentry	IRQ7	; IRQ 7 (LPT 1) - (INT 0x6F)
+	idtentry	IRQ8	; IRQ 8 (RTC Alarm) - (INT 0x70)
+	idtentry	IRQ9	; IRQ 9 - (INT 0x71)
+	idtentry	IRQ10	; IRQ 10 - (INT 0x72)
+	idtentry	IRQ11	; IRQ 10 - (INT 0x73)
+	idtentry	IRQ12	; IRQ 12 (PS/2 mouse) - (INT 0x74)
+	idtentry	IRQ13	; IRQ 13 (Floating point error) - (INT 0x75)
+	idtentry	IRQ14	; IRQ 14 (Secondary IDE) - (INT 0x76)
+	idtentry	IRQ15	; IRQ 15 (Primary IDE) - (INT 0x77)
+
+IDT_END:
+
+	align 2
+
+MemoryMapSize:
+	dd  0
+
+MemoryMap:
+	times (0x0FE0 - ($ - $$)) db 0
+
+MyStack:
+	; XXX: below is the pieces of the IVT that is used to redirect INT 68h - 6fh
+	; back to INT 08h - 0fh  when in real mode...  It is 'org'ed to a
+	; known low address (0x20F00) so it can be set up by PlMapIrqToVect in 8259.c
+
+	int 8
+	iret
+
+	int 9
+	iret
+
+	int 10
+	iret
+
+	int 11
+	iret
+
+	int 12
+	iret
+
+	int 13
+	iret
+
+	int 14
+	iret
+
+	int 15
+	iret
 
 	align	16
 
