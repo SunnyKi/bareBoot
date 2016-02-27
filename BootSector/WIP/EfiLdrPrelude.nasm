@@ -26,6 +26,10 @@ struc	idtdescr
 %endif
 endstruc
 
+IDT_COUNT	equ	((IDT_END - IDT_BASE) / idtdescr_size)	; count of IDT entries to initialize
+
+;------------------------------------------------------------------------------
+
 	BITS	16
 
 Start:
@@ -35,7 +39,8 @@ Start:
 	mov	ss, ax
 	mov	sp, MyStack
 
-; Gether memory msp
+;------------------------------------------------------------------------------
+; Gether memory map
 
 	xor	ebx, ebx
 	lea	edi, [MemoryMap]
@@ -53,18 +58,22 @@ MemMapLoop:
 
 MemMapDone:
 	lea	eax, [MemoryMap]
-	sub	edi, eax			; Get the address of the memory map
-	mov	dword [MemoryMapSize], edi	; Save the size of the memory map
+	sub	edi, eax
+	mov	dword [MemoryMapSize], edi
+
+;------------------------------------------------------------------------------
+; Fix pointers
 
 	xor	ebx, ebx
-	mov	bx, cs				; BX=segment
+	mov	bx, cs
 	shl	ebx, 4				; BX="linear" address of segment base
 	lea	eax, [GDT_BASE + ebx]		; EAX=PHYSICAL address of gdt
 	mov	dword [gdtr + 2], eax		; Put address of gdt into the gdtr
 	lea	eax, [IDT_BASE + ebx]		; EAX=PHYSICAL address of idt
 	mov	dword [idtr + 2], eax		; Put address of idt into the idtr
-	lea	edx, [MemoryMapSize + ebx]	; Physical base address of the memory map
+	lea	edx, [MemoryMapSize + ebx]	; XXX: Physical base address of the memory map
 
+;------------------------------------------------------------------------------
 ; Enable A20 Gate
 
 	mov	ax, 0x2401	; Enable A20 Gate
@@ -102,7 +111,7 @@ Timeout8042:
 ;
 ; attempt to Enable A20 (fast method).
 ;
-	in	al, 0x92
+	in	al, 0x92	; XXX: is there a name for 0x92?
 	test	al, 2
 	jnz	A20GateEnabled
 	or	al, 2
@@ -110,12 +119,23 @@ Timeout8042:
 	out	0x92, al
 %endif
 
+Empty8042InputBuffer:
+	xor	cx, cx
+Empty8042Loop:
+	out	DELAY_PORT, ax		; Delay 1us
+	in	al, KBD_STATUS_PORT	; Read the 8042 Status Port
+	and	al, 0x02		; Check the Input Buffer Full Flag
+	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
+	ret
+
 A20GateEnabled:
 
-	; DISABLE INTERRUPTS - Entering Protected Mode
+;------------------------------------------------------------------------------
+; Entering Protected Mode
 
 	cli
 
+	; XXX
 	lea	eax, [OffsetIn32BitProtectedMode]
 	add	eax, 0x20000 + (In32BitProtectedMode - OffsetIn32BitProtectedMode)
 	mov	dword [OffsetIn32BitProtectedMode], eax
@@ -135,14 +155,15 @@ A20GateEnabled:
 	or	eax, 1		; Set PE=1
 	mov	cr0, eax
 
-	jmp	dword 0x0010:0x00000000	; will be modified by above code
+	jmp	dword LINEAR_CODE_SEL:0x00000000	; will be modified by above code
 OffsetIn32BitProtectedMode	equ $ - 6
 
 In32BitProtectedMode:
 
-	BITS	32
-
+;------------------------------------------------------------------------------
 ; Entering Long Mode
+
+	BITS	32
 
 	mov	ax, LINEAR_SEL
 	mov	ds, ax
@@ -163,11 +184,11 @@ In32BitProtectedMode:
 	; under 4GB.
 	;
 	; Address Map:
-	;    10000 ~    12000 - efildr (loaded)
-	;    20000 ~    21000 - start64.com
-	;    21000 ~    22000 - efi64.com
-	;    22000 ~    90000 - efildr + stuff
-	;    90000 ~    96000 - 4G pagetable (will be reload later)
+	;  10000 ~ 12000 - efildr (loaded)
+	;  20000 ~ 21000 - start64.com
+	;  21000 ~ 22000 - efi64.com
+	;  22000 ~ 90000 - efildr + stuff
+	;  90000 ~ 96000 - 4G pagetable (will be reload later)
 
 	mov	eax, 0x90000	; XXX: !!!
 	mov	cr3, eax
@@ -180,19 +201,17 @@ In32BitProtectedMode:
 	wrmsr
 
 	; Enable paging to activate long mode (set CR0.PG=1)
- 
+
 	mov	eax, cr0
 	bts	eax, 31		; Set PG=1.
 	mov	cr0, eax
 	jmp	GoToLongMode
 
 GoToLongMode:
+	a16 jmp	dword SYS_CODE64_SEL:0x00000000
+OffsetInLongMode	equ ($ - 6)
 
-	db	0x67	; XXX: ???
-	jmp	dword 0x0038:0x00000000	; Selector is Our Code Selector (38h)
-OffsetInLongMode	equ $ - 6
-
-	BITS	64
+;------------------------------------------------------------------------------
 
 InLongMode:
 	mov	ax, SYS_DATA64_SEL
@@ -203,35 +222,8 @@ InLongMode:
 	mov	ss, ax
 	mov	ds, ax
 
-	mov	ebp, 0x00400000	; XXX: Destination of EFILDR32
-	mov	ebx, 0x00070000	; Length of copy
-
-	; load idt later
-
-	xor	rax, rax
-	mov	ax, idtr
-	add	rax, 0x20000	; XXX
-
-	lidt	[rax]
-
-	mov	rax, dword 0x21000	; XXX
-	push	rax
-	ret
-
-	BITS	16
-
-Empty8042InputBuffer:
-	xor	cx, cx
-Empty8042Loop:
-	out	DELAY_PORT, ax		; Delay 1us
-	in	al, KBD_STATUS_PORT	; Read the 8042 Status Port
-	and	al, 0x02		; Check the Input Buffer Full Flag
-	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
-	ret
-
-
 Start2:
-	mov     esp, 0x001FFFE8	; make final stack aligned
+	mov	esp, 0x001FFFE8	; make final stack aligned
 
 	; set OSFXSR and OSXMMEXCPT because some code will use XMM register
 
@@ -240,68 +232,74 @@ Start2:
 	bts eax, 10
 	mov cr4, eax
 
-	; Populate IDT with meaningful offsets for exception handlers...
+;------------------------------------------------------------------------------
+; Populate IDT with meaningful offsets for exception handlers...
 
 	lea	eax, [idtr]
-	sidt    [eax]		; get fword address of IDT
-
-	lea	eax, [Halt]
-	mov     ebx, eax	; use bx to copy 15..0 to descriptors
-	shr     eax, 16		; use ax to copy 31..16 to descriptors
-				; 63..32 of descriptors are 0
-	mov     ecx, (IDT_END - IDT_BASE) / idtdescr_size	; count of IDT entries to initialize
-	mov	esi, [idtr + 2]
-	mov	edi, [esi]
+	sidt	[eax]		; get fword address of IDT
 
 	; loop through all IDT entries exception handlers and initialize to default handler
 
+	lea	eax, [Halt]
+	mov	ebx, eax	; use bx to copy 15..0 to descriptors
+	shr	eax, 16		; use ax to copy 31..16 to descriptors
+%ifdef X64
+				; 63..32 of descriptors are 0
+%endif
+	mov	ecx, IDT_COUNT	; count of IDT entries to initialize
+	lea	edi, [IDT_BASE]
+
 .1:
-	mov     word [edi + idtdescr.loffset], bx	; write bits 15..0 of offset
-	mov     word [edi + idtdescr.moffset], ax	; write bits 31..16 of offset
-	add     edi, idtdescr_size			; move up to next descriptor
-	add     ebx, DEFAULT_HANDLER_SIZE		; move to next entry point
-	loop    .1
+	mov	word [edi + idtdescr.loffset], bx	; write bits 15..0 of offset
+	mov	word [edi + idtdescr.moffset], ax	; write bits 31..16 of offset
+	add	edi, idtdescr_size			; move up to next descriptor
+	add	ebx, DEFAULT_HANDLER_SIZE		; move to next entry point
+	loop	.1
+
+;------------------------------------------------------------------------------
 
 	lea	esi, [EfiLdrCode]
-	mov     eax, [esi + 014h]	; eax = [22014]
-	add     esi, eax		; esi = 22000 + [22014] = Base of EFILDR.C
-	mov     ebp, [esi + 03Ch]	; ebp = [22000 + [22014] + 3c] = NT Image Header for EFILDR.C
+	mov	eax, [esi + 014h]	; eax = [22014]
+	add	esi, eax		; esi = 22000 + [22014] = Base of EFILDR.C
+	mov	ebp, [esi + 03Ch]	; ebp = [22000 + [22014] + 3c] = NT Image Header for EFILDR.C
 	add	ebp, esi
-	mov     edi, [ebp + 030h]	; edi = [[22000 + [22014] + 3c] + 2c] = ImageBase (63..32 is zero, ignore)
-	mov     eax, [ebp + 028h]	; eax = [[22000 + [22014] + 3c] + 24] = EntryPoint
-	add     eax, edi		; eax = ImageBase + EntryPoint
+	mov	edi, [ebp + 030h]	; edi = [[22000 + [22014] + 3c] + 2c] = ImageBase (63..32 is zero, ignore)
+	mov	eax, [ebp + 028h]	; eax = [[22000 + [22014] + 3c] + 24] = EntryPoint
+	add	eax, edi		; eax = ImageBase + EntryPoint
 
 	mov	[EfiLdrEntry], eax
 
-	mov     bx, word [ebp + 6]	; bx = Number of sections
-	mov     ax, word [ebp + 014h]	; ax = Optional Header Size
+	mov	bx, word [ebp + 6]	; bx = Number of sections
+	mov	ax, word [ebp + 014h]	; ax = Optional Header Size
 	add	ebp, eax
-	add     ebp, 018h	; ebp = Start of 1st Section
+	add	ebp, 018h	; ebp = Start of 1st Section
 
 SectionLoop:
-	push    esi	; Save Base of EFILDR.C
-	push    edi	; Save ImageBase
-	add     esi, [ebp + 014h]	; esi = Base of EFILDR.C + PointerToRawData
-	add     edi, [ebp + 00Ch]	; edi = ImageBase + VirtualAddress
-	mov     ecx, [ebp + 010h]	; ecs = SizeOfRawData
+	push	esi	; Save Base of EFILDR.C
+	push	edi	; Save ImageBase
+	add	esi, [ebp + 014h]	; esi = Base of EFILDR.C + PointerToRawData
+	add	edi, [ebp + 00Ch]	; edi = ImageBase + VirtualAddress
+	mov	ecx, [ebp + 010h]	; ecs = SizeOfRawData
 
 	cld
 	shr	ecx, 2
 	rep	movsd
 
-	pop     edi	; Restore ImageBase
-	pop     esi	; Restore Base of EFILDR.C
+	pop	edi	; Restore ImageBase
+	pop	esi	; Restore Base of EFILDR.C
 
-	add     ebp, 0x28	; ebp = ebp + 028h = Pointer to next section record
+	add	ebp, 0x28	; ebp = ebp + 028h = Pointer to next section record
 	dec	ebx
 	cmp	ebx, 0
 	jne	SectionLoop
 
+;------------------------------------------------------------------------------
+
 	lea	edx, [idtr]
-	movzx   eax, word [edx]	; get size of IDT
+	movzx	eax, word [edx]	; get size of IDT
 	inc	eax
-	add     eax, [edx + 2]	; add to base of IDT to get location of memory map...
-	mov     ecx, eax	; put argument to RCX
+	add	eax, [edx + 2]	; add to base of IDT to get location of memory map...
+	mov	ecx, eax	; put argument to RCX
 
 	mov	eax, [EfiLdrEntry]
 	push	eax
@@ -310,60 +308,63 @@ SectionLoop:
 	align	2
 
 EfiLdrEntry:
-	dd 0
-	dd 0
+	dq	0
 
+;------------------------------------------------------------------------------
 ; Interrupt Handling Table
 
-%macro ihtentry 1
-	push 0
-	push %1
-	jmp qword commonIhtEntry	; qword to keep the same entry length
+%macro	ihtentry	1
+	push	0
+	push	%1
+	jmp	qword commonIhtEntry	; qword to keep the same entry length
 %endmacro
 
-%macro ihtenerr 1
+%macro	ihtenerr	1
 	nop
 	nop
-	push %1
-	jmp qword commonIhtEntry	; qword to keep the same entry length
+	push	%1
+	jmp	qword commonIhtEntry	; qword to keep the same entry length
 %endmacro
 
 	align	2
 
 	BITS	64
 
-DEFAULT_HANDLER_SIZE equ INT1 - INT0
+DEFAULT_HANDLER_SIZE equ (INT1 - INT0)
 
 Halt:
 INT0:
-	ihtentry 0
+	ihtentry	0
 
 INT1:
-	ihtentry 1
-	ihtentry 2
-	ihtentry 3
-	ihtentry 4
-	ihtentry 5
-	ihtentry 6
-	ihtentry 7
-	ihtenerr 8	; Double Fault
-	ihtentry 9
-	ihtenerr 10	; Invalid TSS
-	ihtenerr 11	; Segment Not Present
-	ihtenerr 12	; Stack Fault
-	ihtenerr 13	; GP Fault
-	ihtenerr 14	; Page Fault
-	ihtentry 15
-	ihtentry 16
-	ihtenerr 17	; Alignment Check
-	ihtentry 18
-	ihtentry 19
+	ihtentry	1
+	ihtentry	2
+	ihtentry	3
+	ihtentry	4
+	ihtentry	5
+	ihtentry	6
+	ihtentry	7
+	ihtenerr	8	; Double Fault
+	ihtentry	9
+	ihtenerr	10	; Invalid TSS
+	ihtenerr	11	; Segment Not Present
+	ihtenerr	12	; Stack Fault
+	ihtenerr	13	; GP Fault
+	ihtenerr	14	; Page Fault
+	ihtentry	15
+	ihtentry	16
+	ihtenerr	17	; Alignment Check
+	ihtentry	18
+	ihtentry	19
 
 INTUnknown:
-
-%rep (0x78 - 20)
-	ihtentry ($ - INTUnknown - 2) / 9 + 20	; vector number
+; XXX: 0x78 is IDT_COUNT, 9 is DEFAULT_HANDLER_SIZE. Keep in sync!
+%rep	(0x78 - 20)
+	ihtentry	(($ - INTUnknown - 2) / 9 + 20)
 %endrep
+
+;------------------------------------------------------------------------------
+; Interrupt Handler
 
 commonIhtEntry:
 	push	rax
@@ -384,31 +385,31 @@ commonIhtEntry:
 	push	r15
 	mov	rbp, rsp
 
-;;  At this point the stack looks like this:
+;; At this point the stack looks like this:
 ;;
-;;      Calling SS
-;;      Calling RSP
-;;      rflags
-;;      Calling CS
-;;      Calling RIP
-;;      Error code or 0
-;;      Int num or 0xFF for unknown int num
-;;      rax
-;;      rcx
-;;      rdx
-;;      rbx
-;;      rsp
-;;      rbp
-;;      rsi
-;;      rdi
-;;      r8
-;;      r9
-;;      r10
-;;      r11
-;;      r12
-;;      r13
-;;      r14
-;;      r15 <------- RSP, RBP
+;;  Calling SS
+;;  Calling RSP
+;;  rflags
+;;  Calling CS
+;;  Calling RIP
+;;  Error code or 0
+;;  Int num or 0xFF for unknown int num
+;;  rax
+;;  rcx
+;;  rdx
+;;  rbx
+;;  rsp
+;;  rbp
+;;  rsi
+;;  rdi
+;;  r8
+;;  r9
+;;  r10
+;;  r11
+;;  r12
+;;  r13
+;;  r14
+;;  r15 <------- RSP, RBP
 
 %macro PrintRegister 2
 	mov	rsi, %1
@@ -421,19 +422,19 @@ commonIhtEntry:
 
 	mov	rsi, String1
 	call	PrintString
-	mov     rax, [rbp + 16 * 8]	; move Int number into RAX
+	mov	rax, [rbp + 16 * 8]	; move Int number into RAX
 	cmp	rax, 18
 	ja	PrintDefaultString
 
 PrintExceptionString:
-	shl     rax, 3			; multiply by 8 to get from StringTable to actual string address
+	shl	rax, 3			; multiply by 8 to get from StringTable to actual string address
 	add	rax, StringTable
 	mov	rsi, [rax]
 	jmp	PrintTheString
 
 PrintDefaultString:
 	mov	rsi, IntUnkString
-	mov     rdx, rax		; patch Int number
+	mov	rdx, rax		; patch Int number
 	call	A2C
 	mov	[rsi + 1], al
 	mov	rax, rdx
@@ -449,7 +450,7 @@ PrintTheString:
 	mov	al, ':'
 	mov	byte [rdi], al
 	add	rdi, 2
-	mov     rax, [rbp + 18 * 8]	; RIP
+	mov	rax, [rbp + 18 * 8]	; RIP
 	call	PrintQword
 	mov	rsi, String3
 	call	PrintString
@@ -500,7 +501,6 @@ PrintTheString:
 	add	rsi, 23 * 8
 	mov	rcx, 4
 
-
 OuterLoop:
 	push	rcx
 	mov	rcx, 4
@@ -522,9 +522,9 @@ InnerLoop:
 
 	mov	rdi, 0x000B8960
 
-	mov     rax, [rbp + 18 * 8]	; RIP
+	mov	rax, [rbp + 18 * 8]	; RIP
 	sub	rax, 8 * 8
-	mov     rsi, rax		; esi = rip - 8 QWORD linear (total 16 QWORD)
+	mov	rsi, rax		; esi = rip - 8 QWORD linear (total 16 QWORD)
 
 	mov	rcx, 4
 
@@ -549,7 +549,7 @@ InnerLoop1:
 @2:
 	jmp	@2
 
-; return
+	; return
 	mov	rsp, rbp
 	pop	r15
 	pop	r14
@@ -562,13 +562,13 @@ InnerLoop1:
 	pop	rdi
 	pop	rsi
 	pop	rbp
-	pop    rax	; esp
+	pop	rax	; esp
 	pop	rbx
 	pop	rdx
 	pop	rcx
 	pop	rax
 
-	add    rsp, 16	; error code and INT number
+	add	rsp, 16	; error code and INT number
 	iretq
 
 PrintString:
@@ -694,47 +694,52 @@ StringSs	db	" SS =", 0
 StringRflags	db	"RFLAGS=", 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;   global descriptor table (GDT)
+; global descriptor table (GDT)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 %macro	gdtentry	4
 %[%1]_SEL	equ	$ - GDT_BASE
-	dw	%2
-	dw	0
-	db	0
-	db	%3
-	db	%4
-	db	0
+	dw	%2	; limit low bits (0..15)
+	dw	0	; base low bits (0..15)
+	db	0	; base middle bits (16..23)
+	db	%3	; access
+	db	%4	; limit high bits (16..19) & flags
+	db	0	; base high bits (24..31)
 %endmacro
 
 	align 2
 
 gdtr:
 	dw	GDT_END - GDT_BASE - 1	; GDT limit
-	dd	0			; (GDT base gets set above)
+	dd	0			; (GDT base gets set at runtime)
 
 	align 2
 
 GDT_BASE:
-	gdtentry	NULL, 0, 0, 0
-	gdtentry	LINEAR, 0xFFFF, 0x92, 0xCF
-	gdtentry	LINEAR_CODE, 0xFFFF, 0x9A, 0xCF
-	gdtentry	SYS_DATA, 0xFFFF, 0x92, 0xCF
-	gdtentry	SYS_CODE, 0xFFFF, 0x9A, 0xCF
-	gdtentry	SPARE3, 0, 0, 0
-	gdtentry	SYS_DATA64, 0xFFFF, 0x92, 0xCF
-	gdtentry	SYS_CODE64, 0xFFFF, 0x9A, 0xAF
-	gdtentry	SPARE4, 0, 0, 0
+	gdtentry	NULL, 0, 0, 0			; selector [0x00]
+	gdtentry	LINEAR, 0xFFFF, 0x92, 0xCF	; selector [0x08]
+	gdtentry	LINEAR_CODE, 0xFFFF, 0x9A, 0xCF	; selector [0x10]
+	gdtentry	SYS_DATA, 0xFFFF, 0x92, 0xCF	; selector [0x18]
+	gdtentry	SYS_CODE, 0xFFFF, 0x9A, 0xCF	; selector [0x20]
+	gdtentry	SPARE3, 0, 0, 0			; selector [0x28]
+%ifdef X64
+	gdtentry	SYS_DATA64, 0xFFFF, 0x92, 0xCF	; selector [0x30]
+	gdtentry	SYS_CODE64, 0xFFFF, 0x9A, 0xAF	; selector [0x38]
+%else
+	gdtentry	SPARE4, 0, 0, 0			; selector [0x30]
+	gdtentry	SPARE5, 0, 0, 0			; selector [0x38]
+%endif
+	gdtentry	SPARE6, 0, 0, 0			; selector [0x40]
 
 GDT_END:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;   interrupt descriptor table (IDT)
+; interrupt descriptor table (IDT)
 ;
-;   Note: The hardware IRQ's specified in this table are the normal PC/AT IRQ
-;       mappings.  This implementation only uses the system timer and all other
-;       IRQs will remain masked.  The descriptors for vectors 33 + are provided
-;       for convenience.
+; Note: The hardware IRQ's specified in this table are the normal PC/AT IRQ
+; mappings. This implementation only uses the system timer and all other
+; IRQs will remain masked. The descriptors for vectors 33 + are provided
+; for convenience.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 %macro	idtentry	1
@@ -755,7 +760,7 @@ GDT_END:
 
 idtr:
 	dw	IDT_END - IDT_BASE - 1	; IDT limit
-	dd	0			; (IDT base gets set above)
+	dq	0			; (IDT base gets set at runtime)
 
 	align 2
 
@@ -781,8 +786,8 @@ IDT_BASE:
 	idtentry	MACHINE_CHECK	; machine check (INT 0x12)
 	idtentry	SIMD_EXCEPTION	; SIMD floating-point exception (INT 0x13)
 
-	; 85 unspecified descriptors, First 12 of them are reserved, the rest are avail
-	times (85 * idtdescr_size) db 0
+	; 84 unspecified descriptors, First 12 of them are reserved, the rest are avail
+	times (84 * idtdescr_size) db 0
 
 	idtentry	IRQ0	; IRQ 0 (System timer) - (INT 0x68)
 	idtentry	IRQ1	; IRQ 1 (8042 Keyboard controller) - (INT 0x69)
@@ -806,14 +811,14 @@ IDT_END:
 	align 2
 
 MemoryMapSize:
-	dd  0
+	dd	0
 
 MemoryMap:
 	times (0x0FE0 - ($ - $$)) db 0
 
 MyStack:
 	; XXX: below is the pieces of the IVT that is used to redirect INT 68h - 6fh
-	; back to INT 08h - 0fh  when in real mode...  It is 'org'ed to a
+	; back to INT 08h - 0fh when in real mode... It is 'org'ed to a
 	; known low address (0x20F00) so it can be set up by PlMapIrqToVect in 8259.c
 
 	int 8
