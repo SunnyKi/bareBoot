@@ -357,9 +357,31 @@ INTUnknown:
 %endrep
 
 ;------------------------------------------------------------------------------
+
+%ifdef X64
+%define	ZWORD_SIZE	8
+%define	Zax	rax
+%define	Zbx	rbx
+%define	Zcx	rcx
+%define	Zdi	rdi
+%define	Zsi	rsi
+%else
+%define	ZWORD_SIZE	4
+%define	Zax	eax
+%define	Zbx	ebx
+%define	Zcx	ecx
+%define	Zdi	edi
+%define	Zsi	esi
+%endif
+
+;------------------------------------------------------------------------------
 ; Interrupt Handler
 
 commonIhtEntry:
+%ifdef X64
+
+	BITS 64
+
 	push	rax
 	push	rcx
 	push	rdx
@@ -408,7 +430,7 @@ commonIhtEntry:
 	mov	rsi, %1
 	call	PrintString
 	mov	rax, [rbp + %2 * 8]
-	call	PrintQword
+	call	PrintZword
 %endmacro
 
 	call	ClearScreen
@@ -416,11 +438,11 @@ commonIhtEntry:
 	mov	rsi, String1
 	call	PrintString
 	mov	rax, [rbp + 16 * 8]	; move Int number into RAX
-	cmp	rax, 18
+	cmp	rax, 19
 	ja	PrintDefaultString
 
 PrintExceptionString:
-	shl	rax, 3			; multiply by 8 to get from StringTable to actual string address
+	shl	rax, 2			; multiply by 4 (sizeof dword) to get from StringTable to actual string address
 	add	rax, StringTable
 	mov	rsi, [rax]
 	jmp	PrintTheString
@@ -444,7 +466,7 @@ PrintTheString:
 	mov	byte [rdi], al
 	add	rdi, 2
 	mov	rax, [rbp + 18 * 8]	; RIP
-	call	PrintQword
+	call	PrintZword
 	mov	rsi, String3
 	call	PrintString
 
@@ -501,7 +523,7 @@ OuterLoop:
 
 InnerLoop:
 	mov	rax, [rsi]
-	call	PrintQword
+	call	PrintZword
 	add	rsi, 8
 	mov	al, ' '
 	mov	[rdi], al
@@ -517,7 +539,7 @@ InnerLoop:
 
 	mov	rax, [rbp + 18 * 8]	; RIP
 	sub	rax, 8 * 8
-	mov	rsi, rax		; esi = rip - 8 QWORD linear (total 16 QWORD)
+	mov	rsi, rax		; rsi = rip - 8 QWORD linear (total 16 QWORD)
 
 	mov	rcx, 4
 
@@ -528,7 +550,7 @@ OuterLoop1:
 
 InnerLoop1:
 	mov	rax, [rsi]
-	call	PrintQword
+	call	PrintZword
 	add	rsi, 8
 	mov	al, ' '
 	mov	[rdi], al
@@ -565,36 +587,164 @@ InnerLoop1:
 	add	rsp, 16	; error code and INT number
 	iretq
 
+%else
+
+	BITS	32
+
+	pushad
+	mov	ebp, esp
+;;
+;;	At this point the stack looks like this:
+;;
+;;	eflags
+;;	Calling CS
+;;	Calling EIP
+;;	Error code or 0
+;;	Int num or 0ffh for unknown int num
+;;	eax
+;;	ecx
+;;	edx
+;;	ebx
+;;	esp
+;;	ebp
+;;	esi
+;;	edi <------- ESP, EBP
+;;
+
+%macro PrintRegister 2
+	mov	esi, %1
+	call	PrintString
+	mov	eax, [ebp + %2]
+	call	PrintZword
+%endmacro
+
+	call	ClearScreen
+
+	mov	esi, String1
+	call	PrintString
+	mov	eax, [ebp + 32]		; move Int number into EAX
+	cmp	eax, 19
+	ja	PrintDefaultString
+
+PrintExceptionString:
+	shl	eax, 2			; multiply by 4 to get offset from StringTable to actual string address
+	add	eax, StringTable
+	mov	esi, [eax]
+	jmp	PrintTheString
+
+PrintDefaultString:
+	mov	esi, IntUnkString
+	mov	edx, eax		; patch Int number
+	call	A2C
+	mov	[esi + 1], al
+	mov	eax, edx
+	shr	eax, 4
+	call	A2C
+	mov	[esi], al
+
+PrintTheString:
+	call	PrintString
+
+	PrintRegister	String2, 44	; CS
+	mov	al, ':'
+	mov	byte [edi], al
+	add	edi, 2
+	mov	eax, [ebp + 40]		; EIP
+	call	PrintZword
+	mov	esi, String3
+	call	PrintString
+
+	mov	edi, 0x000B8140
+
+	PrintRegister	StringEax, 28
+	PrintRegister	StringEbx, 16
+	PrintRegister	StringEcx, 24
+	PrintRegister	StringEdx, 20
+	PrintRegister	StringEcode, 36
+
+	mov	edi, 0x000B81E0
+
+	PrintRegister	StringEsp, 12
+	PrintRegister	StringEbp, 8
+	PrintRegister	StringEsi, 4
+	PrintRegister	StringEdi, 0
+	PrintRegister	StringEflags, 48
+
+	mov	edi, 0x000B8320
+
+	mov	esi, ebp
+	add	esi, 52
+	mov	ecx, 8
+
+OuterLoop:
+	push	ecx
+	mov	ecx, 8
+	mov	edx, edi
+
+InnerLoop:
+	mov	eax, [esi]
+	call	PrintZword
+	add	esi, 4
+	mov	al, ' '
+	mov	[edi], al
+	add	edi, 2
+	loop	InnerLoop
+
+	pop	ecx
+	add	edx, 160
+	mov	edi, edx
+	loop	OuterLoop
+
+	mov	edi, 0x000B8960
+
+	mov	eax, [ebp + 40]	; EIP
+	sub	eax, 32 * 4
+	mov	esi, eax	; esi = eip - 32 DWORD linear (total 64 DWORD)
+
+	mov	ecx, 8
+
+OuterLoop1:
+	push	ecx
+	mov	ecx, 8
+	mov	edx, edi
+
+InnerLoop1:
+	mov	eax, [esi]
+	call	PrintZword
+	add	esi, 4
+	mov	al, ' '
+	mov	[edi], al
+	add	edi, 2
+	loop	InnerLoop1
+
+	pop	ecx
+	add	edx, 160
+	mov	edi, edx
+	loop	OuterLoop1
+
+@2:
+	jmp	@2
+
+	mov	esp, ebp
+	popad
+	add	esp, 8	; error code and INT number
+
+	iretd
+%endif
+
 ;------------------------------------------------------------------------------
-PrintString:
-	push	rax
+;; ZAX contains zword to print
+;; ZDI contains memory location (screen location) to print it to
 
-@3:
-	mov	al, byte [rsi]
-	cmp	al, 0
-	je	@4
-	mov	byte [rdi], al
-	inc	rsi
-	add	rdi, 2
-	jmp	@3
+PrintZword:
+	push	Zcx
+	push	Zbx
+	push	Zax
 
-@4:
-	pop	rax
-	ret
-
-;------------------------------------------------------------------------------
-;; RAX contains qword to print
-;; RDI contains memory location (screen location) to print it to
-
-PrintQword:
-	push	rcx
-	push	rbx
-	push	rax
-
-	mov	rcx, dword 16
+	mov	Zcx, (2 * ZWORD_SIZE)
 
 looptop:
-	rol	rax, 4
+	rol	Zax, 4
 	mov	bl, al
 	and	bl, 0x0F
 	add	bl, '0'
@@ -603,36 +753,54 @@ looptop:
 	add	bl, 7
 
 @5:
-	mov	byte [rdi], bl
-	add	rdi, 2
+	mov	byte [Zdi], bl
+	add	Zdi, 2
 	loop	looptop
 
-	pop	rax
-	pop	rbx
-	pop	rcx
+	pop	Zax
+	pop	Zbx
+	pop	Zcx
 	ret
 
-;------------------------------------------------------------------------------
 ClearScreen:
-	push	rax
-	push	rcx
+	push	Zax
+	push	Zcx
 
 	mov	al, ' '
 	mov	ah, 0x0C
-	mov	rdi, 0x000B8000
-	mov	rcx, 80 * 24
+	mov	Zdi, 0x000B8000
+	mov	Zcx, 80 * 24
 
 @6:
-	mov	word [rdi], ax
-	add	rdi, 2
+	mov	word [Zdi], ax
+	add	Zdi, 2
 	loop	@6
-	mov	rdi, 0x000B8000
+	mov	Zdi, 0x000B8000
 
-	pop	rcx
-	pop	rax
+	pop	Zcx
+	pop	Zax
 	ret
 
 ;------------------------------------------------------------------------------
+
+PrintString:
+	push	Zax
+
+@3:
+	mov	al, byte [Zsi]
+	cmp	al, 0
+	je	@4
+	mov	byte [Zdi], al
+	inc	Zsi
+	add	Zdi, 2
+	jmp	@3
+
+@4:
+	pop	Zax
+	ret
+
+;------------------------------------------------------------------------------
+
 A2C:
 	and	al, 0x0F
 	add	al, '0'
@@ -669,16 +837,17 @@ Int19String	db	"13h SIMD Floating-Point Exception -", 0
 IntUnkString	db	"??h Unknown interrupt -", 0
 
 StringTable:
-	dq	Int0String, Int1String, Int2String, Int3String
-	dq	Int4String, Int5String, Int6String, Int7String
-	dq	Int8String, Int9String, Int10String, Int11String
-	dq	Int12String, Int13String, Int14String, Int15String
-	dq	Int16String, Int17String, Int18String, Int19String
+	dd	Int0String, Int1String, Int2String, Int3String
+	dd	Int4String, Int5String, Int6String, Int7String
+	dd	Int8String, Int9String, Int10String, Int11String
+	dd	Int12String, Int13String, Int14String, Int15String
+	dd	Int16String, Int17String, Int18String, Int19String
 
 String1		db	"*** INT ", 0
 String2		db	" HALT!! *** (", 0
 String3		db	")", 0
 
+%ifdef X64
 StringRax	db	"RAX=", 0
 StringRcx	db	" RCX=", 0
 StringRdx	db	" RDX=", 0
@@ -698,6 +867,18 @@ StringR14	db	"R14=", 0
 StringR15	db	" R15=", 0
 StringSs	db	" SS =", 0
 StringRflags	db	"RFLAGS=", 0
+%else
+StringEax	db	"EAX=", 0
+StringEbx	db	" EBX=", 0
+StringEcx	db	" ECX=", 0
+StringEdx	db	" EDX=", 0
+StringEcode	db	" ECODE=", 0
+StringEsp	db	"ESP=", 0
+StringEbp	db	" EBP=", 0
+StringEsi	db	" ESI=", 0
+StringEdi	db	" EDI=", 0
+StringEflags	db	" EFLAGS=", 0
+%endif
 
 ;------------------------------------------------------------------------------
 ; global descriptor table (GDT)
@@ -832,7 +1013,7 @@ MemoryMapSize:
 MemoryMap:
 	times 512 db 0
 
-MyStack:
+MyStack:		; XXX: better place???
 
 ;------------------------------------------------------------------------------
 
