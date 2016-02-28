@@ -9,10 +9,16 @@
 ;*   THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 ;*   WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 ;*
-;*    efildrprelude.nasm
+;*    EfiLdrPrelude.nasm
 ;*
 ;------------------------------------------------------------------------------
 ; nms was here
+;------------------------------------------------------------------------------
+; Variants selected by nasm command line
+;  -DX64=1 X86_64 binary
+;  -DX64=0 IA32 binary
+;  -DA20FAST=1 compile in fast A20 enabler
+;  -DA20FAST=0 compile in BIOS & manual enabler
 ;------------------------------------------------------------------------------
 
 struc	idtdescr
@@ -21,7 +27,7 @@ struc	idtdescr
 	.zero1		resb	1	; zero
 	.tattr		resb	1	; type and attributes
 	.moffset	resw	1	; offset middle bits (16..31)
-%ifdef X64
+%if X64
 	.hoffset	resd	1	; offset high bits (32..63)
 	.zero2		resd	1	; zero
 %endif
@@ -69,13 +75,24 @@ MemMapDone:
 	mov	bx, cs
 	shl	ebx, 4				; BX="linear" address of segment base
 	lea	eax, [GDT_BASE + ebx]		; EAX=PHYSICAL address of gdt
-	mov	dword [gdtr + 2], eax		; Put address of gdt into the gdtr
+	mov	dword [gdtr + 2], eax
 	lea	eax, [IDT_BASE + ebx]		; EAX=PHYSICAL address of idt
-	mov	dword [idtr + 2], eax		; Put address of idt into the idtr
+	mov	dword [idtr + 2], eax
 
 ;------------------------------------------------------------------------------
 ; Enable A20 Gate
 
+%if A20FAST
+;
+; attempt to Enable A20 (fast method).
+;
+	in	al, 0x92	; 0x92 -- System Control Port A
+	test	al, 2
+	jnz	A20GateEnabled
+	or	al, 2
+	and	al, 0xFE
+	out	0x92, al
+%else
 	mov	ax, 0x2401	; Enable A20 Gate
 	int	0x15
 	jnc	A20GateEnabled	; Jump if it suceeded
@@ -107,18 +124,6 @@ Delay25uS:
 
 Timeout8042:
 
-%ifdef A20FAST
-;
-; attempt to Enable A20 (fast method).
-;
-	in	al, 0x92	; XXX: is there a name for 0x92?
-	test	al, 2
-	jnz	A20GateEnabled
-	or	al, 2
-	and	al, 0xFE
-	out	0x92, al
-%endif
-
 Empty8042InputBuffer:
 	xor	cx, cx
 
@@ -128,6 +133,7 @@ Empty8042Loop:
 	and	al, 0x02		; Check the Input Buffer Full Flag
 	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
 	ret
+%endif
 
 A20GateEnabled:
 
@@ -141,7 +147,7 @@ A20GateEnabled:
 	add	eax, 0x20000 + (In32BitProtectedMode - OffsetIn32BitProtectedMode)
 	mov	dword [OffsetIn32BitProtectedMode], eax
 
-%ifdef X64
+%if X64
 	lea	eax, [OffsetInLongMode]
 	add	eax, 0x20000 + (InLongMode - OffsetInLongMode)
 	mov	dword [OffsetInLongMode], eax
@@ -217,7 +223,7 @@ SectionLoop:
 	cmp	ebx, 0
 	jne	SectionLoop
 
-%ifdef X64
+%if X64
 ;------------------------------------------------------------------------------
 ; Entering Long Mode
 
@@ -358,7 +364,7 @@ INTUnknown:
 
 ;------------------------------------------------------------------------------
 
-%ifdef X64
+%if X64
 %define	ZWORD_SIZE	8
 %define	Zax	rax
 %define	Zbx	rbx
@@ -378,7 +384,7 @@ INTUnknown:
 ; Interrupt Handler
 
 commonIhtEntry:
-%ifdef X64
+%if X64
 
 	BITS 64
 
@@ -847,7 +853,7 @@ String1		db	"*** INT ", 0
 String2		db	" HALT!! *** (", 0
 String3		db	")", 0
 
-%ifdef X64
+%if X64
 StringRax	db	"RAX=", 0
 StringRcx	db	" RCX=", 0
 StringRdx	db	" RDX=", 0
@@ -913,7 +919,7 @@ GDT_BASE:
 	gdtentry	SYS_DATA, 0xFFFF, 0x92, 0xCF	; selector [0x18]
 	gdtentry	SYS_CODE, 0xFFFF, 0x9A, 0xCF	; selector [0x20]
 	gdtentry	SPARE3, 0, 0, 0			; selector [0x28]
-%ifdef X64
+%if X64
 	gdtentry	SYS_DATA64, 0xFFFF, 0x92, 0xCF	; selector [0x30]
 	gdtentry	SYS_CODE64, 0xFFFF, 0x9A, 0xAF	; selector [0x38]
 %else
@@ -937,7 +943,7 @@ GDT_END:
 %[%1]_SEL	equ	$ - IDT_BASE
 	istruc	idtdescr
 		at	idtdescr.selector
-%ifdef X64
+%if X64
 			dw SYS_CODE64_SEL
 %else
 			dw SYS_CODE_SEL
