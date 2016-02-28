@@ -226,14 +226,13 @@ nextdirent:
 
 falsealert:
 	pop	ds
-	add	cl, 21	; (fatde_size - .nameext_size)
+	add	cl, 21	; skip rest of entry (fatde_size - .nameext_size)
 	add	si, cx
 	cmp	si, bx
 	jz	nextdirclus
 	jmp	nextdirent
 
 direntfound:
-;	test byte [ds:si + fatde.attr - 11], 0x18
 	lodsb
 	test	al, FATDE_VOL_ID | FATDE_DIRECTORY
 	jnz	falsealert
