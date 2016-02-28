@@ -17,8 +17,6 @@
 ; Variants selected by nasm command line
 ;  -DX64=1 X86_64 binary
 ;  -DX64=0 IA32 binary
-;  -DA20FAST=1 compile in fast A20 enabler
-;  -DA20FAST=0 compile in BIOS & manual A20 enabler
 ;------------------------------------------------------------------------------
 
 struc	idtdescr
@@ -71,8 +69,7 @@ MemMapDone:
 ;------------------------------------------------------------------------------
 ; Enable A20 Gate
 
-%if A20FAST
-; attempt to Enable A20 (fast method).
+; Fast method first
 
 	in	al, 0x92	; 0x92 -- System Control Port A
 	test	al, 2
@@ -80,18 +77,23 @@ MemMapDone:
 	or	al, 2
 	and	al, 0xFE
 	out	0x92, al
-%else
+	in	al, 0x92	; verify
+	test	al, 2
+	jnz	A20GateEnabled
+
+; May be BIOS?
+ 
 	mov	ax, 0x2401	; Enable A20 Gate
 	int	0x15
 	jnc	A20GateEnabled	; Jump if it suceeded
+
+; If INT 15 Function 2401 does not work, attempt to Enable A20 by bare hands
 
 DELAY_PORT		equ	0xED	; Port to use for 1uS delay
 KBD_CONTROL_PORT	equ	0x60	; 8042 control port
 KBD_STATUS_PORT		equ	0x64	; 8042 status port
 WRITE_DATA_PORT_CMD	equ	0xD1	; 8042 command to write the data port
 ENABLE_A20_CMD		equ	0xDF	; 8042 command to enable A20
-
-; If INT 15 Function 2401 is not supported, then attempt to Enable A20 manually.
 
 	call	Empty8042InputBuffer	; Empty the Input Buffer on the 8042 controller
 	jnz	Timeout8042		; Jump if the 8042 timed out
@@ -108,7 +110,7 @@ ENABLE_A20_CMD		equ	0xDF	; 8042 command to enable A20
 Delay25uS:
 	out	DELAY_PORT, ax		; Delay 1 uS
 	loop	Delay25uS
-	jmp	A20GateEnabled
+	jmp	A20GateEnabled		; Let hope so
 
 Timeout8042:
 
@@ -121,7 +123,6 @@ Empty8042Loop:
 	and	al, 0x02		; Check the Input Buffer Full Flag
 	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
 	ret
-%endif
 
 A20GateEnabled:
 
