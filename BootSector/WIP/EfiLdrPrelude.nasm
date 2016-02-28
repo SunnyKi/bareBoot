@@ -18,7 +18,7 @@
 ;  -DX64=1 X86_64 binary
 ;  -DX64=0 IA32 binary
 ;  -DA20FAST=1 compile in fast A20 enabler
-;  -DA20FAST=0 compile in BIOS & manual enabler
+;  -DA20FAST=0 compile in BIOS & manual A20 enabler
 ;------------------------------------------------------------------------------
 
 struc	idtdescr
@@ -44,7 +44,7 @@ Start:
 	mov	ds, ax
 	mov	es, ax
 	mov	ss, ax
-	mov	sp, MyStack
+	mov	sp, 0xFFF0	; XXX: better place?
 
 ;------------------------------------------------------------------------------
 ; Gether memory map
@@ -69,23 +69,11 @@ MemMapDone:
 	mov	dword [MemoryMapSize], edi
 
 ;------------------------------------------------------------------------------
-; Fix pointers
-
-	xor	ebx, ebx
-	mov	bx, cs
-	shl	ebx, 4				; BX="linear" address of segment base
-	lea	eax, [GDT_BASE + ebx]		; EAX=PHYSICAL address of gdt
-	mov	dword [gdtr + 2], eax
-	lea	eax, [IDT_BASE + ebx]		; EAX=PHYSICAL address of idt
-	mov	dword [idtr + 2], eax
-
-;------------------------------------------------------------------------------
 ; Enable A20 Gate
 
 %if A20FAST
-;
 ; attempt to Enable A20 (fast method).
-;
+
 	in	al, 0x92	; 0x92 -- System Control Port A
 	test	al, 2
 	jnz	A20GateEnabled
@@ -138,40 +126,27 @@ Empty8042Loop:
 A20GateEnabled:
 
 ;------------------------------------------------------------------------------
-; Entering Protected Mode
+; Fix pointers & offsets
 
-	cli
+	xor	ebx, ebx
+	mov	bx, cs
+	shl	ebx, 4				; BX="linear" address of segment base
+	lea	eax, [GDT_BASE + ebx]		; EAX=PHYSICAL address of gdt
+	mov	dword [gdtr + 2], eax
+	lea	eax, [IDT_BASE + ebx]		; EAX=PHYSICAL address of idt
+	mov	dword [idtr + 2], eax
 
-	; XXX
-	lea	eax, [OffsetIn32BitProtectedMode]
-	add	eax, 0x20000 + (In32BitProtectedMode - OffsetIn32BitProtectedMode)
+	lea	eax, [In32BitProtectedMode + ebx]
 	mov	dword [OffsetIn32BitProtectedMode], eax
 
 %if X64
-	lea	eax, [OffsetInLongMode]
-	add	eax, 0x20000 + (InLongMode - OffsetInLongMode)
+	lea	eax, [InLongMode + ebx]
 	mov	dword [OffsetInLongMode], eax
 %endif
 
-	o32 lgdt	[gdtr]
+	; Populate IDT with meaningful offsets for exception handlers...
 
-	; Enable Protect Mode (set CR0.PE=1)
-
-	mov	eax, cr0
-	or	eax, 1		; Set PE=1
-	mov	cr0, eax
-
-	jmp	dword LINEAR_CODE_SEL:0x00000000	; will be modified by above code
-OffsetIn32BitProtectedMode	equ $ - 6
-
-In32BitProtectedMode:
-
-	BITS	32
-
-;------------------------------------------------------------------------------
-; Populate IDT with meaningful offsets for exception handlers...
-
-	lea	eax, [Halt]
+	lea	eax, [Halt + ebx]
 	mov	ebx, eax	; use bx to copy 15..0 to descriptors
 	shr	eax, 16		; use ax to copy 31..16 to descriptors
 	mov	ecx, IDT_COUNT	; count of IDT entries to initialize
@@ -184,6 +159,23 @@ In32BitProtectedMode:
 	add	edi, idtdescr_size			; move up to next descriptor
 	add	ebx, DEFAULT_HANDLER_SIZE		; move to next entry point
 	loop	.1
+
+;------------------------------------------------------------------------------
+; Entering Protected Mode
+
+	cli
+	o32 lgdt	[gdtr]
+
+	mov	eax, cr0
+	or	eax, 1		; Enable Protect Mode (set CR0.PE=1)
+	mov	cr0, eax
+
+	jmp	dword LINEAR_CODE_SEL:0x00000000	; will be modified by above code
+OffsetIn32BitProtectedMode	equ $ - 6
+
+In32BitProtectedMode:
+
+	BITS	32
 
 ;------------------------------------------------------------------------------
 ; Move EfiLdr to its final place
@@ -255,17 +247,13 @@ SectionLoop:
 	mov	eax, 0x90000	; XXX: !!!
 	mov	cr3, eax
 
-	; Enable long mode (set EFER.LME=1).
-
 	mov	ecx, 0xC0000080	; EFER MSR number.
 	rdmsr
-	bts	eax, 8		; Set LME=1.
+	bts	eax, 8		; Enable long mode (set EFER.LME=1).
 	wrmsr
 
-	; Enable paging to activate long mode (set CR0.PG=1)
-
 	mov	eax, cr0
-	bts	eax, 31		; Set PG=1.
+	bts	eax, 31		; Enable paging to activate long mode (set CR0.PG=1)
 	mov	cr0, eax
 	jmp	GoToLongMode
 
@@ -1018,8 +1006,6 @@ MemoryMapSize:
 
 MemoryMap:
 	times 512 db 0
-
-MyStack:		; XXX: better place???
 
 ;------------------------------------------------------------------------------
 
