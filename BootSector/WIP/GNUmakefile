@@ -11,7 +11,8 @@ BOOTSECTOR_BINS= \
 	$(DESTDIR)/boot0af \
 	$(DESTDIR)/boot0ss \
 	$(DESTDIR)/boot1f32 \
-	$(DESTDIR)/boot1f32alt
+	$(DESTDIR)/boot1f32alt \
+	$(DESTDIR)/EfiLdrPrelude
 
 all: $(BOOTSECTOR_BINS)
 
@@ -27,5 +28,8 @@ $(DESTDIR)/boot1f32alt:	boot1f32.nasm $(INCSRCS)
 $(DESTDIR)/boot1f32:	boot1f32.nasm $(INCSRCS)
 	nasm -DBOOTSEL=0 -DDEBUG=0 -DVERBOSE=0 -DUNUSED=0 -DUSESIDL=1 -iInclude/ -o $@ boot1f32.nasm
 
+$(DESTDIR)/EfiLdrPrelude:	EfiLdrPrelude.nasm $(INCSRCS)
+	nasm -DX64=0 -iInclude/ -o $@ -l EfiLdrPrelude.lst EfiLdrPrelude.nasm
+
 clean:
-	rm -f $(BOOTSECTOR_BINS)
+	rm -f $(BOOTSECTOR_BINS) *.lst
