@@ -45,10 +45,22 @@ Start:
 	mov	sp, 0xFFF0	; XXX: better place?
 
 ;------------------------------------------------------------------------------
+; Where we are? ;-)
+
+	call	readEip
+	sub	ax, ($ - Start)
+	xor	ebp, ebp
+	mov	bp, cs
+	shr	ax, 4
+	add	bp, ax
+	mov	es, bp	; our code base segment
+	shl	ebp, 4	; our code linear address
+
+;------------------------------------------------------------------------------
 ; Gether memory map
 
 	xor	ebx, ebx
-	lea	edi, [MemoryMap]
+	lea	edi, [ebp + MemoryMap]
 
 MemMapLoop:
 	mov	eax, 0xE820
@@ -62,9 +74,9 @@ MemMapLoop:
 	jmp	MemMapLoop
 
 MemMapDone:
-	lea	eax, [MemoryMap]
+	lea	eax, [ebp + MemoryMap]
 	sub	edi, eax
-	mov	dword [MemoryMapSize], edi
+	mov	dword [es:MemoryMapSize], edi
 
 ;------------------------------------------------------------------------------
 ; Enable A20 Gate
@@ -124,64 +136,69 @@ Empty8042Loop:
 	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
 	ret
 
+;------------------------------------------------------------------------------
+readEip:
+	mov	eax, [esp]
+	ret
+;------------------------------------------------------------------------------
+
 A20GateEnabled:
 
 ;------------------------------------------------------------------------------
 ; Fix pointers & offsets
 
-	xor	ebx, ebx
-	mov	bx, cs
-	shl	ebx, 4				; BX="linear" address of segment base
-	lea	eax, [GDT_BASE + ebx]		; EAX=PHYSICAL address of gdt
-	mov	dword [gdtr + 2], eax
-	lea	eax, [IDT_BASE + ebx]		; EAX=PHYSICAL address of idt
-	mov	dword [idtr + 2], eax
+	lea	eax, [ebp + GDT_BASE]		; PHYSICAL address of gdt
+	mov	dword [es:gdtr + 2], eax
+	lea	eax, [ebp + IDT_BASE]		; PHYSICAL address of idt
+	mov	dword [es:idtr + 2], eax
 
-	lea	eax, [In32BitProtectedMode + ebx]
-	mov	dword [OffsetIn32BitProtectedMode], eax
+	lea	eax, [ebp + In32BitProtectedMode]
+	mov	dword [es:OffsetIn32BitProtectedMode], eax
 
 %if X64
-	lea	eax, [InLongMode + ebx]
-	mov	dword [OffsetInLongMode], eax
+	lea	eax, [ebp + InLongMode]
+	mov	dword [es:OffsetInLongMode], eax
 %endif
 
 	; Populate IDT with meaningful offsets for exception handlers...
 
-	lea	eax, [Halt + ebx]
+	mov	di, IDT_BASE
+	lea	eax, [ebp + Halt]
 	mov	ebx, eax	; use bx to copy 15..0 to descriptors
 	shr	eax, 16		; use ax to copy 31..16 to descriptors
-	mov	ecx, IDT_COUNT	; count of IDT entries to initialize
-	lea	edi, [IDT_BASE]
+	mov	cx, IDT_COUNT	; count of IDT entries to initialize
 
 .1:
-	mov	word [edi + idtdescr.loffset], bx	; write bits 15..0 of offset
-	mov	word [edi + idtdescr.moffset], ax	; write bits 31..16 of offset
+	mov	word [es:di + idtdescr.loffset], bx	; write bits 15..0 of offset
+	mov	word [es:di + idtdescr.moffset], ax	; write bits 31..16 of offset
 							; X64: 63..32 of descriptors are 0
-	add	edi, idtdescr_size			; move up to next descriptor
-	add	ebx, DEFAULT_HANDLER_SIZE		; move to next entry point
+	add	di, idtdescr_size			; move up to next descriptor
+	add	bx, DEFAULT_HANDLER_SIZE		; move to next entry point
 	loop	.1
 
 ;------------------------------------------------------------------------------
 ; Entering Protected Mode
 
 	cli
-	o32 lgdt	[gdtr]
+	o32 lgdt	[es:gdtr]
 
 	mov	eax, cr0
 	or	eax, 1		; Enable Protect Mode (set CR0.PE=1)
 	mov	cr0, eax
 
-	jmp	dword LINEAR_CODE_SEL:0x00000000	; will be modified by above code
-OffsetIn32BitProtectedMode	equ $ - 6
+	jmp	dword LINEAR_CODE_SEL:In32BitProtectedMode	; XXX: will be adjusted by above code
+OffsetIn32BitProtectedMode	equ ($ - 6)
+
+;------------------------------------------------------------------------------
 
 In32BitProtectedMode:
 
 	BITS	32
 
 ;------------------------------------------------------------------------------
-; Move EfiLdr to its final place
+; Move payload to its final destination
 
-	lea	esi, [EfiLdrCode]
+	lea	esi, [ebx + PayLoadDatum]
 	mov	eax, [esi + 014h]	; eax = [22014]
 	add	esi, eax		; esi = 22000 + [22014] = Base of EFILDR.C
 	mov	ebp, [esi + 03Ch]	; ebp = [22000 + [22014] + 3c] = NT Image Header for EFILDR.C
@@ -190,16 +207,17 @@ In32BitProtectedMode:
 	mov	eax, [ebp + 028h]	; eax = [[22000 + [22014] + 3c] + 24] = EntryPoint
 	add	eax, edi		; eax = ImageBase + EntryPoint
 
-	mov	[EfiLdrEntry], eax
+	mov	[ebx + PayLoadEntry], eax
 
 	mov	bx, word [ebp + 6]	; bx = Number of sections
 	mov	ax, word [ebp + 014h]	; ax = Optional Header Size
 	add	ebp, eax
-	add	ebp, 018h	; ebp = Start of 1st Section
+	add	ebp, 018h		; ebp = Start of 1st Section
+	push	ebx
 
 SectionLoop:
-	push	esi	; Save Base of EFILDR.C
-	push	edi	; Save ImageBase
+	push	esi			; Save Base of EFILDR.C
+	push	edi			; Save ImageBase
 	add	esi, [ebp + 014h]	; esi = Base of EFILDR.C + PointerToRawData
 	add	edi, [ebp + 00Ch]	; edi = ImageBase + VirtualAddress
 	mov	ecx, [ebp + 010h]	; ecs = SizeOfRawData
@@ -215,6 +233,15 @@ SectionLoop:
 	dec	ebx
 	cmp	ebx, 0
 	jne	SectionLoop
+	pop	ebx
+
+;------------------------------------------------------------------------------
+; set OSFXSR and OSXMMEXCPT because some code will use XMM register
+
+	mov eax, cr4
+	bts eax, 9
+	bts eax, 10
+	mov cr4, eax
 
 %if X64
 ;------------------------------------------------------------------------------
@@ -256,15 +283,16 @@ SectionLoop:
 	mov	eax, cr0
 	bts	eax, 31		; Enable paging to activate long mode (set CR0.PG=1)
 	mov	cr0, eax
-	jmp	GoToLongMode
 
-GoToLongMode:
-	a16 jmp	dword SYS_CODE64_SEL:0x00000000
+	a16 jmp	dword SYS_CODE64_SEL:InLongMode	; XXX: will be adjusted by above code
 OffsetInLongMode	equ ($ - 6)
 
 ;------------------------------------------------------------------------------
 
 InLongMode:
+
+	BITS	64
+
 	mov	ax, SYS_DATA64_SEL
 	mov	ds, ax
 
@@ -273,29 +301,32 @@ InLongMode:
 	mov	ss, ax
 	mov	ds, ax
 
-	mov	esp, 0x001FFFE8	; make final stack aligned
-
-	; set OSFXSR and OSXMMEXCPT because some code will use XMM register
-
-	mov eax, cr4
-	bts eax, 9
-	bts eax, 10
-	mov cr4, eax
-%endif
+	mov	rsp, 0x001FFFE8	; make final stack aligned
 
 ;------------------------------------------------------------------------------
-; Switch to EfiLdr
+; Switch to payload code
 
 	; XXX: prepare args here!!!
-	mov	eax, [EfiLdrEntry]
+	mov	rax, [PayLoadEntry]
+	push	rax
+	ret
+
+%else
+
+	BITS 32
+
+	; XXX: prepare args here!!!
+	mov	eax, [PayLoadEntry]
 	push	eax
 	ret
+
+%endif
 
 ;------------------------------------------------------------------------------
 
 	align	2
 
-EfiLdrEntry:
+PayLoadEntry:
 	dq	0
 
 ;------------------------------------------------------------------------------
@@ -895,7 +926,7 @@ StringEflags	db	" EFLAGS=", 0
 
 gdtr:
 	dw	GDT_END - GDT_BASE - 1	; GDT limit
-	dd	0			; (GDT base gets set at runtime)
+	dd	GDT_BASE		; will be adjusted at runtime
 
 ;------------------------------------------------------------------------------
 
@@ -908,14 +939,9 @@ GDT_BASE:
 	gdtentry	SYS_DATA, 0xFFFF, 0x92, 0xCF	; selector [0x18]
 	gdtentry	SYS_CODE, 0xFFFF, 0x9A, 0xCF	; selector [0x20]
 	gdtentry	SPARE3, 0, 0, 0			; selector [0x28]
-%if X64
 	gdtentry	SYS_DATA64, 0xFFFF, 0x92, 0xCF	; selector [0x30]
 	gdtentry	SYS_CODE64, 0xFFFF, 0x9A, 0xAF	; selector [0x38]
-%else
-	gdtentry	SPARE4, 0, 0, 0			; selector [0x30]
-	gdtentry	SPARE5, 0, 0, 0			; selector [0x38]
-%endif
-	gdtentry	SPARE6, 0, 0, 0			; selector [0x40]
+	gdtentry	SPARE4, 0, 0, 0			; selector [0x40]
 
 GDT_END:
 
@@ -948,7 +974,7 @@ GDT_END:
 
 idtr:
 	dw	IDT_END - IDT_BASE - 1	; IDT limit
-	dq	0			; (IDT base gets set at runtime)
+	dq	IDT_BASE		; will be adjusted at runtime
 
 ;------------------------------------------------------------------------------
 
@@ -1012,4 +1038,4 @@ MemoryMap:
 
 	align	16
 
-EfiLdrCode:
+PayLoadDatum	equ	$
