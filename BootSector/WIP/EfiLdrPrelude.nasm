@@ -19,6 +19,8 @@
 ;  -DX64=0 IA32 binary
 ;------------------------------------------------------------------------------
 
+%include "efildr-inc.nasm"
+
 struc	idtdescr
 	.loffset	resw	1	; offset low bits (0..15)
 	.selector	resw	1	; code segment selector
@@ -60,7 +62,7 @@ Start:
 ; Gether memory map
 
 	xor	ebx, ebx
-	lea	edi, [ebp + MemoryMap]
+	mov	edi, MemoryMap
 
 MemMapLoop:
 	mov	eax, 0xE820
@@ -74,7 +76,7 @@ MemMapLoop:
 	jmp	MemMapLoop
 
 MemMapDone:
-	lea	eax, [ebp + MemoryMap]
+	mov	eax, MemoryMap
 	sub	edi, eax
 	mov	dword [es:MemoryMapSize], edi
 
@@ -195,45 +197,57 @@ In32BitProtectedMode:
 
 	BITS	32
 
+	mov	ax, LINEAR_SEL
+	mov	ds, ax
+	mov	es, ax
+	mov	ss, ax
+
+	mov	esp, 0x001FFFE8	; make final stack aligned
+
 ;------------------------------------------------------------------------------
 ; Move payload to its final destination
 
-	lea	esi, [ebx + PayLoadDatum]
-	mov	eax, [esi + 014h]	; eax = [22014]
-	add	esi, eax		; esi = 22000 + [22014] = Base of EFILDR.C
-	mov	ebp, [esi + 03Ch]	; ebp = [22000 + [22014] + 3c] = NT Image Header for EFILDR.C
+
+	lea	esi, [ebp + PayLoadDatum]
+
+	push	ebp
+	mov	eax, [esi + EfiLdrHeader_size + EfiLdrImage.Offset]
+	add	esi, eax			; esi = Base of EFILDR datum
+	mov	ebp, [esi + MsDosStub.e_lfanew]	; ebp = PE Image Header for EFILDR
 	add	ebp, esi
-	mov	edi, [ebp + 030h]	; edi = [[22000 + [22014] + 3c] + 2c] = ImageBase (63..32 is zero, ignore)
-	mov	eax, [ebp + 028h]	; eax = [[22000 + [22014] + 3c] + 24] = EntryPoint
-	add	eax, edi		; eax = ImageBase + EntryPoint
+	mov	edi, [ebp + PeHeader_size + PeOptionalHeader.ImageBase]
+	mov	eax, [ebp + PeHeader_size + PeOptionalHeader.AddressOfEntryPoint]
+	add	eax, edi			; eax = ImageBase + EntryPoint
 
-	mov	[ebx + PayLoadEntry], eax
+	push	eax
 
-	mov	bx, word [ebp + 6]	; bx = Number of sections
-	mov	ax, word [ebp + 014h]	; ax = Optional Header Size
+	movzx	ebx, word [ebp + PeHeader.NumberOfSections]
+	movzx	eax, word [ebp + PeHeader.SizeOfOptionalHeader]
 	add	ebp, eax
-	add	ebp, 018h		; ebp = Start of 1st Section
-	push	ebx
+	add	ebp, PeHeader_size	; ebp = Start of 1st Section
 
 SectionLoop:
-	push	esi			; Save Base of EFILDR.C
-	push	edi			; Save ImageBase
-	add	esi, [ebp + 014h]	; esi = Base of EFILDR.C + PointerToRawData
-	add	edi, [ebp + 00Ch]	; edi = ImageBase + VirtualAddress
-	mov	ecx, [ebp + 010h]	; ecs = SizeOfRawData
+	push	esi	; Save Base of EFILDR
+	push	edi	; Save ImageBase
+
+	add	esi, [ebp + PeSectionHeader.PointerToRawData]	; esi = ImageBase + PointerToRawData
+	add	edi, [ebp + PeSectionHeader.VirtualAddress]	; edi = ImageBase + VirtualAddress
+	mov	ecx, [ebp + PeSectionHeader.SizeOfRawData]	; ecs = SizeOfRawData
 
 	cld
 	shr	ecx, 2
 	rep	movsd
 
 	pop	edi	; Restore ImageBase
-	pop	esi	; Restore Base of EFILDR.C
+	pop	esi	; Restore Base of EFILDR
 
-	add	ebp, 0x28	; ebp = ebp + 028h = Pointer to next section record
+	add	ebp, PeSectionHeader_size	; ebp = Pointer to next section record
 	dec	ebx
 	cmp	ebx, 0
 	jne	SectionLoop
-	pop	ebx
+
+	pop	esi	; Payload entry point
+	pop	ebp	; Our code & data real address
 
 ;------------------------------------------------------------------------------
 ; set OSFXSR and OSXMMEXCPT because some code will use XMM register
@@ -301,33 +315,30 @@ InLongMode:
 	mov	ss, ax
 	mov	ds, ax
 
-	mov	rsp, 0x001FFFE8	; make final stack aligned
+	lidt	[ebp + lidtr]
 
 ;------------------------------------------------------------------------------
-; Switch to payload code
+; Go to X64 payload code
 
-	; XXX: prepare args here!!!
-	mov	rax, [PayLoadEntry]
-	push	rax
-	ret
+	; XXX: args in rcx, rdx, r8, r8
+
+	jmp	[rsi]
 
 %else
 
 	BITS 32
 
-	; XXX: prepare args here!!!
-	mov	eax, [PayLoadEntry]
-	push	eax
-	ret
-
-%endif
+	lidt	[ebp + idtr]
 
 ;------------------------------------------------------------------------------
+; Go to IA32 payload code
 
-	align	2
+	; XXX: prepare args here!!!
+	mov	eax, [ebp + PayLoadDatum]	; XXX: ???
+	push	eax
+	jmp	[esi]
 
-PayLoadEntry:
-	dq	0
+%endif
 
 ;------------------------------------------------------------------------------
 ; Interrupt Handling Table
@@ -1032,7 +1043,7 @@ MemoryMapSize:
 	dd	0
 
 MemoryMap:
-	times 512 db 0
+	times 1000 db 0
 
 ;------------------------------------------------------------------------------
 
