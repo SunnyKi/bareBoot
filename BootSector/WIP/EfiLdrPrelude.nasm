@@ -1,6 +1,8 @@
 ;------------------------------------------------------------------------------
 ;*
 ;*   Copyright (c) 2006 - 2016, Intel Corporation. All rights reserved.<BR>
+;*   Copyright (c) 2014 - 2016, Scott Duplichan (notabs.org). All rights reserved.<BR>
+;*
 ;*   This program and the accompanying materials
 ;*   are licensed and made available under the terms and conditions of the BSD License
 ;*   which accompanies this distribution.  The full text of the license may be found at
@@ -21,6 +23,14 @@
 
 %include "efildr-inc.nasm"
 
+%if X64
+
+%ifndef	X64_PAGE_TABLE_BASE
+%define	X64_PAGE_TABLE_BASE	0x8000
+%endif
+
+%endif
+
 struc	idtdescr
 	.loffset	resw	1	; offset low bits (0..15)
 	.selector	resw	1	; code segment selector
@@ -33,7 +43,7 @@ struc	idtdescr
 %endif
 endstruc
 
-IDT_COUNT	equ	((IDT_END - IDT_BASE) / idtdescr_size)	; count of IDT entries to initialize
+IDT_COUNT	equ	((IDT_END - IDT_BASE) / idtdescr_size)
 
 ;------------------------------------------------------------------------------
 
@@ -55,8 +65,8 @@ Start:
 	mov	bp, cs
 	shr	ax, 4
 	add	bp, ax
-	mov	es, bp	; our code base segment
-	shl	ebp, 4	; our code linear address
+	mov	es, bp	; our code&data base segment
+	shl	ebp, 4	; our code&data linear address
 
 ;------------------------------------------------------------------------------
 ; Gether memory map
@@ -178,6 +188,94 @@ A20GateEnabled:
 	add	bx, DEFAULT_HANDLER_SIZE		; move to next entry point
 	loop	.1
 
+%if X64
+
+	BITS	16
+
+mappingSize	equ	0xFFFFFFFF
+
+count4		equ	((mappingSize >> 39) + 1)
+count3		equ	((mappingSize >> 30) + 1)
+count2		equ	((mappingSize >> 21) + 1)
+
+struc	pageMapLevel4	
+.lowPart	resd	1
+.highPart	resd	1
+endstruc
+
+struc	pageDirectoryPointer
+.lowPart	resd	1
+.highPart	resd	1
+endstruc
+
+struc	pageDirectory
+.lowPart	resd	1
+.highPart	resd	1
+endstruc
+
+struc	tableStruct
+.map		resb	(pageMapLevel4_size * count4)
+		align	4096, resb 1
+.pointer	resb	(pageDirectoryPointer_size * count3)
+		align	4096, resb 1
+.directory	resb	(pageDirectory_size * count2)
+endstruc
+
+identityMapLongMode:
+	push	ds
+	push	es
+
+	mov	ax, X64_PAGE_TABLE_BASE / 16
+	mov	ds, ax
+	mov	es, ax
+	movzx	ebx, ax
+	shl	ebx, 4	; ebx = table base physical address
+
+	mov	cx, tableStruct_size
+	xor	di, di	; table starts at beginning of segment
+	xor	al, al	
+	rep	stosb	; clear the page table memory
+
+	xor	ecx, ecx
+	mov	di, 0
+.1:
+	lea	eax, [ebx + tableStruct.pointer]
+	add	eax, ecx
+	or	al, 0x03	; present, writable
+	or	[di + tableStruct.map + pageMapLevel4.lowPart], eax
+	add	di, pageMapLevel4_size
+	add	ecx, 4096
+	cmp	ecx, (count4 << 12)
+	jl	.1
+
+	xor	ecx, ecx
+	mov	di, 0
+.2:
+	lea	eax, [ebx + tableStruct.directory]
+	add	eax, ecx
+	or	al, 0x03	; present, writable
+	or	[di + tableStruct.map + pageDirectoryPointer.lowPart], eax
+	add	di, pageDirectoryPointer_size
+	add	ecx, 4096
+	cmp	ecx, (count3 << 12)
+	jl	.2
+
+	xor	ecx, ecx
+	mov	di, 0
+.3:
+	mov	eax, ecx
+	shl	eax, 21
+	or	al, 0x83	; present, writable, big
+	or	[di + tableStruct.map + pageDirectory.lowPart], eax
+	add	di, pageDirectory_size
+	inc	ecx
+	cmp	ecx, count2
+	jl	.3
+
+	pop	es
+	pop	ds
+%endif
+
 ;------------------------------------------------------------------------------
 ; Entering Protected Mode
 
@@ -249,6 +347,7 @@ SectionLoop:
 	pop	esi	; Payload entry point
 	pop	ebp	; Our code & data real address
 
+%if X64
 ;------------------------------------------------------------------------------
 ; set OSFXSR and OSXMMEXCPT because some code will use XMM register
 
@@ -257,7 +356,6 @@ SectionLoop:
 	bts eax, 10
 	mov cr4, eax
 
-%if X64
 ;------------------------------------------------------------------------------
 ; Entering Long Mode
 
@@ -315,13 +413,14 @@ InLongMode:
 	mov	ss, ax
 	mov	ds, ax
 
-	lidt	[ebp + lidtr]
+	lidt	[rbp + idtr]
 
 ;------------------------------------------------------------------------------
 ; Go to X64 payload code
 
 	; XXX: args in rcx, rdx, r8, r8
 
+	lea	rcx, [rbp + MemoryMapSize]	; XXX: ???
 	jmp	[rsi]
 
 %else
@@ -334,11 +433,12 @@ InLongMode:
 ; Go to IA32 payload code
 
 	; XXX: prepare args here!!!
-	mov	eax, [ebp + PayLoadDatum]	; XXX: ???
+	mov	eax, [ebp + MemoryMapSize]	; XXX: ???
 	push	eax
 	jmp	[esi]
 
 %endif
+
 
 ;------------------------------------------------------------------------------
 ; Interrupt Handling Table
