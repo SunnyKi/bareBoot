@@ -24,11 +24,9 @@
 %include "efildr-inc.nasm"
 
 %if X64
-
 %ifndef	X64_PAGE_TABLE_BASE
 %define	X64_PAGE_TABLE_BASE	0x8000
 %endif
-
 %endif
 
 struc	idtdescr
@@ -93,7 +91,14 @@ MemMapDone:
 ;------------------------------------------------------------------------------
 ; Enable A20 Gate
 
-; Fast method first
+	mov	ax, 0x2401	; Enable A20 Gate
+	int	0x15
+
+%ifdef A20_OLD
+
+	jnc	A20GateEnabled	; Jump if it suceeded
+
+; Fast method
 
 	in	al, 0x92	; 0x92 -- System Control Port A
 	test	al, 2
@@ -105,13 +110,7 @@ MemMapDone:
 	test	al, 2
 	jnz	A20GateEnabled
 
-; May be BIOS?
- 
-	mov	ax, 0x2401	; Enable A20 Gate
-	int	0x15
-	jnc	A20GateEnabled	; Jump if it suceeded
-
-; If INT 15 Function 2401 does not work, attempt to Enable A20 by bare hands
+; If fast method does not work, try much older one
 
 DELAY_PORT		equ	0xED	; Port to use for 1uS delay
 KBD_CONTROL_PORT	equ	0x60	; 8042 control port
@@ -147,12 +146,7 @@ Empty8042Loop:
 	and	al, 0x02		; Check the Input Buffer Full Flag
 	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
 	ret
-
-;------------------------------------------------------------------------------
-readEip:
-	mov	eax, [esp]
-	ret
-;------------------------------------------------------------------------------
+%endif	; A20_OLD
 
 A20GateEnabled:
 
@@ -300,7 +294,7 @@ In32BitProtectedMode:
 	mov	es, ax
 	mov	ss, ax
 
-	mov	esp, 0x001FFFE8	; make final stack aligned
+	mov	esp, 0x001FFFE8	; make final stack aligned (X64 & IA32)
 
 ;------------------------------------------------------------------------------
 ; Move payload to its final destination
@@ -349,14 +343,6 @@ SectionLoop:
 
 %if X64
 ;------------------------------------------------------------------------------
-; set OSFXSR and OSXMMEXCPT because some code will use XMM register
-
-	mov eax, cr4
-	bts eax, 9
-	bts eax, 10
-	mov cr4, eax
-
-;------------------------------------------------------------------------------
 ; Entering Long Mode
 
 	mov	ax, LINEAR_SEL
@@ -382,9 +368,8 @@ SectionLoop:
 	;  20000 ~ 21000 - start64.com
 	;  21000 ~ 22000 - efi64.com
 	;  22000 ~ 90000 - efildr + stuff
-	;  90000 ~ 96000 - 4G pagetable (will be reload later)
 
-	mov	eax, 0x90000	; XXX: !!!
+	mov	eax, X64_PAGE_TABLE_BASE
 	mov	cr3, eax
 
 	mov	ecx, 0xC0000080	; EFER MSR number.
@@ -413,6 +398,14 @@ InLongMode:
 	mov	ss, ax
 	mov	ds, ax
 
+;------------------------------------------------------------------------------
+; set OSFXSR and OSXMMEXCPT because some code will use XMM register
+
+	mov rax, cr4
+	bts rax, 9
+	bts rax, 10
+	mov cr4, rax
+
 	lidt	[rbp + idtr]
 
 ;------------------------------------------------------------------------------
@@ -439,6 +432,13 @@ InLongMode:
 
 %endif
 
+;------------------------------------------------------------------------------
+
+	BITS	16
+
+readEip:
+	mov	eax, [esp]
+	ret
 
 ;------------------------------------------------------------------------------
 ; Interrupt Handling Table
