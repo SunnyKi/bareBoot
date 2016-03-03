@@ -17,7 +17,7 @@
 ; nms was here
 ;------------------------------------------------------------------------------
 ; Variants selected by nasm command line
-;  -DX64=1 X86_64 binary
+;  -DX64=1 X64 binary
 ;  -DX64=0 IA32 binary
 ;------------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@
 %ifndef	X64_PAGE_TABLE_BASE
 %define	X64_PAGE_TABLE_BASE	0x8000
 %endif
-%endif
+%endif	; X64
 
 struc	idtdescr
 	.loffset	resw	1	; offset low bits (0..15)
@@ -38,7 +38,7 @@ struc	idtdescr
 %if X64
 	.hoffset	resd	1	; offset high bits (32..63)
 	.zero2		resd	1	; zero
-%endif
+%endif	; X64
 endstruc
 
 IDT_COUNT	equ	((IDT_END - IDT_BASE) / idtdescr_size)
@@ -126,7 +126,7 @@ ENABLE_A20_CMD		equ	0xDF	; 8042 command to enable A20
 	call	Empty8042InputBuffer	; Empty the Input Buffer on the 8042 controller
 	jnz	Timeout8042		; Jump if the 8042 timed out
 	mov	al, ENABLE_A20_CMD	; gate address bit 20 on
-	out	KBD_CONTROL_PORT, al	; Send command to thre 8042
+	out	KBD_CONTROL_PORT, al	; Send command to the 8042
 	call	Empty8042InputBuffer	; Empty the Input Buffer on the 8042 controller
 	mov	cx, 25			; Delay 25 uS for the command to complete on the 8042
 
@@ -164,7 +164,7 @@ A20GateEnabled:
 %if X64
 	lea	eax, [ebp + InLongMode]
 	mov	dword [es:OffsetInLongMode], eax
-%endif
+%endif	; X64
 
 	; Populate IDT with meaningful offsets for exception handlers...
 
@@ -268,7 +268,7 @@ identityMapLongMode:
 
 	pop	es
 	pop	ds
-%endif
+%endif	; X64
 
 ;------------------------------------------------------------------------------
 ; Entering Protected Mode
@@ -339,7 +339,7 @@ SectionLoop:
 	jne	SectionLoop
 
 	pop	esi	; Payload entry point
-	pop	ebp	; Our code & data real address
+	pop	ebp	; Our code&data real address
 
 %if X64
 ;------------------------------------------------------------------------------
@@ -413,10 +413,10 @@ InLongMode:
 
 	; XXX: args in rcx, rdx, r8, r8
 
-	lea	rcx, [rbp + MemoryMapSize]	; XXX: ???
+	lea	rcx, [rbp + MemoryMapSize]
 	jmp	[rsi]
 
-%else
+%else	; IA32
 
 	BITS 32
 
@@ -425,12 +425,12 @@ InLongMode:
 ;------------------------------------------------------------------------------
 ; Go to IA32 payload code
 
-	; XXX: prepare args here!!!
-	mov	eax, [ebp + MemoryMapSize]	; XXX: ???
+	; XXX: args on stack
+	mov	eax, [ebp + MemoryMapSize]
 	push	eax
 	jmp	[esi]
 
-%endif
+%endif	; IA32
 
 ;------------------------------------------------------------------------------
 
@@ -502,14 +502,14 @@ INTUnknown:
 %define	Zcx	rcx
 %define	Zdi	rdi
 %define	Zsi	rsi
-%else
+%else	; IA32
 %define	ZWORD_SIZE	4
 %define	Zax	eax
 %define	Zbx	ebx
 %define	Zcx	ecx
 %define	Zdi	edi
 %define	Zsi	esi
-%endif
+%endif	; IA32
 
 ;------------------------------------------------------------------------------
 ; Interrupt Handler
@@ -724,7 +724,7 @@ InnerLoop1:
 	add	rsp, 16	; error code and INT number
 	iretq
 
-%else
+%else	; IA32
 
 	BITS	32
 
@@ -867,7 +867,7 @@ InnerLoop1:
 	add	esp, 8	; error code and INT number
 
 	iretd
-%endif
+%endif	; IA32
 
 ;------------------------------------------------------------------------------
 ;; ZAX contains zword to print
@@ -1004,7 +1004,7 @@ StringR14	db	"R14=", 0
 StringR15	db	" R15=", 0
 StringSs	db	" SS =", 0
 StringRflags	db	"RFLAGS=", 0
-%else
+%else	; IA32
 StringEax	db	"EAX=", 0
 StringEbx	db	" EBX=", 0
 StringEcx	db	" ECX=", 0
@@ -1015,7 +1015,7 @@ StringEbp	db	" EBP=", 0
 StringEsi	db	" ESI=", 0
 StringEdi	db	" EDI=", 0
 StringEflags	db	" EFLAGS=", 0
-%endif
+%endif	; IA32
 
 ;------------------------------------------------------------------------------
 ; global descriptor table (GDT)
@@ -1071,9 +1071,9 @@ GDT_END:
 		at	idtdescr.selector
 %if X64
 			dw SYS_CODE64_SEL
-%else
+%else	; IA32
 			dw SYS_CODE_SEL
-%endif
+%endif	; IA32
 		at	idtdescr.tattr
 			db 0x8E	 ; 386 32-bit interrupt gate, present
 	iend
@@ -1143,10 +1143,10 @@ MemoryMapSize:
 	dd	0
 
 MemoryMap:
-	times 1000 db 0
+	times (32 * 20) db 0
 
 ;------------------------------------------------------------------------------
 
-	align	16
+	align	16, db 0
 
 PayLoadDatum	equ	$
