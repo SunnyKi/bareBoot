@@ -124,42 +124,27 @@ kDriveNumber		EQU	0x80
 %endif
 
 ;--------------------------------------------------------------------------
-; Start of text segment.
 
 	SEGMENT .text
 
-	ORG	kBoot0RelocAddr
-
 ;--------------------------------------------------------------------------
-; Boot code is loaded at 0:7C00h.
+; Boot code is loaded at 0:0x7C00.
+
+	ORG	kBoot0LoadAddr
 
 start:
 	; Set up the stack to grow down from kBoot0Segment:kBoot0Stack.
 	; Interrupts should be off while the stack is being manipulated.
 
-	cli			; interrupts off
-	xor	ax, ax		; zero ax
-	mov	ss, ax		; ss <- 0
-	mov	sp, kBoot0StackAddr	; sp <- top of stack
-	sti			; reenable interrupts
+	cli
+	mov	ax, kBoot0Segment
+	mov	ss, ax
+	mov	sp, kBoot0StackAddr
+	sti
 
-	mov	es, ax	; es <- 0
-	mov	ds, ax	; ds <- 0
+	mov	ds, ax
+	mov	es, ax
 
-	; Relocate boot0 code.
-
-	mov	si, kBoot0LoadAddr	; si <- source
-	mov	di, kBoot0RelocAddr	; di <- destination
-	cld				; auto-increment SI and/or DI registers
-	mov	cx, kSectorBytes / 2	; copy 256 words
-	repnz	movsw			; repeat string move (word) operation
-
-	jmp	kBoot0Segment:start_reloc	; Code relocated, jump to start_reloc in relocated location.
-
-;--------------------------------------------------------------------------
-; Start execution from the relocated location.
-
-start_reloc:
 	DebugChar('>')
 %if DEBUG
 	mov	al, dl
@@ -318,7 +303,7 @@ initBootLoader:
 %if VERBOSE
 	LogString(done_str)
 %endif
-	jmp	kBoot0LoadAddr
+	jmp	kBoot1Segment:kBoot1LoadAddr
 
 	; Found Protective MBR Partition Type: 0xEE
 	; Check for 'EFI PART' string at the beginning
@@ -425,8 +410,11 @@ checkGPT:
 
 loadBootSector:
 	pusha
-	mov	al, 3
-	mov	bx, kBoot0LoadAddr
+	mov	al, 127			; Read max sectors for a while
+	mov	bx, kBoot1LoadAddr
+	push	es
+	push	kBoot1Segment
+	pop	es
 	call	load
 	jc	error
 	or	dh, dh
@@ -439,7 +427,7 @@ loadBootSector:
 
 	; Looking for HFSPlus ('H+') or HFSPlus case-sensitive ('HX') signature
 
-	mov	ax, [kBoot0LoadAddr + 2 * kSectorBytes]
+	mov	ax, [es:kBoot1LoadAddr + 2 * kSectorBytes]
 	cmp	ax, kHFSPSignature			; 'H+'
 	je	.checkBootSignature
 	cmp	ax, kHFSPCaseSignature			; 'HX'
@@ -447,13 +435,13 @@ loadBootSector:
 
 	; Looking for exFAT signature
 
-	mov	ax, [kBoot0LoadAddr + 3]
+	mov	ax, [es:kBoot1LoadAddr + 3]
 	cmp	ax, kEXFATSignature			; 'EX'
 	je	.checkBootSignature
 
 	; Looking for boot1f32 magic string
 
-	mov	ax, [kBoot0LoadAddr + kFAT32BootCodeOffset]
+	mov	ax, [es:kBoot1LoadAddr + kFAT32BootCodeOffset]
 	cmp	ax, kFAT32BootSignature
 	jne	.exit
 
@@ -461,9 +449,10 @@ loadBootSector:
 
 	; Check for boot block signature 0xAA55
 
-	cmp	WORD [kBoot0LoadAddr + kSectorBytes - 2], kBootSignature
+	cmp	WORD [es:kBoot1LoadAddr + kSectorBytes - 2], kBootSignature
 
 .exit:
+	pop	es
 	popa
 	ret
 
@@ -574,7 +563,7 @@ read_lba:
 ; Write a string with 'boot0: ' prefix to the console.
 ;
 ; Arguments:
-;	ES:DI	pointer to a NULL terminated string.
+;	DS:DI	pointer to a NULL terminated string.
 ;
 ; Clobber list:
 ;	DI
@@ -694,7 +683,7 @@ boot_error_str	db	'error', 0
 ; According to EFI specification, maximum boot code size is 440 bytes
 
 pad_boot:
-	times	428-($-$$) db 0	; 428 = 440 - len(log_title_str)
+	times	428 - ($ - $$) db 0	; 428 = 440 - len(log_title_str)
 
 log_title_str:
 %if ACTIVEFIRST
@@ -704,10 +693,10 @@ log_title_str:
 %endif
 
 pad_table_and_sig:
-	times 510-($-$$) db 0
+	times 510 - ($ - $$) db 0
 	dw	kBootSignature
 
-	ABSOLUTE kBoot0RelocAddr + (kSectorBytes + kSectorBytes)
+	ABSOLUTE kBoot0LoadAddr + (kSectorBytes + kSectorBytes)
 
 ; In memory variables.
 
