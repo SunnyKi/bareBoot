@@ -1,0 +1,76 @@
+## @file
+#
+#  Copyright (c) 2016, Nikolai Saoukh. All rights reserved.<BR>
+#
+#  This program and the accompanying materials
+#  are licensed and made available under the terms and conditions of the BSD License
+#  which accompanies this distribution. The full text of the license may be found at
+#  http://opensource.org/licenses/bsd-license.php
+#  THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
+##
+
+OUTPUT_DIR=$(MODULE_DIR)/bin
+
+TARGET_FILES = \
+  $(OUTPUT_DIR)/bootx0af \
+  $(OUTPUT_DIR)/bootx0ss \
+  $(OUTPUT_DIR)/bootx1f32 \
+  $(OUTPUT_DIR)/bootx1f32alt \
+  $(OUTPUT_DIR)/EfiLdrPrelude32 \
+  $(OUTPUT_DIR)/EfiLdrPrelude64 \
+  $(OUTPUT_DIR)/f32b1tool \
+  $(OUTPUT_DIR)/nopsector
+
+INCLUDE_FILES = \
+  $(MODULE_DIR)/Include/bootxdefs.nasm \
+  $(MODULE_DIR)/Include/bpbxx-inc.nasm \
+  $(MODULE_DIR)/Include/efifvfile.nasm \
+  $(MODULE_DIR)/Include/efiimage.nasm \
+  $(MODULE_DIR)/Include/fatstruct.nasm \
+  $(MODULE_DIR)/Include/gptstruct.nasm \
+  $(MODULE_DIR)/Include/mbrstruct.nasm
+
+all:	$(TARGET_FILES)
+
+#=============
+
+$(OUTPUT_DIR)/bootx0af:	$(MODULE_DIR)/bootx0.nasm $(INCLUDE_FILES)
+	nasm -DACTIVEFIRST=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx0.nasm
+
+$(OUTPUT_DIR)/bootx0ss:	$(MODULE_DIR)/bootx0.nasm $(INCLUDE_FILES)
+	nasm -DACTIVEFIRST=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx0.nasm
+
+#=============
+
+$(OUTPUT_DIR)/bootx1f32:	$(MODULE_DIR)/bootx1f32.nasm $(INCLUDE_FILES)
+	nasm -DBOOTSEL=0 -DUSESIDL=1 -DVERBOSE=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasm
+
+$(OUTPUT_DIR)/bootx1f32alt:	$(MODULE_DIR)/bootx1f32.nasm $(INCLUDE_FILES)
+	nasm -DBOOTSEL=1 -DUSESIDL=1 -DVERBOSE=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasm
+
+#=============
+
+$(OUTPUT_DIR)/EfiLdrPrelude32:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
+	nasm -DX64=0 -DA20OLD=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
+
+$(OUTPUT_DIR)/EfiLdrPrelude64:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
+	nasm -DX64=1 -DA20OLD=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
+
+#=============
+
+$(OUTPUT_DIR)/f32b1tool:	$(MODULE_DIR)/f32b1tool.c
+	$(CC) -o $@ $?
+
+#=============
+
+$(OUTPUT_DIR)/nopsector:	$(MODULE_DIR)/nopsector.nasm
+	nasm -o $@ $?
+
+#=============
+
+clean:
+	echo do not clean me
+
+cleanall:
+	echo do not clean me
