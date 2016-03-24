@@ -44,6 +44,8 @@ endstruc
 
 IDT_COUNT	equ	((IDT_END - IDT_BASE) / idtdescr_size)
 
+PAYLOAD_STACK	equ	(2 * 1024 * 1024 - 0x18)
+
 ;------------------------------------------------------------------------------
 
 	BITS	16
@@ -107,7 +109,8 @@ fixPointers:
 	mov	dword [es:OffsetInLongMode], eax
 %endif	; X64
 
-	; Populate IDT with meaningful offsets for exception handlers...
+;------------------------------------------------------------------------------
+; Populate IDT with meaningful offsets for exception handlers...
 
 	mov	di, IDT_BASE
 	lea	eax, [ebp + Halt]
@@ -124,6 +127,8 @@ fixPointers:
 	loop	.1
 
 %if X64
+;------------------------------------------------------------------------------
+; Prepare paging tables
 
 	BITS	16
 
@@ -235,12 +240,12 @@ In32BitProtectedMode:
 	mov	es, ax
 	mov	ss, ax
 
-	mov	esp, 0x001FFFE8	; make final stack aligned (X64 & IA32)
+	mov	esp, PAYLOAD_STACK
 
 ;------------------------------------------------------------------------------
 ; Move payload to its final destination
 
-
+movePayload:
 	lea	esi, [ebp + PayLoadDatum]
 
 	push	ebp
@@ -311,9 +316,7 @@ SectionLoop:
 	;
 	; Address Map:
 	;  10000 ~ 12000 - efildr (loaded)
-	;  20000 ~ 21000 - start64.com
-	;  21000 ~ 22000 - efi64.com
-	;  22000 ~ 90000 - efildr + stuff
+	;  20000 ~ 21000 - efildrprelude
 
 	mov	eax, X64_PAGE_TABLE_BASE
 	mov	cr3, eax
