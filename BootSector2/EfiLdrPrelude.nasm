@@ -1060,7 +1060,12 @@ IDT_BASE:
 	idtentry	SIMD_EXCEPTION	; SIMD floating-point exception (INT 0x13)
 
 	; 84 unspecified descriptors, First 12 of them are reserved, the rest are avail
-	times (84 * idtdescr_size) db 0
+
+%assign	i	0x14
+%rep	84
+	idtentry	UNSPEC%+i
+%assign	i	(i + 1)
+%endrep
 
 	idtentry	IRQ0	; IRQ 0 (System timer) - (INT 0x68)
 	idtentry	IRQ1	; IRQ 1 (8042 Keyboard controller) - (INT 0x69)
