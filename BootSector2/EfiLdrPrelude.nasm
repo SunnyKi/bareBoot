@@ -20,6 +20,7 @@
 ;  -DX64=?
 ;------------------------------------------------------------------------------
 
+%include "bootxdefs.nasm"
 %include "efifvfile.nasm"
 %include "efiimage.nasm"
 
@@ -69,28 +70,30 @@ Start:
 ;------------------------------------------------------------------------------
 ; Gether memory map
 
+getBiosMemoryMap:
 	xor	ebx, ebx
-	mov	edi, MemoryMap
+	mov	edi, BiosMemoryMap + 4	; skip map size
 
-MemMapLoop:
+.1:
 	mov	eax, 0xE820
 	mov	ecx, 20
 	mov	edx, 'PAMS'
 	int	0x15
-	jc	MemMapDone
+	jc	.2
 	add	edi, 20
 	cmp	ebx, 0
-	je	MemMapDone
-	jmp	MemMapLoop
+	je	.2
+	jmp	.1
 
-MemMapDone:
-	mov	eax, MemoryMap
+.2:
+	mov	eax, BiosMemoryMap + 4
 	sub	edi, eax
-	mov	dword [es:MemoryMapSize], edi
+	mov	dword [es:BiosMemoryMap], edi
 
 ;------------------------------------------------------------------------------
 ; Fix pointers & offsets
 
+fixPointers:
 	lea	eax, [ebp + GDT_BASE]		; PHYSICAL address of gdt
 	mov	dword [es:gdtr + 2], eax
 	lea	eax, [ebp + IDT_BASE]		; PHYSICAL address of idt
@@ -356,7 +359,7 @@ InLongMode:
 
 	; XXX: args in rcx, rdx, r8, r8
 
-	lea	rcx, [rbp + MemoryMapSize]
+	lea	rcx, [rbp + BiosMemoryMap]
 	jmp	[rsi]
 
 %else	; IA32
@@ -369,7 +372,7 @@ InLongMode:
 ; Go to IA32 payload code
 
 	; XXX: args on stack
-	mov	eax, [ebp + MemoryMapSize]
+	mov	eax, [ebp + BiosMemoryMap]
 	push	eax
 	jmp	[esi]
 
@@ -1090,10 +1093,8 @@ IDT_END:
 
 	align 2
 
-MemoryMapSize:
+BiosMemoryMap:
 	dd	0
-
-MemoryMap:
 	times (32 * 20) db 0
 
 ;------------------------------------------------------------------------------
