@@ -14,10 +14,10 @@
 ;*    EfiLdrPrelude.nasm
 ;*
 ;------------------------------------------------------------------------------
-; nms was here, enlighted by Scott Duplichan (notabs.org) works ;-)
+; nms was here, enlightened by Scott Duplichan (notabs.org) works ;-)
 ;------------------------------------------------------------------------------
 ; Variants selected by nasm command line
-;  -DX64=? -DA20OLD=?
+;  -DX64=?
 ;------------------------------------------------------------------------------
 
 %include "efifvfile.nasm"
@@ -87,68 +87,6 @@ MemMapDone:
 	mov	eax, MemoryMap
 	sub	edi, eax
 	mov	dword [es:MemoryMapSize], edi
-
-;------------------------------------------------------------------------------
-; Enable A20 Gate
-
-	mov	ax, 0x2401	; Enable A20 Gate
-	int	0x15
-
-%ifdef A20_OLD
-
-	jnc	A20GateEnabled	; Jump if it suceeded
-
-; Fast method
-
-	in	al, 0x92	; 0x92 -- System Control Port A
-	test	al, 2
-	jnz	A20GateEnabled
-	or	al, 2
-	and	al, 0xFE
-	out	0x92, al
-	in	al, 0x92	; verify
-	test	al, 2
-	jnz	A20GateEnabled
-
-; If fast method does not work, try much older one
-
-DELAY_PORT		equ	0xED	; Port to use for 1uS delay
-KBD_CONTROL_PORT	equ	0x60	; 8042 control port
-KBD_STATUS_PORT		equ	0x64	; 8042 status port
-WRITE_DATA_PORT_CMD	equ	0xD1	; 8042 command to write the data port
-ENABLE_A20_CMD		equ	0xDF	; 8042 command to enable A20
-
-	call	Empty8042InputBuffer	; Empty the Input Buffer on the 8042 controller
-	jnz	Timeout8042		; Jump if the 8042 timed out
-	out	DELAY_PORT, ax		; Delay 1 uS
-	mov	al, WRITE_DATA_PORT_CMD	; 8042 cmd to write output port
-	out	KBD_STATUS_PORT, al	; Send command to the 8042
-	call	Empty8042InputBuffer	; Empty the Input Buffer on the 8042 controller
-	jnz	Timeout8042		; Jump if the 8042 timed out
-	mov	al, ENABLE_A20_CMD	; gate address bit 20 on
-	out	KBD_CONTROL_PORT, al	; Send command to the 8042
-	call	Empty8042InputBuffer	; Empty the Input Buffer on the 8042 controller
-	mov	cx, 25			; Delay 25 uS for the command to complete on the 8042
-
-Delay25uS:
-	out	DELAY_PORT, ax		; Delay 1 uS
-	loop	Delay25uS
-	jmp	A20GateEnabled		; Let hope so
-
-Timeout8042:
-
-Empty8042InputBuffer:
-	xor	cx, cx
-
-Empty8042Loop:
-	out	DELAY_PORT, ax		; Delay 1us
-	in	al, KBD_STATUS_PORT	; Read the 8042 Status Port
-	and	al, 0x02		; Check the Input Buffer Full Flag
-	loopnz	Empty8042Loop		; Loop until the input buffer is empty or a timout of 65536 uS
-	ret
-%endif	; A20_OLD
-
-A20GateEnabled:
 
 ;------------------------------------------------------------------------------
 ; Fix pointers & offsets
