@@ -52,10 +52,10 @@ $(OUTPUT_DIR)/bootx1f32alt:	$(MODULE_DIR)/bootx1f32.nasm $(INCLUDE_FILES)
 #=============
 
 $(OUTPUT_DIR)/EfiLdrPrelude32:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
-	nasm -DX64=0 -DA20OLD=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
+	nasm -DX64=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
 
 $(OUTPUT_DIR)/EfiLdrPrelude64:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
-	nasm -DX64=1 -DA20OLD=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
+	nasm -DX64=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
 
 #=============
 
