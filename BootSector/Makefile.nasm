@@ -85,3 +85,11 @@ $(OUTPUT_DIR)/efi32.com2: $(OUTPUT_DIR)/efi32.com
 
 $(OUTPUT_DIR)/efi64.com2: $(OUTPUT_DIR)/efi64.com
 	Split -f $(OUTPUT_DIR)/efi64.com -t $(OUTPUT_DIR)/efi64.com2 -s 135168
+
+#=============
+
+clean:
+	echo do not clean me
+
+cleanall:
+	echo do not clean me
