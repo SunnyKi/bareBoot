@@ -50,7 +50,7 @@ PAYLOAD_STACK	equ	(2 * 1024 * 1024 - 0x18)
 
 	BITS	16
 
-Start:
+Start0:
 	mov	ax, cs
 	mov	ds, ax
 	mov	es, ax
@@ -61,7 +61,7 @@ Start:
 ; Where we are? ;-)
 
 	call	readEip
-	sub	ax, ($ - Start)
+	sub	ax, ($ - Start0)
 	xor	ebp, ebp
 	mov	bp, cs
 	shr	ax, 4
@@ -243,10 +243,10 @@ In32BitProtectedMode:
 	mov	esp, PAYLOAD_STACK
 
 ;------------------------------------------------------------------------------
-; Move payload to its final destination
+; Move EfiLdr to its final destination
 
-movePayload:
-	lea	esi, [ebp + PayLoadDatum]
+moveEfiLdr:
+	lea	esi, [ebp + PayloadDatum]
 
 	push	ebp
 	mov	eax, [esi + EfiLdrHeader_size + EfiLdrImage.Offset]
@@ -360,9 +360,10 @@ InLongMode:
 ;------------------------------------------------------------------------------
 ; Go to X64 payload code
 
-	; XXX: args in rcx, rdx, r8, r8
+	; XXX: args in rcx, rdx, r8, r9
 
 	lea	rcx, [rbp + BiosMemoryMap]
+	mov	rdx, (kPayloadHighAddr + (PayloadDatum - Start0))
 	jmp	[rsi]
 
 %else	; IA32
@@ -375,7 +376,8 @@ InLongMode:
 ; Go to IA32 payload code
 
 	; XXX: args on stack
-	mov	eax, [ebp + BiosMemoryMap]
+	push	dword (kPayloadHighAddr + (PayloadDatum - Start0))
+	lea	eax, [ebp + BiosMemoryMap]
 	push	eax
 	jmp	[esi]
 
@@ -1102,6 +1104,6 @@ BiosMemoryMap:
 
 ;------------------------------------------------------------------------------
 
-	align	16, db 0
+	align	4, db 0
 
-PayLoadDatum	equ	$
+PayloadDatum	equ	$
