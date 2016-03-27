@@ -19,7 +19,6 @@ TARGET_FILES = \
   $(OUTPUT_DIR)/bootx1f32alt \
   $(OUTPUT_DIR)/EfiLdrPrelude32 \
   $(OUTPUT_DIR)/EfiLdrPrelude64 \
-  $(OUTPUT_DIR)/f32b1tool \
   $(OUTPUT_DIR)/nopsector
 
 INCLUDE_FILES = \
@@ -59,18 +58,13 @@ $(OUTPUT_DIR)/EfiLdrPrelude64:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
 
 #=============
 
-$(OUTPUT_DIR)/f32b1tool:	$(MODULE_DIR)/f32b1tool.c
-	$(CC) -o $@ $?
-
-#=============
-
 $(OUTPUT_DIR)/nopsector:	$(MODULE_DIR)/nopsector.nasm
 	nasm -o $@ $?
 
 #=============
 
 clean:
-	echo do not clean me
+	$(RM) $(TARGET_FILES)
 
 cleanall:
-	echo do not clean me
+	$(RM) $(TARGET_FILES)

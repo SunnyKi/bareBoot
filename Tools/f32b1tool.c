@@ -13,6 +13,9 @@
 /*
  * Tool to stuff oversized boot1 code to fat32 volume.
  * Damn foolproofness is not included.
+ *
+ * compile as
+ *     cc -o f32b1tool f32b1tool.c
  */
 
 #include	<stdlib.h>
