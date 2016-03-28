@@ -163,6 +163,7 @@ main(int argc, char* argv[]) {
 	unsigned short ressec;	/* reserved sector count */
 	unsigned char* s0;
 	unsigned char* fs0 = NULL;
+	int minsectors;
 
 	if (argc != 3) {
 		usage(argv[0]);
@@ -186,15 +187,17 @@ main(int argc, char* argv[]) {
 	ressec = getword(s0, 0x0E);	/* count of reserved sectors */
 	fsis = getword(s0, 0x30);	/* FSinfo sector number */
 
-	if (fsis != 0x0000 && fsis != 0xFFFF) {
-		fs0 = readsectors(fsis, 1);
-		fsis = bcsectors;	/* next after bootcode */
-	} else {
+	if (fsis == 0x0000 || fsis == 0xFFFF) {
 		fsis = 0x0000;
+	} else {
+		fs0 = readsectors(fsis, 1);
+		fsis = 2 * bcsectors;	/* next after bootcode backup */
 	}
 
-	if (ressec < 2 * bcsectors + fsis) {
-		fprintf(stderr, "%s: not enough reserved sectors (%d), need %d\n", argv[1], ressec, 2 * bcsectors + fsis);
+	minsectors = 2 * bcsectors + (fsis ? 1 : 0);
+	if (ressec < minsectors) {
+		fprintf(stderr, "%s: not enough reserved sectors (%d), need %d\n",
+				argv[1], ressec, minsectors);
 		f32close();
 		return 1;
 	}
@@ -210,10 +213,11 @@ main(int argc, char* argv[]) {
 	putword(bkps, bootcode, 0x32);
 
 	writesectors(bootcode, 0, bcsectors);
-	if (fsis != 0x0000) {
+	writesectors(bootcode, bcsectors, bcsectors);
+
+	if (fsis) {
 		writesectors(fs0, fsis, 1);
 	}
-	writesectors(bootcode, bkps, bcsectors);
 
 	f32close();
 	return 0;
