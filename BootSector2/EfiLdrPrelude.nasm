@@ -362,9 +362,9 @@ InLongMode:
 
 	; XXX: args in rcx, rdx, r8, r9
 
-	lea	rcx, [rbp + BiosMemoryMap]
 	mov	rdx, (kPayloadHighAddr + (PayloadDatum - Start0))
-	jmp	[rsi]
+	lea	rcx, [rbp + BiosMemoryMap]
+	call	rsi
 
 %else	; IA32
 
@@ -379,7 +379,7 @@ InLongMode:
 	push	dword (kPayloadHighAddr + (PayloadDatum - Start0))
 	lea	eax, [ebp + BiosMemoryMap]
 	push	eax
-	jmp	[esi]
+	call	esi
 
 %endif	; IA32
 
