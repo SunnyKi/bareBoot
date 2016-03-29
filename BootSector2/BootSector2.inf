@@ -26,5 +26,4 @@
   bootx0.nasm
   bootx1f32.nasm
   EfiLdrPrelude.nasm
-  f32b1tool.c
   nopsector.nasm
