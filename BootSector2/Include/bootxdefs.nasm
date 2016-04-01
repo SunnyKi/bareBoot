@@ -37,5 +37,5 @@ kBoot1Fatbuf		equ	0x00006000	; XXX FAT buffer (1 sector long)
 
 kPayloadHighAddr	equ	(1 * 1024 * 1024)
 kPayloadLowAddr		equ	0x00020000
-kPayloadLowHdr		equ	(1 * 64 * 1024)		; when payload size exceeds LowMax, copy to low memory only that amount
+kPayloadLowHdr		equ	(2 * 64 * 1024)		; when payload size exceeds LowMax, copy to low memory only that amount
 kPayloadLowMax		equ	(480 * 1024)
