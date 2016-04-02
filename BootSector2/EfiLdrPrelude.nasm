@@ -1039,7 +1039,7 @@ SYS_CODEXX_SEL	equ	SYS_CODE_SEL
 
 idtr:
 	dw	IDT_END - IDT_BASE - 1	; IDT limit
-	dd	IDT_BASE		; will be adjusted at runtime
+	dq	IDT_BASE		; will be adjusted at runtime
 
 ;------------------------------------------------------------------------------
 
