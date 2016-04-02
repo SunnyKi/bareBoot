@@ -289,7 +289,7 @@ PrintHeader ('C');
   // Display the table of memory descriptors.
   //
   PrintString ("\nEFI Memory Descriptors\n");   
-  for (Index = 0; Index < NumberOfMemoryMapEntries; Index++) {
+  for (Index = 0; Index < (INTN) NumberOfMemoryMapEntries; Index++) {
     PrintString (
       "Type = 0x%x Start = 0x%08lx NumberOfPages = 0x%08lx\n",
       EfiMemoryDescriptor[Index].Type, EfiMemoryDescriptor[Index].PhysicalStart, EfiMemoryDescriptor[Index].NumberOfPages
