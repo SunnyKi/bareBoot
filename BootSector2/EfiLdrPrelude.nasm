@@ -194,7 +194,7 @@ identityMapLongMode:
 	lea	eax, [ebx + tableStruct.directory]
 	add	eax, ecx
 	or	al, 0x03	; present, writable
-	or	[di + tableStruct.map + pageDirectoryPointer.lowPart], eax
+	or	[di + tableStruct.pointer + pageDirectoryPointer.lowPart], eax
 	add	di, pageDirectoryPointer_size
 	add	ecx, 4096
 	cmp	ecx, (count3 << 12)
@@ -206,7 +206,7 @@ identityMapLongMode:
 	mov	eax, ecx
 	shl	eax, 21
 	or	al, 0x83	; present, writable, big
-	or	[di + tableStruct.map + pageDirectory.lowPart], eax
+	or	[di + tableStruct.directory + pageDirectory.lowPart], eax
 	add	di, pageDirectory_size
 	inc	ecx
 	cmp	ecx, count2
