@@ -17,6 +17,25 @@
 #
 ##
 
+function findInPackages
+{
+  if [ -z "$PACKAGES_PATH" ]
+  then
+    echo $WORKSPACE/$1
+    return
+  fi
+  for d in ${PACKAGES_PATH//:/ }
+  do
+    fn=$d/$1
+    if [ -e $fn ]
+    then
+      echo $fn
+      return
+    fi
+  done
+  echo $1
+}
+
 if [ $# = 2 ]
 then
   PROCESSOR=$1
@@ -40,7 +59,7 @@ then
   PROJECTNAME=$(basename $ACTIVE_PLATFORM .dsc)
 fi
 
-BOOTSECTOR_BIN_DIR=$WORKSPACE/../$(dirname $ACTIVE_PLATFORM)/$PROJECTNAME/BootSector2/bin
+BOOTSECTOR_BIN_DIR=$(findInPackages bareBoot/BootSector2/bin)
 
 BUILD_DIR=$WORKSPACE/Build/$PROJECTNAME/$PROCESSOR/${TARGET}_$TOOLTAG
 
@@ -57,19 +76,9 @@ LzmaCompress -e -o $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/$PROCESSOR/DxeIpl.efi
 
 echo Generate Loader Image ...
 
-case "$PROCESSOR" in
-  IA32)
-    GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-    EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${FVNAME}.z
-    cat $BOOTSECTOR_BIN_DIR/EfiLdrPrelude32$BUILD_DIR/FV/Efildr32 > $WORKSPACE/stage/boot32
-    ;;
-
-  X64)
-    GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-    EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${FVNAME}.z
-    cat $BOOTSECTOR_BIN_DIR/EfiLdrPrelude64 $BUILD_DIR/FV/Efildr64 > $WORKSPACE/stage/boot64
-    ;;
-esac
+GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
+EfiLdrImage -o $BUILD_DIR/FV/Efildr$PROCESSOR $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${FVNAME}.z
+cat $BOOTSECTOR_BIN_DIR/EfiLdrPrelude$PROCESSOR $BUILD_DIR/FV/Efildr$PROCESSOR > $WORKSPACE/stage/boot$PROCESSOR
 
 echo Done!
 exit 0

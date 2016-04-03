@@ -17,8 +17,8 @@ TARGET_FILES = \
   $(OUTPUT_DIR)/bootx0ss \
   $(OUTPUT_DIR)/bootx1f32 \
   $(OUTPUT_DIR)/bootx1f32alt \
-  $(OUTPUT_DIR)/EfiLdrPrelude32 \
-  $(OUTPUT_DIR)/EfiLdrPrelude64 \
+  $(OUTPUT_DIR)/EfiLdrPreludeIA32 \
+  $(OUTPUT_DIR)/EfiLdrPreludeX64 \
   $(OUTPUT_DIR)/nopsector
 
 INCLUDE_FILES = \
@@ -50,10 +50,10 @@ $(OUTPUT_DIR)/bootx1f32alt:	$(MODULE_DIR)/bootx1f32.nasm $(INCLUDE_FILES)
 
 #=============
 
-$(OUTPUT_DIR)/EfiLdrPrelude32:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
+$(OUTPUT_DIR)/EfiLdrPreludeIA32:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
 	nasm -DX64=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
 
-$(OUTPUT_DIR)/EfiLdrPrelude64:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
+$(OUTPUT_DIR)/EfiLdrPreludeX64:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
 	nasm -DX64=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
 
 #=============
