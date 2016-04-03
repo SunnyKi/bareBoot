@@ -63,22 +63,25 @@ BOOTSECTOR_BIN_DIR=$(findInPackages bareBoot/BootSector2/bin)
 
 BUILD_DIR=$WORKSPACE/Build/$PROJECTNAME/$PROCESSOR/${TARGET}_$TOOLTAG
 
+FV_DIR=$BUILD_DIR/FV
 FVNAME=$(echo ${PROJECTNAME}EFIMAINFV | tr '[a-z]' '[A-Z]')
 
+BOOTFILE=$WORKSPACE/stage/boot$PROCESSOR
+
 echo Compressing ${FVNAME}.FV ...
-LzmaCompress -e -o $BUILD_DIR/FV/${FVNAME}.z $BUILD_DIR/FV/${FVNAME}.Fv
+LzmaCompress -e -o $FV_DIR/${FVNAME}.z $FV_DIR/${FVNAME}.Fv
 
 echo Compressing DxeMain.efi ...
-LzmaCompress -e -o $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/$PROCESSOR/DxeCore.efi
+LzmaCompress -e -o $FV_DIR/DxeMain.z $BUILD_DIR/$PROCESSOR/DxeCore.efi
 
 echo Compressing DxeIpl.efi ...
-LzmaCompress -e -o $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/$PROCESSOR/DxeIpl.efi
+LzmaCompress -e -o $FV_DIR/DxeIpl.z $BUILD_DIR/$PROCESSOR/DxeIpl.efi
 
 echo Generate Loader Image ...
 
-GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
-EfiLdrImage -o $BUILD_DIR/FV/Efildr$PROCESSOR $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/${FVNAME}.z
-cat $BOOTSECTOR_BIN_DIR/EfiLdrPrelude$PROCESSOR $BUILD_DIR/FV/Efildr$PROCESSOR > $WORKSPACE/stage/boot$PROCESSOR
+GenFw --rebase 0x10000 -o $FV_DIR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
+EfiLdrImage -o $FV_DIR/Efildr$PROCESSOR $FV_DIR/EfiLoader.efi $FV_DIR/DxeIpl.z $FV_DIR/DxeMain.z $FV_DIR/${FVNAME}.z
+cat $BOOTSECTOR_BIN_DIR/EfiLdrPrelude$PROCESSOR $FV_DIR/Efildr$PROCESSOR > $BOOTFILE
 
-echo Done!
+echo $BOOTFILE is made!
 exit 0
