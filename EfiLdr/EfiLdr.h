@@ -18,8 +18,8 @@ Revision History:
 
 --*/
 
-#ifndef _DUET_EFI_LOADER_H_
-#define _DUET_EFI_LOADER_H_
+#ifndef _BIOS_EFI_LOADER_H_
+#define _BIOS_EFI_LOADER_H_
 
 #include "Uefi.h"
 #include "EfiLdrHandoff.h"
@@ -35,8 +35,6 @@ Revision History:
 #define INT15_E820_AddressRangeReserved 2
 #define INT15_E820_AddressRangeACPI     3
 #define INT15_E820_AddressRangeNVS      4
-
-#define EFI_FIRMWARE_BASE_ADDRESS  0x00200000
 
 #define EFI_DECOMPRESSED_BUFFER_ADDRESS 0x00600000
 
@@ -86,4 +84,4 @@ VOID
     IN EFILDRHANDOFF  *Handoff
     );
 
-#endif //_DUET_EFI_LOADER_H_
+#endif //_BIOS_EFI_LOADER_H_
