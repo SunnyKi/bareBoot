@@ -4,7 +4,7 @@
 @REM #  and platform building, so just use a bat file to do post build commands.
 @REM #  Originally, following post building command is for EfiLoader module.
 @REM #
-@REM #  Copyright (c) 2010 - 2011, Intel Corporation. All rights reserved.<BR>
+@REM #  Copyright (c) 2010 - 2016, Intel Corporation. All rights reserved.<BR>
 @REM #
 @REM #  This program and the accompanying materials
 @REM #  are licensed and made available under the terms and conditions of the BSD License
@@ -16,7 +16,8 @@
 
 set PKGNAME=bareBoot
 
-set BOOTSECTOR_BIN_DIR=%WORKSPACE%\..\bareBoot\%PKGNAME%\BootSector2\bin
+for %%i in (bareBoot\BootSector2\bin) do set BOOTSECTOR_BIN_DIR=%%~$PACKAGES_PATH:i
+
 set PROCESSOR=""
 call %WORKSPACE%\..\tools\GetVariables.bat
 
