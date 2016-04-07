@@ -19,6 +19,8 @@
  SmbiosGen.c
  **/
 
+#include <IndustryStandard/SmBios.h>
+
 #include <macosx.h>
 
 #include "cpu.h"
