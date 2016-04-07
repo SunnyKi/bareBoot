@@ -23,7 +23,7 @@
   bareBoot/bareBoot.dec
 
 [Sources]
-  bootx0.nasm
-  bootx1f32.nasm
-  EfiLdrPrelude.nasm
-  nopsector.nasm
+  bootx0.nasmb
+  bootx1f32.nasmb
+  EfiLdrPrelude.nasmb
+  nopsector.nasmb
