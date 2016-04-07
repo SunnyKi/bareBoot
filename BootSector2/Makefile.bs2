@@ -35,31 +35,31 @@ all:	$(TARGET_FILES)
 #=============
 
 $(OUTPUT_DIR)/bootx0af:	$(MODULE_DIR)/bootx0.nasm $(INCLUDE_FILES)
-	nasm -DACTIVEFIRST=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx0.nasm
+	nasm -O1 -DACTIVEFIRST=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx0.nasm
 
 $(OUTPUT_DIR)/bootx0ss:	$(MODULE_DIR)/bootx0.nasm $(INCLUDE_FILES)
-	nasm -DACTIVEFIRST=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx0.nasm
+	nasm -O1 -DACTIVEFIRST=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx0.nasm
 
 #=============
 
 $(OUTPUT_DIR)/bootx1f32:	$(MODULE_DIR)/bootx1f32.nasm $(INCLUDE_FILES)
-	nasm -DBOOTSEL=0 -DUSESIDL=1 -DVERBOSE=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasm
+	nasm -O1 -DBOOTSEL=0 -DUSESIDL=1 -DVERBOSE=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasm
 
 $(OUTPUT_DIR)/bootx1f32alt:	$(MODULE_DIR)/bootx1f32.nasm $(INCLUDE_FILES)
-	nasm -DBOOTSEL=1 -DUSESIDL=1 -DVERBOSE=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasm
+	nasm -O1 -DBOOTSEL=1 -DUSESIDL=1 -DVERBOSE=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasm
 
 #=============
 
 $(OUTPUT_DIR)/EfiLdrPreludeIA32:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
-	nasm -DX64=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
+	nasm -O1 -DX64=0 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
 
 $(OUTPUT_DIR)/EfiLdrPreludeX64:	$(MODULE_DIR)/EfiLdrPrelude.nasm $(INCLUDE_FILES)
-	nasm -DX64=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
+	nasm -O1 -DX64=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/EfiLdrPrelude.nasm
 
 #=============
 
 $(OUTPUT_DIR)/nopsector:	$(MODULE_DIR)/nopsector.nasm
-	nasm -o $@ $?
+	nasm -O1 -o $@ $?
 
 #=============
 
