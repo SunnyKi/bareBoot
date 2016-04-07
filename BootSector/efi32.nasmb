@@ -20,9 +20,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
         BITS 32
-        org 21000h
+
+THIS_BASE equ 021000h
 
 DEFAULT_HANDLER_SIZE EQU INT1 - INT0
+
+    times THIS_BASE db 0
 
 %macro JmpCommonIdtEntry 0
     ; jmp     commonIdtEntry - this must be hand coded to keep the assembler from
@@ -577,5 +580,7 @@ StringEflags      db  " EFLAGS=", 0
 Idtr        times 6 db  0
 
 ;???    org 21ffeh
+    times (021FFEh - ($ - $$)) db 0
+
 BlockSignature:
     dw      0aa55h
