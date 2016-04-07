@@ -27,28 +27,22 @@ if %PROCESSOR%=="" goto WrongArch
 
 set BUILD_DIR=%WORKSPACE%\Build\%PKGNAME%\%TARGET_ARCH%\%TARGET%_%TOOL_CHAIN_TAG%
 
+set FV_DIR=%BUILD_DIR%\FV
+set FV_NAME=bareBootEFIMAINFV
 
 echo Compressing bareBootEFIMainFv.FV ...
-LzmaCompress -e -o %BUILD_DIR%\FV\bareBootEFIMAINFV.z %BUILD_DIR%\FV\bareBootEFIMAINFV.Fv
+LzmaCompress -e -o %FV_DIR%\%FV_NAME%.z %FV_DIR%\%FV_NAME%.Fv
 
 echo Compressing DxeMain.efi ...
-LzmaCompress -e -o %BUILD_DIR%\FV\DxeMain.z %BUILD_DIR%\%PROCESSOR%\DxeCore.efi
+LzmaCompress -e -o %FV_DIR%\DxeMain.z %BUILD_DIR%\%PROCESSOR%\DxeCore.efi
 
 echo Compressing DxeIpl.efi ...
-LzmaCompress -e -o %BUILD_DIR%\FV\DxeIpl.z %BUILD_DIR%\%PROCESSOR%\DxeIpl.efi
+LzmaCompress -e -o %FV_DIR%\DxeIpl.z %BUILD_DIR%\%PROCESSOR%\DxeIpl.efi
 
 echo Generate Loader Image ...
-if "%PROCESSOR%"=="IA32" goto GENERATE_IMAGE_IA32
-if "%PROCESSOR%"=="X64" goto GENERATE_IMAGE_X64
 
-:GENERATE_IMAGE_IA32
-EfiLdrImage.exe -o %BUILD_DIR%\FV\Efildr32 %BUILD_DIR%\%PROCESSOR%\EfiLoader.efi %BUILD_DIR%\FV\DxeIpl.z %BUILD_DIR%\FV\DxeMain.z %BUILD_DIR%\FV\bareBootEFIMAINFV.z
-copy /b %BOOTSECTOR_BIN_DIR%\EfiLdrPrelude32+%BUILD_DIR%\FV\Efildr32 %WORKSPACE%\stage\boot32
-goto end
-
-:GENERATE_IMAGE_X64
-EfiLdrImage.exe -o %BUILD_DIR%\FV\Efildr64 %BUILD_DIR%\%PROCESSOR%\EfiLoader.efi %BUILD_DIR%\FV\DxeIpl.z %BUILD_DIR%\FV\DxeMain.z %BUILD_DIR%\FV\bareBootEFIMAINFV.z
-copy /b %BOOTSECTOR_BIN_DIR%\EfiLdrPrelude64+%BUILD_DIR%\FV\Efildr64 %WORKSPACE%\stage\boot64
+EfiLdrImage.exe -o %FV_DIR%\Efildr%PROCESSOR% %BUILD_DIR%\%PROCESSOR%\EfiLoader.efi %FV_DIR%\DxeIpl.z %FV_DIR%\DxeMain.z %FV_DIR%\%FV_NAME%.z
+copy /b %BOOTSECTOR_BIN_DIR%\EfiLdrPrelude%PROCESSOR%+%FV_DIR%\Efildr%PROCESSOR% %WORKSPACE%\stage\boot%PROCESSOR%
 goto end
 
 :WrongArch
