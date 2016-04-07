@@ -52,7 +52,8 @@ IsGoodEFILAddr (
 
   eh = (EFILDR_HEADER *)((UINTN) EFILAddr);
 
-  if (eh->Signature == 'LIFE' && eh->NumberOfImages == 4) {
+  // Signature is "EFIL" or 'LIFE'
+  if (eh->Signature == 0x4C494645 && eh->NumberOfImages == 4) {
     return TRUE;
   }
 
