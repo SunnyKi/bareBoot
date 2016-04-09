@@ -340,7 +340,9 @@ _ModuleEntryPoint (
   UINT32    EFILAddr
   )
 {
+#if defined(MEMLOG2SERIAL) || !defined(MDEPKG_NDEBUG)
   SerialPortInitialize ();
+#endif
   EfiLoader(BiosMemoryMapBaseAddress, EFILAddr);
   return EFI_SUCCESS;
 }

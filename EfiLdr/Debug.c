@@ -72,9 +72,11 @@ PrintString (
     }
   }
 
+#if defined(MEMLOG2SERIAL) || !defined(MDEPKG_NDEBUG)
   //
   // All information also output to serial port.
   //
   SerialPortWrite ((UINT8 *) PrintBuffer, Index);
+#endif
 }
 
