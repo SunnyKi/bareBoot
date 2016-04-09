@@ -2,6 +2,7 @@
 Version.h
 Debug/
 Release/
+bin/
 
 *.com
 *.com1
