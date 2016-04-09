@@ -17,9 +17,11 @@
 set PKGNAME=bareBoot
 
 for %%i in (bareBoot\BootSector2\bin) do set BOOTSECTOR_BIN_DIR=%%~$PACKAGES_PATH:i
+for %%i in (bareBoot\GetVariables.bat) do set GETVARSSCRIPT=%%~$PACKAGES_PATH:i
+
+call %GETVARSSCRIPT%
 
 set PROCESSOR=""
-call %WORKSPACE%\..\tools\GetVariables.bat
 
 if NOT "%1"=="" @set TARGET_ARCH=%1
 if "%TARGET_ARCH%"=="IA32" set PROCESSOR=IA32
@@ -31,7 +33,7 @@ set BUILD_DIR=%WORKSPACE%\Build\%PKGNAME%\%TARGET_ARCH%\%TARGET%_%TOOL_CHAIN_TAG
 set FV_DIR=%BUILD_DIR%\FV
 set FV_NAME=bareBootEFIMAINFV
 
-set BOOTFILE=%WORKSPACE%\stage\boot%PROCESSOR%-%TARGET%-%TOOLTAG%
+set BOOTFILE=%WORKSPACE%\stage\boot%PROCESSOR%-%TARGET%-%TOOL_CHAIN_TAG%
 
 echo Compressing bareBootEFIMainFv.FV ...
 LzmaCompress -e -o %FV_DIR%\%FV_NAME%.z %FV_DIR%\%FV_NAME%.Fv
