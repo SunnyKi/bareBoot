@@ -31,6 +31,8 @@ set BUILD_DIR=%WORKSPACE%\Build\%PKGNAME%\%TARGET_ARCH%\%TARGET%_%TOOL_CHAIN_TAG
 set FV_DIR=%BUILD_DIR%\FV
 set FV_NAME=bareBootEFIMAINFV
 
+set BOOTFILE=%WORKSPACE%\stage\boot%PROCESSOR%-%TARGET%-%TOOLTAG%
+
 echo Compressing bareBootEFIMainFv.FV ...
 LzmaCompress -e -o %FV_DIR%\%FV_NAME%.z %FV_DIR%\%FV_NAME%.Fv
 
@@ -43,7 +45,7 @@ LzmaCompress -e -o %FV_DIR%\DxeIpl.z %BUILD_DIR%\%PROCESSOR%\DxeIpl.efi
 echo Generate Loader Image ...
 
 EfiLdrImage.exe -o %FV_DIR%\Efildr%PROCESSOR% %BUILD_DIR%\%PROCESSOR%\EfiLoader.efi %FV_DIR%\DxeIpl.z %FV_DIR%\DxeMain.z %FV_DIR%\%FV_NAME%.z
-copy /b %BOOTSECTOR_BIN_DIR%\EfiLdrPrelude%PROCESSOR%+%FV_DIR%\Efildr%PROCESSOR% %WORKSPACE%\stage\boot%PROCESSOR%
+copy /b %BOOTSECTOR_BIN_DIR%\EfiLdrPrelude%PROCESSOR%+%FV_DIR%\Efildr%PROCESSOR% %BOOTFILE%
 goto end
 
 :WrongArch
