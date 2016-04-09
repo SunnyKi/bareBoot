@@ -78,11 +78,12 @@ EfiLoader (
   UINTN                 BfvBase;
   EFI_MAIN_ENTRYPOINT   EfiMainEntrypoint;
   EFILDRHANDOFF         Handoff;
-
+#if 0
   INTN			Index;
+#endif
 
   ClearScreen();
-#if 1
+#if 0
   PrintHeader ('A');
   
   PrintString ("Enter bareBoot Loader...\n");
@@ -97,7 +98,7 @@ EfiLoader (
   NumberOfMemoryMapEntries = 0;
   GenMemoryMap (&NumberOfMemoryMapEntries, EfiMemoryDescriptor, BiosMemoryMap);
 
-#if 1
+#if 0
   PrintString ("Get %d entries of memory map!\n", NumberOfMemoryMapEntries);
 #endif
 
@@ -120,7 +121,7 @@ EfiLoader (
   //
   EFILDRImage += 3;
 
-#if 1
+#if 0
   PrintString (
     "Decompress BFV image, Image Address = 0x%x Offset = 0x%x\n", 
     (UINTN) (EFILBase + EFILDRImage->Offset),
@@ -140,7 +141,7 @@ EfiLoader (
   if (EFI_ERROR (Status)) {
     SystemHang ("Failed to get decompress information for BFV!\n");
   }
-#if 1
+#if 0
   PrintString ("BFV decompress: DestinationSize = 0x%x, ScratchSize = 0x%x\n", (UINTN) DestinationSize, (UINTN) ScratchSize);
 #endif
   Status =  LzmaUefiDecompress (
@@ -163,7 +164,7 @@ EfiLoader (
   ZeroMem ((VOID *)(UINTN)BfvBase, BfvPageNumber * EFI_PAGE_SIZE);
   CopyMem ((VOID *)(UINTN)BfvBase, (VOID *)(UINTN)EFI_DECOMPRESSED_BUFFER_ADDRESS, DestinationSize);
 
-#if 1
+#if 0
   PrintHeader ('B');
 #endif
 
@@ -173,7 +174,7 @@ EfiLoader (
     
   EFILDRImage -= 2;
 
-#if 1
+#if 0
   PrintString (
     "Decompress DxeIpl image, Image Address = 0x%x Offset = 0x%x\n", 
     (UINTN) (EFILBase + EFILDRImage->Offset),
@@ -203,7 +204,7 @@ EfiLoader (
     SystemHang ("Failed to decompress DxeIpl image\n");
   }
 
-#if 1
+#if 0
   PrintString ("Start load DxeIpl PE image\n");  
 #endif
 
@@ -219,7 +220,7 @@ EfiLoader (
   if (EFI_ERROR (Status)) {
     SystemHang ("Failed to load and relocate DxeIpl PE image!\n");
   }
-#if 1
+#if 0
   PrintString (
     "DxeIpl PE image is successed loaded at 0x%lx, entry=0x%p\n",
     DxeIplImage.ImageBasePage,
@@ -235,7 +236,7 @@ PrintHeader ('C');
 
   EFILDRImage++;
 
-#if 1
+#if 0
   PrintString (
     "Decompress DxeMain FV image, Image Address = 0x%x Offset = 0x%x\n",
     (UINTN)(EFILBase + EFILDRImage->Offset),
@@ -277,7 +278,7 @@ PrintHeader ('C');
   if (EFI_ERROR (Status)) {
     SystemHang ("Failed to load/relocate DxeMain!\n");
   }
-#if 1
+#if 0
   PrintString (
     "DxeCore PE image is successed loaded at 0x%lx, entry=0x%p\n",
     DxeCoreImage.ImageBasePage,
@@ -313,7 +314,7 @@ PrintHeader ('C');
     Handoff.DxeCoreImageSize  = DxeCoreImage.NoPages * EFI_PAGE_SIZE;
     Handoff.DxeCoreEntryPoint = (VOID *)(UINTN)DxeCoreImage.EntryPoint;
 
-#if 1
+#if 0
     PrintString ("Transfer to DxeIpl ...EntryPoint = 0x%p\n", DxeIplImage.EntryPoint);
 #endif
     
@@ -321,7 +322,7 @@ PrintHeader ('C');
     EfiMainEntrypoint (&Handoff);
   }
 
-#if 1
+#if 0
   PrintHeader ('F');
 #endif
 
