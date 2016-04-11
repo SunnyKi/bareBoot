@@ -128,17 +128,18 @@ ScanDeviceHandles (
                   if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].ControllerHandle)
                     (*HandleType)[ChildIndex] |= (EFI_HANDLE_TYPE_DEVICE_HANDLE | EFI_HANDLE_TYPE_CHILD_HANDLE);
 
-            if (OpenInfo[OpenInfoIndex].ControllerHandle == ControllerHandle)
-            {
-              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) == EFI_OPEN_PROTOCOL_BY_DRIVER)
+            if (OpenInfo[OpenInfoIndex].ControllerHandle == ControllerHandle) {
+              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_DRIVER) == EFI_OPEN_PROTOCOL_BY_DRIVER) {
                 for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++)
                   if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].AgentHandle)
                     (*HandleType)[ChildIndex] |= EFI_HANDLE_TYPE_DEVICE_DRIVER;
-              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER) == EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER)
+              }
+              if ((OpenInfo[OpenInfoIndex].Attributes & EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER) == EFI_OPEN_PROTOCOL_BY_CHILD_CONTROLLER) {
                 (*HandleType)[HandleIndex] |= EFI_HANDLE_TYPE_PARENT_HANDLE;
                 for (ChildIndex = 0; ChildIndex < *HandleCount; ChildIndex++)
                   if ((*HandleBuffer)[ChildIndex] == OpenInfo[OpenInfoIndex].AgentHandle)
                     (*HandleType)[ChildIndex] |= EFI_HANDLE_TYPE_BUS_DRIVER;
+              }
             }
           }
 
