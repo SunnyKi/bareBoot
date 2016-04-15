@@ -515,7 +515,7 @@ commonIhtEntry:
 ;;  r15 <------- RSP, RBP
 
 %macro PrintRegister 2
-	mov	rsi, %1
+	lea	rsi, [%1]
 	call	PrintString
 	mov	rax, [rbp + %2 * 8]
 	call	PrintZword
@@ -523,7 +523,7 @@ commonIhtEntry:
 
 	call	ClearScreen
 
-	mov	rsi, String1
+	lea	rsi, [String1]
 	call	PrintString
 	mov	rax, [rbp + 16 * 8]	; move Int number into RAX
 	cmp	rax, 19
@@ -531,12 +531,11 @@ commonIhtEntry:
 
 PrintExceptionString:
 	shl	rax, 2			; multiply by 4 (sizeof dword) to get from StringTable to actual string address
-	add	rax, StringTable
-	mov	rsi, [rax]
+	mov	esi, dword [rax + StringTable]
 	jmp	PrintTheString
 
 PrintDefaultString:
-	mov	rsi, IntUnkString
+	lea	rsi, [IntUnkString]
 	mov	rdx, rax		; patch Int number
 	call	A2C
 	mov	[rsi + 1], al
@@ -550,12 +549,11 @@ PrintTheString:
 
 	PrintRegister String2, 19	; CS
 
-	mov	al, ':'
-	mov	byte [rdi], al
+	mov	byte [rdi], ':'
 	add	rdi, 2
 	mov	rax, [rbp + 18 * 8]	; RIP
 	call	PrintZword
-	mov	rsi, String3
+	lea	rsi, [String3]
 	call	PrintString
 
 	mov	rdi, 0x000B8140
@@ -613,8 +611,7 @@ InnerLoop:
 	mov	rax, [rsi]
 	call	PrintZword
 	add	rsi, 8
-	mov	al, ' '
-	mov	[rdi], al
+	mov	byte [rdi], ' '
 	add	rdi, 2
 	loop	InnerLoop
 
@@ -640,8 +637,7 @@ InnerLoop1:
 	mov	rax, [rsi]
 	call	PrintZword
 	add	rsi, 8
-	mov	al, ' '
-	mov	[rdi], al
+	mov	byte [rdi], ' '
 	add	rdi, 2
 	loop	InnerLoop1
 
@@ -700,7 +696,7 @@ InnerLoop1:
 ;;
 
 %macro PrintRegister 2
-	mov	esi, %1
+	lea	esi, [%1]
 	call	PrintString
 	mov	eax, [ebp + %2]
 	call	PrintZword
@@ -708,7 +704,7 @@ InnerLoop1:
 
 	call	ClearScreen
 
-	mov	esi, String1
+	lea	esi, [String1]
 	call	PrintString
 	mov	eax, [ebp + 32]		; move Int number into EAX
 	cmp	eax, 19
@@ -716,12 +712,11 @@ InnerLoop1:
 
 PrintExceptionString:
 	shl	eax, 2			; multiply by 4 to get offset from StringTable to actual string address
-	add	eax, StringTable
-	mov	esi, [eax]
+	mov	esi, [eax + StringTable]
 	jmp	PrintTheString
 
 PrintDefaultString:
-	mov	esi, IntUnkString
+	lea	esi, [IntUnkString]
 	mov	edx, eax		; patch Int number
 	call	A2C
 	mov	[esi + 1], al
@@ -734,12 +729,11 @@ PrintTheString:
 	call	PrintString
 
 	PrintRegister	String2, 44	; CS
-	mov	al, ':'
-	mov	byte [edi], al
+	mov	byte [edi], ':'
 	add	edi, 2
 	mov	eax, [ebp + 40]		; EIP
 	call	PrintZword
-	mov	esi, String3
+	lea	esi, [String3]
 	call	PrintString
 
 	mov	edi, 0x000B8140
@@ -773,8 +767,7 @@ InnerLoop:
 	mov	eax, [esi]
 	call	PrintZword
 	add	esi, 4
-	mov	al, ' '
-	mov	[edi], al
+	mov	byte [edi], ' '
 	add	edi, 2
 	loop	InnerLoop
 
@@ -800,8 +793,7 @@ InnerLoop1:
 	mov	eax, [esi]
 	call	PrintZword
 	add	esi, 4
-	mov	al, ' '
-	mov	[edi], al
+	mov	byte [edi], ' '
 	add	edi, 2
 	loop	InnerLoop1
 
