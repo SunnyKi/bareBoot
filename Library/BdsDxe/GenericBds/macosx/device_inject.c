@@ -184,6 +184,7 @@ devprop_add_device_pci (
   }
 
   if (NumPaths == 0) {
+    FreePool (device);
     return NULL;
   }
 

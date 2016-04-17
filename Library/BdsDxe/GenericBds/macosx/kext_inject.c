@@ -117,6 +117,7 @@ LoadKext (
     egLoadFile (gRootFHandle, TempName, &infoDictBuffer, &infoDictBufferLength);
   if (EFI_ERROR (Status)) {
     DBG ("%a: Error loading kext %s plist!\n", __FUNCTION__, FileName);
+    plNodeDelete (plist);
     return EFI_NOT_FOUND;
   }
 
@@ -134,6 +135,7 @@ LoadKext (
     if (EFI_ERROR (Status)) {
       DBG ("%a: Failed to load extra kext: %s\n", __FUNCTION__, FileName);
       FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
+      plNodeDelete (plist);
       return EFI_NOT_FOUND;
     }
     executableBuffer = executableFatBuffer;
@@ -142,6 +144,7 @@ LoadKext (
       FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
       FreeAlignedPages (executableFatBuffer, EFI_SIZE_TO_PAGES (executableFatBufferLength));
       DBG ("%a: Thinning failed %s\n", __FUNCTION__, FileName);
+      plNodeDelete (plist);
       return EFI_NOT_FOUND;
     }
   }
