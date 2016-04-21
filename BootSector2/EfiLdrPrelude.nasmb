@@ -515,15 +515,19 @@ commonIhtEntry:
 ;;  r15 <------- RSP, RBP
 
 %macro PrintRegister 2
-	lea	rsi, [%1]
+	lea	rsi, [rbx + %1]
 	call	PrintString
 	mov	rax, [rbp + %2 * 8]
 	call	PrintZword
 %endmacro
 
+	call	readRip64
+	sub	rax, ($ - Start0)
+	mov	rbx, rax
+
 	call	ClearScreen
 
-	lea	rsi, [String1]
+	lea	rsi, [rbx + String1]
 	call	PrintString
 	mov	rax, [rbp + 16 * 8]	; move Int number into RAX
 	cmp	rax, 19
@@ -531,11 +535,13 @@ commonIhtEntry:
 
 PrintExceptionString:
 	shl	rax, 2			; multiply by 4 (sizeof dword) to get from StringTable to actual string address
+	add	rax, rbx
 	mov	esi, dword [rax + StringTable]
+	add	rsi, rbx
 	jmp	PrintTheString
 
 PrintDefaultString:
-	lea	rsi, [IntUnkString]
+	lea	rsi, [rbx + IntUnkString]
 	mov	rdx, rax		; patch Int number
 	call	A2C
 	mov	[rsi + 1], al
@@ -553,7 +559,7 @@ PrintTheString:
 	add	rdi, 2
 	mov	rax, [rbp + 18 * 8]	; RIP
 	call	PrintZword
-	lea	rsi, [String3]
+	lea	rsi, [rbx + String3]
 	call	PrintString
 
 	mov	rdi, 0x000B8140
@@ -671,6 +677,9 @@ InnerLoop1:
 	add	rsp, 16	; error code and INT number
 	iretq
 
+readRip64:
+	mov	rax, [rsp]
+	ret
 %else	; IA32
 
 	BITS	32
