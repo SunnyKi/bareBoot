@@ -121,7 +121,7 @@ INF  IntelFrameworkModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2keyboardDxe.inf
 !endif
 !endif
 
-!ifndef NO_BIOSKDB
+!ifndef NO_BIOSKBD
 INF  bareBoot/BiosKeyboard/KeyboardDxe.inf
 !endif
 
