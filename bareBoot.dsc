@@ -111,10 +111,10 @@
   HobLib|MdePkg/Library/DxeHobLib/DxeHobLib.inf
   ExtractGuidedSectionLib|MdePkg/Library/DxeExtractGuidedSectionLib/DxeExtractGuidedSectionLib.inf
   PlatformHookLib|MdeModulePkg/Library/BasePlatformHookLibNull/BasePlatformHookLibNull.inf
-!if "$(TARGET)" == "DEBUG" || "$(TARGET)" == "NOOPT"
-  SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
-!else
+!if "$(TARGET)" == "RELEASE"
   SerialPortLib|MdePkg/Library/BaseSerialPortLibNull/BaseSerialPortLibNull.inf
+!else
+  SerialPortLib|MdeModulePkg/Library/BaseSerialPortLib16550/BaseSerialPortLib16550.inf
 !endif
   MtrrLib|UefiCpuPkg/Library/MtrrLib/MtrrLib.inf
   LockBoxLib|MdeModulePkg/Library/LockBoxNullLib/LockBoxNullLib.inf
@@ -275,14 +275,14 @@
   gPcAtChipsetPkgTokenSpaceGuid.PcdIsaAcpiCom2Enable|FALSE
   gEfiMdeModulePkgTokenSpaceGuid.PcdSerialUseHardwareFlowControl|TRUE
 
-!if "$(TARGET)" == "DEBUG" || "$(TARGET)" == "NOOPT"
-  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x0F
-  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FEFCF
-!else
+!if "$(TARGET)" == "RELEASE"
   gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x00
   gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x00
   gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x00000000
+!else
+  gEfiMdePkgTokenSpaceGuid.PcdReportStatusCodePropertyMask|0x07
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPropertyMask|0x0F
+  gEfiMdePkgTokenSpaceGuid.PcdDebugPrintErrorLevel|0x804FEFCF
 !endif
 
 [PcdsPatchableInModule]
