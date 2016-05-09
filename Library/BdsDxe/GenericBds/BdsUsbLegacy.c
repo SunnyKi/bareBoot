@@ -1,6 +1,6 @@
 /*++
 
-Copyright (c) 2013, (to be filled later). All rights reserved.
+Copyright (c) 2013-2016, (to be filled later). All rights reserved.
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -70,6 +70,7 @@ DisableEhciLegacy (
 
     DEBUG ((DEBUG_INFO, "%a: usblegsup before 0x%08x\n", __FUNCTION__, UsbLegSup));
     if ((UsbLegSup & BIOS_OWNED) != 0) {
+      DEBUG ((DEBUG_INFO, "%a: usblegctlsts before 0x%08x\n", __FUNCTION__, UsbLegCtlSts));
       UsbLegSup |= OS_OWNED;
       (void) PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
       Status = PciIo->Flush (PciIo);
@@ -81,16 +82,19 @@ DisableEhciLegacy (
       while (TimeOut-- != 0) {
         gBS->Stall (500);
     
-        PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
+        (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
     
         if ((UsbLegSup & (BIOS_OWNED | OS_OWNED)) == OS_OWNED) {
+          (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
+          DEBUG ((DEBUG_INFO, "%a: usblegctlsts in middle 0x%08x\n", __FUNCTION__, UsbLegCtlSts));
+          (void) PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
           break;
         }
       }
-      DEBUG ((DEBUG_INFO, "%a: usblegsup after 0x%08x\n", __FUNCTION__, UsbLegSup));
       /* Read back registers to dismiss pending interrupts */
-      (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
       (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
+      DEBUG ((DEBUG_INFO, "%a: usblegsup after 0x%08x\n", __FUNCTION__, UsbLegSup));
+      DEBUG ((DEBUG_INFO, "%a: usblegctlsts after 0x%08x\n", __FUNCTION__, UsbLegCtlSts));
     } else {
       DEBUG ((DEBUG_INFO, "%a: no legacy on device\n", __FUNCTION__));
     }
