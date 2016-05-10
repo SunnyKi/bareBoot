@@ -87,6 +87,7 @@ DisableEhciLegacy (
         if ((UsbLegSup & (BIOS_OWNED | OS_OWNED)) == OS_OWNED) {
           (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
           DEBUG ((DEBUG_INFO, "%a: usblegctlsts in middle 0x%08x\n", __FUNCTION__, UsbLegCtlSts));
+          UsbLegCtlSts = 0;
           (void) PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
           break;
         }
