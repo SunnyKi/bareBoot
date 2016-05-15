@@ -92,8 +92,8 @@ INF  bareBoot/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
 INF  bareBoot/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF  bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !else
-!ifdef OHCI
-INF  bareBoot/Bus/Pci/OhciDxe/OhciDxe.inf
+!ifndef NO_OHCI
+INF  QuarkSocPkg/QuarkSouthCluster/Usb/Ohci/Dxe/OhciDxe.inf
 !endif
 !ifndef NO_UHCI
 INF  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
