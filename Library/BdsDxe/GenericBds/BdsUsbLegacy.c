@@ -189,6 +189,15 @@ DisableOhciLegacy (
   DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
+#define UHCI_BAR_INDEX 0x04
+
+#define UHCI_CMD_REGISTER 0x00
+#define   UHCICMD_HCRESET 0x0002
+
+#define UHCI_INT_REGISTER 0x04
+
+#define UHCI_LEGACY_REGISTER 0xC0
+
 VOID
 DisableUhciLegacy (
   EFI_PCI_IO_PROTOCOL       *PciIo,
@@ -200,25 +209,29 @@ DisableUhciLegacy (
 
   DEBUG ((DEBUG_INFO, "%a: enter for %04x&%04x\n", __FUNCTION__, Pci->Hdr.VendorId, Pci->Hdr.DeviceId));
 
-  Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
+  Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint16, UHCI_LEGACY_REGISTER, 1, &Command);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (read usb_legsup: %r)\n", __FUNCTION__, Status));
     return;
   }
   DEBUG ((DEBUG_INFO, "%a: legsup 0x%04x\n", __FUNCTION__, Command));
 
-  /*
-   * XXX: Is the device in legacy mode?
-   * (need to read more specs and other implementations)
-   * Let go blind
-   */
-
-  Command = 0;  /* No need in PIRQD, as efi runs in polling mode */
-  Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, 0xC0, 1, &Command);
+  Command = 0x2F00;
+  Status = PciIo->Pci.Write (PciIo, EfiPciIoWidthUint16, UHCI_LEGACY_REGISTER, 1, &Command);
   if (EFI_ERROR (Status)) {
     DEBUG ((DEBUG_INFO, "%a: bail out (write usb_legsup: %r)\n", __FUNCTION__, Status));
     return;
   }
+  (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint16, UHCI_LEGACY_REGISTER, 1, &Command);
+  DEBUG ((DEBUG_INFO, "%a: legsup (again) 0x%04x\n", __FUNCTION__, Command));
+
+  Command = UHCICMD_HCRESET;
+  (void) PciIo->Io.Write (PciIo, EfiPciIoWidthUint16, UHCI_BAR_INDEX, UHCI_CMD_REGISTER, 1, &Command);
+  gBS->Stall (500);
+  Command = 0;
+  (void) PciIo->Io.Write (PciIo, EfiPciIoWidthUint16, UHCI_BAR_INDEX, UHCI_INT_REGISTER, 1, &Command);
+  gBS->Stall (500);
+  (void) PciIo->Io.Write (PciIo, EfiPciIoWidthUint16, UHCI_BAR_INDEX, UHCI_CMD_REGISTER, 1, &Command);
 
   DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
