@@ -17,6 +17,8 @@
 
 #include <macosx.h>
 
+OPER_REGION                     *gRegions;
+
 UINT32
 aml_write_size (
   UINT32 size,

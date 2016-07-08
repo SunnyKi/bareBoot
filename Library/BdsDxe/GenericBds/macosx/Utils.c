@@ -12,6 +12,13 @@
 #include "../InternalBdsLib.h"
 #include "../../BootMaintLib.h"
 
+CHAR8                           *OSVersion;
+EFI_GUID                        gPlatformUuid;
+EFI_GUID                        gSystemID;
+SETTINGS_DATA                   gSettings;
+VOID                            *gConfigPlist;
+
+
 BOOLEAN
   EfiGrowBuffer (
   IN OUT EFI_STATUS *Status,

@@ -18,9 +18,11 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include "Graphics.h"
 #include "Version.h"
 
-UINT16             mKeyInput;
-BDS_COMMON_OPTION  *gOption;
+UINT16                          mKeyInput;
+BDS_COMMON_OPTION               *gOption;
 EFI_FORM_BROWSER2_PROTOCOL      *gFormBrowser2;
+BOOLEAN                         gFronPage;
+UINTN                           gCallbackKey;
 
 CHAR8   *mAVersion;
 CHAR8   *mABiosVersion;

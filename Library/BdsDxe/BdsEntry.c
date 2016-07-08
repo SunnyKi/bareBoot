@@ -32,12 +32,14 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 /// Please refer to the library useage of BdsLibGetBootMode, BdsLibGetTimeout
 /// and PlatformBdsDiagnostics in BdsPlatform.c
 ///
+LIST_ENTRY  gBootOptionList;
 EFI_HANDLE  gBdsHandle = NULL;
 
 EFI_BDS_ARCH_PROTOCOL  gBds = {
   BdsEntry
 };
 
+EFI_RUNTIME_SERVICES            *gRS;
 UINT16                          *mBootNext = NULL;
 
 /**

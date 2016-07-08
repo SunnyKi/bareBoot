@@ -14,6 +14,8 @@
 #include "ati.h"
 #include "gma.h"
 
+GFX_PROPERTIES                  gGraphics;
+
 UINT32 devices_number = 1;
 UINT32 builtin_set = 0;
 DevPropString *string = NULL;

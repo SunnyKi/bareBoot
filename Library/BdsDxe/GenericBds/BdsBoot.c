@@ -35,6 +35,9 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define MACOSX_INSTALL_PATH2            L"\\.IABootFiles\\boot.efi"
 #define MACOSX_INSTALL_PATH3            L"\\Mac OS X Install Data\\boot.efi"
 
+BOOLEAN                         WithKexts;
+EFI_FILE_HANDLE                 gRootFHandle;
+
 CHAR16* mLoaderPath[] = {
   CLOVER_MEDIA_FILE_NAME,
   EFI_REMOVABLE_MEDIA_FILE_NAME,

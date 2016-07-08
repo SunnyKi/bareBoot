@@ -35,6 +35,13 @@ Abstract:
 #define SCAN_ESC        0x0017
 #define SCAN_F1         0x000B
 
+BOOLEAN                         gPNDirExists;
+CHAR16                          *gPNAcpiDir;
+CHAR16                          *gPNConfigPlist;
+CHAR16                          *gProductNameDir;
+CHAR16                          *gProductNameDir2;
+CHAR8                           *AddBootArgs;
+
 extern BOOLEAN  gConnectAllHappened;
 extern USB_CLASS_FORMAT_DEVICE_PATH gUsbClassKeyboardDevicePath;
 

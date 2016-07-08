@@ -45,6 +45,8 @@
 #define ECX 2
 #define EDX 3
 
+CPU_STRUCTURE                   gCPUStructure;
+
 VOID
 SetPIT2Mode0 (
   IN   UINT64  Value

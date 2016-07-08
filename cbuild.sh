@@ -55,7 +55,7 @@ if [ -z "$NASM_PREFIX" ]
 then
   export NASM_PREFIX=$HOME/src/opt/local/bin/
 fi
-  echo $NASM_PREFIX
+  echo NASM_PREFIX: $NASM_PREFIX
 
 
 BUILD_ROOT_ARCH=$WORKSPACE/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"/$PROCESSOR

@@ -32,6 +32,8 @@
 
 static EFI_GUID             *gTableGuidArray[] = {&gEfiSmbiosTableGuid};
 
+EFI_GUID                    gUuid;
+MEM_STRUCTURE               *gRAM;
 VOID                        *Smbios;  //pointer to SMBIOS data
 SMBIOS_TABLE_ENTRY_POINT    *EntryPoint; //SmbiosEps original
 SMBIOS_TABLE_ENTRY_POINT    *SmbiosEpsNew; //new SmbiosEps
