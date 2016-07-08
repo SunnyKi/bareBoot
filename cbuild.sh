@@ -107,6 +107,7 @@ else
 fi
 
 export BOOTSECTOR_BIN_DIR=$WORKSPACE/bareBoot/BootSector/bin
+export BOOTSECTOR2_BIN_DIR=$WORKSPACE/bareBoot/BootSector2/bin
 export BUILD_DIR=$WORKSPACE/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"
 
 echo Compressing bareBootEFIMainFv.FV ...
@@ -120,7 +121,11 @@ $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/$PROCESSOR/D
 
 echo Generate Loader Image ...
 
-if [ $PROCESSOR = IA32 ]
+$BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
+$BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr$PROCESSOR $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
+cat $BOOTSECTOR2_BIN_DIR/EfiLdrPrelude$PROCESSOR $BUILD_DIR/FV/Efildr$PROCESSOR > $BUILD_DIR/FV/boot2
+
+if [ $PROCESSOR = IA32_ ]
 then
   $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
   $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr32 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
@@ -132,7 +137,7 @@ then
   echo Done!
 fi
 
-if [ $PROCESSOR = X64 ]
+if [ $PROCESSOR = X64_ ]
 then
   $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
   $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr64 $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
