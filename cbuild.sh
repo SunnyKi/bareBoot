@@ -22,6 +22,7 @@ while [[ $# -gt 0 ]]; do
 #use VBoxFsDxe instead HFSPlus
         "-vhfs") DEF="$DEF -D VBOXHFS" ;;
         "-ohci") DEF="$DEF -D OHCI" ;;
+        "-old_cpudxe") DEF="$DEF -D OLD_CPUDXE" ;;
         "-ps2") DEF="$DEF -D PS2" ;;
         "-m2s") DEF="$DEF -D MEMLOG2SERIAL" ;;
         "-ion") DEF="$DEF -D ION" ;;
