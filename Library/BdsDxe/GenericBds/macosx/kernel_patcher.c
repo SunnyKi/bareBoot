@@ -418,6 +418,16 @@ UINT8 KBEEntitlementSearch[] =
 UINT8 KBEEntitlementReplace[] =
 { 0xC3, 0x48, 0x85, 0xDB, 0xEB, 0x12, 0x48, 0x8B, 0x03, 0x48, 0x89, 0xDF, 0xFF, 0x50, 0x28, 0x48 };
 
+UINT8 KBESDP2Search[] =
+{ 0xC6, 0xE8, 0x25, 0x00, 0x00, 0x00, 0xEB, 0x05, 0xE8, 0x7E, 0x05 };
+UINT8 KBESDP2Replace[] =
+{ 0xC6, 0xE8, 0x25, 0x00, 0x00, 0x00, 0x90, 0x90, 0xE8, 0x7E, 0x05 };
+
+UINT8 KBESDP2EntitlementSearch[] =
+{ 0xC3, 0x48, 0x85, 0xDB, 0x74, 0x71, 0x48, 0x8B, 0x03, 0x48, 0x89, 0xDF, 0xFF, 0x50, 0x28, 0x48 };
+UINT8 KBESDP2EntitlementReplace[] =
+{ 0xC3, 0x48, 0x85, 0xDB, 0xEB, 0x12, 0x48, 0x8B, 0x03, 0x48, 0x89, 0xDF, 0xFF, 0x50, 0x28, 0x48 };
+
 VOID
 EFIAPI
 KernelBooterExtensionsPatch (
@@ -507,6 +517,26 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBEEntitlementSearch,
               sizeof (KBEEntitlementSearch),
               (CHAR8 *) KBEEntitlementReplace,
+              1
+              );
+      goto Exit;
+    }
+    if (AsciiStrnCmp (KernVersion, "16", 4) == 0) {
+      Num = SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBESDP2Search,
+              sizeof (KBEYSearch),
+              (CHAR8 *) KBESDP2Replace,
+              1
+              );
+      GetSection ("__TEXT", "__text", &addr, &size);
+      Num += SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBESDP2EntitlementSearch,
+              sizeof (KBEEntitlementSearch),
+              (CHAR8 *) KBESDP2EntitlementReplace,
               1
               );
       goto Exit;
