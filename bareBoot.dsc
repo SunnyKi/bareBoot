@@ -182,7 +182,9 @@
 # ----+++++++------
   UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
   UefiCpuPkg/CpuDxe/CpuDxe.inf
+!ifdef OLD_CPUDXE
   bareBoot/Cpu/CpuDxe/Cpu.inf
+!endif
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
   bareBoot/AcpiResetDxe/Reset.inf
   MdeModulePkg/Universal/Metronome/Metronome.inf
