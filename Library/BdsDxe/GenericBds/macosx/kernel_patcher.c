@@ -522,23 +522,33 @@ KernelBooterExtensionsPatch (
       goto Exit;
     }
     if (AsciiStrnCmp (KernVersion, "16", 2) == 0) {
+      // DP1
       Num = SearchAndReplace (
               (UINT8 *) (UINTN) addr,
               size,
-              (CHAR8 *) KBESDP2Search,
+              (CHAR8 *) KBEYSearch,
               sizeof (KBEYSearch),
-              (CHAR8 *) KBESDP2Replace,
+              (CHAR8 *) KBEYReplace,
               1
               );
+      // DP2
+      Num += SearchAndReplace (
+               (UINT8 *) (UINTN) addr,
+               size,
+               (CHAR8 *) KBESDP2Search,
+               sizeof (KBEYSearch),
+               (CHAR8 *) KBESDP2Replace,
+               1
+               );
       GetSection ("__TEXT", "__text", &addr, &size);
       Num += SearchAndReplace (
-              (UINT8 *) (UINTN) addr,
-              size,
-              (CHAR8 *) KBESDP2EntitlementSearch,
-              sizeof (KBEEntitlementSearch),
-              (CHAR8 *) KBESDP2EntitlementReplace,
-              1
-              );
+               (UINT8 *) (UINTN) addr,
+               size,
+               (CHAR8 *) KBESDP2EntitlementSearch,
+               sizeof (KBEEntitlementSearch),
+               (CHAR8 *) KBESDP2EntitlementReplace,
+               1
+               );
       goto Exit;
     }
   } else {
