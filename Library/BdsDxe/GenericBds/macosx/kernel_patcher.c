@@ -521,7 +521,7 @@ KernelBooterExtensionsPatch (
               );
       goto Exit;
     }
-    if (AsciiStrnCmp (KernVersion, "16", 4) == 0) {
+    if (AsciiStrnCmp (KernVersion, "16", 2) == 0) {
       Num = SearchAndReplace (
               (UINT8 *) (UINTN) addr,
               size,
