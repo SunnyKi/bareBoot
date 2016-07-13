@@ -265,37 +265,21 @@ GetExtraKextsDir (
   VOID
 )
 {
-  CHAR16 *OSTypeStr = NULL;
+  CHAR16 *OSTypeStr;
   CHAR16 *KextsDir;
+  CHAR8 *s;
 
   OSTypeStr = NULL;
   KextsDir = NULL;
+  s = NULL;
+
   if (OSVersion != NULL) {
-    if (AsciiStrnCmp (OSVersion, "10.4", 4) == 0) {
-      OSTypeStr = L"10.4";
-    }
-    else if (AsciiStrnCmp (OSVersion, "10.5", 4) == 0) {
-      OSTypeStr = L"10.5";
-    }
-    else if (AsciiStrnCmp (OSVersion, "10.6", 4) == 0) {
-      OSTypeStr = L"10.6";
-    }
-    else if (AsciiStrnCmp (OSVersion, "10.7", 4) == 0) {
-      OSTypeStr = L"10.7";
-    }
-    else if (AsciiStrnCmp (OSVersion, "10.8", 4) == 0) {
-      OSTypeStr = L"10.8";
-    }
-    else if (AsciiStrnCmp (OSVersion, "10.9", 4) == 0) {
-      OSTypeStr = L"10.9";
-    }
-    else if (AsciiStrLen (OSVersion) >= 5) {
-      if (AsciiStrnCmp (OSVersion, "10.10", 5) == 0) {
-        OSTypeStr = L"10.10";
-      }
-      if (AsciiStrnCmp (OSVersion, "10.11", 5) == 0) {
-        OSTypeStr = L"10.11";
-      }
+    s = AllocateZeroPool (AsciiStrSize (OSVersion));
+    OSTypeStr = AllocateZeroPool (AsciiStrSize (OSVersion) * 2);
+    if (AsciiStrnCmp (OSVersion, "10.1", 4) != 0) {
+      AsciiStrToUnicodeStr (AsciiStrnCpy (s, OSVersion, 4), OSTypeStr);
+    } else {
+      AsciiStrToUnicodeStr (AsciiStrnCpy (s, OSVersion, 5), OSTypeStr);
     }
   } else {
     OSTypeStr = L"other";
@@ -349,6 +333,7 @@ LoadKexts (
   VOID *extra;
   UINT16 KextCount;
 
+#if 0
 #if defined(MDE_CPU_X64)
   cpu_type_t archCpuType = CPU_TYPE_X86_64;
 #else
@@ -373,6 +358,23 @@ LoadKexts (
     else if (AsciiStrnCmp (OSVersion, "10.7", 4) != 0)
       archCpuType = CPU_TYPE_I386;
   }
+#else
+  cpu_type_t archCpuType = CPU_TYPE_X86_64;
+
+  if (OSVersion != NULL) {
+    if (AsciiStrnCmp (OSVersion, "10.1", 4) != 0 && // Puma is not for Intel, assume it's 10.10 and greater
+        AsciiStrnCmp (OSVersion, "10.8", 4) < 0) {
+      if (AsciiStrnCmp (OSVersion, "10.5", 4) <= 0 ||
+          (AsciiStrnCmp (OSVersion, "10.6", 4) == 0 && AsciiStrStr (gSettings.BootArgs, "arch=x86_64") == NULL) ||
+          (AsciiStrnCmp (OSVersion, "10.7", 4) == 0 && AsciiStrStr (gSettings.BootArgs, "arch=i386") == NULL)) {
+          archCpuType = CPU_TYPE_I386;
+      }
+    }
+  } else {
+    if (AsciiStrStr (gSettings.BootArgs, "arch=i386") != NULL)
+      archCpuType = CPU_TYPE_I386;
+  }
+#endif
 
   InitializeUnicodeCollationProtocol ();
 
