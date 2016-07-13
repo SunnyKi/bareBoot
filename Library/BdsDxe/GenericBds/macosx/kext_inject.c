@@ -281,6 +281,7 @@ GetExtraKextsDir (
     } else {
       AsciiStrToUnicodeStr (AsciiStrnCpy (s, OSVersion, 5), OSTypeStr);
     }
+    FreePool (s);
   } else {
     OSTypeStr = L"other";
   }
@@ -302,6 +303,8 @@ GetExtraKextsDir (
     StrCpy (KextsDir, L"\\EFI\\bareboot\\kexts\\");
     StrCat (KextsDir, OSTypeStr);
   }
+
+  FreePool (OSTypeStr);
 
   DBG ("%a: expected extra kexts dir is %s\n", __FUNCTION__, KextsDir);
 
