@@ -30,7 +30,7 @@ INCLUDE_FILES = \
   $(MODULE_DIR)/Include/gptstruct.nasm \
   $(MODULE_DIR)/Include/mbrstruct.nasm
 
-all:	$(TARGET_FILES)
+all:	init $(TARGET_FILES)
 
 #=============
 
