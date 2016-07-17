@@ -31,7 +31,7 @@
 ;
 ; This code is written for the NASM assembler.
 ;
-;	nasm -DBOOTSEL=1 -DVERBOSE=0 -DUSESIDL=1 -o $@ bootx1f32.nasm
+;	nasm -DBOOTSEL=1 -DVERBOSE=0 -DUSESIDL=1 -DCLOVER_COMPAT=1 -o $@ bootx1f32.nasm
 ;
 ; This version of bootx1f32 tries to find the file 'boot ' with efi stuff in the root folder.
 ;
@@ -44,6 +44,12 @@
 %include	"bpbxx-inc.nasm"
 %include	"mbrstruct.nasm"
 %include	"fatstruct.nasm"
+
+%if CLOVER_COMPAT
+kCloverOffset	equ	0x0200
+%else
+kCloverOffset	equ	0x0000
+%endif
 
 %macro LogString 1
 	mov	di, %1
@@ -220,7 +226,7 @@ nextStage:
 
 .notbig:
 	mov	eax, kPayloadHighAddr
-	mov	edx, kPayloadLowAddr
+	mov	edx, kPayloadLowAddr + kCloverOffset
 	call	copyHigh
 
 ;--------------------------------------------------------------------------
@@ -230,7 +236,7 @@ nextStage:
 ;--------------------------------------------------------------------------
 
 	mov	dl, [zBIOSDriveNumber]	; load BIOS drive number
-	jmp	(kPayloadLowAddr >> 4):(kPayloadLowAddr & 0xFFFF)
+	jmp	(kPayloadLowAddr >> 4):((kPayloadLowAddr & 0xFFFF) + kCloverOffset)
 
 ;--------------------------------------------------------------------------
 ; Directory search error
