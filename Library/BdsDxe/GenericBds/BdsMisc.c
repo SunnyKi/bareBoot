@@ -312,7 +312,7 @@ BdsLibRegisterNewOption (
   OptionPtr           = AllocateZeroPool (OptionSize);
   ASSERT (OptionPtr != NULL);
 
-  DBG ("BdsLibRegisterNewOption: DevicePath size = %d, OptionSize = %d\n", GetDevicePathSize (DevicePath), OptionSize);
+  DBG ("BdsLibRegisterNewOption: DevicePath %s, size = %d, OptionSize = %d\n", ConvertDevicePathToText (DevicePath, FALSE, FALSE), GetDevicePathSize (DevicePath), OptionSize);
 
 
   TempPtr             = OptionPtr;
