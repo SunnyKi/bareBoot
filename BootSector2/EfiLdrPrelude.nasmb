@@ -870,7 +870,7 @@ ClearScreen:
 	mov	al, ' '
 	mov	ah, 0x0C
 	mov	Zdi, 0x000B8000
-	mov	Zcx, 80 * 24
+	mov	Zcx, 80 * 25
 
 .1:
 	mov	word [Zdi], ax
