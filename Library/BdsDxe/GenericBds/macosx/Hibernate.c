@@ -249,6 +249,9 @@ GetSleepImagePosition (
                   &gEfiSimpleFileSystemProtocolGuid,
                   (VOID *) &Volume
                 );
+
+  FHandle = NULL;
+
   if (!EFI_ERROR (Status)) {
     Status = Volume->OpenVolume (
                        Volume,
