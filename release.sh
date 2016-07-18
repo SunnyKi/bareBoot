@@ -13,52 +13,52 @@ echo $ARCHIVE_NAME
 
 #SPEEDUP
 cd $BB_SOURCE_PATH
-source cbuild.sh -s -ia32
-cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot3 $BB_ARCHIVE_PATH/for\ HDD/ata/32/
+source cbuild.sh -s -ia32 -old_cpudxe
+cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/for\ HDD/ata/32/
 rm -rf $BUILD_PATH/bareboot/
 
 cd $BB_SOURCE_PATH
-source cbuild.sh -s
+source cbuild.sh -s -old_cpudxe
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/for\ HDD/ata/64/
-cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/for\ HDD/ata/64/
+#cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/for\ HDD/ata/64/
 rm -rf $BUILD_PATH/bareboot/
 
 cd $BB_SOURCE_PATH
-source cbuild.sh -s -ia32 -b
-cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot3 $BB_ARCHIVE_PATH/for\ HDD/BlockIo/32/
+source cbuild.sh -s -ia32 -b -old_cpudxe
+cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/for\ HDD/BlockIo/32/
 rm -rf $BUILD_PATH/bareboot/
 
 cd $BB_SOURCE_PATH
-source cbuild.sh -s -b
+source cbuild.sh -s -b -old_cpudxe
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/for\ HDD/BlockIo/64/
-cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/for\ HDD/BlockIo/64/
+#cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/for\ HDD/BlockIo/64/
 rm -rf $BUILD_PATH/bareboot/
 
 # no SPEEDUP
 cd $BB_SOURCE_PATH
-source cbuild.sh -ia32
-cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot3 $BB_ARCHIVE_PATH/standard/ata/32/
-cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/ata/32/
+source cbuild.sh -ia32 -old_cpudxe
+cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/standard/ata/32/
+#cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/ata/32/
 rm -rf $BUILD_PATH/bareboot/
 
 cd $BB_SOURCE_PATH
-source cbuild.sh 
+source cbuild.sh  -old_cpudxe
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/standard/ata/64/
-cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/ata/64/
-cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/standard/ata/64/
+#cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/ata/64/
+#cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/standard/ata/64/
 rm -rf $BUILD_PATH/bareboot/
 
 cd $BB_SOURCE_PATH
-source cbuild.sh -b -ia32
-cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot3 $BB_ARCHIVE_PATH/standard/BlockIo/32/
-cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/BlockIo/32/
+source cbuild.sh -b -ia32 -old_cpudxe
+cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/standard/BlockIo/32/
+#cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/BlockIo/32/
 rm -rf $BUILD_PATH/bareboot/
 
 cd $BB_SOURCE_PATH
-source cbuild.sh -b
+source cbuild.sh -b -old_cpudxe
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/boot $BB_ARCHIVE_PATH/standard/BlockIo/64/
-cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/BlockIo/64/
-cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/standard/BlockIo/64/
+#cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildr20 $BB_ARCHIVE_PATH/standard/BlockIo/64/
+#cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC49/FV/Efildgpt $BB_ARCHIVE_PATH/standard/BlockIo/64/
 rm -rf $BUILD_PATH/bareboot/
 
 # archive
