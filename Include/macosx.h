@@ -209,6 +209,7 @@ typedef struct {
   BOOLEAN SaveVideoRom;
   BOOLEAN NvRam;
   BOOLEAN YoBlack;
+  BOOLEAN Hibernate;
   //ACPI
   UINT64  ResetAddr;
   UINT8   ResetVal;
@@ -381,6 +382,8 @@ extern EFI_GUID                        gEfiMiscSubClassGuid;
 extern BOOLEAN                         SSSE3;
 extern EFI_UNICODE_COLLATION_PROTOCOL  *gUnicodeCollation;
 extern GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *EfiMemoryTypeDesc[14];
+extern UINT64                          gSleepImageOffset;
+extern BOOLEAN                         gIsHibernation;
 
 // ----------------------------------------
 
@@ -631,4 +634,10 @@ VOID
 PutNvramPlistToRtVars (
   VOID
 );
+
+BOOLEAN
+PrepareHibernation (
+  IN  EFI_DEVICE_PATH_PROTOCOL  *DevicePath
+);
+
 #endif

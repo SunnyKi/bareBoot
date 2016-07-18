@@ -291,11 +291,13 @@ OnExitBootServices (
 #ifdef USB_FIXUP
   USBOwnerFix ();
 #endif
-  //
-  // Patch kernel and kexts if needed
-  //
-  KernelAndKextsPatcherStart ();
-  
+
+  if (!gIsHibernation) {
+    //
+    // Patch kernel and kexts if needed
+    //
+    KernelAndKextsPatcherStart ();
+  }
 #ifdef BOOT_DEBUG
   EFI_DEVICE_PATH_PROTOCOL        *DevicePath;
   UINTN                           NumberFileSystemHandles;

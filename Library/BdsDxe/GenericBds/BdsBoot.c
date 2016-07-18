@@ -37,6 +37,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 BOOLEAN                         WithKexts;
 EFI_FILE_HANDLE                 gRootFHandle;
+BOOLEAN                         gIsHibernation;
+
+//extern EFI_EVENT OnReadyToBootEvent;
+//extern EFI_EVENT ExitBootServiceEvent;
 
 CHAR16* mLoaderPath[] = {
   CLOVER_MEDIA_FILE_NAME,
@@ -124,14 +128,16 @@ BdsLibBootViaBootOption (
   EFI_DEVICE_PATH_PROTOCOL  *FilePath;
   EFI_LOADED_IMAGE_PROTOCOL *ImageInfo;
   UINT16                    buffer[255];
-  EFI_FILE_HANDLE                 FHandle;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   UINT8                     Index;
   CHAR16                    *TmpLoadPath;
+  EFI_FILE_HANDLE                 FHandle;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
 
-  *ExitDataSize = 0;
-  *ExitData     = NULL;
-  FHandle       = NULL;
+  *ExitDataSize   = 0;
+  *ExitData       = NULL;
+  FHandle         = NULL;
+  gIsHibernation  = FALSE;
+  WithKexts       = FALSE;
 
   BdsSetMemoryTypeInformationVariable ();
   ASSERT (Option->DevicePath != NULL);
@@ -232,6 +238,10 @@ MacOS:
   GetCpuProps ();
   DBG ("%a: launching GetUserSettings.\n",__FUNCTION__);
   GetUserSettings ();
+  if (gSettings.Hibernate) {
+    DBG ("%a: launching PrepareHibernation.\n",__FUNCTION__);
+    gIsHibernation = PrepareHibernation (DevicePath);
+  }
   if (cDevProp == NULL) {
     DBG ("%a: launching SetDevices (no cDevProp).\n",__FUNCTION__);
     SetDevices ();
@@ -315,10 +325,8 @@ MacOS:
     }
   }
 
-  if (gSettings.LoadExtraKexts) {
+  if (!gIsHibernation && gSettings.LoadExtraKexts) {
     WithKexts = LoadKexts ();
-  } else {
-    WithKexts = FALSE;
   }
 
 #if 0
