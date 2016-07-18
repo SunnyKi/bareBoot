@@ -357,6 +357,8 @@ InLongMode:
 
 	lidt	[rbp + idtr]
 
+	call	ClearScreen
+
 ;------------------------------------------------------------------------------
 ; Go to X64 payload code
 
@@ -371,6 +373,8 @@ InLongMode:
 	BITS 32
 
 	lidt	[ebp + idtr]
+
+	call	ClearScreen
 
 ;------------------------------------------------------------------------------
 ; Go to IA32 payload code
@@ -870,7 +874,7 @@ ClearScreen:
 	mov	al, ' '
 	mov	ah, 0x0C
 	mov	Zdi, 0x000B8000
-	mov	Zcx, 80 * 25
+	mov	Zcx, 80 * 24
 
 .1:
 	mov	word [Zdi], ax
