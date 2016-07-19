@@ -158,11 +158,12 @@ patchbc(unsigned char* bc, unsigned char* src) {
 
 int
 main(int argc, char* argv[]) {
-	unsigned char* s0;
-	int minsectors;
 	unsigned short bkps;	/* bootcode backup sector number */
 	unsigned short fsis;	/* FSinfo sector number */
 	unsigned short ressec;	/* reserved sector count */
+	unsigned char* s0;
+	unsigned char* fs0 = NULL;
+	int minsectors;
 
 	if (argc != 3) {
 		usage(argv[0]);
@@ -186,21 +187,14 @@ main(int argc, char* argv[]) {
 	ressec = getword(s0, 0x0E);	/* count of reserved sectors */
 	fsis = getword(s0, 0x30);	/* FSinfo sector number */
 
-	bkps = bcsectors;	/* assume no FSinfo */
-
-	if (fsis != 0x0000 && fsis != 0xFFFF) {
-		/* FSinfo present. Put backup after it */
-		bkps = fsis + 1;
-	       	if (fsis < bcsectors) {
-			fprintf(stderr, "%s: not enough space for new bootcode (need %d, %d available)\n",
-				argv[1], bcsectors, fsis);
-			f32close();
-			return 1;
-		}
+	if (fsis == 0x0000 || fsis == 0xFFFF) {
+		fsis = 0x0000;
+	} else {
+		fs0 = readsectors(fsis, 1);
+		fsis = 2 * bcsectors;	/* next after bootcode backup */
 	}
 
-	minsectors = bkps + bcsectors;
-
+	minsectors = 2 * bcsectors + (fsis ? 1 : 0);
 	if (ressec < minsectors) {
 		fprintf(stderr, "%s: not enough reserved sectors (%d), need %d\n",
 				argv[1], ressec, minsectors);
@@ -208,12 +202,22 @@ main(int argc, char* argv[]) {
 		return 1;
 	}
 
+	bkps = bcsectors;
+	if (fsis != 0x0000) {
+		bkps++;
+	}
+
 	patchbc(bootcode, s0);
 
+	putword(fsis, bootcode, 0x30);
 	putword(bkps, bootcode, 0x32);
 
 	writesectors(bootcode, 0, bcsectors);
-	writesectors(bootcode, bkps, bcsectors);
+	writesectors(bootcode, bcsectors, bcsectors);
+
+	if (fsis) {
+		writesectors(fs0, fsis, 1);
+	}
 
 	f32close();
 	return 0;
