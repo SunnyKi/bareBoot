@@ -428,6 +428,16 @@ UINT8 KBESDP2EntitlementSearch[] =
 UINT8 KBESDP2EntitlementReplace[] =
 { 0xC3, 0x48, 0x85, 0xDB, 0xEB, 0x12, 0x48, 0x8B, 0x03, 0x48, 0x89, 0xDF, 0xFF, 0x50, 0x28, 0x48 };
 
+UINT8 KBEECDebugSearch[] =
+{ 0xE8, 0x44, 0x00, 0x00, 0x00, 0xE9, 0x09, 0x00, 0x00, 0x00 };
+UINT8 KBEECDebugReplace[] =
+{ 0xE8, 0x44, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90, 0x90, 0x90 };
+
+UINT8 KBEECDebugEntitlementSearch[] =
+{ 0x39, 0xC1, 0x0F, 0x85, 0x3C, 0x00, 0x00, 0x00, 0x48, 0x8B };
+UINT8 KBEECDebugEntitlementReplace[] =
+{ 0x39, 0xC1, 0xE9, 0x3D, 0x00, 0x00, 0x00, 0x90, 0x48, 0x8B };
+
 VOID
 EFIAPI
 KernelBooterExtensionsPatch (
@@ -510,6 +520,15 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBEYReplace,
               1
               );
+      // kernel.debug
+      Num += SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBEECDebugSearch,
+              sizeof (KBEECDebugSearch),
+              (CHAR8 *) KBEECDebugReplace,
+              1
+              );
       GetSection ("__TEXT", "__text", &addr, &size);
       Num += SearchAndReplace (
               (UINT8 *) (UINTN) addr,
@@ -517,6 +536,15 @@ KernelBooterExtensionsPatch (
               (CHAR8 *) KBEEntitlementSearch,
               sizeof (KBEEntitlementSearch),
               (CHAR8 *) KBEEntitlementReplace,
+              1
+              );
+      // kernel.debug
+      Num += SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KBEECDebugEntitlementSearch,
+              sizeof (KBEECDebugEntitlementSearch),
+              (CHAR8 *) KBEECDebugEntitlementReplace,
               1
               );
       goto Exit;
@@ -536,7 +564,7 @@ KernelBooterExtensionsPatch (
                (UINT8 *) (UINTN) addr,
                size,
                (CHAR8 *) KBESDP2Search,
-               sizeof (KBEYSearch),
+               sizeof (KBESDP2Search),
                (CHAR8 *) KBESDP2Replace,
                1
                );
@@ -545,7 +573,7 @@ KernelBooterExtensionsPatch (
                (UINT8 *) (UINTN) addr,
                size,
                (CHAR8 *) KBESDP2EntitlementSearch,
-               sizeof (KBEEntitlementSearch),
+               sizeof (KBESDP2EntitlementSearch),
                (CHAR8 *) KBESDP2EntitlementReplace,
                1
                );
