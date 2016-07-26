@@ -35,8 +35,10 @@ static TABLE_0 nvda_res[RESOLUTIONS_NUMBER] = {
   {2048, 1536}
 };
 
-static UINT8 Sample0[] = 
-      {0x34, 0x2d, 0x27, 0x28, 0x90, 0x2b, 0xa0, 0xbf, 0x9c, 0x8f, 0x96, 0xb9, 0x8e, 0x1f, 0x00, 0x00, 0x00};
+#if 1
+static UINT8 Sample0[] =
+//      {0x34, 0x2d, 0x27, 0x28, 0x90, 0x2b, 0xa0, 0xbf, 0x9c, 0x8f, 0x96, 0xb9, 0x8e, 0x1f, 0x00, 0x00, 0x00};
+      {0x12, 0x7F, 0x63, 0x63, 0x83, 0x6A, 0x1A, 0x72, 0x59, 0x57, 0x57, 0x73, 0x4D, 0xE0, 0x80, 0x00, 0x01};
 
 static TABLE_A nvda_key0[] = {
   {3, {0x16, 0xCB, 0x9F, 0x9F, 0x8F, 0xA7, 0x17, 0xEA, 0xD2, 0xCF, 0xCF, 0xEB, 0x47, 0xE0, 0xC0, 0x00, 0x01}},
@@ -51,11 +53,10 @@ static TABLE_A nvda_key0[] = {
   {0, {0x12, 0x3F, 0xEF, 0xEF, 0x83, 0x01, 0x1B, 0xD8, 0xB1, 0xAF, 0xAF, 0xD9, 0x04, 0x00, 0x41, 0x25, 0x12}},
   {1, {0x12, 0x63, 0xFF, 0xFF, 0x9D, 0x12, 0x0E, 0x34, 0x01, 0x00, 0x00, 0x35, 0x44, 0xE0, 0x41, 0x25, 0x13}}
 };
+#endif
 
-//static UINT8 Sample1[] =
+static UINT8 Sample1[] =
 //      {0x28, 0x00, 0x19, 0x00, 0x28, 0x18, 0x08, 0x08, 0x05};
-
-static UINT8 Sample1[] = 
       {0x20, 0x03, 0x58, 0x02, 0x64, 0x24, 0x10, 0x0C, 0x05};
 
 static TABLE_B nvda_key1[] = {
@@ -72,6 +73,7 @@ static TABLE_B nvda_key1[] = {
   {1, {0x00, 0x08, 0x00, 0x06, 0x00, 0x60, 0x10, 0x22, 0x05}}  
 };
 
+#if 1
 static UINT8 Sample2[] = 
       {0x82, 0x0f, 0x03, 0x01, 0x00, 0x00, 0x08, 0x04, 0x14, 0x00, 0x00, 0x08, 0x17};
 
@@ -105,6 +107,7 @@ static TABLE_LIMIT nvda_key3[] = {
   {1, {0x00, 0x08, 0xBA, 0x00, 0x06}}  
   
 };
+#endif
 
 //DTD string to replace in Intel BIOSes
 static UINT8 DTD_1024[] = {0x64, 0x19, 0x00, 0x40, 0x41, 0x00, 0x26, 0x30, 0x18, 
@@ -288,7 +291,9 @@ VOID set_mode (
 )
 {
   UINTN             NumReplaces;
+#if 0
   NV_MODELINE       *mode_timing;
+#endif
   UINTN             Index;
 
 
@@ -377,6 +382,7 @@ VOID set_mode (
       }
       DBG (" - mode %dx%d\n", nvda_res[Index].HRes, nvda_res[Index].VRes);
 
+#if 1
       NumReplaces = VideoBiosPatchSearchAndReplace (
                       (UINT8*)(UINTN)VBIOS_START,
                       VBIOS_SIZE,
@@ -385,14 +391,16 @@ VOID set_mode (
                       -1
                     );
       DBG (" patch 0: patched %d time(s)\n", NumReplaces);
+#endif
       NumReplaces = VideoBiosPatchSearchAndReplace (
                       (UINT8*)(UINTN)VBIOS_START,
                       VBIOS_SIZE,
                       (UINT8*)&Sample1[0], 9,
                       (UINT8*)&nvda_key1[Index].Matrix[0],
-                      -1
+                      1
                     );
       DBG (" patch 1: patched %d time(s)\n", NumReplaces);
+#if 1
       NumReplaces = VideoBiosPatchSearchAndReplace (
                       (UINT8*)(UINTN)VBIOS_START,
                       VBIOS_SIZE,
@@ -409,12 +417,14 @@ VOID set_mode (
                       -1
                     );
       DBG (" patch 3: patched %d time(s)\n", NumReplaces);
+#endif
 
       if ((*((UINT8*)(UINTN)(VBIOS_START + 0x34)) & 0x8F) == 0x80 ) {
         *((UINT8*)(UINTN)(VBIOS_START + 0x34)) |= 0x01; 
       }
 
-      mode_timing = (NV_MODELINE *) map->nv_mode_table;
+#if 0
+     mode_timing = (NV_MODELINE *) map->nv_mode_table;
       Index = 0;
 
       DBG ("NVDA mode_timing: %dx%d vbios mode %d patched!\n", mode.h_active, mode.v_active, Index);
@@ -428,6 +438,7 @@ VOID set_mode (
       mode_timing[Index].usV_SyncStart = mode.v_active + mode.v_sync_offset;
       mode_timing[Index].usV_SyncEnd = mode.v_active + mode.v_sync_offset + mode.v_sync_width;
       mode_timing[Index].usPixel_Clock = mode.pixel_clock/10000;
+#endif
 
       break;
     }
