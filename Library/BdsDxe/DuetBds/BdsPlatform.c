@@ -1335,7 +1335,7 @@ Returns:
       vrom_size = 0x20000;
     }
     DBG ("BdsPlatorm: vrom_size = 0x%x\n", vrom_size);
-    egSaveFile (gRootFHandle, L"EFI\\bareboot\\rom.rom", vrom, vrom_size);
+    egSaveFile (gRootFHandle, L"EFI\\bareboot\\vrom.rom", vrom, vrom_size);
   }
 
   if (gSettings.ScreenMode != 0xffff) {
