@@ -279,7 +279,7 @@ ICpuFamily06 (
   case CPU_MODEL_HASWELL:
   case CPU_MODEL_HASWELL_MB:
   case CPU_MODEL_HASWELL_ULT:
-  case CPU_MODEL_HASWELL_ULX:
+//  case CPU_MODEL_HASWELL_ULX:
   case CPU_MODEL_IVY_BRIDGE:
   case CPU_MODEL_IVY_BRIDGE_E5:
   case CPU_MODEL_JAKETOWN:
@@ -309,6 +309,10 @@ ICpuFamily06 (
   case CPU_MODEL_NEHALEM_EX:  // Core i7, Nehalem-Ex Xeon, "Beckton"
   case CPU_MODEL_WESTMERE:    // Core i7 LGA1366, Six-core, "Westmere", "Gulftown", 32nm
   case CPU_MODEL_WESTMERE_EX: // Core i7, Nehalem-Ex Xeon, "Eagleton"
+  case CPU_MODEL_CRYSTALWELL:
+  case CPU_MODEL_BROADWELL_HQ:
+  case CPU_MODEL_SKYLAKE_U:
+  case CPU_MODEL_SKYLAKE_S:
     msr = AsmReadMsr64 (MSR_PLATFORM_INFO);
     gCPUStructure.MaxRatio = (UINT8) BitFieldRead64 (msr, 8, 15);
     gCPUStructure.TurboMsr = msr + 1;  /* XXX: suspicious action! */
@@ -433,13 +437,16 @@ ICpuProps (
   case CPU_MODEL_HASWELL:
   case CPU_MODEL_HASWELL_MB:
   case CPU_MODEL_HASWELL_ULT:
-  case CPU_MODEL_HASWELL_ULX:
   case CPU_MODEL_IVY_BRIDGE:
   case CPU_MODEL_IVY_BRIDGE_E5:
   case CPU_MODEL_JAKETOWN:
   case CPU_MODEL_NEHALEM:
   case CPU_MODEL_NEHALEM_EX:
   case CPU_MODEL_SANDY_BRIDGE:
+  case CPU_MODEL_CRYSTALWELL:
+  case CPU_MODEL_BROADWELL_HQ:
+  case CPU_MODEL_SKYLAKE_U:
+  case CPU_MODEL_SKYLAKE_S:
     msr = AsmReadMsr64 (MSR_CORE_THREAD_COUNT);
     gCPUStructure.Cores   = (UINT8) BitFieldRead64 (msr, 16, 31);
     gCPUStructure.Threads = (UINT8) BitFieldRead64 (msr, 0,  15);
