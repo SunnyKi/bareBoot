@@ -46,6 +46,7 @@
 #define EDX 3
 
 CPU_STRUCTURE                   gCPUStructure;
+BOOLEAN                         SSSE3;
 
 VOID
 SetPIT2Mode0 (
@@ -496,6 +497,7 @@ GetCpuProps (
   CHAR8                 str[128];
   CHAR8                 *s;
 
+  SSSE3 = FALSE;
   gCPUStructure.TurboMsr = 0;
   gCPUStructure.MaxRatio = 10;
   gCPUStructure.ProcessorInterconnectSpeed = 0;

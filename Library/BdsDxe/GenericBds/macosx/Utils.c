@@ -1526,8 +1526,7 @@ GetUserSettings (
   gSettings.PatchLAPIC = GetBoolProperty (dictPointer, "PatchLAPIC", FALSE);
   gSettings.PatchPM = GetBoolProperty (dictPointer, "PatchPM", FALSE);
   gSettings.PatchCPU = GetBoolProperty (dictPointer, "PatchCPU", FALSE);
-  gSettings.CpuFamily = (UINT32) GetNumProperty (dictPointer, "CpuFamily", 0);
-  gSettings.CpuIdVars = (UINT32) GetNumProperty (dictPointer, "CpuIdVars", 0);
+  gSettings.CpuIdSing = (UINT32) GetNumProperty (dictPointer, "CpuIdSing", 0);
 
   if (GetBoolProperty (dictPointer, "Turbo", FALSE)) {
     if (gCPUStructure.TurboMsr != 0) {

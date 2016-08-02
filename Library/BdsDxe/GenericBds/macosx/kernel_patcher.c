@@ -28,7 +28,6 @@ UINT32                  KernelSlide     = 0;
 BOOLEAN                 isKernelcache   = FALSE;
 BOOLEAN                 is64BitKernel   = FALSE;
 BOOLEAN                 PatcherInited   = FALSE;
-BOOLEAN                 SSSE3;
 
 // notes:
 // - 64bit segCmd64->vmaddr is 0xffffff80xxxxxxxx and we are taking
@@ -807,268 +806,66 @@ Patcher_SSE3_5 (
   bytes[patchLocation2 + 9] = 0x00;
 }
 
-VOID
-Patcher_SSE3_7 (
-  VOID  *kernelData
-)
-{
-  // not support yet
-  return;
-}
+UINT8 KSearchCpuId_1[] =
+{ 0xB8, 0x01, 0x00, 0x00, 0x00, 0x31, 0xDB, 0x89, 0xD9, 0x89, 0xDA, 0x0F, 0xA2 };
+UINT8 KSearchCpuId_2[] =
+{ 0xB8, 0x01, 0x00, 0x00, 0x00, 0x31, 0xDB, 0x31, 0xC9, 0x31, 0xD2, 0x0F, 0xA2 };
+UINT8 KReplaceCpuId[] =
+{ 0xB8, 0x01, 0x00, 0x00, 0x00, 0x0F, 0xA2, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x90 };
 
 VOID
-KernelPatcher_64 (
-  VOID* kernelData
+EFIAPI
+KernelPatchCpuId_64 (
+  VOID
 )
 {
-  UINT8       *bytes;
-  UINT32      patchLocation=0, patchLocation1=0;
-  UINT32      i;
-  UINT32      switchaddr=0;
-  UINT32      mask_family=0, mask_model=0;
-  UINT32      cpuid_family_addr=0, cpuid_model_addr=0;
+  UINTN     Num = 0;
+  UINT32    addr, size;
 
   if (KernVersion == NULL) {
     DBG ("%a: kernel version not found.\n", __FUNCTION__);
     return;
   }
 
-  bytes = (UINT8 *) kernelData;
-  
-  DBG ("%a: looking for _cpuid_set_info Unsupported CPU _panic\n", __FUNCTION__);
-  // Determine location of _cpuid_set_info _panic call for refrence
-  // basically looking for info_p->cpuid_model = bitfield32(reg[eax],  7,  4);
-  for (i=0; i<0x1000000; i++) {
-    if (bytes[i+ 0] == 0xC7 && bytes[i+ 1] == 0x05 && bytes[i+ 5] == 0x00 &&
-        bytes[i+ 6] == 0x07 && bytes[i+ 7] == 0x00 && bytes[i+ 8] == 0x00 &&
-        bytes[i+ 9] == 0x00 && bytes[i-5] == 0xE8) {
-      // matching bytes[i-5] == 0xE8 for _panic call doesn't seem to always work
-      // i made sure _panic call is only place wit this sequence in all the kernels i've looked at
-      patchLocation = i-5;
-      break;
+  GetSection ("__TEXT", "__text", &addr, &size);
+  if (is64BitKernel) {
+    KReplaceCpuId [ 8] = (UINT8) ((gSettings.CpuIdSing & 0x000000FF) >>  0);
+    KReplaceCpuId [ 9] = (UINT8) ((gSettings.CpuIdSing & 0x0000FF00) >>  8);
+    KReplaceCpuId [10] = (UINT8) ((gSettings.CpuIdSing & 0x00FF0000) >> 16);
+    KReplaceCpuId [11] = (UINT8) ((gSettings.CpuIdSing & 0xFF000000) >> 24);
+    if (AsciiStrnCmp (KernVersion, "10.7.1", 6) >= 0 &&
+        AsciiStrnCmp (KernVersion, "11.0.0", 6) < 0) {
+      Num = SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KSearchCpuId_1,
+              sizeof (KSearchCpuId_1),
+              (CHAR8 *) KReplaceCpuId,
+              1
+              );
+      goto Exit;
+    }
+    if (AsciiStrnCmp (KernVersion, "11.0.0", 6) >= 0) {
+      Num = SearchAndReplace (
+              (UINT8 *) (UINTN) addr,
+              size,
+              (CHAR8 *) KSearchCpuId_2,
+              sizeof (KSearchCpuId_2),
+              (CHAR8 *) KReplaceCpuId,
+              1
+              );
+      goto Exit;
     }
   }
-  if (!patchLocation) {
-    DBG ("%a: _cpuid_set_info Unsupported CPU _panic not found\n", __FUNCTION__);
-    return;
-  }
-  // make sure only kernels for OSX 10.6.0 to 10.7.3 are being patched by this approach
-  if (AsciiStrnCmp (KernVersion, "10", 2) >= 0 && AsciiStrnCmp (KernVersion, "11.3.0", 6) <= 0) {
-    DBG ("%a: will patch kernel for OSX 10.6.0 to 10.7.3\n", __FUNCTION__);
-    // remove tsc_init: unknown CPU family panic for kernels prior to 10.6.2 which still had Atom support
-    if (AsciiStrnCmp (KernVersion, "10.1", 4) <= 0) {
-      for (i=0; i<0x1000000; i++) {
-        // find _tsc_init panic address by byte sequence 488d3df4632a00
-        if (bytes[i] == 0x48 && bytes[i+1] == 0x8D && bytes[i+2] == 0x3D && bytes[i+3] == 0xF4 &&
-            bytes[i+4] == 0x63 && bytes[i+5] == 0x2A && bytes[i+6] == 0x00) {
-          patchLocation1 = i+9;
-          DBG ("%a: found _tsc_init _panic address at 0x%08x\n", __FUNCTION__, patchLocation1);
-          break;
-        }
-      }
-      // NOP _panic call
-      if (patchLocation1) {
-        bytes[patchLocation1 + 0] = 0x90;
-        bytes[patchLocation1 + 1] = 0x90;
-        bytes[patchLocation1 + 2] = 0x90;
-        bytes[patchLocation1 + 3] = 0x90;
-        bytes[patchLocation1 + 4] = 0x90;
-      }
-    }
-    else { // assume patching logic for OSX 10.6.2 to 10.7.3
-      /*
-       Here is our case from CPUID switch statement, it sets CPUFAMILY_UNKNOWN
-       C7051C2C5F0000000000   mov     dword [ds:0xffffff80008a22c0], 0x0 (example from 10.7)
-       */
-      switchaddr = patchLocation-19;
-      DBG ("%a: switch statement patch location is 0x%08x\n", __FUNCTION__, (switchaddr+6));
-      
-      if (bytes[switchaddr+0] == 0xC7 && bytes[switchaddr+1] == 0x05 &&
-          bytes[switchaddr+5] == 0x00 && bytes[switchaddr+6] == 0x00 &&
-          bytes[switchaddr+7] == 0x00 && bytes[switchaddr+8] == 0x00) {
-        // Determine cpuid_family address from above mov operation
-        cpuid_family_addr =
-        bytes[switchaddr + 2] <<  0 |
-        bytes[switchaddr + 3] <<  8 |
-        bytes[switchaddr + 4] << 16 |
-        bytes[switchaddr + 5] << 24;
-        
-        cpuid_family_addr = cpuid_family_addr + (switchaddr+10);
-
-        if (cpuid_family_addr) {
-          // Determine cpuid_model address
-          // for 10.6.2 kernels it's offset by 299 bytes from cpuid_family address
-          if (AsciiStrnCmp (KernVersion, "10.2", 4) == 0) {
-            cpuid_model_addr = cpuid_family_addr - 0x12B;
-          } else {
-            // for 10.6.3 to 10.6.7 it's offset by 303 bytes
-            if (AsciiStrnCmp (KernVersion, "10.3", 4) >= 0 && AsciiStrnCmp (KernVersion, "10.7", 4) <= 0) {
-              cpuid_model_addr = cpuid_family_addr - 0x12F;
-            } else {
-              // for 10.6.8+ kernels - by 339 bytes
-              cpuid_model_addr = cpuid_family_addr - 0x153;
-            }
-          }
-          DBG ("%a: cpuid_family address = 0x%08x\n", __FUNCTION__, cpuid_family_addr);
-          DBG ("%a: cpuid_model address  = 0x%08x\n", __FUNCTION__, cpuid_model_addr);
-          switchaddr += 6; // offset 6 bytes in mov operation to write a dword instead of zero
-          // calculate mask for patching, cpuid_family mask not needed as we offset on a valid mask
-          mask_model   = cpuid_model_addr -  (switchaddr+14);
-          DBG ("%a: model mask = 0x%08x\n", __FUNCTION__, mask_model);
-          if (gSettings.CpuFamily != 0) {
-            DBG ("%a: overriding custom cpuid_family = 0x08x\n", __FUNCTION__, gSettings.CpuFamily);
-            bytes[switchaddr+0] = (gSettings.CpuFamily & 0x000000FF) >>  0;
-            bytes[switchaddr+1] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
-            bytes[switchaddr+2] = (UINT8) ((gSettings.CpuFamily & 0x00FF0000) >> 16);
-            bytes[switchaddr+3] = (gSettings.CpuFamily & 0xFF000000) >> 24;
-          } else {
-            DBG ("%a: overriding cpuid_family as CPUID_INTEL_PENRYN\n", __FUNCTION__);
-            bytes[switchaddr+0] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
-            bytes[switchaddr+1] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
-            bytes[switchaddr+2] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
-            bytes[switchaddr+3] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
-          }
-          // mov  dword [ds:0xffffff80008a216d], 0x2000117
-          bytes[switchaddr+4] = 0xC7;
-          bytes[switchaddr+5] = 0x05;
-          bytes[switchaddr+6] = (mask_model & 0x000000FF) >> 0;
-          bytes[switchaddr+7] = (mask_model & 0x0000FF00) >> 8;
-          bytes[switchaddr+8] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
-          bytes[switchaddr+9] = (mask_model & 0xFF000000) >> 24;
-          if (gSettings.CpuIdVars != 0) {
-            DBG ("%a: overriding custom cpuid_model = 0x08x\n", __FUNCTION__, gSettings.CpuIdVars);
-            bytes[switchaddr+10] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
-            bytes[switchaddr+11] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
-            bytes[switchaddr+12] = (UINT8) ((gSettings.CpuIdVars & 0x00FF0000) >> 16); // cpuid_extfamily
-            bytes[switchaddr+13] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
-
-          } else {
-            DBG ("%a: overriding cpuid_model as CPUID_INTEL_PENRYN\n", __FUNCTION__);
-            bytes[switchaddr+10] = 0x17; // cpuid_model
-            bytes[switchaddr+11] = 0x01; // cpuid_extmodel
-            bytes[switchaddr+12] = 0x00; // cpuid_extfamily
-            bytes[switchaddr+13] = 0x02; // cpuid_stepping
-          }
-          // fill remainder with 4 NOPs
-          for (i=14; i<18; i++) {
-            bytes[switchaddr+i] = 0x90;
-          }
-        }
-      } else {
-        DBG ("%a: unable to determine cpuid_family address, patching aborted\n", __FUNCTION__);
-        return;
-      }
-    }
-    // patch ssse3
-    if (!SSSE3 &&
-        (AsciiStrnCmp (KernVersion, "10", 2) == 0)) {
-      Patcher_SSE3_6 ((VOID*) bytes);
-    }
-    if (!SSSE3 &&
-        (AsciiStrnCmp (KernVersion, "11", 2) == 0)) {
-      Patcher_SSE3_7 ((VOID*) bytes);
-    }
-  } else {
-    DBG ("%a: will patch kernel for OSX 10.7.4+\n", __FUNCTION__);
-    /*
-     Here is our switchaddress location ... it should be case 20 from CPUID switch statement
-     833D78945F0000  cmp        dword [ds:0xffffff80008a21d0], 0x0;
-     7417            je         0xffffff80002a8d71
-     */
-    switchaddr = patchLocation-45;
-    DBG ("%a: switch statement patch location = 0x%08x\n", __FUNCTION__, switchaddr);
-    
-    if(bytes[switchaddr+0] == 0x83 && bytes[switchaddr+1] == 0x3D &&
-       bytes[switchaddr+5] == 0x00 && bytes[switchaddr+6] == 0x00 &&
-       bytes[switchaddr+7] == 0x74) {
-      // Determine cpuid_family address
-      // 891D4F945F00    mov        dword [ds:0xffffff80008a21a0], ebx
-      cpuid_family_addr =
-      bytes[switchaddr - 4] <<  0 |
-      bytes[switchaddr - 3] <<  8 |
-      bytes[switchaddr - 2] << 16 |
-      bytes[switchaddr - 1] << 24;
-
-      cpuid_family_addr = cpuid_family_addr + switchaddr;
-      
-      if (cpuid_family_addr) {
-        // Determine cpuid_model address
-        // for 10.6.8+ kernels it's 339 bytes apart from cpuid_family address
-        cpuid_model_addr = cpuid_family_addr - 0x153;
-        DBG ("%a: cpuid_family address = 0x%08x\n", __FUNCTION__, cpuid_family_addr);
-        DBG ("%a: cpuid_model address  = 0x%08x\n", __FUNCTION__, cpuid_model_addr);
-        // Calculate masks for patching
-        mask_family  = cpuid_family_addr - (switchaddr +15);
-        mask_model   = cpuid_model_addr -  (switchaddr +25);
-        DBG ("%a: family mask = 0x%08x\n", __FUNCTION__, mask_family);
-        DBG ("%a: model mask  = 0x%08x\n", __FUNCTION__, mask_model);
-        // retain original
-        // test ebx, ebx
-        bytes[switchaddr+0] = bytes[patchLocation-13];
-        bytes[switchaddr+1] = bytes[patchLocation-12];
-        // retain original, but move jump offset by 20 bytes forward
-        // jne for above test
-        bytes[switchaddr+2] = bytes[patchLocation-11];
-        bytes[switchaddr+3] = bytes[patchLocation-10]+0x20;
-        // mov ebx, 0x78ea4fbc
-        bytes[switchaddr+4] = 0xBB;
-        if (gSettings.CpuFamily != 0) {
-          DBG ("%a: overriding custom cpuid_family = 0x08x\n", __FUNCTION__, gSettings.CpuFamily);
-          bytes[switchaddr+5] = (gSettings.CpuFamily & 0x000000FF) >>  0;
-          bytes[switchaddr+6] = (gSettings.CpuFamily & 0x0000FF00) >>  8;
-          bytes[switchaddr+7] = (UINT8) ((gSettings.CpuFamily & 0x00FF0000) >> 16);
-          bytes[switchaddr+8] = (gSettings.CpuFamily & 0xFF000000) >> 24;
-        } else {
-          DBG ("%a: overriding cpuid_model as CPUID_INTEL_PENRYN\n", __FUNCTION__);
-          bytes[switchaddr+5] = (CPUFAMILY_INTEL_PENRYN & 0x000000FF) >>  0;
-          bytes[switchaddr+6] = (CPUFAMILY_INTEL_PENRYN & 0x0000FF00) >>  8;
-          bytes[switchaddr+7] = (CPUFAMILY_INTEL_PENRYN & 0x00FF0000) >> 16;
-          bytes[switchaddr+8] = (CPUFAMILY_INTEL_PENRYN & 0xFF000000) >> 24;
-        }
-        // mov dword, ebx
-        bytes[switchaddr+9]  = 0x89;
-        bytes[switchaddr+10] = 0x1D;
-        // cpuid_cpufamily address 0xffffff80008a21a0
-        bytes[switchaddr+11] = (mask_family & 0x000000FF) >> 0;
-        bytes[switchaddr+12] = (mask_family & 0x0000FF00) >> 8;
-        bytes[switchaddr+13] = (UINT8) ((mask_family & 0x00FF0000) >> 16);
-        bytes[switchaddr+14] = (mask_family & 0xFF000000) >> 24;
-        // mov dword
-        bytes[switchaddr+15] = 0xC7;
-        bytes[switchaddr+16] = 0x05;
-        // cpuid_model address 0xffffff80008b204d
-        bytes[switchaddr+17] = (mask_model & 0x000000FF) >> 0;
-        bytes[switchaddr+18] = (mask_model & 0x0000FF00) >> 8;
-        bytes[switchaddr+19] = (UINT8) ((mask_model & 0x00FF0000) >> 16);
-        bytes[switchaddr+20] = (mask_model & 0xFF000000) >> 24;
-        if (gSettings.CpuIdVars != 0) {
-          DBG ("%a: overriding custom cpuid_model = 0x08x\n", __FUNCTION__, gSettings.CpuIdVars);
-          bytes[switchaddr+21] = (gSettings.CpuIdVars & 0x000000FF) >>  0; // cpuid_model
-          bytes[switchaddr+22] = (gSettings.CpuIdVars & 0x0000FF00) >>  8; // cpuid_extmodel
-          bytes[switchaddr+23] = (UINT8) ((gSettings.CpuIdVars & 0x00FF0000) >> 16); // cpuid_extfamily
-          bytes[switchaddr+24] = (gSettings.CpuIdVars & 0xFF000000) >> 24; // cpuid_stepping
-          
-        } else {
-          DBG ("%a: overriding cpuid_model as CPUID_INTEL_PENRYN\n", __FUNCTION__);
-          bytes[switchaddr+21] = 0x17; // cpuid_model
-          bytes[switchaddr+22] = 0x01; // cpuid_extmodel
-          bytes[switchaddr+23] = 0x00; // cpuid_extfamily
-          bytes[switchaddr+24] = 0x02; // cpuid_stepping
-        }
-        // fill remainder with 25 NOPs
-        for (i=25; i<25+25; i++) {
-          bytes[switchaddr+i] = 0x90;
-        }
-      }
-    } else {
-      DBG ("%a: unable to determine cpuid_family address, patching aborted\n", __FUNCTION__);
-      return;
-    }
-  }
+Exit:
+  DBG ("%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
+#ifdef KERNEL_PATCH_DEBUG
+  Print (L"%a: SearchAndReplace %d times.\n", __FUNCTION__, Num);
+#endif
 }
 
 VOID
-KernelPatcher_32 (
+KernelPatchCPU_32 (
   VOID* kernelData
 )
 {
@@ -1496,10 +1293,17 @@ KernelAndKextsPatcherStart (
 
   if (gSettings.PatchCPU) {
     if (is64BitKernel) {
-      KernelPatcher_64 (KernelData);
+      // patch ssse3
+      if (!SSSE3 && (AsciiStrnCmp (KernVersion, "10", 2) == 0)) {
+        Patcher_SSE3_6 ((VOID*) KernelData);
+      }
     } else {
-      KernelPatcher_32 (KernelData);
+      KernelPatchCPU_32 (KernelData);
     }
+  }
+
+  if (gSettings.CpuIdSing != 0) {
+    KernelPatchCpuId_64 ();
   }
 
   // CPU power management patch for haswell with locked msr
