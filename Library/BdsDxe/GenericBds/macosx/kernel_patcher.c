@@ -215,7 +215,78 @@ GetSection (
     }
     binaryIndex += cmdsize;
   }
+  DBG ("%a: Section = %a, Segment = %a, Addr = 0x%x, Size = 0x%x\n", __FUNCTION__, Section, Segment, *Addr, *Size);
+
+  return;
+}
+
+VOID
+GetFunction (
+  IN CHAR8    *FunctionName,
+  OUT UINT32  *Addr
+)
+{
+  UINT32  ncmds;
+  UINT32  cmdsize;
+  UINT32  binaryIndex;
+  UINTN   cnt;
+  UINT8   *binary, *symbin, *strbin;
+
+  struct load_command         *loadCommand;
+  struct symtab_command       *comSymTab;
+  struct nlist_64             *systabentry;
+
+  binary = (UINT8 *) KernelData;
+
+  if (is64BitKernel) {
+    binaryIndex = sizeof (struct mach_header_64);
+  } else {
+    binaryIndex = sizeof (struct mach_header);
+  }
   
+  ncmds = MACH_GET_NCMDS (binary);
+  
+  for (cnt = 0; cnt < ncmds; cnt++) {
+    loadCommand = (struct load_command *) (binary + binaryIndex);
+    cmdsize = loadCommand->cmdsize;
+    
+    switch (loadCommand->cmd) {
+      case LC_SYMTAB:
+        comSymTab = (struct symtab_command *) loadCommand;
+        DBG ("%a: symoff = 0x%x, nsyms = %d, stroff = 0x%x, strsize = %d\n", __FUNCTION__,
+              comSymTab->symoff,
+              comSymTab->nsyms,
+              comSymTab->stroff,
+              comSymTab->strsize
+            );
+        cnt = 0;
+        symbin = (binary + comSymTab->symoff + 0x2c7a0); // XXX: why there is additional offset 0x2c7a0 ???
+        strbin = (binary + comSymTab->stroff + 0x2c7a0);
+        while (cnt < comSymTab->nsyms) {
+          systabentry = (struct nlist_64 *) (symbin);
+          DBG ("%a: function %a, index 0x%x, address 0x%x\n", __FUNCTION__,
+                (CHAR8 *) (strbin + systabentry->n_un.n_strx),
+                systabentry->n_un.n_strx,
+                systabentry->n_value
+              );
+          if (AsciiStrCmp ((CHAR8 *) (strbin + systabentry->n_un.n_strx), FunctionName) == 0) {
+            *Addr = (UINT32) systabentry->n_value;
+            break;
+          } else {
+            cnt++;
+            symbin += sizeof (struct nlist_64);
+          }
+        }
+        DBG ("%a: function %a address 0x%x\n", __FUNCTION__, FunctionName, *Addr);
+        return;
+
+      default:
+        break;
+    }
+    binaryIndex += cmdsize;
+  }
+
+  DBG ("%a: symbol table not found\n", __FUNCTION__);
   return;
 }
 
@@ -970,7 +1041,11 @@ KernelLapicPatch_64 (
   UINT8       *bytes = (UINT8*)kernelData;
   UINT32      patchLocation=0;
   UINT32      i;
-  
+
+// 13.3.0 - 48 8D 3D 81 30 43 00 44 89 F6 30 C0 E8 01 0B F4 FF
+// 16.0.0 - 48 8D 3D B7 E0 56 00 31 C0 44 89 F6 E8 2D 58 EE FF
+
+
   for (i=0; i<0x1000000; i++) {
     if (bytes[i+0]  == 0x65 && bytes[i+1]  == 0x8B && bytes[i+2]  == 0x04 && bytes[i+3]  == 0x25 &&
         bytes[i+4]  == 0x14 && bytes[i+5]  == 0x00 && bytes[i+6]  == 0x00 && bytes[i+7]  == 0x00 &&
@@ -1274,6 +1349,7 @@ KernelAndKextsPatcherStart (
   UINT32      deviceTreeP;
   UINT32      deviceTreeLength;
   EFI_STATUS  Status;
+  UINT32      addr;
 
   //
   // Kernel & Kexts patches
@@ -1287,6 +1363,9 @@ KernelAndKextsPatcherStart (
 #endif
     return;
   }
+
+//  GetFunction ("_kprintf", &addr);
+  GetFunction ("_zp_tiny_zone_limit", &addr);
 
   if (gSettings.PatchCPU) {
     if (is64BitKernel) {

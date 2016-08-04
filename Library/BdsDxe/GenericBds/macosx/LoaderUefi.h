@@ -45,6 +45,7 @@ typedef INT32 vm_prot_t;
 // And finally the xnu/EXTERNAL_HEADERS/mach-o/loader.h
 //
 #include "loader.h"
+#include "nlist.h"
 
 //
 // Additionally, only needed thread state definitions for LC_UNIXTHREAD
