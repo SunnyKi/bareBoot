@@ -1348,7 +1348,10 @@ Returns:
     ClearScreen (0xBFBFBF, NULL);
   }
 
-  AddBootArgs = "\0 23456789012345678901234567890123456789";
+  AddBootArgs = "\0 2345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+  if (gSettings.DebugKernel) {
+    AsciiStrCat (AddBootArgs, " -cpuid debug=0x12a acpi_layer=0x08 acpi_level=0x02 msgbuf=309212");
+  }
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
     AsciiStrCat (AddBootArgs, " -v");
   }

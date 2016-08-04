@@ -273,33 +273,8 @@ GetFunction (
                   segCmd64->vmsize,
                   linkeditfileoff
                 );
-#if 1
           }
         }
-#else
-          } else {
-            DBG ("%a: Segment = %a, Addr = 0x%x, Size = 0x%x, FileOff = 0x%x, FileSize = 0x%x\n", __FUNCTION__,
-                  segCmd64->segname,
-                  segCmd64->vmaddr,
-                  segCmd64->vmsize,
-                  segCmd64->fileoff,
-                  segCmd64->filesize
-                );
-          }
-        } else {
-          sectionIndex = sizeof (struct segment_command_64);
-          while(sectionIndex < segCmd64->cmdsize) {
-            sect64 = (struct section_64 *) ((UINT8 *) segCmd64 + sectionIndex);
-            DBG ("%a: Section = %a, Segment = %a, Addr = 0x%x, Size = 0x%x\n", __FUNCTION__,
-                  sect64->sectname,
-                  sect64->segname,
-                  sect64->addr,
-                  sect64->size
-                );
-            sectionIndex += sizeof (struct section_64);
-          }
-        }
-#endif
         break;
 
       case LC_SYMTAB:
@@ -326,13 +301,6 @@ GetFunction (
         );
     while (cnt < nsyms) {
       systabentry = (struct nlist_64 *) (symbin);
-#if 0
-      DBG ("%a: function %a, index 0x%x, address 0x%x\n", __FUNCTION__,
-            (CHAR8 *) (strbin + systabentry->n_un.n_strx),
-            systabentry->n_un.n_strx,
-            systabentry->n_value
-          );
-#endif
       if (AsciiStrCmp ((CHAR8 *) (strbin + systabentry->n_un.n_strx), FunctionName) == 0) {
         *Addr = (UINT32) systabentry->n_value;
         break;
@@ -1176,6 +1144,37 @@ KernelLapicPatch_32 (
 }
 
 VOID
+EFIAPI
+DebugKernel (
+  VOID
+)
+{
+  UINT32            printfAddr;
+  UINT32            kprintfAddr;
+  UINT32            delta;
+  UINT8             *binary;
+
+  // thanks to RevoGirl and Pike R. Alpha
+  GetFunction ("_printf", &printfAddr);
+  GetFunction ("_kprintf", &kprintfAddr);
+  DBG ("%a: printfAddr = 0x%x\n", __FUNCTION__, printfAddr);
+  DBG ("%a: kprintfAddr = 0x%x\n", __FUNCTION__, kprintfAddr);
+  if (kprintfAddr > printfAddr) {
+    delta = (0xFFFFFFFF - (kprintfAddr - printfAddr)) - 4;
+  } else {
+    delta = (printfAddr - kprintfAddr) + 4;
+  }
+  DBG ("%a: delta = 0x%x\n", __FUNCTION__, delta);
+  binary = (UINT8 *)(UINTN) kprintfAddr;
+  binary [0] = 0xE9;
+  binary [1] = (UINT8) ((delta & 0x000000FF) >>  0);
+  binary [2] = (UINT8) ((delta & 0x0000FF00) >>  8);
+  binary [3] = (UINT8) ((delta & 0x00FF0000) >> 16);
+  binary [4] = (UINT8) ((delta & 0xFF000000) >> 24);
+  binary [5] = 0xC3;
+}
+
+VOID
 FindBootArgs (
   VOID
 )
@@ -1407,7 +1406,6 @@ KernelAndKextsPatcherStart (
   UINT32      deviceTreeP;
   UINT32      deviceTreeLength;
   EFI_STATUS  Status;
-  UINT32      addr;
 
   //
   // Kernel & Kexts patches
@@ -1422,9 +1420,6 @@ KernelAndKextsPatcherStart (
     return;
   }
 
-  GetFunction ("_kprintf", &addr);
-//  GetFunction ("_zp_tiny_zone_limit", &addr);
-
   if (gSettings.PatchCPU) {
     if (is64BitKernel) {
       // patch ssse3
@@ -1434,6 +1429,10 @@ KernelAndKextsPatcherStart (
     } else {
       KernelPatchCPU_32 (KernelData);
     }
+  }
+
+  if (gSettings.DebugKernel) {
+    DebugKernel ();
   }
 
   if (gSettings.CpuIdSing != 0) {
