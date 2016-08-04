@@ -215,7 +215,6 @@ GetSection (
     }
     binaryIndex += cmdsize;
   }
-  DBG ("%a: Section = %a, Segment = %a, Addr = 0x%x, Size = 0x%x\n", __FUNCTION__, Section, Segment, *Addr, *Size);
 
   return;
 }
@@ -231,10 +230,21 @@ GetFunction (
   UINT32  binaryIndex;
   UINTN   cnt;
   UINT8   *binary, *symbin, *strbin;
+  UINT32  linkeditaddr = 0;
+  UINT32  linkeditfileoff = 0;
+  UINT32  symoff = 0;
+  UINT32  nsyms = 0;
+  UINT32  stroff = 0;
+  UINT32  strsize = 0;
 
   struct load_command         *loadCommand;
   struct symtab_command       *comSymTab;
   struct nlist_64             *systabentry;
+  struct segment_command_64   *segCmd64;
+#if 0
+  UINT32  sectionIndex;
+  struct section_64           *sect64;
+#endif 
 
   binary = (UINT8 *) KernelData;
 
@@ -251,42 +261,90 @@ GetFunction (
     cmdsize = loadCommand->cmdsize;
     
     switch (loadCommand->cmd) {
-      case LC_SYMTAB:
-        comSymTab = (struct symtab_command *) loadCommand;
-        DBG ("%a: symoff = 0x%x, nsyms = %d, stroff = 0x%x, strsize = %d\n", __FUNCTION__,
-              comSymTab->symoff,
-              comSymTab->nsyms,
-              comSymTab->stroff,
-              comSymTab->strsize
-            );
-        cnt = 0;
-        symbin = (binary + comSymTab->symoff + 0x2c7a0); // XXX: why there is additional offset 0x2c7a0 ???
-        strbin = (binary + comSymTab->stroff + 0x2c7a0);
-        while (cnt < comSymTab->nsyms) {
-          systabentry = (struct nlist_64 *) (symbin);
-          DBG ("%a: function %a, index 0x%x, address 0x%x\n", __FUNCTION__,
-                (CHAR8 *) (strbin + systabentry->n_un.n_strx),
-                systabentry->n_un.n_strx,
-                systabentry->n_value
-              );
-          if (AsciiStrCmp ((CHAR8 *) (strbin + systabentry->n_un.n_strx), FunctionName) == 0) {
-            *Addr = (UINT32) systabentry->n_value;
-            break;
-          } else {
-            cnt++;
-            symbin += sizeof (struct nlist_64);
+      case LC_SEGMENT_64: 
+        segCmd64 = (struct segment_command_64 *) loadCommand;
+        if (segCmd64->nsects == 0) {
+          if (AsciiStrCmp (segCmd64->segname, "__LINKEDIT") == 0) {
+            linkeditaddr = (UINT32) segCmd64->vmaddr;
+            linkeditfileoff = (UINT32) segCmd64->fileoff;
+            DBG ("%a: Segment = %a, Addr = 0x%x, Size = 0x%x, FileOff = 0x%x\n", __FUNCTION__,
+                  segCmd64->segname,
+                  linkeditaddr,
+                  segCmd64->vmsize,
+                  linkeditfileoff
+                );
+#if 1
           }
         }
-        DBG ("%a: function %a address 0x%x\n", __FUNCTION__, FunctionName, *Addr);
-        return;
+#else
+          } else {
+            DBG ("%a: Segment = %a, Addr = 0x%x, Size = 0x%x, FileOff = 0x%x, FileSize = 0x%x\n", __FUNCTION__,
+                  segCmd64->segname,
+                  segCmd64->vmaddr,
+                  segCmd64->vmsize,
+                  segCmd64->fileoff,
+                  segCmd64->filesize
+                );
+          }
+        } else {
+          sectionIndex = sizeof (struct segment_command_64);
+          while(sectionIndex < segCmd64->cmdsize) {
+            sect64 = (struct section_64 *) ((UINT8 *) segCmd64 + sectionIndex);
+            DBG ("%a: Section = %a, Segment = %a, Addr = 0x%x, Size = 0x%x\n", __FUNCTION__,
+                  sect64->sectname,
+                  sect64->segname,
+                  sect64->addr,
+                  sect64->size
+                );
+            sectionIndex += sizeof (struct section_64);
+          }
+        }
+#endif
+        break;
+
+      case LC_SYMTAB:
+        comSymTab = (struct symtab_command *) loadCommand;
+        symoff = comSymTab->symoff;
+        nsyms = comSymTab->nsyms;
+        stroff = comSymTab->stroff;
+        strsize = comSymTab->strsize;
+        DBG ("%a: symoff = 0x%x, nsyms = %d, stroff = 0x%x, strsize = %d\n", __FUNCTION__, symoff, nsyms, stroff, strsize);
+        break;
 
       default:
         break;
     }
     binaryIndex += cmdsize;
   }
-
-  DBG ("%a: symbol table not found\n", __FUNCTION__);
+  if (linkeditaddr != 0 && symoff != 0) {
+    cnt = 0;
+    symbin = (UINT8 *)(UINTN) (linkeditaddr + (symoff - linkeditfileoff));
+    strbin = (UINT8 *)(UINTN) (linkeditaddr + (stroff - linkeditfileoff));
+    DBG ("%a: symaddr = 0x%x, straddr = 0x%x\n", __FUNCTION__,
+          symbin,
+          strbin
+        );
+    while (cnt < nsyms) {
+      systabentry = (struct nlist_64 *) (symbin);
+#if 0
+      DBG ("%a: function %a, index 0x%x, address 0x%x\n", __FUNCTION__,
+            (CHAR8 *) (strbin + systabentry->n_un.n_strx),
+            systabentry->n_un.n_strx,
+            systabentry->n_value
+          );
+#endif
+      if (AsciiStrCmp ((CHAR8 *) (strbin + systabentry->n_un.n_strx), FunctionName) == 0) {
+        *Addr = (UINT32) systabentry->n_value;
+        break;
+      } else {
+        cnt++;
+        symbin += sizeof (struct nlist_64);
+      }
+    }
+    DBG ("%a: function %a address 0x%x\n", __FUNCTION__, FunctionName, *Addr);
+  } else {
+    DBG ("%a: symbol table not found\n", __FUNCTION__);
+  }
   return;
 }
 
@@ -1364,8 +1422,8 @@ KernelAndKextsPatcherStart (
     return;
   }
 
-//  GetFunction ("_kprintf", &addr);
-  GetFunction ("_zp_tiny_zone_limit", &addr);
+  GetFunction ("_kprintf", &addr);
+//  GetFunction ("_zp_tiny_zone_limit", &addr);
 
   if (gSettings.PatchCPU) {
     if (is64BitKernel) {
