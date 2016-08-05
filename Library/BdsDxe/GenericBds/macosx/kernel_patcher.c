@@ -48,12 +48,11 @@ SetKernelRelocBase (
   VOID
 )
 {
-    EFI_STATUS      Status;
-    UINTN           DataSize = sizeof(KernelRelocBase);
+    UINTN           DataSize = sizeof (KernelRelocBase);
     
     KernelRelocBase = 0;
     // OsxAptioFixDrv will set this
-    Status = gRT->GetVariable(
+    (void) gRT->GetVariable(
                     L"OsxAptioFixDrv-RelocBase",
                     &gEfiAppleBootGuid,
                     NULL,
@@ -61,7 +60,6 @@ SetKernelRelocBase (
                     &KernelRelocBase
                   );
     // KernelRelocBase is now either read or 0
-    return;
 }
 
 #if 0
@@ -1382,11 +1380,11 @@ AnyKernelPatch (
   IN UINT8 *Kernel
 )
 {
-  UINTN   Num = 0, i;
+  UINTN   i;
 
   for (i = 0; i < gSettings.NrKernel; i++) {
     if (gSettings.AnyKernelData[i] > 0) {
-      Num = SearchAndReplace (
+      (void) SearchAndReplace (
               Kernel,
               KERNEL_MAX_SIZE,
               gSettings.AnyKernelData[i],

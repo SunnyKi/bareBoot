@@ -45,9 +45,6 @@ ScanDeviceHandles (
   UINTN                               OpenInfoCount;
   UINTN                               OpenInfoIndex;
   UINTN                               ChildIndex;
-  BOOLEAN                             ControllerHandleIndexValid;
-
-  ControllerHandleIndexValid = FALSE;
 
   if (ControllerHandleIndex != NULL) {
     *ControllerHandleIndex = 0xffffffff;
@@ -78,7 +75,6 @@ ScanDeviceHandles (
 
     if (ControllerHandle != NULL && ControllerHandleIndex != NULL && (*HandleBuffer)[HandleIndex] == ControllerHandle) {
       *ControllerHandleIndex      = (UINT32) HandleIndex;
-      ControllerHandleIndexValid  = TRUE;
     }
 
   }

@@ -1094,7 +1094,6 @@ PatchSmbios (
   EFI_PEI_HOB_POINTERS  GuidHob;
   EFI_PEI_HOB_POINTERS  HobStart;
   EFI_PHYSICAL_ADDRESS  *Table;
-  UINTN                 TableLength;
   EFI_STATUS            Status;
   UINTN                 BufferLen;
   EFI_PHYSICAL_ADDRESS  BufferPtr;
@@ -1203,7 +1202,6 @@ PatchSmbios (
 
     if (GuidHob.Raw != NULL) {
       Table = GET_GUID_HOB_DATA (GuidHob.Guid);
-      TableLength = GET_GUID_HOB_DATA_SIZE (GuidHob);
 
       if (Table != NULL) {
         SmbiosEpsNew->TableLength = (UINT16) ((UINT32) (UINTN) Current - (UINT32) (UINTN) Smbios);

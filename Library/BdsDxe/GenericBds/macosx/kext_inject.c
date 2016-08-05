@@ -321,7 +321,6 @@ LoadKexts (
   VOID
 )
 {
-  EFI_STATUS Status;
   BOOLEAN CommonKextsDir = TRUE;
   CHAR16 *KextsDir = NULL;
   DIR_ITER KextIter;
@@ -453,8 +452,7 @@ LoadKexts (
                    sizeof (_DeviceTreeBuffer));
     mm_extra =
       AllocateZeroPool (mm_extra_size - sizeof (DeviceTreeNodeProperty));
-    Status =
-      LogDataHub (&gEfiMiscSubClassGuid, L"mm_extra", mm_extra,
+      (void) LogDataHub (&gEfiMiscSubClassGuid, L"mm_extra", mm_extra,
                   (UINT32) (mm_extra_size - sizeof (DeviceTreeNodeProperty))
       );
 
@@ -462,8 +460,7 @@ LoadKexts (
     extra =
       AllocateZeroPool (extra_size - sizeof (DeviceTreeNodeProperty) +
                         EFI_PAGE_SIZE);
-    Status =
-      LogDataHub (&gEfiMiscSubClassGuid, L"extra", extra,
+      (void) LogDataHub (&gEfiMiscSubClassGuid, L"extra", extra,
                   (UINT32) (extra_size - sizeof (DeviceTreeNodeProperty) +
                             EFI_PAGE_SIZE)
       );

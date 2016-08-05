@@ -548,7 +548,9 @@ CallBootManager (
   VOID
   )
 {
+#if 0
   EFI_STATUS                  Status;
+#endif
   BDS_COMMON_OPTION           *Option;
   LIST_ENTRY                  *Link;
   CHAR16                      *ExitData;
@@ -703,7 +705,12 @@ CallBootManager (
   HiiFreeOpCodeHandle (EndOpCodeHandle);
 
   ActionRequest = EFI_BROWSER_ACTION_REQUEST_NONE;
-  Status = gFormBrowser2->SendForm (
+#if 1
+  (void)
+#else
+  Status =
+#endif
+	  gFormBrowser2->SendForm (
                            gFormBrowser2,
                            &HiiHandle,
                            1,
@@ -729,8 +736,10 @@ CallBootManager (
   //
   // parse the selected option
   //
+#if 1
+  (void) BdsLibBootViaBootOption (gOption, gOption->LoadOptions, gOption->DevicePath, &ExitDataSize, &ExitData);
+#else
   Status = BdsLibBootViaBootOption (gOption, gOption->LoadOptions, gOption->DevicePath, &ExitDataSize, &ExitData);
-#if 0
   if (!EFI_ERROR (Status)) {
     gOption->StatusString = GetStringById (STRING_TOKEN (STR_BOOT_SUCCEEDED));
     PlatformBdsBootSuccess (gOption);

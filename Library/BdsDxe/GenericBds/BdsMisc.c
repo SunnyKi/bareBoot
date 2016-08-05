@@ -217,8 +217,6 @@ BdsLibRegisterNewOption (
   BOOLEAN                   UpdateDescription;
   UINT16                    BootOrderEntry;
   UINTN                     OrderItemNum;
-  CHAR16                    *TempLoadOption;
-
 
   if (DevicePath == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -274,7 +272,6 @@ BdsLibRegisterNewOption (
          StrSize (Description) + 
          GetDevicePathSize (OptionDevicePath))) {
       TempPtr         +=  GetDevicePathSize (OptionDevicePath);
-      TempLoadOption   =   (CHAR16 *) TempPtr;
     }
 
     //

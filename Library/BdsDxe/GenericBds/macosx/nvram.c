@@ -170,7 +170,6 @@ PutNvramPlistToRtVars (
   VOID
 )
 {
-  EFI_STATUS      Status;
   UINTN           i, DictSize;
   VOID            *prop;
   VOID            *val;
@@ -182,7 +181,7 @@ PutNvramPlistToRtVars (
   Data = NULL;
   
   if (gNvramDict == NULL) {
-    Status = LoadLatestNvramPlist ();
+    (void) LoadLatestNvramPlist ();
     if (gNvramDict == NULL) {
       DBG ("PutNvramPlistToRtVars: nvram.plist not found\n");
       return;
@@ -247,7 +246,7 @@ PutNvramPlistToRtVars (
         DBG ("ERROR: unsupported tag type\n");
         break;
     }
-    Status = gRS->SetVariable (
+    (void) gRS->SetVariable (
                     KeyBuf,
                     &gEfiAppleBootGuid,
                     EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,

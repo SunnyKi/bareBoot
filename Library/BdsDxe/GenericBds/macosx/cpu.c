@@ -414,10 +414,8 @@ ICpuProps (
 )
 {
   UINT64                msr;
-  UINT64                flex_ratio;
 
   msr = 0;
-  flex_ratio = 0;
   
   AsmWriteMsr64 (MSR_IA32_BIOS_SIGN_ID, 0);
   gCPUStructure.MicroCode = BitFieldRead64 (AsmReadMsr64 (MSR_IA32_BIOS_SIGN_ID), 32, 63);

@@ -1175,7 +1175,6 @@ GetUserSettings (
 )
 {
   EFI_STATUS Status;
-  UINTN size;
   VOID *dictPointer;
   VOID *array;
   VOID *prop;
@@ -1188,7 +1187,6 @@ GetUserSettings (
   Status = EFI_NOT_FOUND;
   array = NULL;
   i = 0;
-  size = 0;
 
   if (gConfigPlist == NULL) {
     Print (L"Error loading usersettings plist!\r\n");

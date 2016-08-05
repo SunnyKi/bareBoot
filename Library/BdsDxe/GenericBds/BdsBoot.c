@@ -467,7 +467,6 @@ BdsLibEnumerateAllBootOption (
   EFI_FILE_HANDLE               FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
   CHAR16                        *VolumeName;
-  EFI_FILE_SYSTEM_INFO          *FileSystemInfo;
   UINTN                         NumberBlockIoHandles;
   EFI_HANDLE                    *BlockIoHandles;
   EFI_BLOCK_IO_PROTOCOL         *BlkIo;
@@ -476,7 +475,6 @@ BdsLibEnumerateAllBootOption (
   UINT16                        *PNConfigPlist2;
   
   gRootFHandle    = NULL;
-  FileSystemInfo  = NULL;
   FileSystemHandles = NULL;
   FHandle         = NULL;
   ConfigNotFound  = TRUE;

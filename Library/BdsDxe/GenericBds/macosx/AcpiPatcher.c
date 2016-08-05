@@ -284,8 +284,6 @@ PatchACPI (
   EFI_PHYSICAL_ADDRESS                              BufferPtr;
   UINT8                                             *buffer;
   UINTN                                             bufferLen;
-  UINT32                                            *rf;
-  UINT64                                            *xf;
   UINT64                                            BiosDsdt;
   UINT64                                            XFirmwareCtrl;
   UINT32                                            *pEntryR;
@@ -294,10 +292,12 @@ PatchACPI (
   CHAR16                                            *PathACPI;
   CHAR16                                            *PathDsdt;
   UINT32                                            eCntR;
-  BOOLEAN                                           PatchedBios;
   OPER_REGION                                       *tmpRegion;
 
 #if 0
+  UINT32                                            *rf;
+  UINT64                                            *xf;
+
   EFI_ACPI_DESCRIPTION_HEADER                           *ApicTable;
   EFI_ACPI_DESCRIPTION_HEADER                           *NewApicTable;
   EFI_ACPI_2_0_MULTIPLE_APIC_DESCRIPTION_TABLE_HEADER   *ApicHeader;
@@ -330,10 +330,12 @@ PatchACPI (
   PathDsdt      = L"DSDT.aml";
   PathACPI      = L"\\EFI\\bareboot\\acpi\\";
   PathToACPITables = AllocateZeroPool (PATHTOACPITABLESSIZE);
-  rf            = NULL;
   RsdPointer    = NULL;
   Status        = EFI_SUCCESS;
+#if 0
+  rf            = NULL;
   xf            = NULL;
+#endif
 
   for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
     if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi20TableGuid)) {
@@ -597,7 +599,6 @@ PatchACPI (
        FadtPointer->Header.Revision,
        FadtPointer->Header.Length);
 
-  PatchedBios = FALSE;
   BiosDsdt = FadtPointer->Dsdt;
   if (BiosDsdt == 0) {
     BiosDsdt = FadtPointer->XDsdt;
@@ -733,7 +734,6 @@ PatchACPI (
           }
           newFadt->XDsdt = dsdt;
           newFadt->Dsdt  = (UINT32) dsdt;
-          PatchedBios = TRUE;
           DBG ("PatchACPI: custom dsdt table loaded\n");
         }
 	FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));

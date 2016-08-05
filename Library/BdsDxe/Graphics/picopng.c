@@ -1206,7 +1206,7 @@ PNG_decode (
   PNG_info_t *info;
   UINT32 pos;                   // first byte of the first chunk after the header
   vector8_t *idat;              // the data from idat chunks
-  BOOLEAN IEND, known_type;
+  BOOLEAN IEND;
   UINT32 bpp;
   vector8_t *scanlines;         // now the out buffer will be filled
   UINT32 bytewidth, outlength;
@@ -1224,7 +1224,6 @@ PNG_decode (
   pos = 33; // first byte of the first chunk after the header
   idat = NULL;  // the data from idat chunks
   IEND = FALSE;
-  known_type = TRUE;
   info->key_defined = FALSE;
   // loop through the chunks, ignoring unknown chunks and stopping at IEND chunk. IDAT data is
   // put at the start of the in buffer
@@ -1322,7 +1321,6 @@ PNG_decode (
         return NULL;
       }
       pos += (chunkLength + 4); // skip 4 letters and uninterpreted data of unimplemented chunk
-      known_type = FALSE;
     }
     pos += 4; // step over CRC (which is ignored)
   }

@@ -374,17 +374,13 @@ read_smb_intel (
   EFI_PCI_IO_PROTOCOL *PciIo
 )
 {
-  EFI_STATUS      Status;
   INTN            i, i2, maxslots;
   UINT8           spd_type;
   UINT32          base, mmio, hostc;
   UINT16          Command;
   RAM_SLOT_INFO*  slot;
-  UINT16          vid, did;
 
-  vid = mPci.Hdr.VendorId;
-  did = mPci.Hdr.DeviceId;
-  Status = PciIo->Pci.Read (
+  (void) PciIo->Pci.Read (
              PciIo,
              EfiPciIoWidthUint16,
              PCI_COMMAND_OFFSET,
@@ -392,21 +388,21 @@ read_smb_intel (
              &Command
            );
   Command |= 1;
-  Status = PciIo->Pci.Write (
+  (void) PciIo->Pci.Write (
              PciIo,
              EfiPciIoWidthUint16,
              PCI_COMMAND_OFFSET,
              1,
              &Command
            );
-  Status = PciIo->Pci.Read (
+  (void) PciIo->Pci.Read (
              PciIo,
              EfiPciIoWidthUint32,
              0x10,
              1,
              &mmio
            );
-  Status = PciIo->Pci.Read (
+  (void) PciIo->Pci.Read (
              PciIo,
              EfiPciIoWidthUint32,
              0x20,
@@ -414,7 +410,7 @@ read_smb_intel (
              &base
            );
   base &= 0xFFFE;
-  Status = PciIo->Pci.Read (
+  (void) PciIo->Pci.Read (
              PciIo,
              EfiPciIoWidthUint32,
              0x40,

@@ -64,16 +64,13 @@ PartitionInstallAppleChildHandles (
   )
 {
   EFI_STATUS                Status;
-  EFI_BLOCK_IO_MEDIA       *Media;
   CDROM_DEVICE_PATH         CdDev;
   UINT32                    Partition;
   UINT32                    PartitionEntries;
-  UINT32                    VolSpaceSize;
   UINT32                    SubBlockSize;
   UINT32                    BlkPerSec;
   UINT32                    MediaId;
   UINT32                    BlockSize;
-  EFI_LBA                   LastBlock;
   APPLE_PT_HEADER           *AppleHeader;
   APPLE_PT_ENTRY            *AppleEntry;
   UINT32                    StartLba;
@@ -81,11 +78,8 @@ PartitionInstallAppleChildHandles (
 
   AppleEntry = NULL;
 
-  Media         = BlockIo->Media;
   BlockSize     = BlockIo->Media->BlockSize;
-  LastBlock     = BlockIo->Media->LastBlock;
   MediaId       = BlockIo->Media->MediaId;
-  VolSpaceSize  = 0;
 
   AppleHeader = AllocatePool (BlockSize);
 

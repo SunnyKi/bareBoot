@@ -1951,12 +1951,11 @@ init_card (
   CHAR8 *name_parent;
   CHAR8 *CfgName;
   INTN NameLen, n_ports;
-  UINTN i, ExpansionRom;
+  UINTN i;
   BOOLEAN add_vbios = TRUE;
 
   NameLen = 0;
   n_ports = 0;
-  ExpansionRom = 0;
   add_vbios = gSettings.LoadVBios;
 
   card = AllocateZeroPool (sizeof (card_t));
@@ -1994,7 +1993,6 @@ init_card (
   card->io =
     (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_4) & ~0x03);
   pci_dev->regs = card->mmio;
-  ExpansionRom = pci_config_read32 (pci_dev, PCI_EXPANSION_ROM_BASE);
   card->posted = radeon_card_posted ();
   get_vram_size ();
 
