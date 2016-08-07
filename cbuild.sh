@@ -2,10 +2,11 @@
 
 ## MAIN ARGUMENT PART##
 
-export TARGET_TOOLS=GCC49
+export TARGET_TOOLS=GCC5
 export PROCESSOR=X64
 export TARGET=RELEASE
 export DEF="-D NO_LOGO -D NO_FONT"
+export GCC5_BIN=$HOME/src/opt/local/cross/bin/x86_64-clover-linux-gnu-
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -57,6 +58,7 @@ then
   export NASM_PREFIX=$HOME/src/opt/local/bin/
 fi
   echo NASM_PREFIX: $NASM_PREFIX
+echo GCC5_BIN: $GCC5_BIN
 
 
 BUILD_ROOT_ARCH=$WORKSPACE/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"/$PROCESSOR
