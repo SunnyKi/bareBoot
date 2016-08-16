@@ -194,6 +194,8 @@
           <true/>
         <key>CsrActiveConfig</key>
           <integer>0x00000000</integer>
+        <key>DebugKernel</key>
+          <false/>
         <key>DefaultBootVolume</key>
           <string>Mountain Lion</string>
         <key>LoadExtraKexts</key>
