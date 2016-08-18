@@ -1158,6 +1158,7 @@ GetBootDefault (
   gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
   gSettings.YoBlack = GetBoolProperty (spdict, "YoBlack", FALSE);
   gSettings.DebugKernel = GetBoolProperty (spdict, "DebugKernel", FALSE);
+  gSettings.DebugKernelToCom = GetBoolProperty (spdict, "DebugKernelToCom", FALSE);
 
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
     gSettings.BootTimeout = 0xFFFF;

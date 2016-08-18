@@ -210,6 +210,7 @@ typedef struct {
   BOOLEAN YoBlack;
   BOOLEAN Hibernate;
   BOOLEAN DebugKernel;
+  BOOLEAN DebugKernelToCom;
   //ACPI
   UINT64  ResetAddr;
   UINT8   ResetVal;
