@@ -612,6 +612,11 @@ Returns:
   }
 
   //
+  // XXX: Patch System Timer Handler (push ...) with actual timer vector number
+  //
+  ((UINT8 *)(UINTN)&SystemTimerHandler)[3] = (UINT8) mTimerVector;
+
+  //
   // Install Timer Handler
   //
   InstallInterruptHandler (mTimerVector, SystemTimerHandler);

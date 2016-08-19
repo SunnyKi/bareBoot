@@ -31,20 +31,28 @@
   ASM_GLOBAL ASM_PFX(InitDescriptor)
 
 ASM_PFX(InitDescriptor):
+
 #        movq    GDT_BASE(%rip),%rax              # EAX=PHYSICAL address of gdt
 #        movq    %rax, (gdtr + 2)(%rip)              # Put address of gdt into the gdtr
-#        lgdt    gdtr(%rip)
-        movabs  $gdtr, %rax
-        lgdt    (%rax)
-        movq    $0x18, %rax
-        movl    %eax, %gs
-        movl    %eax, %fs
+
+	lgdt    gdtr(%rip)
+
+##	movabs  $gdtr, %rax
+##	lgdt    (%rax)
+
+	movq    $0x18, %rax
+	movl    %eax, %gs
+	movl    %eax, %fs
+
 #        movq    IDT_BASE(%rip),%rax              # EAX=PHYSICAL address of idt
 #        movq    %rax, (idtr + 2)(%rip)              # Put address of idt into the idtr
-#        lidt    idtr(%rip)
-        movabs  $idtr, %rax
-        lidt    (%rax)
-        ret
+
+	lidt    idtr(%rip)
+
+##	movabs  $idtr, %rax
+##	lidt    (%rax)
+
+	ret
 
 # VOID
 # InstallInterruptHandler (
@@ -286,7 +294,7 @@ INTUnknown:
   ASM_GLOBAL ASM_PFX(SystemTimerHandler)
 ASM_PFX(SystemTimerHandler):
     push     $0
-    push     $ASM_PFX(mTimerVector)
+    push     $0   # Actual vector number will be patched from mTimerVector
     JmpCommonIdtEntry
 
 commonIdtEntry:
@@ -518,16 +526,12 @@ ExceptionDone:
   addq    $16, %rsp
   iretq
 
-
 ##############################################################################
 # data
 ##############################################################################
 
   .data
 
-gdtr: .short GDT_END - GDT_BASE - 1   # GDT limit
-#gdtr: .short GDT_LEN
-      .quad GDT_BASE                  # (GDT base gets set above)
 ##############################################################################
 #   global descriptor table (GDT)
 ##############################################################################
@@ -618,10 +622,13 @@ SPARE4_SEL    = .-GDT_BASE            # Selector [0x40]
         .byte 0
 
 GDT_END:
-#GDT_LEN = . - GDT_BASE - 1
-#idtr: .short IDT_END - IDT_BASE - 1   # IDT limit
-idtr: .short IDT_LEN
-      .quad IDT_BASE                  # (IDT base gets set above)
+
+        .p2align 2
+
+	.set	GDT_LEN, GDT_END - GDT_BASE - 1   # GDT limit
+gdtr:	.short	GDT_LEN
+	.quad GDT_BASE                  # (GDT base gets set above)
+
 ##############################################################################
 #   interrupt descriptor table (IDT)
 #
@@ -1100,4 +1107,9 @@ IRQ15_SEL            = .-IDT_BASE
   .fill 16, 1, 0
 
 IDT_END:
-  .set IDT_LEN, .-IDT_BASE - 1
+
+	.p2align 2
+
+	.set	IDT_LEN, IDT_END - IDT_BASE - 1
+idtr:	.short IDT_LEN
+	.quad IDT_BASE                  # (IDT base gets set above)

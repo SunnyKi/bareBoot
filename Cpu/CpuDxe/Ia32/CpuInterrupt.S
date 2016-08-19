@@ -276,7 +276,7 @@ INTUnknown:
   ASM_GLOBAL ASM_PFX(SystemTimerHandler)
 ASM_PFX(SystemTimerHandler):
     pushl    $0
-    pushl    $ASM_PFX(mTimerVector)
+    pushl    $0   # Actual vector number will be patched from mTimerVector
     JmpCommonIdtEntry
 
 commonIdtEntry:
@@ -485,10 +485,6 @@ ExceptionDone:
 #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   .data
-        .p2align 2
-
-gdtr: .short GDT_END - GDT_BASE - 1   # GDT limit
-        .long 0                         # (GDT base gets set above)
 #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #   global descriptor table (GDT)
 #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -572,10 +568,9 @@ GDT_END:
 
         .p2align 2
 
+gdtr: .short GDT_END - GDT_BASE - 1   # GDT limit
+        .long 0                         # (GDT base gets set above)
 
-
-idtr: .short IDT_END - IDT_BASE - 1   # IDT limit
-        .long 0                         # (IDT base gets set above)
 #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 #   interrupt descriptor table (IDT)
 #
@@ -586,6 +581,7 @@ idtr: .short IDT_END - IDT_BASE - 1   # IDT limit
 #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #idt_tag .byte "IDT",0     
+
         .p2align 2
 
 IDT_BASE:
@@ -959,3 +955,7 @@ IRQ15_SEL            = .-IDT_BASE
 
 IDT_END:
 
+        .p2align 2
+
+idtr: .short IDT_END - IDT_BASE - 1   # IDT limit
+        .long 0                         # (IDT base gets set above)

@@ -208,7 +208,7 @@ SystemExceptionHandler ENDP
 
 SystemTimerHandler PROC
     push    0
-    push    mTimerVector
+    push    0   ; Actual vector number will be patched from mTimerVector
     JmpCommonIdtEntry
 SystemTimerHandler ENDP
 
