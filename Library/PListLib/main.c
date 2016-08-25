@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Nikolai Saoukh. All rights reserved.
+ * Copyright (c) 2013 - 2016 Nikolai Saoukh. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,30 +40,34 @@ plbuf_t obuf = {obig, sizeof(obig), 0 };
 int main(int argc, char* argv[]) {
 	FILE* ifp;
 	void* pl;
+#ifdef DEBUG
 	void* dp;
 	void* kp;
 	int rc;
+#endif
 
 	if (argc > 1) {
 		ifp = fopen(argv[1], "rb");
+
 		if (ifp == NULL)
 			return 1;
 		ibuf.len = fread(ibig, 1, sizeof(ibig), ifp);
 		fclose(ifp);
+
 		if (ibuf.len < 1)
 			return 2;
 
 		pl = plXmlToNode(&ibuf);
-		plNodeDelete(pl);
 
-		ibuf.pos = 0;
-		pl = plXmlToNode(&ibuf);
 		if (pl != NULL) {
 			(void) plNodeToXml(pl, &obuf);
 			fwrite(obig, 1, obuf.pos, stdout);
 		}
 		plNodeDelete(pl);
+		obuf.pos = 0;
 	}
+
+#ifdef DEBUG
 	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
 	fflush(stdout);
 	obuf.pos = 0;
@@ -85,6 +89,7 @@ int main(int argc, char* argv[]) {
 	plNodeDelete(pl);
 
 	fwrite(obig, 1, obuf.pos, stdout);
+#endif
 	fclose(stdout);
 	return 0;
 }
