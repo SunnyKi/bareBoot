@@ -3,7 +3,6 @@ Version.h
 Debug/
 Release/
 bin/
-.vs
 
 *.com
 *.com1
@@ -12,5 +11,3 @@ bin/
 *.sdf
 *.suo
 *.user
-*.VC.db
-
