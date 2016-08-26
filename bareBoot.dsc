@@ -170,7 +170,11 @@
   bareBoot/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 #  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+!ifdef DUETSTUFF
+  DuetPkg/SmbiosGenDxe/SmbiosGen.inf
+!else
   bareBoot/SmbiosGenDxe/SmbiosGen.inf
+!endif
 
   bareBoot/EfiLdr/EfiLdr.inf {
     <LibraryClasses>
@@ -196,8 +200,13 @@
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
   bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+!ifdef DUETSTUFF
+  DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
+  DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+!else
   bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+!endif
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
 #  IntelFrameworkModulePkg/Universal/Console/VgaClassDxe/VgaClassDxe.inf

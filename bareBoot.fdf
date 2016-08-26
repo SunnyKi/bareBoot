@@ -54,7 +54,11 @@ INF  MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 
 INF  bareBoot/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 INF  MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+!ifdef DUETSTUFF
+INF  DuetPkg/SmbiosGenDxe/SmbiosGen.inf
+!else
 INF  bareBoot/SmbiosGenDxe/SmbiosGen.inf
+!endif
 
 INF  bareBoot/Library/BdsDxe/BdsDxe.inf
 
@@ -72,8 +76,13 @@ INF  PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
 INF  PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
 INF  PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+!ifdef DUETSTUFF
+INF  DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
+INF  DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+!else
 INF  bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
 INF  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+!endif
 
   # IDE/AHCI Support
 #INF  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
