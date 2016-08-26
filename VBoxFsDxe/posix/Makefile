@@ -14,4 +14,4 @@ hfstest:	${SRCS}
 	${CC} ${CFLAGS} ${SRCS}
 
 clean:
-	/bin/rm -fr a.out *.plist *.o *.gmon
+	/bin/rm -fr a.out* *.plist *.o *.gmon
