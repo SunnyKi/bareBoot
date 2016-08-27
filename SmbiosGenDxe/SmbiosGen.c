@@ -243,11 +243,11 @@ SmbiosGenEntrypoint (
                     );
   ASSERT (gStringHandle != NULL);
 
+  InstallProcessorSmbios (Smbios);
+  InstallCacheSmbios     (Smbios);
+  InstallMemorySmbios    (Smbios);
   InstallMiscSmbios      (Smbios);
   InstallBaseBoardSmbios (Smbios);
-  InstallProcessorSmbios (Smbios);
-  InstallMemorySmbios    (Smbios);
-  InstallCacheSmbios     (Smbios);
 
   return EFI_SUCCESS;
 }
