@@ -1349,9 +1349,11 @@ Returns:
   }
 
   AddBootArgs = "\0 2345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
+#if 0
   if (gSettings.DebugKernel) {
     AsciiStrCat (AddBootArgs, " -cpuid debug=0x12a acpi_layer=0x08 acpi_level=0x02 msgbuf=309212");
   }
+#endif
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
     AsciiStrCat (AddBootArgs, " -v");
   }
