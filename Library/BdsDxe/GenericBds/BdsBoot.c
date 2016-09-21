@@ -34,6 +34,7 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #define MACOSX_INSTALL_PATH             L"\\OS X Install Data\\boot.efi"
 #define MACOSX_INSTALL_PATH2            L"\\.IABootFiles\\boot.efi"
 #define MACOSX_INSTALL_PATH3            L"\\Mac OS X Install Data\\boot.efi"
+#define MACOSX_INSTALL_PATH4            L"\\macOS Install Data\\boot.efi"
 
 BOOLEAN                         WithKexts;
 EFI_FILE_HANDLE                 gRootFHandle;
@@ -50,6 +51,7 @@ CHAR16* mLoaderPath[] = {
   MACOSX_INSTALL_PATH,
   MACOSX_INSTALL_PATH2,
   MACOSX_INSTALL_PATH3,
+  MACOSX_INSTALL_PATH4,
   L"\\EFI\\Microsoft\\Boot\\bootmgfw.efi",
   L"\\EFI\\SuSE\\elilo.efi",
 #if defined (MDE_CPU_X64)
@@ -201,7 +203,8 @@ BdsLibBootViaBootOption (
           (StrCmp (TmpLoadPath, MACOSX_RECOVERY_LOADER_PATH) == 0) ||
           (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH) == 0) ||
           (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH2) == 0) ||
-          (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH3) == 0)) {
+          (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH3) == 0) ||
+          (StrCmp (TmpLoadPath, MACOSX_INSTALL_PATH4) == 0)) {
         goto MacOS;
       } else {
         goto Next;
