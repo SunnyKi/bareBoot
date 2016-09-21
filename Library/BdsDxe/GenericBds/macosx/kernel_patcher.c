@@ -1460,11 +1460,11 @@ KernelAndKextsPatcherStart (
     }
   }
 
-  if (gSettings.DebugKernel) {
+  if (gSettings.DebugKernel && !gSettings.DebugKernelToCom) {
     DebugKernelToScreen ();
   }
 
-  if (gSettings.DebugKernelToCom) {
+  if (gSettings.DebugKernelToCom && !gSettings.DebugKernel) {
     DebugKernelToCom ();
   }
 
