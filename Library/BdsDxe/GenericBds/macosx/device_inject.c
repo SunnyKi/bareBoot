@@ -205,6 +205,7 @@ devprop_add_device_pci (
       (DevPropDevice **) AllocateZeroPool (MAX_NUM_DEVICES * sizeof (device));
 
     if (StringBuf->entries == NULL) {
+      FreePool (device);
       return NULL;
     }
   }
