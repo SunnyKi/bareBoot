@@ -237,13 +237,6 @@ PartitionDriverBindingStart (
     }
   }
 
-  // XXX: this came from notabs.org
-  // prevent trying to process a partition boot record as if it were a master boot record.
-  if (BlockIo->ReadBlocks == &PartitionReadBlocks) {
-    Status = EFI_ALREADY_STARTED;
-    goto Exit;
-  }
-
   //
   // Try to open BlockIO and BlockIO2. If BlockIO would be opened, continue,
   // otherwise, return error.
@@ -257,6 +250,13 @@ PartitionDriverBindingStart (
                   EFI_OPEN_PROTOCOL_GET_PROTOCOL
                   );
   if (EFI_ERROR (Status)) {
+    goto Exit;
+  }
+
+  // XXX: this came from notabs.org
+  // prevent trying to process a partition boot record as if it were a master boot record.
+  if (BlockIo->ReadBlocks == &PartitionReadBlocks) {
+    Status = EFI_ALREADY_STARTED;
     goto Exit;
   }
 
