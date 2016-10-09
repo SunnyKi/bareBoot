@@ -27,7 +27,7 @@ ASM_PFX(mExceptionCodeSize):
 
 global	ASM_PFX(InitDescriptor)
 ASM_PFX(InitDescriptor):
-	lea	rax, [_GDT_BASE]	; RAX=PHYSICAL address of gdt
+	lea	rax, [GDT_BASE]		; RAX=PHYSICAL address of gdt
 	mov	qword [gdtr + 2], rax	; Put address of gdt into the gdtr
 	lgdt	[gdtr]
 
@@ -35,7 +35,7 @@ ASM_PFX(InitDescriptor):
 	mov	gs, rax
 	mov	fs, rax
 
-	lea	rax, [_IDT_BASE]	; RAX=PHYSICAL address of idt
+	lea	rax, [IDT_BASE]		; RAX=PHYSICAL address of idt
 	mov	qword [idtr + 2], rax	; Put address of idt into the idtr
 	lidt	[idtr]
 	ret
@@ -49,23 +49,23 @@ ASM_PFX(InitDescriptor):
 global	ASM_PFX(InstallInterruptHandler)
 ASM_PFX(InstallInterruptHandler):
 	push	rbx
-	pushfq	; save eflags
-	cli	; turn off interrupts
-	sub	rsp, 0x10	; open some space on the stack
+	pushfq				; save eflags
+	cli				; turn off interrupts
+	sub	rsp, 0x10		; open some space on the stack
 	mov	rbx, rsp
-	sidt	[rbx]	; get fword address of IDT
-	mov	rbx, [rbx+2]	; move offset of IDT into RBX
-	add	rsp, 0x10	; correct stack
-	mov	rax, rcx	; Get vector number
-	shl	rax, 4	; multiply by 16 to get offset
-	add	rbx, rax	; add to IDT base to get entry
-	mov	rax, rdx	; load new address into IDT entry
-	mov	word [rbx], ax	; write bits 15..0 of offset
-	shr	rax, 16	; use ax to copy 31..16 to descriptors
-	mov	word [rbx+6], ax	; write bits 31..16 of offset
-	shr	rax, 16	; use eax to copy 63..32 to descriptors
-	mov	dword [rbx+8], eax	; write bits 63..32 of offset
-	popfq	; restore flags (possible enabling interrupts)
+	sidt	[rbx]			; get fword address of IDT
+	mov	rbx, [rbx + 2]		; move offset of IDT into RBX
+	add	rsp, 0x10		; correct stack
+	mov	rax, rcx		; Get vector number
+	shl	rax, 4			; multiply by 16 to get offset
+	add	rbx, rax		; add to IDT base to get entry
+	mov	rax, rdx		; load new address into IDT entry
+	mov	word [rbx], ax		; write bits 15..0 of offset
+	shr	rax, 16			; use ax to copy 31..16 to descriptors
+	mov	word [rbx + 6], ax	; write bits 31..16 of offset
+	shr	rax, 16			; use eax to copy 63..32 to descriptors
+	mov	dword [rbx + 8], eax	; write bits 63..32 of offset
+	popfq				; restore flags (possible enabling interrupts)
 	pop	rbx
 	ret
 
@@ -87,7 +87,7 @@ ASM_PFX(SystemExceptionHandler):
 	jmp	qword commonIhtEntry	; qword to keep the same entry length
 %endmacro
 
-DEFAULT_HANDLER_SIZE 	qu	(INT1 - INT0)
+DEFAULT_HANDLER_SIZE 	equ	(INT1 - INT0)
 
 INT0:
 	ihtentry	0
@@ -369,7 +369,7 @@ ExceptionDone:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 %macro	gdtentry	4
-%[%1]_SEL	equ	$ - _GDT_BASE
+%[%1]_SEL	equ	$ - GDT_BASE
 	dw	%2	; limit low bits (0..15)
 	dw	0	; base low bits (0..15)
 	db	0	; base middle bits (16..23)
@@ -377,21 +377,20 @@ ExceptionDone:
 	db	%4	; limit high bits (16..19) & flags
 	db	0	; base high bits (24..31)
 %endmacro
-
 ;------------------------------------------------------------------------------
 
 	align 2
 
 gdtr:
-	dw	GDT_END - _GDT_BASE - 1	; GDT limit
-	dd	_GDT_BASE		; will be adjusted at runtime
-
-;------------------------------------------------------------------------------
+	dw	GDT_END - GDT_BASE - 1	; GDT limit
+	dq	0			; will be adjusted at runtime
 
 	align 2
 
-global _GDT_BASE
-_GDT_BASE:
+;------------------------------------------------------------------------------
+
+global GDT_BASE
+GDT_BASE:
 	gdtentry	DUMMY, 0, 0, 0			; selector [0x00]
 	gdtentry	LINEAR, 0xFFFF, 0x92, 0xCF	; selector [0x08]
 	gdtentry	LINEAR_CODE, 0xFFFF, 0x9A, 0xCF	; selector [0x10]
@@ -403,6 +402,7 @@ _GDT_BASE:
 	gdtentry	SPARE4, 0, 0, 0			; selector [0x40]
 
 GDT_END:
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; interrupt descriptor table (IDT)
@@ -424,7 +424,7 @@ struc	idtdescr
 endstruc
 
 %macro	idtentry	1
-%[%1]_SEL	equ	$ - _IDT_BASE
+%[%1]_SEL	equ	$ - IDT_BASE
 	istruc	idtdescr
 		at	idtdescr.selector
 			dw SYS_CODE64_SEL
@@ -438,14 +438,12 @@ endstruc
 	align 2
 
 idtr:
-	dw	IDT_END - _IDT_BASE - 1	; IDT limit
-	dq	_IDT_BASE		; will be adjusted at runtime
+	dw	IDT_END - IDT_BASE - 1	; IDT limit
+	dq	0			; will be adjusted at runtime
 
 ;------------------------------------------------------------------------------
 
-	align 2
-
-_IDT_BASE:
+IDT_BASE:
 	idtentry	DIV_ZERO	; divide by zero (INT 0)
 	idtentry	DEBUG_EXCEPT	; debug exception (INT 1)
 	idtentry	NMI		; NMI (INT 2)
@@ -493,3 +491,5 @@ _IDT_BASE:
 	idtentry	IRQ15	; IRQ 15 (Primary IDE) - (INT 0x77)
 
 IDT_END:
+
+;------------------------------------------------------------------------------
