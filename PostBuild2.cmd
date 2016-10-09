@@ -14,6 +14,8 @@
 @REM #  WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 @REM ##
 
+@echo off
+
 set PKGNAME=bareBoot
 
 for %%i in (bareBoot\BootSector2\bin) do set BOOTSECTOR_BIN_DIR=%%~$PACKAGES_PATH:i
