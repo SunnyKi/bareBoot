@@ -47,9 +47,12 @@ echo Compressing DxeIpl.efi ...
 LzmaCompress -e -o %FV_DIR%\DxeIpl.z %BUILD_DIR%\%PROCESSOR%\DxeIpl.efi
 
 echo Generate Loader Image ...
-
 EfiLdrImage.exe -o %FV_DIR%\Efildr%PROCESSOR% %BUILD_DIR%\%PROCESSOR%\EfiLoader.efi %FV_DIR%\DxeIpl.z %FV_DIR%\DxeMain.z %FV_DIR%\%FV_NAME%.z
+
 copy /b %BOOTSECTOR_BIN_DIR%\EfiLdrPrelude%PROCESSOR%+%FV_DIR%\Efildr%PROCESSOR% %BOOTFILE%
+
+echo Created bootfile %BOOTFILE%
+
 goto end
 
 :WrongArch
