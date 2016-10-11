@@ -103,7 +103,7 @@ ASM_PFX(mExceptionCodeSize):
 
 gdtr:
 	dw	GDT_END - GDT_BASE - 1	; GDT limit
-	dq	GDT_BASE		; will be adjusted at runtime
+	dq	0			; will be adjusted at runtime
 
 ;------------------------------------------------------------------------------
 
@@ -152,7 +152,7 @@ endstruc
 
 idtr:
 	dw	IDT_END - IDT_BASE - 1	; IDT limit
-	dq	IDT_BASE		; will be adjusted at runtime
+	dq	0			; will be adjusted at runtime
 
 IDT_BASE:
 	idtentry	DIV_ZERO	; divide by zero (INT 0)
