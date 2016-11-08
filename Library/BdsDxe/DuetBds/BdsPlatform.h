@@ -232,11 +232,6 @@ PlatformBdsConnectSequence (
   );
 
 EFI_STATUS
-ProcessCapsules (
-  EFI_BOOT_MODE BootMode
-  );
-
-EFI_STATUS
 PlatformBdsConnectConsole (
   IN BDS_CONSOLE_CONNECT_ENTRY   *PlatformConsole
   );
