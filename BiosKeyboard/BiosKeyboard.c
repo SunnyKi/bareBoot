@@ -1738,7 +1738,7 @@ ConvertToEFIScanCode (
     //
     // Movement & Function Keys
     //
-    for (Index = 0; (Index < sizeof (mConvertTable) / sizeof (CONVERT_TABLE_ENTRY)) && (mConvertTable[Index].ScanCode != TABLE_END); Index += 1) {
+    for (Index = 0; Index < ARRAY_SIZE (mConvertTable) && (mConvertTable[Index].ScanCode != TABLE_END); Index += 1) {
       if (ScanCode == mConvertTable[Index].ScanCode) {
         return mConvertTable[Index].EfiScanCode;
       }

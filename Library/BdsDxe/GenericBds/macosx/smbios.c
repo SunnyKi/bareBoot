@@ -1197,7 +1197,7 @@ PatchSmbios (
   HobStart.Raw = GetHobList ();
   //
   // Iteratively add Smbios Table to EFI System Table
-  for (Index = 0; Index < sizeof (gTableGuidArray) / sizeof (*gTableGuidArray); ++Index) {
+  for (Index = 0; Index < ARRAY_SIZE (gTableGuidArray); ++Index) {
     GuidHob.Raw = GetNextGuidHob (gTableGuidArray[Index], HobStart.Raw);
 
     if (GuidHob.Raw != NULL) {

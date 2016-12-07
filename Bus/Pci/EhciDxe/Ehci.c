@@ -394,7 +394,7 @@ EhcGetRootHubPortStatus (
   //
   // Convert the EHCI port/port change state to UEFI status
   //
-  MapSize = sizeof (mUsbPortStateMap) / sizeof (USB_PORT_STATE_MAP);
+  MapSize = ARRAY_SIZE (mUsbPortStateMap);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (EHC_BIT_IS_SET (State, mUsbPortStateMap[Index].HwState)) {
@@ -402,7 +402,7 @@ EhcGetRootHubPortStatus (
     }
   }
 
-  MapSize = sizeof (mUsbPortChangeMap) / sizeof (USB_PORT_STATE_MAP);
+  MapSize = ARRAY_SIZE (mUsbPortChangeMap);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (EHC_BIT_IS_SET (State, mUsbPortChangeMap[Index].HwState)) {

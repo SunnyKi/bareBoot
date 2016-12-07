@@ -1411,7 +1411,7 @@ GetUserSettings (
 
   Model = Unknown;
   if (AsciiStrLen (gSettings.ProductName) > 0) {
-    for (i = 0; i < (sizeof (AppleProductName) / sizeof (CHAR8 *)); i++) {
+    for (i = 0; i < ARRAY_SIZE (AppleProductName); i++) {
       if (AsciiStrStr (AppleProductName[i], gSettings.ProductName) != NULL) {
         Model = i;
         break;

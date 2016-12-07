@@ -872,7 +872,7 @@ get_nvidia_model (
   INT32 i;
   CHAR8 *name;
 
-  for (i = 1; i < (sizeof (NVKnownChipsets) / sizeof (NVKnownChipsets[0])); i++) {
+  for (i = 1; i < ARRAY_SIZE (NVKnownChipsets); i++) {
     if (NVKnownChipsets[i].device == id) {
       UINTN size = AsciiStrLen (NVKnownChipsets[i].name);
 
@@ -2103,7 +2103,7 @@ get_gma_model (
 {
   INT32 i;
 
-  for (i = 0; i < (sizeof (KnownGPUS) / sizeof (KnownGPUS[0])); i++) {
+  for (i = 0; i < ARRAY_SIZE (KnownGPUS); i++) {
     if (KnownGPUS[i].device == id) {
       return KnownGPUS[i].name;
     }

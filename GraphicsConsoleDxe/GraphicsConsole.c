@@ -251,7 +251,7 @@ InitializeGraphicsConsoleTextMode (
     return EFI_INVALID_PARAMETER;
   }
 
-  Count = sizeof (mGraphicsConsoleModeData) / sizeof (GRAPHICS_CONSOLE_MODE_DATA);
+  Count = ARRAY_SIZE (mGraphicsConsoleModeData);
 
   //
   // Compute the maximum number of text Rows and Columns that this current graphics mode can support.

@@ -924,6 +924,6 @@ VenIdName vendorMap[] = {
   { 9, 0xff, ""}
 };
 
-#define VEN_MAP_SIZE (sizeof(vendorMap)/sizeof(VenIdName))
+#define VEN_MAP_SIZE ARRAY_SIZE (vendorMap)
 
 #endif

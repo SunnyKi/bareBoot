@@ -1697,10 +1697,10 @@ InitQueue (
     FreePool (Queue->Buffer[0]);
   }
 
-  Queue->Buffer[0] = AllocatePool (sizeof (Queue->Buffer) / sizeof (Queue->Buffer[0]) * ItemSize);
+  Queue->Buffer[0] = AllocatePool (ARRAY_SIZE (Queue->Buffer) * ItemSize);
   ASSERT (Queue->Buffer[0] != NULL);
 
-  for (Index = 1; Index < sizeof (Queue->Buffer) / sizeof (Queue->Buffer[0]); Index++) {
+  for (Index = 1; Index < ARRAY_SIZE (Queue->Buffer); Index++) {
     Queue->Buffer[Index] = ((UINT8 *) Queue->Buffer[Index - 1]) + ItemSize;
   }
 }

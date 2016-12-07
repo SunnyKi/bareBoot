@@ -63,7 +63,7 @@ CHAR16* mLoaderPath[] = {
   L"\\EFI\\MS\\Boot\\bootmgfw.efi"
 };
 
-#define MAX_LOADER_PATHS  (sizeof (mLoaderPath) / sizeof (CHAR16*))
+#define MAX_LOADER_PATHS  ARRAY_SIZE (mLoaderPath)
 
 VOID
 DumpEfiMemoryMap (

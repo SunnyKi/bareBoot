@@ -261,18 +261,18 @@ LegacyRegionManipulationInternal (
   // Loop to find the start PAM.
   //
   StartIndex = 0;
-  for (Index = 0; Index < (sizeof(mSectionArray) / sizeof(mSectionArray[0])); Index++) {
+  for (Index = 0; Index < ARRAY_SIZE (mSectionArray); Index++) {
     if ((Start >= mSectionArray[Index].Start) && (Start < (mSectionArray[Index].Start + mSectionArray[Index].Length))) {
       StartIndex = Index;
       break;
     }
   }
-  ASSERT (Index < (sizeof(mSectionArray) / sizeof(mSectionArray[0])));
+  ASSERT (Index < ARRAY_SIZE (mSectionArray));
 
   //
   // Program PAM until end PAM is encountered
   //
-  for (Index = StartIndex; Index < (sizeof(mSectionArray) / sizeof(mSectionArray[0])); Index++) {
+  for (Index = StartIndex; Index < ARRAY_SIZE (mSectionArray); Index++) {
 #if 0
     DBG("LegacyRegion2: %d. PAMRegOffset %x = %x\n", Index,
         mRegisterValues[Index].PAMRegOffset,
@@ -320,7 +320,7 @@ LegacyRegionManipulationInternal (
       break;
     }
   }
-  ASSERT (Index < (sizeof(mSectionArray) / sizeof(mSectionArray[0])));
+  ASSERT (Index < ARRAY_SIZE (mSectionArray));
 
   return EFI_SUCCESS;
 }
@@ -345,7 +345,7 @@ LegacyRegionGetInfoInternal (
   //
   // Fill in current status of legacy region.
   //
-  *DescriptorCount = (sizeof(mSectionArray) / sizeof(mSectionArray[0]));
+  *DescriptorCount = ARRAY_SIZE (mSectionArray);
   for (Index = 0; Index < *DescriptorCount; Index++) {
     PamValue = PciRead8 (PCI_LIB_ADDRESS(mPamPciBus, mPamPciDev, mPamPciFunc, mRegisterValues[Index].PAMRegOffset));
     mSectionArray[Index].ReadEnabled = FALSE;

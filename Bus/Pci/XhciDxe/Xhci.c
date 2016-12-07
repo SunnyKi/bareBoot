@@ -428,7 +428,7 @@ XhcGetRootHubPortStatus (
   //
   // Convert the XHCI port/port change state to UEFI status
   //
-  MapSize = sizeof (mUsbPortStateMap) / sizeof (USB_PORT_STATE_MAP);
+  MapSize = ARRAY_SIZE (mUsbPortStateMap);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (XHC_BIT_IS_SET (State, mUsbPortStateMap[Index].HwState)) {
@@ -442,7 +442,7 @@ XhcGetRootHubPortStatus (
     PortStatus->PortStatus |= USB_PORT_STAT_SUSPEND;
   }
 
-  MapSize = sizeof (mUsbPortChangeMap) / sizeof (USB_PORT_STATE_MAP);
+  MapSize = ARRAY_SIZE (mUsbPortChangeMap);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (XHC_BIT_IS_SET (State, mUsbPortChangeMap[Index].HwState)) {
@@ -450,7 +450,7 @@ XhcGetRootHubPortStatus (
     }
   }
 
-  MapSize = sizeof (mUsbClearPortChangeMap) / sizeof (USB_CLEAR_PORT_MAP);
+  MapSize = ARRAY_SIZE (mUsbClearPortChangeMap);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (XHC_BIT_IS_SET (State, mUsbClearPortChangeMap[Index].HwState)) {
@@ -1061,21 +1061,21 @@ XhcControlTransfer (
     //
     // Convert the XHCI port/port change state to UEFI status
     //
-    MapSize = sizeof (mUsbHubPortStateMap) / sizeof (USB_PORT_STATE_MAP);
+    MapSize = ARRAY_SIZE (mUsbHubPortStateMap);
     for (Index = 0; Index < MapSize; Index++) {
       if (XHC_BIT_IS_SET (State, mUsbHubPortStateMap[Index].HwState)) {
         PortStatus.PortStatus = (UINT16) (PortStatus.PortStatus | mUsbHubPortStateMap[Index].UefiState);
       }
     }
 
-    MapSize = sizeof (mUsbHubPortChangeMap) / sizeof (USB_PORT_STATE_MAP);
+    MapSize = ARRAY_SIZE (mUsbHubPortChangeMap);
     for (Index = 0; Index < MapSize; Index++) {
       if (XHC_BIT_IS_SET (State, mUsbHubPortChangeMap[Index].HwState)) {
         PortStatus.PortChangeStatus = (UINT16) (PortStatus.PortChangeStatus | mUsbHubPortChangeMap[Index].UefiState);
       }
     }
 
-    MapSize = sizeof (mUsbHubClearPortChangeMap) / sizeof (USB_CLEAR_PORT_MAP);
+    MapSize = ARRAY_SIZE (mUsbHubClearPortChangeMap);
 
     for (Index = 0; Index < MapSize; Index++) {
       if (XHC_BIT_IS_SET (State, mUsbHubClearPortChangeMap[Index].HwState)) {
