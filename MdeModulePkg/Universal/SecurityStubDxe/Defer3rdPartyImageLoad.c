@@ -55,9 +55,6 @@ FileFromFv (
   IN  CONST EFI_DEVICE_PATH_PROTOCOL   *File
   )
 {
-#if 1
-  return TRUE;
-#else
   EFI_STATUS                        Status;
   EFI_HANDLE                        DeviceHandle;
   EFI_DEVICE_PATH_PROTOCOL          *TempDevicePath;
@@ -86,8 +83,7 @@ FileFromFv (
     }
   }
 
-  return FALSE;
-#endif
+  return TRUE;
 }
 
 /**
