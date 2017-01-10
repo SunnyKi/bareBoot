@@ -1,7 +1,7 @@
 #!/bin/sh
 
 EDK2HOME=$BBHOME/../edk2; export EDK2HOME
-EDK2CFG=$BBHOME/cppcheck/edk2.cfg; export EDK2HOME
+EDK2CFG=$BBHOME/cppcheck/edk2.cfg; export EDK2CFG
 
 exec $BBHOME/cppcheck/cppcheck.sh \
 	--library=$BBHOME/cppcheck/bareBoot.cfg \
