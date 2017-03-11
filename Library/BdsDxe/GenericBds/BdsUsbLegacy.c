@@ -68,16 +68,17 @@ DisableEhciLegacy (
 #define BIOS_OWNED BIT16
 #define OS_OWNED   BIT24
 
-    DEBUG ((DEBUG_INFO, "%a: usblegsup before 0x%08x\n", __FUNCTION__, UsbLegSup));
+    DBG ("%a: usblegsup before 0x%08x\n", __FUNCTION__, UsbLegSup);
+    /* Claim device */
+    UsbLegSup |= OS_OWNED;
+    (void) PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
+    Status = PciIo->Flush (PciIo);
+    if (EFI_ERROR (Status)) {
+      DEBUG ((DEBUG_INFO, "%a: bail out (flush: %r)\n", __FUNCTION__, Status));
+      return;
+    }
     if ((UsbLegSup & BIOS_OWNED) != 0) {
-      DEBUG ((DEBUG_INFO, "%a: usblegctlsts before 0x%08x\n", __FUNCTION__, UsbLegCtlSts));
-      UsbLegSup |= OS_OWNED;
-      (void) PciIo->Pci.Write (PciIo, EfiPciIoWidthUint32, ExtendCapPtr, 1, &UsbLegSup);
-      Status = PciIo->Flush (PciIo);
-      if (EFI_ERROR (Status)) {
-        DEBUG ((DEBUG_INFO, "%a: bail out (flush: %r)\n", __FUNCTION__, Status));
-        return;
-      }
+      DBG ("%a: (SMM ownes device) usblegctlsts before 0x%08x\n", __FUNCTION__, UsbLegCtlSts);
       TimeOut = 40;
       while (TimeOut-- != 0) {
         gBS->Stall (500);
@@ -92,18 +93,16 @@ DisableEhciLegacy (
           break;
         }
       }
-      /* Read back registers to dismiss pending interrupts */
-      (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
-      DEBUG ((DEBUG_INFO, "%a: usblegsup after 0x%08x\n", __FUNCTION__, UsbLegSup));
-      DEBUG ((DEBUG_INFO, "%a: usblegctlsts after 0x%08x\n", __FUNCTION__, UsbLegCtlSts));
     } else {
-      DEBUG ((DEBUG_INFO, "%a: no legacy on device\n", __FUNCTION__));
+      DBG ("%a: no legacy on device\n", __FUNCTION__);
     }
+    /* Read back registers to dismiss pending interrupts */
+    (void) PciIo->Pci.Read (PciIo, EfiPciIoWidthUint32, ExtendCapPtr + 4, 1, &UsbLegCtlSts);
+    DBG ("%a: after usblegsup 0x%08x, usblegctlsts 0x%08x\n", __FUNCTION__, UsbLegSup, UsbLegCtlSts);
     break;
 #undef BIOS_OWNED
 #undef OS_OWNED
   }
-  DEBUG ((DEBUG_INFO, "%a: leave\n", __FUNCTION__));
 }
 
 VOID
