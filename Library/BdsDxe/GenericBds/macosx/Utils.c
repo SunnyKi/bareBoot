@@ -32,12 +32,13 @@ CHAR8 *BiosVendor = "Apple Inc.";
 CHAR8 *AppleManufacturer = "Apple Computer, Inc.";
 EFI_UNICODE_COLLATION_PROTOCOL *gUnicodeCollation = NULL;
 
-CHAR8 *AppleFirmwareVersion[24] = {
+CHAR8 *AppleFirmwareVersion[] = {
   "MB11.88Z.0061.B03.0809221748",
   "MB21.88Z.00A5.B07.0706270922",
   "MB41.88Z.0073.B00.0809221748",
   "MB52.88Z.0088.B05.0809221748",
   "MBP51.88Z.007E.B06.0906151647",
+  "MBP61.88Z.0057.B16.1702172057",  // MBP62
   "MBP81.88Z.0047.B2A.1506082203",
   "MBP83.88Z.0047.B24.1110261426",
   "MBP91.88Z.00D3.B08.1205101904",
@@ -59,12 +60,13 @@ CHAR8 *AppleFirmwareVersion[24] = {
   "MP51.88Z.007F.B03.1010071432"
 };
 
-CHAR8 *AppleBoardID[24] = {
+CHAR8 *AppleBoardID[] = {
   "Mac-F4208CC8", //MB11 - yonah
   "Mac-F4208CA9", //MB21 - merom 05/07
   "Mac-F22788A9", //MB41 - penryn
   "Mac-F22788AA", //MB52
   "Mac-F42D86C8", //MBP51
+  "Mac-F22586C8",          // MBP62   Intel Core i7-620M @ 2.66 GHz 
   "Mac-94245B3640C91C81", //MBP81 - i5 SB IntelHD3000
   "Mac-942459F5819B171B", //MBP83 - i7 SB  ATI
   "Mac-6F01561E16C75D06", //MBP92 - i5-3210M IvyBridge HD4000
@@ -86,12 +88,13 @@ CHAR8 *AppleBoardID[24] = {
   "Mac-F221BEC8"  //MP51 - Xeon Nehalem 4 cores
 };
 
-CHAR8 *AppleReleaseDate[24] = {
+CHAR8 *AppleReleaseDate[] = {
   "09/22/08", //mb11
   "06/27/07",
   "09/22/08",
   "01/21/09",
   "06/15/09", //mbp51
+  "02/17/17",    // MBP62
   "02/07/11",
   "10/26/11",
   "05/10/2012", //MBP92
@@ -113,12 +116,13 @@ CHAR8 *AppleReleaseDate[24] = {
   "10/07/10"
 };
 
-CHAR8 *AppleProductName[24] = {
+CHAR8 *AppleProductName[] = {
   "MacBook1,1",
   "MacBook2,1",
   "MacBook4,1",
   "MacBook5,2",
   "MacBookPro5,1",
+  "MacBookPro6,2",
   "MacBookPro8,1",
   "MacBookPro8,3",
   "MacBookPro9,2",
@@ -140,11 +144,12 @@ CHAR8 *AppleProductName[24] = {
   "MacPro5,1"
 };
 
-CHAR8 *AppleFamilies[24] = {
+CHAR8 *AppleFamilies[] = {
   "MacBook",
   "MacBook",
   "MacBook",
   "MacBook",
+  "MacBookPro",
   "MacBookPro",
   "MacBookPro",
   "MacBookPro",
@@ -167,12 +172,13 @@ CHAR8 *AppleFamilies[24] = {
   "MacPro"
 };
 
-CHAR8 *AppleSystemVersion[24] = {
+CHAR8 *AppleSystemVersion[] = {
   "1.1",
   "1.2",
   "1.3",
   "1.3",
   "1.0",
+  "1.0",  // MBP62
   "1.0",
   "1.0",
   "1.0",
@@ -194,12 +200,13 @@ CHAR8 *AppleSystemVersion[24] = {
   "1.2"
 };
 
-CHAR8 *AppleSerialNumber[24] = {
+CHAR8 *AppleSerialNumber[] = {
   "W80A041AU9B",  //MB11
   "W88A041AWGP",  //MB21 - merom 05/07
   "W88A041A0P0",  //MB41
   "W88AAAAA9GU",  //MB52
   "W88439FE1G0",  //MBP51
+  "CK132A91AGW",  // MBP62
   "W89F9196DH2G", //MBP81 - i5 SB IntelHD3000
   "W88F9CDEDF93", //MBP83 -i7 SB  ATI
   "C02HA041DTY3", //MBP92 - i5 IvyBridge HD4000
@@ -221,12 +228,13 @@ CHAR8 *AppleSerialNumber[24] = {
   "CG154TB9WU3" //MP51 C07J50F7F4MC
 };
 
-CHAR8 *AppleChassisAsset[24] = {
+CHAR8 *AppleChassisAsset[] = {
   "MacBook-White",
   "MacBook-White",
   "MacBook-Black",
   "MacBook-Black",
   "MacBook-Aluminum",
+  "MacBook-Aluminum",   // MBP62
   "MacBook-Aluminum",
   "MacBook-Aluminum",
   "MacBook-Aluminum",
@@ -1448,7 +1456,7 @@ GetUserSettings (
   GetAsciiProperty (dictPointer, "SerialNumber", gSettings.SerialNr);
   GetAsciiProperty (dictPointer, "Version", gSettings.VersionNr);
 
-  DBG ("Product smbios datum BEGIN\n");
+  DBG ("BEGIN Product smbios datum\n");
   DBG ("ProductName = %a\n", gSettings.ProductName);
   DBG ("Mobile = %a\n", gSettings.Mobile ? "true" : "false");
 
@@ -1516,7 +1524,7 @@ GetUserSettings (
       }
     }
   }
-  DBG ("Product smbios datum END\n");
+  DBG ("END Product smbios datum\n");
 
   DBG ("PlatformUUID is %g (rfc4112)\n", &gPlatformUuid);
   DBG ("SystemID is %g (rfc4112)\n", &gSystemID);
