@@ -78,7 +78,7 @@ DisableEhciLegacy (
       return;
     }
     if ((UsbLegSup & BIOS_OWNED) != 0) {
-      DBG ("%a: (SMM ownes device) usblegctlsts before 0x%08x\n", __FUNCTION__, UsbLegCtlSts);
+      DBG ("%a: (SMM owns device) usblegctlsts before 0x%08x\n", __FUNCTION__, UsbLegCtlSts);
       TimeOut = 40;
       while (TimeOut-- != 0) {
         gBS->Stall (500);
