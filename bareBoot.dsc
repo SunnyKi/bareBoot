@@ -136,7 +136,10 @@
   MemLogLib|bareBoot/Library/MemLogLibDefault/MemLogLibDefault.inf
   PListLib|bareBoot/Library/PListLib/PListLib.inf
   ShiftKeysLib|bareBoot/Library/ShiftKeysLib/ShiftKeysLib.inf
-  LegacyBiosThunkLib |bareBoot/Library/LegacyBiosThunkLib/LegacyBiosThunkLib.inf
+  LegacyBiosThunkLib|bareBoot/Library/LegacyBiosThunkLib/LegacyBiosThunkLib.inf
+
+  UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
+  SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
 
 [LibraryClasses.common.DXE_CORE]
   HobLib|MdePkg/Library/DxeCoreHobLib/DxeCoreHobLib.inf
