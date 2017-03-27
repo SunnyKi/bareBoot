@@ -401,14 +401,14 @@ readEip16:
 %macro	ihtentry	1
 	push	0
 	push	%1
-	jmp	qword commonIhtEntry	; qword to keep the same entry length
+	jmp	STRICT commonIhtEntry	; STRICT to keep the same entry length
 %endmacro
 
 %macro	ihtenerr	1
 	nop
 	nop
 	push	%1
-	jmp	qword commonIhtEntry	; qword to keep the same entry length
+	jmp	STRICT commonIhtEntry	; STRICT to keep the same entry length
 %endmacro
 
 	align	2
