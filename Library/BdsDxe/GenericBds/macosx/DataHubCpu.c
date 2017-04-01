@@ -104,6 +104,7 @@ LogDataHub (
 }
 
 EFI_STATUS
+EFIAPI
 SetVariablesForOSX (
   VOID
 )
@@ -262,6 +263,7 @@ SetVariablesForOSX (
 }
 
 EFI_STATUS
+EFIAPI
 SetupDataForOSX (
   VOID
 )

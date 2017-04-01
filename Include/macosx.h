@@ -510,11 +510,13 @@ ScanSPD (
 );
 
 EFI_STATUS
+EFIAPI
 SetupDataForOSX (
   VOID
 );
 
 EFI_STATUS
+EFIAPI
 SetVariablesForOSX (
   VOID
 );
