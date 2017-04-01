@@ -527,16 +527,16 @@ PatchTableType4and7 (
   UINTN               CpuNumber;
   CHAR8               *SSocketD;
   UINT16              CoreCache;
-  UINT16              HandelLayer[MAX_CACHE_COUNT];
+  UINT16              HandleLayer[MAX_CACHE_COUNT];
 
   ProcChar = 0;
   CoreCache = 0;
   
   // Value 0xFFFF means no cache
-  HandelLayer[0] = 0xFFFF;
-  HandelLayer[1] = 0xFFFF;
-  HandelLayer[2] = 0xFFFF;
-  HandelLayer[3] = 0xFFFF;
+  HandleLayer[0] = 0xFFFF;
+  HandleLayer[1] = 0xFFFF;
+  HandleLayer[2] = 0xFFFF;
+  HandleLayer[3] = 0xFFFF;
   SSocketD = "Lx-Cache";
 
   // Cache Information
@@ -560,7 +560,7 @@ PatchTableType4and7 (
     }
 
     newSmbiosTable.std.Type7->Hdr.Handle = NumberOfRecords;
-    HandelLayer[CoreCache] = newSmbiosTable.std.Type7->Hdr.Handle;
+    HandleLayer[CoreCache] = newSmbiosTable.std.Type7->Hdr.Handle;
     Handle = LogSmbiosTable (newSmbiosTable);
   }
   // Processor Information
@@ -590,9 +590,9 @@ PatchTableType4and7 (
       newSmbiosTable.std.Type4->ExternalClock = 0;
     }
 
-    newSmbiosTable.std.Type4->L1CacheHandle = HandelLayer[0];
-    newSmbiosTable.std.Type4->L2CacheHandle = HandelLayer[1];
-    newSmbiosTable.std.Type4->L3CacheHandle = HandelLayer[2];
+    newSmbiosTable.std.Type4->L1CacheHandle = HandleLayer[0];
+    newSmbiosTable.std.Type4->L2CacheHandle = HandleLayer[1];
+    newSmbiosTable.std.Type4->L3CacheHandle = HandleLayer[2];
 
     if (SmbiosTable.std.Type4->ProcessorVersion == 0) { //if no BrandString we can add
       if (AsciiStrLen (gCPUStructure.BrandString) != 0) {
