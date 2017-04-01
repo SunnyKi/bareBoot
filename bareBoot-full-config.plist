@@ -76,9 +76,9 @@
           <false/>
         <key>NVCAP</key>
           <string>04000000000003001C0000000000000A00000000 </string>
-        <key>VideoPorts</key>
-          <integer>0</integer>
         <key>VRAM</key>
+          <integer>0</integer>
+        <key>VideoPorts</key>
           <integer>0</integer>
       </dict>
     <key>KernelPatches</key>
@@ -177,10 +177,10 @@
           </array>
         <key>Mobile</key>
           <false/>
-        <key>SPDScan</key>
-          <false/>
         <key>ProductName</key>
           <string>iMac9,1</string>
+        <key>SPDScan</key>
+          <false/>
         <key>SerialNumber</key>
           <string>X34520AY6EN</string>
         <key>Version</key>
@@ -188,12 +188,12 @@
       </dict>
     <key>SystemParameters</key>
       <dict>
-        <key>boot-args</key>
-          <string>debug=0x108</string>
+        <key>#ROM</key>
+          <data></data>
         <key>CheckFakeSMC</key>
           <true/>
         <key>CsrActiveConfig</key>
-          <integer>0x00000000</integer>
+          <integer>0</integer>
         <key>DebugKernel</key>
           <false/>
         <key>DefaultBootVolume</key>
@@ -206,10 +206,6 @@
           <false/>
         <key>PlatformUUID</key>
           <string>0D2AE8C8-B6AA-5A79-B51A-15F9B0709EA1</string>
-        <key>prev-lang</key>
-          <string>ru:0</string>
-        <key>#ROM</key>
-          <data></data>
         <key>ROM</key>
           <string></string>
         <key>SaveVideoRom</key>
@@ -222,6 +218,10 @@
           <integer>0</integer>
         <key>YoBlack</key>
           <false/>
+        <key>boot-args</key>
+          <string>debug=0x108</string>
+        <key>prev-lang</key>
+          <string>ru:0</string>
       </dict>
   </dict>
 </plist>
