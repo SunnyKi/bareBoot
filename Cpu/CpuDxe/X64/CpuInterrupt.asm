@@ -40,6 +40,7 @@ InitDescriptor PROC
 InitDescriptor ENDP
 
 ; VOID
+; EFIAPI
 ; InstallInterruptHandler (
 ;     UINTN Vector,           // rcx
 ;     void  (*Handler)(void)  // rdx

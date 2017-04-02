@@ -531,6 +531,7 @@ DumpExceptionDataDebugOut (
 }
 
 VOID
+EFIAPI
 ExceptionHandler (
   IN EFI_EXCEPTION_TYPE    InterruptType,
   IN EFI_SYSTEM_CONTEXT    SystemContext
@@ -548,6 +549,7 @@ ExceptionHandler (
 }
 
 VOID
+EFIAPI
 TimerHandler (
   IN EFI_EXCEPTION_TYPE    InterruptType,
   IN EFI_SYSTEM_CONTEXT    SystemContext
