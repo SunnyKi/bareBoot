@@ -622,20 +622,19 @@ radeon_card_info_t radeon_cards[] = {
   { 0x68BE, 0x00000000, CHIP_FAMILY_JUNIPER, "ATI Radeon HD 5750 Series\0", kHoolock    },
   { 0x68BF, 0x00000000, CHIP_FAMILY_JUNIPER, "ATI Radeon HD 6750 Series\0", kHoolock    },
 
-  { 0x68C0, 0x00000000, CHIP_FAMILY_MANHATTAN, "ATI Radeon HD 5730 Series\0", kBaboon    },
-  { 0x68C1, 0x00000000, CHIP_FAMILY_MANHATTAN, "ATI Radeon HD 5650 Series\0", kBaboon    },
-  { 0x68C7, 0x00000000, CHIP_FAMILY_MANHATTAN, "ATI Mobility Radeon HD 5570\0", kEulemur  },
+  { 0x68C0, 0x00000000, CHIP_FAMILY_REDWOOD, "ATI Radeon HD 5730 Series\0", kBaboon    },
+  { 0x68C1, 0x00000000, CHIP_FAMILY_REDWOOD, "ATI Radeon HD 5650 Series\0", kBaboon    },
+  { 0x68C7, 0x00000000, CHIP_FAMILY_REDWOOD, "ATI Mobility Radeon HD 5570\0", kEulemur  },
   { 0x68C8, 0x00000000, CHIP_FAMILY_REDWOOD, "ATI Radeon HD 5650 Series\0", kBaboon    },
   { 0x68C9, 0x00000000, CHIP_FAMILY_REDWOOD, "FirePro 3D V3800\0", kBaboon    },
   { 0x68D8, 0x00000000, CHIP_FAMILY_REDWOOD, "ATI Radeon HD 5670 Series\0", kBaboon    },
   { 0x68D9, 0x00000000, CHIP_FAMILY_REDWOOD, "ATI Radeon HD 5570 Series\0", kBaboon    },
   { 0x68DA, 0x00000000, CHIP_FAMILY_REDWOOD, "ATI Radeon HD 5500 Series\0", kBaboon    },
 
-  { 0x68E0, 0x00000000, CHIP_FAMILY_MANHATTAN, "ATI Radeon HD 5470 Series\0", kEulemur  },
-  { 0x68E1, 0x00000000, CHIP_FAMILY_MANHATTAN, "AMD Radeon HD 6230\0", kEulemur  },
-  //Manhattan
-  { 0x68E4, 0x00000000, CHIP_FAMILY_MANHATTAN, "ATI Radeon HD 6370M Series\0", kEulemur  },
-  { 0x68E5, 0x00000000, CHIP_FAMILY_MANHATTAN, "ATI Radeon HD 6300M Series\0", kEulemur  },
+  { 0x68E0, 0x00000000, CHIP_FAMILY_CEDAR, "ATI Radeon HD 5470 Series\0", kEulemur  },
+  { 0x68E1, 0x00000000, CHIP_FAMILY_CEDAR, "AMD Radeon HD 6230\0", kEulemur  },
+  { 0x68E4, 0x00000000, CHIP_FAMILY_CEDAR, "ATI Radeon HD 6370M Series\0", kEulemur  },
+  { 0x68E5, 0x00000000, CHIP_FAMILY_CEDAR, "ATI Radeon HD 6300M Series\0", kEulemur  },
   //EvergreenGL
   { 0x68F1, 0x00000000, CHIP_FAMILY_CEDAR, "AMD FirePro 2460\0", kEulemur  },
   { 0x68F2, 0x00000000, CHIP_FAMILY_CEDAR, "AMD FirePro 2270\0", kEulemur  },
