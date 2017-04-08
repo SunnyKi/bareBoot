@@ -426,7 +426,9 @@ set_eth_props (
     builtin = 0x01;
   }
 
+#if 0
   devprop_add_value (device, "device_type", (UINT8 *) "ethernet", 8);
+#endif
   return devprop_add_value (device, "built-in", (UINT8 *) &builtin, 1);
 }
 
