@@ -590,11 +590,19 @@ egLoadFile (
 
   ReadSize = FileInfo->FileSize;
 
+  FreePool (FileInfo);
+
+  if (ReadSize == 0) {
+    FileHandle->Close (FileHandle);
+    *FileData = NULL;
+    *FileDataLength = 0;
+    return EFI_SUCCESS;
+  }
+
   if (ReadSize > MAX_FILE_SIZE) {
     ReadSize = MAX_FILE_SIZE;
   }
 
-  FreePool (FileInfo);
   BufferSize = (UINTN) ReadSize;  // was limited to 1 GB above, so this is safe
   Buffer = (UINT8 *) AllocateAlignedPages (EFI_SIZE_TO_PAGES (BufferSize), 16);
 
