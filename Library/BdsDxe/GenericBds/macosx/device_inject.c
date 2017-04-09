@@ -1953,11 +1953,9 @@ init_ati_card (
   CHAR8 *CfgName;
   INTN NameLen, n_ports;
   UINTN i;
-  BOOLEAN add_vbios;
 
   NameLen = 0;
   n_ports = 0;
-  add_vbios = gSettings.LoadVBios;
 
   card = AllocateZeroPool (sizeof (card_t));
 
@@ -1997,7 +1995,7 @@ init_ati_card (
   card->posted = radeon_card_posted ();
   get_vram_size ();
 
-  if (add_vbios) {
+  if (gSettings.LoadVBios) {
     (void) load_vbios_file (pci_dev->vendor_id, pci_dev->device_id);
 
     if (card->rom == NULL) {
