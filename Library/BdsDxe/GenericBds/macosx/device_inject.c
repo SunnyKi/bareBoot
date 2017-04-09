@@ -1946,7 +1946,7 @@ radeon_card_posted (
 }
 
 BOOLEAN
-init_card (
+init_ati_card (
   pci_dt_t * pci_dev
 )
 {
@@ -2076,7 +2076,7 @@ setup_ati_devprop (
 )
 {
 
-  if (!init_card (ati_dev)) {
+  if (!init_ati_card (ati_dev)) {
     return FALSE;
   }
 
