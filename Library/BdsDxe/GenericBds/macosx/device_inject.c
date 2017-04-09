@@ -1017,7 +1017,7 @@ setup_nvidia_devprop (
   DevPropDevice *device;
   option_rom_pci_header_t *rom_pci_header;
   UINTN bufferLen;
-  CHAR16 FileName[40];
+  CHAR16 FileName[128];
   UINT8 *buffer;
 
   device = NULL;
@@ -1644,7 +1644,7 @@ load_vbios_file (
 {
   EFI_STATUS Status;
   UINTN bufferLen;
-  CHAR16 FileName[40];
+  CHAR16 FileName[128];
   UINT8 *buffer;
 
   buffer = NULL;
