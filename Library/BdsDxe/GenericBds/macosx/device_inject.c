@@ -1998,13 +1998,12 @@ init_ati_card (
   get_vram_size ();
 
   if (add_vbios) {
-    load_vbios_file (pci_dev->vendor_id, pci_dev->device_id);
+    (void) load_vbios_file (pci_dev->vendor_id, pci_dev->device_id);
 
     if (card->rom == NULL) {
       if (card->posted) {
         read_vbios (FALSE);
-      }
-      else {
+      } else {
         read_disabled_vbios ();
       }
     }
