@@ -161,7 +161,7 @@ main(int argc, char* argv[]) {
 	unsigned short bkps;	/* bootcode backup sector number */
 	unsigned short fsis;	/* FSinfo sector number */
 	unsigned short ressec;	/* reserved sector count */
-	unsigned char* s0;
+	unsigned char* s0 = NULL;
 	unsigned char* fs0 = NULL;
 	int minsectors;
 
@@ -220,5 +220,11 @@ main(int argc, char* argv[]) {
 	}
 
 	f32close();
+	if (s0 != NULL) {
+		free(s0);
+	}
+	if (fs0 != NULL) {
+		free(s0);
+	}
 	return 0;
 }

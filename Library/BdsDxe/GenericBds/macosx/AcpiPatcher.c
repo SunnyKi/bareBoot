@@ -854,6 +854,9 @@ PatchACPI (
 
     if (!EFI_ERROR (Status)) {
       Status = InsertTable ((VOID*) buffer, bufferLen);
+      if (EFI_ERROR (Status)) {
+        DBG ("AcpiPatcher: Oops, InserTable() returned %r\n", Status);
+      }
       FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
     }
   }

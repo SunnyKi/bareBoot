@@ -1651,35 +1651,27 @@ load_vbios_file (
   card->rom_size = 0;
   card->rom = NULL;
 
-  if (gPNDirExists) {
-    UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
-                   gProductNameDir, vendor_id, device_id);
-  }
-  else {
-    UnicodeSPrint (FileName, sizeof (FileName),
-                   L"\\EFI\\bareboot\\rom\\%04x_%04x.rom", vendor_id,
-                   device_id);
-  }
+  UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
+                 gPNDirExists ? gProductNameDir : L"\\EFI\\bareBoot\\",
+                 vendor_id, device_id);
 
   Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
 
-  if (EFI_ERROR (Status)) {
-    return FALSE;
-  }
-
-  if (bufferLen == 0) {
+  if (EFI_ERROR (Status) || bufferLen == 0) {
     return FALSE;
   }
 
   card->rom = AllocateCopyPool (bufferLen, buffer);
 
-  if (card->rom == NULL) {
-    FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
+  FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
+
+  if (card->rom == NULL || bufferLen != ((option_rom_header_t *) card->rom)->rom_size * 512) {
+    DBG ("Invalid ati card rom file (file size %u != size in rom %u)\n", bufferLen,
+         ((option_rom_header_t *) card->rom)->rom_size * 512
+        );
     return FALSE;
   }
   card->rom_size = (UINT32) bufferLen;
-
-  FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
 
   if (!validate_rom ((option_rom_header_t *) card->rom, card->pci_dev)) {
     FreePool (card->rom);
