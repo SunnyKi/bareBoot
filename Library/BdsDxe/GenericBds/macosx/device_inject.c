@@ -2022,7 +2022,7 @@ init_ati_card (
   NameLen = StrLen (gSettings.FBName);
 
   if (NameLen > 2) {
-    CfgName = AllocateZeroPool (NameLen);
+    CfgName = AllocateZeroPool (NameLen + 1);
     UnicodeStrToAsciiStr ((CHAR16 *) &gSettings.FBName[0], CfgName);
     card->cfg_name = CfgName;
   }
