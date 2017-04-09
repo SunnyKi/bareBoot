@@ -1955,7 +1955,7 @@ init_ati_card (
   CHAR8 *CfgName;
   INTN NameLen, n_ports;
   UINTN i;
-  BOOLEAN add_vbios = TRUE;
+  BOOLEAN add_vbios;
 
   NameLen = 0;
   n_ports = 0;
