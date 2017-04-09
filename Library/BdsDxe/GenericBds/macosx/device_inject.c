@@ -1058,7 +1058,6 @@ setup_nvidia_devprop (
     }
 
     if (bufferLen == 0) {
-      FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
       goto nofile;
     }
 
@@ -1669,7 +1668,6 @@ load_vbios_file (
   }
 
   if (bufferLen == 0) {
-    FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
     return FALSE;
   }
 
