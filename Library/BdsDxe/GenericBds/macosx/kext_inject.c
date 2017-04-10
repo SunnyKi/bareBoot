@@ -13,43 +13,44 @@ LIST_ENTRY gKextList = INITIALIZE_LIST_HEAD_VARIABLE (gKextList);
 // before booting
 ////////////////////
 EFI_STATUS
-  EFIAPI
+EFIAPI
 ThinFatFile (
   IN OUT UINT8 **binary,
   IN OUT UINTN *length,
   IN cpu_type_t archCpuType
 )
 {
-  UINT32 nfat, swapped, size = 0;
-  FAT_HEADER *fhp = (FAT_HEADER *) * binary;
-  FAT_ARCH *fap = (FAT_ARCH *) (*binary + sizeof (FAT_HEADER));
-  cpu_type_t fapcputype;
+  BOOLEAN swapped;
+  FAT_ARCH *fap;
+  FAT_HEADER *fhp;
   UINT32 fapoffset;
   UINT32 fapsize;
+  UINT32 nfat, size;
+  cpu_type_t fapcputype;
 
-  swapped = 0;
-  if (fhp->magic == FAT_MAGIC) {
-    nfat = fhp->nfat_arch;
-  }
-  else if (fhp->magic == FAT_CIGAM) {
-    nfat = SwapBytes32 (fhp->nfat_arch);
-    swapped = 1;
-    //already thin    
-  }
-  else if (fhp->magic == THIN_X64) {
-    if (archCpuType == CPU_TYPE_X86_64) {
-      return EFI_SUCCESS;
-    }
-    return EFI_NOT_FOUND;
-  }
-  else if (fhp->magic == THIN_IA32) {
-    if (archCpuType == CPU_TYPE_I386) {
-      return EFI_SUCCESS;
-    }
-    return EFI_NOT_FOUND;
-  }
-  else {
-    return EFI_NOT_FOUND;
+  fap = (FAT_ARCH *) (*binary + sizeof (FAT_HEADER));
+  fhp = (FAT_HEADER *) *binary;
+  size = 0;
+  swapped = FALSE;
+
+  switch (fhp->magic) {
+    case FAT_MAGIC:
+      nfat = fhp->nfat_arch;
+      break;
+
+    case FAT_CIGAM:
+      nfat = SwapBytes32 (fhp->nfat_arch);
+      swapped = TRUE;
+      break;
+
+    case THIN_X64:
+      return (archCpuType == CPU_TYPE_X86_64 ? EFI_SUCCESS : EFI_NOT_FOUND);
+
+    case THIN_IA32:
+      return (archCpuType == CPU_TYPE_I386 ? EFI_SUCCESS : EFI_NOT_FOUND);
+
+    default:
+      return EFI_NOT_FOUND;
   }
 
   for (; nfat > 0; nfat--, fap++) {
@@ -57,20 +58,22 @@ ThinFatFile (
       fapcputype = SwapBytes32 (fap->cputype);
       fapoffset = SwapBytes32 (fap->offset);
       fapsize = SwapBytes32 (fap->size);
-    }
-    else {
+    } else {
       fapcputype = fap->cputype;
       fapoffset = fap->offset;
       fapsize = fap->size;
     }
+
     if (fapcputype == archCpuType) {
-      *binary = (*binary + fapoffset);
+      *binary += fapoffset;
       size = fapsize;
       break;
     }
   }
-  if (length != 0)
+
+  if (length != NULL) {
     *length = size;
+  }
 
   return EFI_SUCCESS;
 }
@@ -83,21 +86,20 @@ LoadKext (
   IN OUT _DeviceTreeBuffer * kext
 )
 {
-  EFI_STATUS Status;
-  UINT8 *executableFatBuffer = NULL;
-  UINTN executableFatBufferLength = 0;
-  UINT8 *executableBuffer = NULL;
-  UINTN executableBufferLength = 0;
-  CHAR8 *bundlePathBuffer = NULL;
-  UINTN bundlePathBufferLength = 0;
-  CHAR16 TempName[256];
-  CHAR16 Executable[256];
-  VOID *plist;
-  BOOLEAN NoContents = FALSE;
   _BooterKextFileInfo *infoAddr = NULL;
-
+  BOOLEAN NoContents = FALSE;
+  CHAR8 *bundlePathBuffer = NULL;
+  EFI_STATUS Status;
+  UINT8 *executableBuffer = NULL;
+  UINT8 *executableFatBuffer = NULL;
   UINT8 *infoDictBuffer = NULL;
+  UINTN bundlePathBufferLength = 0;
+  UINTN executableBufferLength = 0;
+  UINTN executableFatBufferLength = 0;
   UINTN infoDictBufferLength = 0;
+  VOID *plist;
+  CHAR16 Executable[256];
+  CHAR16 TempName[256];
 
   UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, L"Contents\\Info.plist");
   plist = LoadPListFile (gRootFHandle, TempName);
