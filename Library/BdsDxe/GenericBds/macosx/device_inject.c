@@ -1643,52 +1643,47 @@ load_vbios_file (
 )
 {
   EFI_STATUS Status;
-  UINTN bufferLen;
-  CHAR16 FileName[128];
   UINT8 *buffer;
+  UINTN bufferLen;
+  UINTN rsize;
+  CHAR16 FileName[128];
 
   buffer = NULL;
   card->rom_size = 0;
   card->rom = NULL;
 
-  if (gPNDirExists) {
-    UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
-                   gProductNameDir, vendor_id, device_id);
-  }
-  else {
-    UnicodeSPrint (FileName, sizeof (FileName),
-                   L"\\EFI\\bareboot\\rom\\%04x_%04x.rom", vendor_id,
-                   device_id);
-  }
+  UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
+                 gPNDirExists ? gProductNameDir : L"\\EFI\\bareBoot\\",
+                 vendor_id, device_id);
 
   Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
 
-  if (EFI_ERROR (Status)) {
+  if (EFI_ERROR (Status) || bufferLen < sizeof(option_rom_header_t)) {
     return FALSE;
   }
 
-  if (bufferLen == 0) {
+  rsize = ((option_rom_header_t *) buffer)->rom_size * 512;
+
+  if (bufferLen != rsize) {
+    DBG ("Invalid ati card rom file (file size %u != size in rom image %u)\n",
+         bufferLen, rsize
+        );
+    return FALSE;
+  }
+
+  if (!validate_rom ((option_rom_header_t *) buffer, card->pci_dev)) {
     return FALSE;
   }
 
   card->rom = AllocateCopyPool (bufferLen, buffer);
 
-  if (card->rom == NULL) {
-    FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
-    return FALSE;
-  }
-  card->rom_size = (UINT32) bufferLen;
-
   FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
 
-  if (!validate_rom ((option_rom_header_t *) card->rom, card->pci_dev)) {
-    FreePool (card->rom);
-    card->rom_size = 0;
-    card->rom = NULL;
+  if (card->rom == NULL) {
     return FALSE;
   }
 
-  card->rom_size = ((option_rom_header_t *) card->rom)->rom_size * 512;
+  card->rom_size = (UINT32) bufferLen;
 
   return TRUE;
 }
@@ -1740,13 +1735,14 @@ read_vbios (
     rom_addr =
       (option_rom_header_t
        *) (UINTN) (pci_config_read32 (card->pci_dev,
-                                      PCI_EXPANSION_ROM_BASE) & ~0x7ff);
+                                      PCI_EXPANSION_ROM_BASE) & ~0x7FF);
   }
   else {
-    rom_addr = (option_rom_header_t *) ((UINTN) 0xc0000);
+    rom_addr = (option_rom_header_t *) ((UINTN) 0xC0000);
   }
 
   if (!validate_rom (rom_addr, card->pci_dev)) {
+    DBG ("ati vbios @%p is not good\n", rom_addr);
     return FALSE;
   }
 
@@ -1756,13 +1752,12 @@ read_vbios (
     return FALSE;
   }
 
-  card->rom = AllocateZeroPool (card->rom_size);
+  card->rom = AllocateCopyPool (card->rom_size, (void *) rom_addr);
 
   if (card->rom == NULL) {
     return FALSE;
   }
 
-  CopyMem (card->rom, (void *) rom_addr, card->rom_size);
   return TRUE;
 }
 
@@ -2000,8 +1995,10 @@ init_ati_card (
 
     if (card->rom == NULL) {
       if (card->posted) {
+        DBG ("ati card - read POSTed vbios\n");
         read_vbios (FALSE);
       } else {
+        DBG ("ati card - read disabled vbios\n");
         read_disabled_vbios ();
       }
     }
