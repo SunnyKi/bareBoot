@@ -1042,30 +1042,17 @@ setup_nvidia_devprop (
   model = get_nvidia_model ((nvda_dev->vendor_id << 16) | nvda_dev->device_id);
 
   if (gSettings.LoadVBios) {
-    if (gPNDirExists) {
-      UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
-                     gProductNameDir, nvda_dev->vendor_id, nvda_dev->device_id);
-    }
-    else {
-      UnicodeSPrint (FileName, sizeof (FileName),
-                     L"\\EFI\\bareboot\\rom\\%04x_%04x.rom",
-                     nvda_dev->vendor_id, nvda_dev->device_id);
-    }
+    UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
+                   gPNDirExists ? gProductNameDir : L"\\EFI\\bareBoot\\",
+                   nvda_dev->vendor_id, nvda_dev->device_id);
     Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
 
-    if (EFI_ERROR (Status)) {
-      goto nofile;
-    }
-
-    if (bufferLen == 0) {
+    if (EFI_ERROR (Status) || bufferLen == 0) {
       goto nofile;
     }
 
     rom = AllocateCopyPool (bufferLen, buffer);
-
-    if (rom == NULL) {
-      FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
-    }
+    FreeAlignedPages (buffer, EFI_SIZE_TO_PAGES (bufferLen));
   }
 
 nofile:
