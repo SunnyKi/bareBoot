@@ -328,7 +328,7 @@ PatchACPI (
   FadtPointer   = NULL;
   newFadt       = NULL;
   PathDsdt      = L"DSDT.aml";
-  PathACPI      = L"\\EFI\\bareboot\\acpi\\";
+  PathACPI      = BB_HOME_DIR L"acpi\\";
   PathToACPITables = AllocateZeroPool (PATHTOACPITABLESSIZE);
   RsdPointer    = NULL;
   Status        = EFI_SUCCESS;

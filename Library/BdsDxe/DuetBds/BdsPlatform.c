@@ -1211,14 +1211,14 @@ MakeProductNameDir (
     *tp = 0x0000;
     tp--;
   }
+
   if (StrLen (ProductName) < 1) {
     FreePool (ProductName);
     return NULL;
   }
-  tp = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\") + StrSize (ProductName) + StrSize (L"\\"));
-  StrCpy (tp, L"\\EFI\\bareboot\\");
-  StrCat (tp, ProductName);
-  StrCat (tp, L"\\");
+
+  tp = AllocatePool (160 * sizeof (CHAR16));
+  UnicodeSPrint(tp, 160 * sizeof (CHAR16), L"%s%s%s", BB_HOME_DIR, ProductName, L"\\");
   FreePool (ProductName);
   return tp;
 }

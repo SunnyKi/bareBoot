@@ -590,7 +590,7 @@ BdsLibEnumerateAllBootOption (
       DBG ("BdsBoot: config's dir: %s\n", gProductNameDir);
     }
     
-    if ((FileExists (FHandle, L"\\EFI\\bareboot\\config.plist")) && (ConfigNotFound)) {
+    if ((FileExists (FHandle, BB_HOME_DIR L"config.plist")) && (ConfigNotFound)) {
       gRootFHandle = FHandle;
       ConfigNotFound  = FALSE;
       DBG ("BdsBoot: config's dir: \\EFI\\bareboot\\ \n");

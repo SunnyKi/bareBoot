@@ -46,6 +46,8 @@
 #include <Library/DevicePathLib.h>
 #include <Library/DxeServicesLib.h>
 
+#define BB_HOME_DIR L"\\EFI\\bareBoot\\"
+
 #include <debug.h>
 
 #define offsetof(st, m) ((UINTN) ( (UINT8 *)&((st *)(0))->m - (UINT8 *)0 ))

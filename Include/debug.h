@@ -27,7 +27,7 @@
 #ifndef BOOT_DEBUG
 #define DBG(...)
 #else
-#define BOOT_LOG L"EFI\\bareboot\\boot.log"
+#define BOOT_LOG BB_HOME_DIR L"boot.log"
 #define DBG(...) MemLog(TRUE, 0, __VA_ARGS__)
 #endif
 

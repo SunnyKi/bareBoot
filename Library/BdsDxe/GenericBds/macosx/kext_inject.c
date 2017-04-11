@@ -293,7 +293,7 @@ GetExtraKextsDir (
   // check OEM subfolders: version speciffic or default to Other
 
   KextsDir = AllocatePool (200 * sizeof (CHAR16));
-  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : L"\\EFI\\bareboot\\");
+  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : BB_HOME_DIR);
   StrCat (KextsDir, L"kexts\\");
   StrCat (KextsDir, OSTypeStr);
   FreePool (OSTypeStr);
@@ -373,7 +373,7 @@ LoadKexts (
   InitializeUnicodeCollationProtocol ();
 
   KextsDir = AllocatePool (200 * sizeof (CHAR16));
-  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : L"\\EFI\\bareboot\\");
+  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : BB_HOME_DIR);
   StrCat (KextsDir, L"kexts\\common\\");
 
   if (!FileExists (gRootFHandle, KextsDir)) {

@@ -1043,7 +1043,7 @@ setup_nvidia_devprop (
 
   if (gSettings.LoadVBios) {
     UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
-                   gPNDirExists ? gProductNameDir : L"\\EFI\\bareBoot\\",
+                   gPNDirExists ? gProductNameDir : BB_HOME_DIR,
                    nvda_dev->vendor_id, nvda_dev->device_id);
     Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);
 
@@ -1640,7 +1640,7 @@ load_vbios_file (
   card->rom = NULL;
 
   UnicodeSPrint (FileName, sizeof (FileName), L"%srom\\%04x_%04x.rom",
-                 gPNDirExists ? gProductNameDir : L"\\EFI\\bareBoot\\",
+                 gPNDirExists ? gProductNameDir : BB_HOME_DIR,
                  vendor_id, device_id);
 
   Status = egLoadFile (gRootFHandle, FileName, &buffer, &bufferLen);

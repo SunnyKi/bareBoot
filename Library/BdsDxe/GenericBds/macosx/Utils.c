@@ -1143,7 +1143,7 @@ GetBootDefault (
   ZeroMem (gSettings.DefaultBoot, sizeof (gSettings.DefaultBoot));
 
   gConfigPlist = LoadPListFile (RootFileHandle,
-                                gPNDirExists ? gPNConfigPlist : L"\\EFI\\bareboot\\config.plist");
+                                gPNDirExists ? gPNConfigPlist : BB_HOME_DIR L"config.plist");
 
   if (gConfigPlist == NULL) {
     Print (L"Error loading bootdefault plist!\r\n");
