@@ -18,14 +18,6 @@ EFI_GUID                        gSystemID;
 SETTINGS_DATA                   gSettings;
 VOID                            *gConfigPlist;
 
-
-BOOLEAN
-  EfiGrowBuffer (
-  IN OUT EFI_STATUS *Status,
-  IN OUT VOID **Buffer,
-  IN UINTN BufferSize
-);
-
 CHAR8 *DefaultMemEntry = "N/A";
 CHAR8 *DefaultSerial = "CT288GT9VT6";
 CHAR8 *BiosVendor = "Apple Inc.";
