@@ -372,16 +372,9 @@ LoadKexts (
 
   InitializeUnicodeCollationProtocol ();
 
-  if (gPNDirExists) {
-    KextsDir =
-      AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"kexts\\common"));
-    StrCpy (KextsDir, gProductNameDir);
-    StrCat (KextsDir, L"kexts\\common");
-  }
-  else {
-    KextsDir = AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\kexts\\common"));
-    StrCpy (KextsDir, L"\\EFI\\bareboot\\kexts\\common");
-  }
+  KextsDir = AllocatePool (200 * sizeof (CHAR16));
+  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : L"\\EFI\\bareboot\\");
+  StrCat (KextsDir, L"kexts\\common\\");
 
   if (!FileExists (gRootFHandle, KextsDir)) {
     FreePool (KextsDir);
