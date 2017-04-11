@@ -1218,7 +1218,7 @@ MakeProductNameDir (
   }
 
   tp = AllocatePool (160 * sizeof (CHAR16));
-  UnicodeSPrint(tp, 160 * sizeof (CHAR16), L"%s%s%s", BB_HOME_DIR, ProductName, L"\\");
+  UnicodeSPrint(tp, 160 * sizeof (CHAR16), L"%s%s\\", BB_HOME_DIR, ProductName);
   FreePool (ProductName);
   return tp;
 }
