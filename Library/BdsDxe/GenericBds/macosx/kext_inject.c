@@ -291,22 +291,11 @@ GetExtraKextsDir (
   // find source injection folder with kexts
   // note: we are just checking for existance of particular folder, not checking if it is empty or not
   // check OEM subfolders: version speciffic or default to Other
-  if (gPNDirExists) {
-    KextsDir =
-      AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"kexts\\") +
-                        StrSize (OSTypeStr));
-    StrCpy (KextsDir, gProductNameDir);
-    StrCat (KextsDir, L"kexts\\");
-    StrCat (KextsDir, OSTypeStr);
-  }
-  else {
-    KextsDir =
-      AllocateZeroPool (StrSize (L"\\EFI\\bareboot\\kexts\\") +
-                        StrSize (OSTypeStr));
-    StrCpy (KextsDir, L"\\EFI\\bareboot\\kexts\\");
-    StrCat (KextsDir, OSTypeStr);
-  }
 
+  KextsDir = AllocatePool (200 * sizeof (CHAR16));
+  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : L"\\EFI\\bareboot\\");
+  StrCat (KextsDir, L"kexts\\");
+  StrCat (KextsDir, OSTypeStr);
   FreePool (OSTypeStr);
 
   DBG ("%a: expected extra kexts dir is %s\n", __FUNCTION__, KextsDir);
