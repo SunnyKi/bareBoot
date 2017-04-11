@@ -1598,12 +1598,13 @@ devprop_add_list (
 BOOLEAN
 validate_rom (
   option_rom_header_t * rom_header,
-  pci_dt_t * pci_dev
+  pci_dt_t * pci_dev,
+  UINT32 sign
 )
 {
   option_rom_pci_header_t *rom_pci_header;
 
-  if (rom_header->signature != 0xaa55) {
+  if (rom_header->signature != 0xAA55) {
     return FALSE;
   }
 
@@ -1611,7 +1612,7 @@ validate_rom (
     (option_rom_pci_header_t *) ((UINT8 *) rom_header +
                                  rom_header->pci_header_offset);
 
-  if (rom_pci_header->signature != 0x52494350) {
+  if (rom_pci_header->signature != sign) {
     return FALSE;
   }
 
@@ -1633,7 +1634,7 @@ load_vbios_file (
   UINT8 *buffer;
   UINTN bufferLen;
   UINTN rsize;
-  CHAR16 FileName[128];
+  CHAR16 FileName[160];
 
   buffer = NULL;
   card->rom_size = 0;
@@ -1652,13 +1653,13 @@ load_vbios_file (
   rsize = ((option_rom_header_t *) buffer)->rom_size * 512;
 
   if (bufferLen != rsize) {
-    DBG ("Invalid ati card rom file (file size %u != size in rom image %u)\n",
+    DBG ("Invalid card rom file (file size %u != size in rom image %u)\n",
          bufferLen, rsize
         );
     return FALSE;
   }
 
-  if (!validate_rom ((option_rom_header_t *) buffer, card->pci_dev)) {
+  if (!validate_rom ((option_rom_header_t *) buffer, card->pci_dev, 'RICP')) {
     return FALSE;
   }
 
@@ -1713,7 +1714,8 @@ get_vram_size (
 
 BOOLEAN
 read_vbios (
-  BOOLEAN from_pci
+  BOOLEAN from_pci,
+  UINT32 sign
 )
 {
   option_rom_header_t *rom_addr;
@@ -1728,8 +1730,8 @@ read_vbios (
     rom_addr = (option_rom_header_t *) ((UINTN) 0xC0000);
   }
 
-  if (!validate_rom (rom_addr, card->pci_dev)) {
-    DBG ("ati vbios @%p is not good\n", rom_addr);
+  if (!validate_rom (rom_addr, card->pci_dev, sign)) {
+    DBG ("card vbios @%p is not good\n", rom_addr);
     return FALSE;
   }
 
@@ -1749,7 +1751,7 @@ read_vbios (
 }
 
 BOOLEAN
-read_disabled_vbios (
+read_ati_disabled_vbios (
   VOID
 )
 {
@@ -1805,7 +1807,7 @@ read_disabled_vbios (
       WRITEREG32 (card->mmio, R600_ROM_CNTL, (rom_cntl | R600_SCK_OVERWRITE));
     }
 
-    ret = read_vbios (TRUE);
+    ret = read_vbios (TRUE, ATI_SIGN);
 
     // restore regs
     if (chip_family == CHIP_FAMILY_RV730) {
@@ -1876,7 +1878,7 @@ read_disabled_vbios (
                 (ctxsw_vid_lower_gpio_cntl & ~0x400));
     WRITEREG32 (card->mmio, R600_LOWER_GPIO_ENABLE,
                 (lower_gpio_enable | 0x400));
-    ret = read_vbios (TRUE);
+    ret = read_vbios (TRUE, ATI_SIGN);
     // restore regs
     WRITEREG32 (card->mmio, RADEON_VIPH_CONTROL, viph_control);
     WRITEREG32 (card->mmio, RADEON_BUS_CNTL, bus_cntl);
@@ -1968,9 +1970,9 @@ init_ati_card (
   }
 
   card->fb =
-    (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_0) & ~0x0f);
+    (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_0) & ~0x0F);
   card->mmio =
-    (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_2) & ~0x0f);
+    (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_2) & ~0x0F);
   card->io =
     (UINT8 *) (UINTN) (pci_config_read32 (pci_dev, PCI_BASE_ADDRESS_4) & ~0x03);
   pci_dev->regs = card->mmio;
@@ -1983,10 +1985,10 @@ init_ati_card (
     if (card->rom == NULL) {
       if (card->posted) {
         DBG ("ati card - read POSTed vbios\n");
-        read_vbios (FALSE);
+        read_vbios (FALSE, ATI_SIGN);
       } else {
         DBG ("ati card - read disabled vbios\n");
-        read_disabled_vbios ();
+        read_ati_disabled_vbios ();
       }
     }
   }
