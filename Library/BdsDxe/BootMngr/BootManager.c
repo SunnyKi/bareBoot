@@ -566,7 +566,6 @@ CallBootManager (
   BOOLEAN                     IsLegacyOption;
   BOOLEAN                     NeedEndOp;
 
-  DeviceType = ~0;
   gOption    = NULL;
 
   //
