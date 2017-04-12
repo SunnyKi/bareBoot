@@ -1661,7 +1661,7 @@ load_vbios_file (
     return FALSE;
   }
 
-  if (!validate_rom ((option_rom_header_t *) buffer, card->pci_dev, 'RICP')) {
+  if (!validate_rom ((option_rom_header_t *) buffer, card->pci_dev, ATI_SIGN)) {
     return FALSE;
   }
 

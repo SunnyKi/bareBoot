@@ -63,8 +63,8 @@ typedef struct {
 
 /* Option ROM PCI Data Structure */
 
-#define ATI_SIGN 'RICP'
-#define NVD_SIGN 'PCIR'
+#define ATI_SIGN 0x52494350
+#define NVD_SIGN 0x50434952
 
 typedef struct {
   UINT32 signature;             // ati - 0x52494350, nvidia - 0x50434952, 'PCIR'
