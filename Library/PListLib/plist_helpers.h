@@ -36,7 +36,7 @@
 #endif
 
 unsigned int _plstrlen(const char* str);
-char* _plstrcpy(char* dst, const char* src);
+int _plstrcpy(char* dst, unsigned int dsz, const char* src);
 int _plstrcmp(const char* s1, const char* s2);
 
 int _plmemcmp(const void* s1, const void* s2, unsigned int sz);

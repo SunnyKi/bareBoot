@@ -40,7 +40,7 @@ GetShortPdbFileName (
   UINTN EndIndex;
 
   if (PdbFileName == NULL) {
-    AsciiStrCpy (GaugeString, " ");
+    AsciiStrCpyS (GaugeString, 2, " ");
   } else {
     StartIndex = 0;
     for (EndIndex = 0; PdbFileName[EndIndex] != 0; EndIndex++)
@@ -91,7 +91,7 @@ GetNameFromHandle (
   CHAR8                       *PdbFileName;
   EFI_DRIVER_BINDING_PROTOCOL *DriverBinding;
 
-  AsciiStrCpy (GaugeString, " ");
+  AsciiStrCpyS (GaugeString, 2, " ");
 
   //
   // Get handle name from image protocol
@@ -279,7 +279,7 @@ WriteBootToOsPerformanceData (
 
       GetNameFromHandle (Handles[Index], GaugeString);
 
-      AsciiStrCpy (mPerfData.Token, GaugeString);
+      AsciiStrCpyS (mPerfData.Token, PERF_TOKEN_LENGTH, GaugeString);
       mPerfData.Duration = Duration;
 
       CopyMem (Ptr, &mPerfData, sizeof (PERF_DATA));
@@ -308,7 +308,7 @@ WriteBootToOsPerformanceData (
 
       ZeroMem (&mPerfData, sizeof (PERF_DATA));
 
-      AsciiStrnCpy (mPerfData.Token, Token, PERF_TOKEN_LENGTH);
+      AsciiStrnCpyS (mPerfData.Token, PERF_TOKEN_LENGTH, Token, PERF_TOKEN_LENGTH);
       if (StartTicker == 1) {
         StartTicker = StartValue;
       }

@@ -365,7 +365,7 @@ extern CHAR16                          *gPNAcpiDir;
 extern CHAR16                          *gPNConfigPlist;
 extern CHAR16                          *gProductNameDir;
 extern CHAR16                          *gProductNameDir2;
-extern CHAR8                           *AddBootArgs;
+extern CHAR8                           AddBootArgs[];
 extern CHAR8                           *OSVersion;
 extern CPU_STRUCTURE                   gCPUStructure;
 extern EFI_FILE_HANDLE                 gRootFHandle;
@@ -562,7 +562,8 @@ BOOLEAN
 GetUnicodeProperty (
   VOID* dict,
   CHAR8* key,
-  CHAR16* uptr
+  CHAR16* uptr,
+  UINTN usz
 );
 
 EFI_STATUS

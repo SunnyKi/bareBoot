@@ -1067,12 +1067,14 @@ SetupResetReminder (
   if (IsResetReminderFeatureEnable ()) {
     if (IsResetRequired ()) {
 
-      StringBuffer1 = AllocateZeroPool (MAX_STRING_LEN * sizeof (CHAR16));
+#define TSBUFSIZE (MAX_STRING_LEN * sizeof (CHAR16))
+
+      StringBuffer1 = AllocateZeroPool (TSBUFSIZE);
       ASSERT (StringBuffer1 != NULL);
-      StringBuffer2 = AllocateZeroPool (MAX_STRING_LEN * sizeof (CHAR16));
+      StringBuffer2 = AllocateZeroPool (TSBUFSIZE);
       ASSERT (StringBuffer2 != NULL);
-      StrCpy (StringBuffer1, L"Configuration changed. Reset to apply it Now ? ");
-      StrCpy (StringBuffer2, L"Enter (YES)  /   Esc (NO)");
+      StrCpyS (StringBuffer1, TSBUFSIZE, L"Configuration changed. Reset to apply it Now ? ");
+      StrCpyS (StringBuffer2, TSBUFSIZE, L"Enter (YES)  /   Esc (NO)");
       //
       // Popup a menu to notice user
       //
@@ -1082,6 +1084,9 @@ SetupResetReminder (
 
       FreePool (StringBuffer1);
       FreePool (StringBuffer2);
+
+#undef TSBUFSIZE
+
       //
       // If the user hits the YES Response key, reset
       //

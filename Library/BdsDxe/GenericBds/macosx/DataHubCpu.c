@@ -278,8 +278,8 @@ SetupDataForOSX (
   CHAR16*         productName;
   CHAR16*         serialNumber;
 
-  productName     = AllocateZeroPool (64);
-  serialNumber    = AllocateZeroPool (64);
+  productName     = AllocatePool (64);
+  serialNumber    = AllocatePool (64);
 
   Status = gBS->LocateProtocol (&gEfiDataHubProtocolGuid, NULL, (VOID**) &mDataHub);
 
@@ -296,8 +296,8 @@ SetupDataForOSX (
 #endif
 
   devPathSupportedVal = 1;
-  AsciiStrToUnicodeStr (gSettings.ProductName, productName);
-  AsciiStrToUnicodeStr (gSettings.SerialNr, serialNumber);
+  AsciiStrToUnicodeStrS (gSettings.ProductName, productName, 32);
+  AsciiStrToUnicodeStrS (gSettings.SerialNr, serialNumber, 32);
 
   Status =  LogDataHub (&gEfiProcessorSubClassGuid, L"FSBFrequency", &gCPUStructure.FSBFrequency, sizeof (gCPUStructure.FSBFrequency));
 #if 0

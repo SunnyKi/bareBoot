@@ -224,7 +224,7 @@ PutNvramPlistToRtVars (
       DBG (" skipping %a\n", akey);
       continue;
     }
-    AsciiStrToUnicodeStr(akey, KeyBuf);
+    AsciiStrToUnicodeStrS (akey, KeyBuf, ARRAY_SIZE (KeyBuf));
     DBG (" adding key: %s\n", KeyBuf);
 
     val = plNodeGetItem(prop, 0);

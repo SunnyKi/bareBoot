@@ -136,6 +136,7 @@ BdsLibBootViaBootOption (
   CHAR16                    *TmpLoadPath;
   EFI_FILE_HANDLE                 FHandle;
   EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
+  UINTN                     TmpSize;
 
   *ExitDataSize   = 0;
   *ExitData       = NULL;
@@ -312,11 +313,11 @@ MacOS:
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
   DBG ("%a: AddBootArgs = %a, gSettings.BootArgs = %a\n",__FUNCTION__, AddBootArgs, gSettings.BootArgs);
-  AsciiStrToUnicodeStr (gSettings.BootArgs, buffer);
+  TmpSize = UnicodeSPrint (buffer, sizeof (buffer), L"%a", gSettings.BootArgs);
   
-  if (StrLen(buffer) > 0) 
+  if (TmpSize > 0) 
   {
-    ImageInfo->LoadOptionsSize  = (UINT32) StrSize(buffer);
+    ImageInfo->LoadOptionsSize  = (UINT32) TmpSize;
     ImageInfo->LoadOptions      = buffer;
   }
 
@@ -479,6 +480,7 @@ BdsLibEnumerateAllBootOption (
   UINTN                         DevicePathType;
   UINT16                        CdromNumber;
   UINT16                        *PNConfigPlist2;
+  UINTN                         TmpSize;
   
   gRootFHandle    = NULL;
   FileSystemHandles = NULL;
@@ -487,23 +489,23 @@ BdsLibEnumerateAllBootOption (
 
   NumberFileSystemHandles = 0;
 
-  ZeroMem (Buffer, sizeof (Buffer));
   CdromNumber     = 0;
   DevicePathType  = 0;
   BlkIo           = NULL;
 
   if (gProductNameDir != NULL) {
-    gPNConfigPlist = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"config.plist"));
-    StrCpy (gPNConfigPlist, gProductNameDir);
-    StrCat (gPNConfigPlist, L"config.plist");
+    TmpSize = UnicodeSPrint (Buffer, sizeof (Buffer), L"%s%s", gProductNameDir, L"config.plist") + 1;
+    gPNConfigPlist = AllocateCopyPool (TmpSize * sizeof (CHAR16), Buffer);
   }
 
   PNConfigPlist2 = NULL;
+
   if (gProductNameDir2 != NULL) {
-    PNConfigPlist2 = AllocateZeroPool (StrSize (gProductNameDir2) + StrSize (L"config.plist"));
-    StrCpy (PNConfigPlist2, gProductNameDir2);
-    StrCat (PNConfigPlist2, L"config.plist");
+    TmpSize = UnicodeSPrint (Buffer, sizeof (Buffer), L"%s%s", gProductNameDir2, L"config.plist") + 1;
+    PNConfigPlist2 = AllocateCopyPool (TmpSize * sizeof (CHAR16), Buffer);
   }
+
+  ZeroMem (Buffer, sizeof (Buffer));
   
   gBS->LocateHandleBuffer (
                            ByProtocol,
@@ -615,9 +617,9 @@ BdsLibEnumerateAllBootOption (
   }
 
   if (gPNDirExists) {
-    gPNAcpiDir = AllocateZeroPool (StrSize (gProductNameDir) + StrSize (L"acpi\\"));
-    StrCpy (gPNAcpiDir, gProductNameDir);
-    StrCat (gPNAcpiDir, L"acpi\\");
+    TmpSize = UnicodeSPrint (Buffer, sizeof (Buffer), L"%s%s", gProductNameDir, L"acpi\\") + 1;
+    gPNAcpiDir = AllocateCopyPool (TmpSize * sizeof (CHAR16), Buffer);
+
     DBG ("BdsBoot: acpi dir: %s\n", gPNAcpiDir);
   }
 

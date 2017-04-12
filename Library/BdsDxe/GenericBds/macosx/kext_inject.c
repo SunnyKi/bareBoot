@@ -123,7 +123,7 @@ LoadKext (
     return EFI_NOT_FOUND;
   }
 
-  if (GetUnicodeProperty (plist, "CFBundleExecutable", Executable)) {
+  if (GetUnicodeProperty (plist, "CFBundleExecutable", Executable, ARRAY_SIZE (Executable))) {
     if (NoContents) {
       UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, Executable);
     }
@@ -155,7 +155,7 @@ LoadKext (
 
   bundlePathBufferLength = StrLen (FileName) + 1;
   bundlePathBuffer = AllocateZeroPool (bundlePathBufferLength);
-  UnicodeStrToAsciiStr (FileName, bundlePathBuffer);
+  UnicodeStrToAsciiStrS (FileName, bundlePathBuffer, bundlePathBufferLength);
 
   kext->length =
     (UINT32) (sizeof (_BooterKextFileInfo) + infoDictBufferLength +
@@ -271,18 +271,22 @@ GetExtraKextsDir (
   CHAR16 *OSTypeStr;
   CHAR16 *KextsDir;
   CHAR8 *s;
+  UINTN tmpLen;
 
   OSTypeStr = NULL;
   KextsDir = NULL;
   s = NULL;
 
   if (OSVersion != NULL) {
-    s = AllocateZeroPool (AsciiStrSize (OSVersion));
-    OSTypeStr = AllocateZeroPool (AsciiStrSize (OSVersion) * 2);
+    tmpLen = AsciiStrSize (OSVersion);
+    s = AllocatePool (tmpLen + 1);
+    OSTypeStr = AllocatePool (tmpLen * sizeof (CHAR16));
     if (AsciiStrnCmp (OSVersion, "10.1", 4) != 0) {
-      AsciiStrToUnicodeStr (AsciiStrnCpy (s, OSVersion, 4), OSTypeStr);
+      (VOID) AsciiStrnCpyS (s, tmpLen + 1, OSVersion, 4);
+      AsciiStrToUnicodeStrS (s, OSTypeStr, tmpLen);
     } else {
-      AsciiStrToUnicodeStr (AsciiStrnCpy (s, OSVersion, 5), OSTypeStr);
+      (VOID) AsciiStrnCpyS (s, tmpLen + 1, OSVersion, 5);
+      AsciiStrToUnicodeStrS (s, OSTypeStr, tmpLen);
     }
     FreePool (s);
   } else {
@@ -293,9 +297,8 @@ GetExtraKextsDir (
   // check OEM subfolders: version speciffic or default to Other
 
   KextsDir = AllocatePool (200 * sizeof (CHAR16));
-  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : BB_HOME_DIR);
-  StrCat (KextsDir, L"kexts\\");
-  StrCat (KextsDir, OSTypeStr);
+  (VOID) UnicodeSPrint (KextsDir, 200 * sizeof (CHAR16), L"%skexts\\%s",
+                        gPNDirExists ? gProductNameDir : BB_HOME_DIR, OSTypeStr);
   FreePool (OSTypeStr);
 
   DBG ("%a: expected extra kexts dir is %s\n", __FUNCTION__, KextsDir);
@@ -373,8 +376,8 @@ LoadKexts (
   InitializeUnicodeCollationProtocol ();
 
   KextsDir = AllocatePool (200 * sizeof (CHAR16));
-  StrCpy (KextsDir, gPNDirExists ? gProductNameDir : BB_HOME_DIR);
-  StrCat (KextsDir, L"kexts\\common\\");
+  (VOID) UnicodeSPrint (KextsDir, 200 * sizeof (CHAR16), L"%skexts\\common\\",
+                        gPNDirExists ? gProductNameDir : BB_HOME_DIR);
 
   if (!FileExists (gRootFHandle, KextsDir)) {
     FreePool (KextsDir);

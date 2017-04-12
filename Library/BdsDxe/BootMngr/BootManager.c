@@ -304,14 +304,11 @@ ConvertMemorySizeToString (
   OUT CHAR16          **String
   )
 {
-  CHAR16  *StringBuffer;
+  UINTN   USlen;
+  CHAR16  tmpBuff[64];
 
-  StringBuffer = AllocateZeroPool (0x20);
-  ASSERT (StringBuffer != NULL);
-  UnicodeValueToString (StringBuffer, LEFT_JUSTIFY, MemorySize, 6);
-  StrCat (StringBuffer, L" MB RAM");
-  
-  *String = (CHAR16 *) StringBuffer;
+  USlen = UnicodeSPrint (tmpBuff, sizeof (tmpBuff), L"%u MB RAM", MemorySize);
+  *String = AllocateCopyPool (USlen * sizeof (CHAR16), tmpBuff);
   
   return ;
 }
@@ -331,9 +328,10 @@ ConvertProcessorToString (
   OUT CHAR16                               **String
   )
 {
-  CHAR16  *StringBuffer;
   UINTN   Index;
   UINT32  FreqMhz;
+  UINTN   USlen;
+  CHAR16  tmpBuff[64];
 
   if (Base10Exponent >= 6) {
     FreqMhz = ProcessorFrequency;
@@ -344,13 +342,8 @@ ConvertProcessorToString (
     FreqMhz = 0;
   }
 
-  StringBuffer = AllocateZeroPool (0x20);
-  ASSERT (StringBuffer != NULL);
-  Index = UnicodeValueToString (StringBuffer, LEFT_JUSTIFY, FreqMhz / 1000, 3);
-  StrCat (StringBuffer, L".");
-  UnicodeValueToString (StringBuffer + Index + 1, PREFIX_ZERO, (FreqMhz % 1000) / 10, 2);
-  StrCat (StringBuffer, L" GHz");
-  *String = (CHAR16 *) StringBuffer;
+  USlen = UnicodeSPrint (tmpBuff, sizeof (tmpBuff), L"%3d.%02d GHz", FreqMhz / 1000, (FreqMhz % 1000) / 10);
+  *String = AllocateCopyPool (USlen * sizeof (CHAR16), tmpBuff);
   return ;
 }
 
@@ -394,8 +387,9 @@ GetOptionalStringByIndex (
     //
     *String = GetStringById (STRING_TOKEN (STR_MISSING_STRING));
   } else {
-    *String = AllocatePool (StrSize * sizeof (CHAR16));
-    AsciiStrToUnicodeStr (OptionalStrStart, *String);
+    StrSize *= sizeof (CHAR16);
+    *String = AllocateZeroPool (StrSize);
+    (VOID) UnicodeSPrint (*String, StrSize, L"%a", OptionalStrStart);
   }
   
   return EFI_SUCCESS;
@@ -419,6 +413,8 @@ UpdateBootStrings (
   SMBIOS_TABLE_TYPE4                *Type4Record;
   SMBIOS_TABLE_TYPE19               *Type19Record;
   EFI_SMBIOS_TABLE_HEADER           *Record;
+  UINTN                             USlen;
+  CHAR16                            uTmpBuff[128];
 
   ZeroMem (Find, sizeof (Find));
 
@@ -430,22 +426,14 @@ UpdateBootStrings (
                   NULL,
                   (VOID **) &Smbios
                   );
+
   ASSERT_EFI_ERROR (Status);
 
-  NewString = AllocateZeroPool (
-                StrSize (FIRMWARE_REVISION) +
-                StrSize (L"    ") +
-                StrSize (L" (") +
-                StrSize (FIRMWARE_BUILDDATE) +
-                StrSize (L")")
-                );
-  StrCat (NewString, L"    ");
-  StrCat (NewString, FIRMWARE_REVISION);
-  StrCat (NewString, L" (");
-  StrCat (NewString, FIRMWARE_BUILDDATE);
-  StrCat (NewString, L")");
-  mAVersion = AllocateZeroPool (StrLen (NewString) + 1);
-  UnicodeStrToAsciiStr (NewString, mAVersion);
+  USlen = UnicodeSPrint (uTmpBuff, sizeof (uTmpBuff), L"%s     (%s)", FIRMWARE_REVISION, FIRMWARE_BUILDDATE);
+  NewString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), uTmpBuff);
+  mAVersion = AllocatePool (USlen + 1);
+  (VOID) AsciiSPrint (mAVersion, USlen + 1, "%s", uTmpBuff);
+
   TokenToUpdate = STRING_TOKEN (STR_MINI_CLOVER_VERSION);
   HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
   FreePool (NewString);
@@ -461,11 +449,12 @@ UpdateBootStrings (
       Type0Record = (SMBIOS_TABLE_TYPE0 *) Record;
       StrIndex = Type0Record->BiosVersion;
       GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type0Record + Type0Record->Hdr.Length), StrIndex, &TmpString);
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
-      StrCat (NewString, L"  ");
-      StrCat (NewString, TmpString);
-      mABiosVersion = AllocateZeroPool (StrLen (NewString) + 1);
-      UnicodeStrToAsciiStr (NewString, mABiosVersion);
+
+      USlen = UnicodeSPrint (uTmpBuff, sizeof (uTmpBuff), L"  %s", TmpString);
+      NewString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), uTmpBuff);
+      mABiosVersion = AllocatePool (USlen + 1);
+      (VOID) AsciiSPrint (mABiosVersion, USlen + 1, "%s", uTmpBuff);
+
       TokenToUpdate = STRING_TOKEN (STR_BOOT_BIOS_VERSION);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -476,11 +465,12 @@ UpdateBootStrings (
       Type1Record = (SMBIOS_TABLE_TYPE1 *) Record;
       StrIndex = Type1Record->ProductName;
       GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type1Record + Type1Record->Hdr.Length), StrIndex, &TmpString);
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
-      StrCat (NewString, L"  ");
-      StrCat (NewString, TmpString);
-      mAProductName = AllocateZeroPool (StrLen (NewString) + 1);
-      UnicodeStrToAsciiStr (NewString, mAProductName);
+
+      USlen = UnicodeSPrint (uTmpBuff, sizeof (uTmpBuff), L"  %s", TmpString);
+      NewString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), uTmpBuff);
+      mAProductName = AllocatePool (USlen + 1);
+      (VOID) AsciiSPrint (mAProductName, USlen + 1, "%s", uTmpBuff);
+
       TokenToUpdate = STRING_TOKEN (STR_BOOT_COMPUTER_MODEL);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -491,11 +481,12 @@ UpdateBootStrings (
       Type4Record = (SMBIOS_TABLE_TYPE4 *) Record;
       StrIndex = Type4Record->ProcessorVersion;
       GetOptionalStringByIndex ((CHAR8*)((UINT8*)Type4Record + Type4Record->Hdr.Length), StrIndex, &TmpString);
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"  "));
-      StrCat (NewString, L"  ");
-      StrCat (NewString, TmpString);
-      mAProcessorVersion = AllocateZeroPool (StrLen (NewString) + 1);
-      UnicodeStrToAsciiStr (NewString, mAProcessorVersion);
+
+      USlen = UnicodeSPrint (uTmpBuff, sizeof (uTmpBuff), L"  %s", TmpString);
+      NewString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), uTmpBuff);
+      mAProcessorVersion = AllocatePool (USlen + 1);
+      (VOID) AsciiSPrint (mAProcessorVersion, USlen + 1, "%s", uTmpBuff);
+
       TokenToUpdate = STRING_TOKEN (STR_BOOT_CPU_MODEL);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -505,11 +496,12 @@ UpdateBootStrings (
     if (Record->Type == EFI_SMBIOS_TYPE_PROCESSOR_INFORMATION) {
       Type4Record = (SMBIOS_TABLE_TYPE4 *) Record;
       ConvertProcessorToString(Type4Record->CurrentSpeed, 6, &TmpString);
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"    "));
-      StrCat (NewString, L"    ");
-      StrCat (NewString, TmpString);
-      mAProcessorSpeed = AllocateZeroPool (StrLen (NewString) + 1);
-      UnicodeStrToAsciiStr (NewString, mAProcessorSpeed);
+
+      USlen = UnicodeSPrint (uTmpBuff, sizeof (uTmpBuff), L"    %s", TmpString);
+      NewString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), uTmpBuff);
+      mAProcessorSpeed = AllocatePool (USlen + 1);
+      (VOID) AsciiSPrint (mAProcessorSpeed, USlen + 1, "%s", uTmpBuff);
+
       TokenToUpdate = STRING_TOKEN (STR_BOOT_CPU_SPEED);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -522,11 +514,12 @@ UpdateBootStrings (
         (UINT32)(RShiftU64((Type19Record->EndingAddress - Type19Record->StartingAddress + 1), 10)),
         &TmpString
         );
-      NewString = AllocateZeroPool (StrSize (TmpString) + StrSize (L"    Memory "));
-      StrCat (NewString, L"    Memory ");
-      StrCat (NewString, TmpString);
-      mAMemorySize = AllocateZeroPool (StrLen (NewString) + 1);
-      UnicodeStrToAsciiStr (NewString, mAMemorySize);
+
+      USlen = UnicodeSPrint (uTmpBuff, sizeof (uTmpBuff), L"    Memory %s", TmpString);
+      NewString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), uTmpBuff);
+      mAMemorySize = AllocatePool (USlen + 1);
+      (VOID) AsciiSPrint (mAMemorySize, USlen + 1, "%s", uTmpBuff);
+
       TokenToUpdate = STRING_TOKEN (STR_BOOT_MEMORY_SIZE);
       HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
       FreePool (NewString);
@@ -573,7 +566,7 @@ CallBootManager (
   BOOLEAN                     IsLegacyOption;
   BOOLEAN                     NeedEndOp;
 
-  DeviceType = (UINT16) -1;
+  DeviceType = ~0;
   gOption    = NULL;
 
   //
@@ -671,11 +664,10 @@ CallBootManager (
 
     /* XXX: do we need more human representation for device path? */
     TempStr = ConvertDevicePathToText (Option->DevicePath, FALSE, FALSE);
-    TempSize = StrSize (TempStr);
-    HelpString = AllocateZeroPool (TempSize + StrSize (L"Device Path : "));
+    TempSize = StrSize (TempStr) + 40;
+    HelpString = AllocatePool (TempSize);
     ASSERT (HelpString != NULL);
-    StrCat (HelpString, L"Device Path : ");
-    StrCat (HelpString, TempStr);
+    (VOID) UnicodeSPrint (HelpString, TempSize, L"Device Path : %s", TempStr);
 
     HelpToken = HiiSetString (HiiHandle, 0, HelpString, NULL);
 

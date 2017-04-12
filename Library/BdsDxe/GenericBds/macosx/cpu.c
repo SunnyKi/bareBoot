@@ -565,8 +565,7 @@ GetCpuProps (
     }
 
     if (AsciiStrStr ((CONST CHAR8*) str, (CONST CHAR8*) CPU_STRING_UNKNOWN) == NULL ) {
-      AsciiStrnCpy (gCPUStructure.BrandString, s, sizeof (gCPUStructure.BrandString));
-      gCPUStructure.BrandString[sizeof (gCPUStructure.BrandString) - 1] = '\0';
+      AsciiStrnCpyS (gCPUStructure.BrandString, sizeof (gCPUStructure.BrandString), s, sizeof (gCPUStructure.BrandString));
     }
   }
 

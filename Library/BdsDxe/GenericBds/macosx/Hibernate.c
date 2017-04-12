@@ -225,6 +225,8 @@ GetSleepImagePosition (
   IN  EFI_HANDLE                DiskHandle
   )
 {
+  STATIC CHAR16                   SleepImageFileName[] = L"\\private\\var\\vm\\sleepimage";
+
   EFI_STATUS                      Status;
   EFI_FILE                        *File;
   VOID                            *Buffer;
@@ -263,8 +265,9 @@ GetSleepImagePosition (
   // expect path of sleepimage is default.
   // since 10.12 /Library/Preferences/com.apple.PowerManagement.plist file is a binary format,
   // so is easier to set a path using pmset (from macOS), than read binary plist from the loader
-  ImageName = AllocateZeroPool (StrSize (L"\\private\\var\\vm\\sleepimage") + 2);
-  StrCpy (ImageName, L"\\private\\var\\vm\\sleepimage");
+
+  ImageName = AllocatePool (ARRAY_SIZE (SleepImageFileName) + 2);
+  (VOID) StrCpyS (ImageName, ARRAY_SIZE (SleepImageFileName), SleepImageFileName);
   Status = FHandle->Open (FHandle, &File, ImageName, EFI_FILE_MODE_READ, 0);
   if (EFI_ERROR(Status)) {
     DBG("%a: sleepimage not found -> %r\n", __FUNCTION__, Status);

@@ -1019,7 +1019,8 @@ BOOLEAN
 GetUnicodeProperty (
   VOID *dict,
   CHAR8 *key,
-  CHAR16 *uptr
+  CHAR16 *uptr,
+  UINTN usz
 )
 {
   VOID *dentry;
@@ -1033,7 +1034,7 @@ GetUnicodeProperty (
     tbuf = AllocateCopyPool (tsiz + 1, plNodeGetBytes (dentry));
     if (tbuf != NULL) {
       tbuf[tsiz] = '\0';
-      AsciiStrToUnicodeStr (tbuf, uptr);
+      AsciiStrToUnicodeStrS (tbuf, uptr, usz);
       FreePool (tbuf);
       return TRUE;
     }
@@ -1163,7 +1164,7 @@ GetBootDefault (
   gSettings.DebugKernel = GetBoolProperty (spdict, "DebugKernel", FALSE);
   gSettings.DebugKernelToCom = GetBoolProperty (spdict, "DebugKernelToCom", FALSE);
 
-  if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot)) {
+  if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot, ARRAY_SIZE (gSettings.DefaultBoot))) {
     gSettings.BootTimeout = 0xFFFF;
   }
   DBG
@@ -1217,7 +1218,7 @@ GetUserSettings (
 
     GetAsciiProperty (dictPointer, "boot-args", gSettings.BootArgs);
     if (AsciiStrLen (AddBootArgs) != 0) {
-      AsciiStrCat (gSettings.BootArgs, AddBootArgs);
+      AsciiStrCatS (gSettings.BootArgs, sizeof (gSettings.BootArgs), AddBootArgs);
     }
 
     /*
@@ -1247,7 +1248,7 @@ GetUserSettings (
     gSettings.LoadVBios = GetBoolProperty (dictPointer, "LoadVBios", FALSE);
     gSettings.VideoPorts = (UINT16) GetNumProperty (dictPointer, "VideoPorts", 0);
     gSettings.DualLink = (UINT16) GetNumProperty (dictPointer, "DualLink", 0);
-    GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName);
+    GetUnicodeProperty (dictPointer, "FBName", gSettings.FBName, ARRAY_SIZE (gSettings.FBName));
 
     tmpval = GetDataSetting (dictPointer, "NVCAP", &len);
     if (tmpval != NULL) {
@@ -1398,13 +1399,13 @@ GetUserSettings (
     }
   }
 
-  AsciiStrCpy (gSettings.BoardManufactureName, BiosVendor);
-  AsciiStrCpy (gSettings.ChassisManufacturer, BiosVendor);
-  AsciiStrCpy (gSettings.ManufactureName, BiosVendor);
-  AsciiStrCpy (gSettings.VendorName, BiosVendor);
+  AsciiStrCpyS (gSettings.BoardManufactureName, sizeof (gSettings.BoardManufactureName), BiosVendor);
+  AsciiStrCpyS (gSettings.ChassisManufacturer, sizeof (gSettings.ChassisManufacturer), BiosVendor);
+  AsciiStrCpyS (gSettings.ManufactureName, sizeof (gSettings.ManufactureName), BiosVendor);
+  AsciiStrCpyS (gSettings.VendorName, sizeof (gSettings.VendorName), BiosVendor);
 
-  AsciiStrCpy (gSettings.BoardSerialNumber, AppleBoardSN);
-  AsciiStrCpy (gSettings.LocationInChassis, AppleBoardLocation);
+  AsciiStrCpyS (gSettings.BoardSerialNumber, sizeof (gSettings.BoardSerialNumber), AppleBoardSN);
+  AsciiStrCpyS (gSettings.LocationInChassis, sizeof (gSettings.LocationInChassis), AppleBoardLocation);
 
   dictPointer = GetDictionary (gConfigPlist, "SMBIOS");
 
@@ -1425,15 +1426,15 @@ GetUserSettings (
   }
 
   if (Model != Unknown) {
-    AsciiStrCpy (gSettings.BoardNumber, AppleBoardID[Model]);
-    AsciiStrCpy (gSettings.BoardVersion, AppleSystemVersion[Model]);
-    AsciiStrCpy (gSettings.ChassisAssetTag, AppleChassisAsset[Model]);
-    AsciiStrCpy (gSettings.FamilyName, AppleFamilies[Model]);
-    AsciiStrCpy (gSettings.ProductName, AppleProductName[Model]);
-    AsciiStrCpy (gSettings.ReleaseDate, AppleReleaseDate[Model]);
-    AsciiStrCpy (gSettings.RomVersion, AppleFirmwareVersion[Model]);
-    AsciiStrCpy (gSettings.SerialNr, AppleSerialNumber[Model]);
-    AsciiStrCpy (gSettings.VersionNr, AppleSystemVersion[Model]);
+    AsciiStrCpyS (gSettings.BoardNumber, sizeof (gSettings.BoardNumber), AppleBoardID[Model]);
+    AsciiStrCpyS (gSettings.BoardVersion, sizeof (gSettings.BoardVersion), AppleSystemVersion[Model]);
+    AsciiStrCpyS (gSettings.ChassisAssetTag, sizeof (gSettings.ChassisAssetTag), AppleChassisAsset[Model]);
+    AsciiStrCpyS (gSettings.FamilyName, sizeof (gSettings.FamilyName), AppleFamilies[Model]);
+    AsciiStrCpyS (gSettings.ProductName, sizeof (gSettings.ProductName), AppleProductName[Model]);
+    AsciiStrCpyS (gSettings.ReleaseDate, sizeof (gSettings.ReleaseDate), AppleReleaseDate[Model]);
+    AsciiStrCpyS (gSettings.RomVersion, sizeof (gSettings.RomVersion), AppleFirmwareVersion[Model]);
+    AsciiStrCpyS (gSettings.SerialNr, sizeof (gSettings.SerialNr), AppleSerialNumber[Model]);
+    AsciiStrCpyS (gSettings.VersionNr, sizeof (gSettings.VersionNr), AppleSystemVersion[Model]);
   }
 
   GetAsciiProperty (dictPointer, "BiosReleaseDate", gSettings.ReleaseDate);

@@ -385,6 +385,7 @@ get_pci_dev_path (
   CHAR8 *tmp;
   CHAR16 *devpathstr;
   EFI_DEVICE_PATH_PROTOCOL *DevicePath;
+  UINTN plen;
 
   devpathstr = NULL;
   DevicePath = NULL;
@@ -394,8 +395,9 @@ get_pci_dev_path (
     return NULL;
   }
   devpathstr = ConvertDevicePathToText (DevicePath, FALSE, FALSE);
-  tmp = AllocateZeroPool ((StrLen (devpathstr) + 1) * sizeof (CHAR8));
-  UnicodeStrToAsciiStr (devpathstr, tmp);
+  plen = StrLen (devpathstr) + 1;
+  tmp = AllocateZeroPool (plen);
+  UnicodeStrToAsciiStrS (devpathstr, tmp, plen);
   return tmp;
 }
 
@@ -715,7 +717,7 @@ patch_nvidia_rom (
   else if (dcbtable_version >= 0x14) {  /* some NV15/16, and NV11+ */
     CHAR8 sig[8];
 
-    AsciiStrnCpy (sig, (CHAR8 *) &dcbtable[-7], 7);
+    AsciiStrnCpyS (sig, sizeof (sig), (CHAR8 *) &dcbtable[-7], 7);
     recordlength = 10;
 
     if (AsciiStrCmp (sig, "DEV_REC")) {
@@ -879,7 +881,7 @@ get_nvidia_model (
       UINTN size = AsciiStrLen (NVKnownChipsets[i].name);
 
       name = AllocatePool (size + 1);
-      AsciiStrnCpy (name, NVKnownChipsets[i].name, size);
+      AsciiStrnCpyS (name, size + 1, NVKnownChipsets[i].name, size);
       name[size] = 0;
       return name;
     }
@@ -2007,7 +2009,7 @@ init_ati_card (
 
   if (NameLen > 2) {
     CfgName = AllocateZeroPool (NameLen + 1);
-    UnicodeStrToAsciiStr ((CHAR16 *) &gSettings.FBName[0], CfgName);
+    UnicodeStrToAsciiStrS ((CHAR16 *) &gSettings.FBName[0], CfgName, NameLen + 1);
     card->cfg_name = CfgName;
   }
   else {

@@ -800,8 +800,11 @@ PListXMLNewSymbol (char* string) {
     }
 
     // Set the symbol's data.
+    if (!_plstrcpy (symbol->string, _plstrlen(string) + 1, string)) {
+      _plfree (symbol);
+      return NULL;
+    }
     symbol->refCount = 0;
-    _plstrcpy (symbol->string, string);
     // Add the symbol to the list.
     symbol->next = gPListXMLSymbolsHead;
     gPListXMLSymbolsHead = symbol;

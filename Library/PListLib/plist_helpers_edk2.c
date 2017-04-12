@@ -34,13 +34,20 @@
 #include "plist.h"
 #include "plist_helpers.h"
 
-char *
+int
 _plstrcpy (
   char *dst,
+  unsigned int dsz,
   const char *src
 )
 {
-  return AsciiStrCpy (dst, src);
+  RETURN_STATUS sts;
+
+  sts = AsciiStrCpyS (dst, dsz, src);
+  if (sts) {
+    return FALSE;
+  }
+  return TRUE;
 }
 
 int
@@ -50,7 +57,15 @@ _plint2str (
   unsigned int bsz
 )
 {
-  return (int) AsciiValueToString (vbuf, 0x00, val, bsz);
+  RETURN_STATUS sts;
+
+  sts = AsciiValueToStringS (vbuf, bsz, 0x00, val, bsz - 1);
+
+  if (sts) {
+    return 0;
+  }
+
+  return (int) _plstrlen (vbuf);
 }
 
 vlong

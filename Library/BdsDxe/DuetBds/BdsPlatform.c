@@ -40,7 +40,7 @@ CHAR16                          *gPNAcpiDir;
 CHAR16                          *gPNConfigPlist;
 CHAR16                          *gProductNameDir;
 CHAR16                          *gProductNameDir2;
-CHAR8                           *AddBootArgs;
+CHAR8                           AddBootArgs[256] = { '\0' };
 
 extern BOOLEAN  gConnectAllHappened;
 extern USB_CLASS_FORMAT_DEVICE_PATH gUsbClassKeyboardDevicePath;
@@ -1348,21 +1348,20 @@ Returns:
     ClearScreen (0xBFBFBF, NULL);
   }
 
-  AddBootArgs = "\0 2345678901234567890123456789012345678901234567890123456789012345678901234567890123456789";
 #if 0
   if (gSettings.DebugKernel) {
     AsciiStrCat (AddBootArgs, " -cpuid debug=0x12a acpi_layer=0x08 acpi_level=0x02 msgbuf=309212");
   }
 #endif
   if (ShiftKeyPressed () & EFI_LEFT_SHIFT_PRESSED) {
-    AsciiStrCat (AddBootArgs, " -v");
+    AsciiStrCatS (AddBootArgs, sizeof (AddBootArgs), " -v");
   }
   if (ShiftKeyPressed () & EFI_LEFT_CONTROL_PRESSED) {
-    AsciiStrCat (AddBootArgs, " -s");
+    AsciiStrCatS (AddBootArgs, sizeof (AddBootArgs), " -s");
   }
   if ((ShiftKeyPressed () & EFI_RIGHT_ALT_PRESSED) ||
       (ShiftKeyPressed () & EFI_RIGHT_CONTROL_PRESSED)) {
-    AsciiStrCat (AddBootArgs, " -x");
+    AsciiStrCatS (AddBootArgs, sizeof (AddBootArgs), " -x");
   }
   if (ShiftKeyPressed () & EFI_LEFT_ALT_PRESSED) {
 #if 0

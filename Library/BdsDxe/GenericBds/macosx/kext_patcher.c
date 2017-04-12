@@ -621,9 +621,9 @@ GetPlistHexValue (
   if (IDLen > 8) {
     return 0;
   }
-  AsciiStrCpy (Buffer, "<integer ID=\"");
-  AsciiStrnCat (Buffer, (CHAR8 *)IDStart, IDLen);
-  AsciiStrCat (Buffer, "\"");
+  AsciiStrCpyS (Buffer, sizeof (Buffer), "<integer ID=\"");
+  AsciiStrnCatS (Buffer, sizeof (Buffer), (CHAR8 *)IDStart, IDLen);
+  AsciiStrCatS (Buffer, sizeof (Buffer), "\"");
   // and search whole plist for ID
   IntTag = SearchMemory ((UINT8 *)WholePlist, WholeSize, Buffer, AsciiStrLen (Buffer));
   if (IntTag == NULL) {

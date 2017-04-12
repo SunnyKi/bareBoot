@@ -17,6 +17,8 @@ Abstract:
 
 **/
 
+#include <Library/PrintLib.h>
+
 #include "SmbiosGen.h"
 
 extern UINT8                SmbiosGenDxeStrings[];
@@ -52,6 +54,8 @@ InstallProcessorSmbios (
   CHAR8                             *AString;
   CHAR16                            *UString;
   STRING_REF                        Token;
+  UINTN                             USlen;
+  CHAR16                            tmpBuff[128];
 
   //
   // Processor info (TYPE 4)
@@ -71,9 +75,8 @@ InstallProcessorSmbios (
   // Set ProcessorVersion string
   //
   AString = GetSmbiosString (SmbiosTable, SmbiosTable.Type4->ProcessorVersion);
-  UString = AllocateZeroPool ((AsciiStrLen(AString) + 1) * sizeof(CHAR16));
-  ASSERT (UString != NULL);
-  AsciiStrToUnicodeStr (AString, UString);
+  USlen = UnicodeSPrint (tmpBuff, sizeof (tmpBuff), L"%a", AString);
+  UString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), tmpBuff);
 
   Token = HiiSetString (gStringHandle, 0, UString, NULL);
   if (Token == 0) {
@@ -147,6 +150,8 @@ InstallMiscSmbios (
   CHAR8                             *AString;
   CHAR16                            *UString;
   STRING_REF                        Token;
+  UINTN                             USlen;
+  CHAR16                            tmpBuff[128];
 
   //
   // BIOS information (TYPE 0)
@@ -161,10 +166,8 @@ InstallMiscSmbios (
   // Record Type 2
   //
   AString = GetSmbiosString (SmbiosTable, SmbiosTable.Type0->BiosVersion);
-  UString = AllocateZeroPool ((AsciiStrLen(AString) + 1) * sizeof(CHAR16) + sizeof(FIRMWARE_BIOS_VERSIONE));
-  ASSERT (UString != NULL);
-  CopyMem (UString, FIRMWARE_BIOS_VERSIONE, sizeof(FIRMWARE_BIOS_VERSIONE));
-  AsciiStrToUnicodeStr (AString, UString + sizeof(FIRMWARE_BIOS_VERSIONE) / sizeof(CHAR16) - 1);
+  USlen = UnicodeSPrint (tmpBuff, sizeof (tmpBuff), L"%s%a", FIRMWARE_BIOS_VERSIONE, AString);
+  UString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), tmpBuff);
 
   Token = HiiSetString (gStringHandle, 0, UString, NULL);
   if (Token == 0) {
@@ -191,10 +194,8 @@ InstallMiscSmbios (
   // Record Type 3
   //
   AString = GetSmbiosString (SmbiosTable, SmbiosTable.Type1->ProductName);
-  UString = AllocateZeroPool ((AsciiStrLen(AString) + 1) * sizeof(CHAR16) + sizeof(FIRMWARE_PRODUCT_NAME));
-  ASSERT (UString != NULL);
-  CopyMem (UString, FIRMWARE_PRODUCT_NAME, sizeof(FIRMWARE_PRODUCT_NAME));
-  AsciiStrToUnicodeStr (AString, UString + sizeof(FIRMWARE_PRODUCT_NAME) / sizeof(CHAR16) - 1);
+  USlen = UnicodeSPrint (tmpBuff, sizeof (tmpBuff), L"%s%a", FIRMWARE_PRODUCT_NAME, AString);
+  UString = AllocateCopyPool ((USlen + 1) * sizeof (CHAR16), tmpBuff);
 
   Token = HiiSetString (gStringHandle, 0, UString, NULL);
   if (Token == 0) {
