@@ -276,9 +276,9 @@ PatchACPI (
 {
   EFI_STATUS                                        Status;
   UINTN                                             Index;
-  EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER      *RsdPointer;
-  EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE         *FadtPointer;
-  EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE         *newFadt;
+  EFI_ACPI_4_0_ROOT_SYSTEM_DESCRIPTION_POINTER      *RsdPointer;
+  EFI_ACPI_4_0_FIXED_ACPI_DESCRIPTION_TABLE         *FadtPointer;
+  EFI_ACPI_4_0_FIXED_ACPI_DESCRIPTION_TABLE         *newFadt;
   EFI_ACPI_4_0_FIRMWARE_ACPI_CONTROL_STRUCTURE      *Facs;
   EFI_PHYSICAL_ADDRESS                              dsdt;
   EFI_PHYSICAL_ADDRESS                              BufferPtr;
@@ -339,7 +339,7 @@ PatchACPI (
 
   for (Index = 0; Index < gST->NumberOfTableEntries; Index++) {
     if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi20TableGuid)) {
-      RsdPointer = (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
+      RsdPointer = (EFI_ACPI_4_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
 #if 0
       DBG ("ACPI 2.0\n");
       DBG ("RSDT = 0x%x\n", (RSDT_TABLE*) (UINTN) RsdPointer->RsdtAddress);
@@ -347,7 +347,7 @@ PatchACPI (
 #endif
       break;
     } else if (CompareGuid (&gST->ConfigurationTable[Index].VendorGuid, &gEfiAcpi10TableGuid)) {
-      RsdPointer = (EFI_ACPI_2_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
+      RsdPointer = (EFI_ACPI_4_0_ROOT_SYSTEM_DESCRIPTION_POINTER*) gST->ConfigurationTable[Index].VendorTable;
 #if 0
       DBG ("ACPI 1.0\n");
 #endif
@@ -380,7 +380,7 @@ PatchACPI (
     eCntR = (Rsdt->Header.Length - sizeof (EFI_ACPI_DESCRIPTION_HEADER)) / sizeof (UINT32);
     Xsdt->Header.Length = eCntR * sizeof (UINT64) + sizeof (EFI_ACPI_DESCRIPTION_HEADER);
     Xsdt->Header.Revision = 1;
-    CopyMem ((CHAR8 *) &Xsdt->Header.OemId, (CHAR8 *) &FadtPointer->Header.OemId, 6);
+    CopyMem ((CHAR8 *) &Xsdt->Header.OemId, (UINT8*) "APPLE  ", 6);
     Xsdt->Header.OemTableId = Rsdt->Header.OemTableId;
     Xsdt->Header.OemRevision = Rsdt->Header.OemRevision;
     Xsdt->Header.CreatorId = Rsdt->Header.CreatorId;
@@ -420,8 +420,8 @@ PatchACPI (
     return EFI_OUT_OF_RESOURCES;
   }
 
-  FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN)
-    *(ScanXSDT (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE));
+  FadtPointer = (EFI_ACPI_4_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN)
+    *(ScanXSDT (EFI_ACPI_4_0_FIXED_ACPI_DESCRIPTION_TABLE_SIGNATURE));
 
   if (FadtPointer == NULL) {
     DBG ("no FADT entry in RSDT\n");
@@ -609,24 +609,29 @@ PatchACPI (
   Status = gBS->AllocatePages (AllocateMaxAddress, EfiACPIReclaimMemory, 1, &BufferPtr);
 
   if (!EFI_ERROR (Status)) {
-    newFadt = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) BufferPtr;
+    newFadt = (EFI_ACPI_4_0_FIXED_ACPI_DESCRIPTION_TABLE*) (UINTN) BufferPtr;
     CopyMem ((UINT8*) newFadt, (UINT8*) FadtPointer, ((EFI_ACPI_DESCRIPTION_HEADER*) FadtPointer)->Length);
 
     if ((newFadt->Header.Revision == EFI_ACPI_1_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION) ||
         (newFadt->Header.Length < 0xF4)) {
       newFadt->Header.Length = 0xF4;
-      newFadt->Header.Revision = EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION;
+      newFadt->Header.Revision = EFI_ACPI_4_0_FIXED_ACPI_DESCRIPTION_TABLE_REVISION;
       newFadt->Reserved0 = 0; //ACPIspec said it should be 0, while 1 is possible, but no more
+      newFadt->PstateCnt = 0;
+      newFadt->Gpe1Base = 0x10;
+      newFadt->CstCnt = 0x85;
+//      newFadt->PLvl2Lat = 0x65;
+//      newFadt->PLvl3Lat = 0x3E9;
       newFadt->IaPcBootArch = 0x3;
-      // Reset Register Supported
-      newFadt->Flags |= EFI_ACPI_2_0_RESET_REG_SUP; 
-      newFadt->ResetReg.AddressSpaceId     = 1;
-      newFadt->ResetReg.RegisterBitWidth   = 8;
-      newFadt->ResetReg.RegisterBitOffset  = 0;
-      newFadt->ResetReg.Reserved           = 1;
       newFadt->Reserved2[0]        = 0;
       newFadt->Reserved2[1]        = 0;
       newFadt->Reserved2[2]        = 0;
+      // Reset Register Supported
+      newFadt->Flags |= EFI_ACPI_4_0_RESET_REG_SUP;
+      newFadt->ResetReg.AddressSpaceId     = 1;
+      newFadt->ResetReg.RegisterBitWidth   = 8;
+      newFadt->ResetReg.RegisterBitOffset  = 0;
+      newFadt->ResetReg.AccessSize         = 1;
       if (gSettings.ResetAddr == 0) {
         newFadt->ResetReg.Address = 0x64;
       }
@@ -637,42 +642,42 @@ PatchACPI (
       newFadt->XPm1aEvtBlk.AddressSpaceId     = 1;
       newFadt->XPm1aEvtBlk.RegisterBitWidth   = 0x20;
       newFadt->XPm1aEvtBlk.RegisterBitOffset  = 0;
-      newFadt->XPm1aEvtBlk.Reserved           = 0;
+      newFadt->XPm1aEvtBlk.AccessSize         = 3;
       newFadt->XPm1aEvtBlk.Address = (UINT64) (newFadt->Pm1aEvtBlk);
       newFadt->XPm1bEvtBlk.AddressSpaceId     = 1;
       newFadt->XPm1bEvtBlk.RegisterBitWidth   = 0;
       newFadt->XPm1bEvtBlk.RegisterBitOffset  = 0;
-      newFadt->XPm1bEvtBlk.Reserved           = 0;
+      newFadt->XPm1bEvtBlk.AccessSize         = 0;
       newFadt->XPm1bEvtBlk.Address            = (UINT64) (newFadt->Pm1bEvtBlk);
       newFadt->XPm1aCntBlk.AddressSpaceId     = 1;
       newFadt->XPm1aCntBlk.RegisterBitWidth   = 0x10;
       newFadt->XPm1aCntBlk.RegisterBitOffset  = 0;
-      newFadt->XPm1aCntBlk.Reserved           = 0;
+      newFadt->XPm1aCntBlk.AccessSize         = 2;
       newFadt->XPm1aCntBlk.Address = (UINT64) (newFadt->Pm1aCntBlk);
       newFadt->XPm1bCntBlk.AddressSpaceId     = 1;
       newFadt->XPm1bCntBlk.RegisterBitWidth   = 0;
       newFadt->XPm1bCntBlk.RegisterBitOffset  = 0;
-      newFadt->XPm1bCntBlk.Reserved           = 0;
+      newFadt->XPm1bCntBlk.AccessSize         = 0;
       newFadt->XPm1bCntBlk.Address = (UINT64) (newFadt->Pm1bCntBlk);
       newFadt->XPm2CntBlk.AddressSpaceId     = 1;
       newFadt->XPm2CntBlk.RegisterBitWidth   = 8;
       newFadt->XPm2CntBlk.RegisterBitOffset  = 0;
-      newFadt->XPm2CntBlk.Reserved           = 0;
+      newFadt->XPm2CntBlk.AccessSize         = 0;
       newFadt->XPm2CntBlk.Address  = (UINT64) (newFadt->Pm2CntBlk);
       newFadt->XPmTmrBlk.AddressSpaceId     = 1;
       newFadt->XPmTmrBlk.RegisterBitWidth   = 0x20;
       newFadt->XPmTmrBlk.RegisterBitOffset  = 0;
-      newFadt->XPmTmrBlk.Reserved           = 0;
+      newFadt->XPmTmrBlk.AccessSize         = 3;
       newFadt->XPmTmrBlk.Address   = (UINT64) (newFadt->PmTmrBlk);
       newFadt->XGpe0Blk.AddressSpaceId     = 1;
       newFadt->XGpe0Blk.RegisterBitWidth   = 0x80;
       newFadt->XGpe0Blk.RegisterBitOffset  = 0;
-      newFadt->XGpe0Blk.Reserved           = 0;
+      newFadt->XGpe0Blk.AccessSize         = 1;
       newFadt->XGpe0Blk.Address    = (UINT64) (newFadt->Gpe0Blk);
       newFadt->XGpe1Blk.AddressSpaceId     = 1;
       newFadt->XGpe1Blk.RegisterBitWidth   = 0;
       newFadt->XGpe1Blk.RegisterBitOffset  = 0;
-      newFadt->XGpe1Blk.Reserved           = 0;
+      newFadt->XGpe1Blk.AccessSize         = 1;
       newFadt->XGpe1Blk.Address    = (UINT64) (newFadt->Gpe1Blk);
     }
     
@@ -799,7 +804,7 @@ PatchACPI (
 
     Facs->Version = EFI_ACPI_4_0_FIRMWARE_ACPI_CONTROL_STRUCTURE_VERSION;
       
-    FadtPointer = (EFI_ACPI_2_0_FIXED_ACPI_DESCRIPTION_TABLE*) newFadt;
+    FadtPointer = (EFI_ACPI_4_0_FIXED_ACPI_DESCRIPTION_TABLE*) newFadt;
     FadtPointer->Header.Checksum = 0;
     FadtPointer->Header.Checksum = (UINT8) (256 - CalculateSum8 ((UINT8*) FadtPointer, FadtPointer->Header.Length));
 

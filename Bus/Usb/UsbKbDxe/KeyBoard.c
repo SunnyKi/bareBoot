@@ -1,7 +1,7 @@
 /** @file
   Helper functions for USB Keyboard Driver.
 
-Copyright (c) 2004 - 2013, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2004 - 2016, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -820,6 +820,7 @@ InitUSBKeyboard (
 
   InitQueue (&UsbKeyboardDevice->UsbKeyQueue, sizeof (USB_KEY));
   InitQueue (&UsbKeyboardDevice->EfiKeyQueue, sizeof (EFI_KEY_DATA));
+  InitQueue (&UsbKeyboardDevice->EfiKeyQueueForNotify, sizeof (EFI_KEY_DATA));
 
   //
   // Use the config out of the descriptor
@@ -1195,7 +1196,9 @@ KeyboardHandler (
       // Handle repeat key
       //
       KeyDescriptor = GetKeyDescriptor (UsbKeyboardDevice, CurKeyCodeBuffer[Index]);
-      ASSERT (KeyDescriptor != NULL);
+      if (KeyDescriptor == NULL) {
+        continue;
+      }
 
       if (KeyDescriptor->Modifier == EFI_NUM_LOCK_MODIFIER || KeyDescriptor->Modifier == EFI_CAPS_LOCK_MODIFIER) {
         //
@@ -1272,8 +1275,9 @@ USBParseKey (
     Dequeue (&UsbKeyboardDevice->UsbKeyQueue, &UsbKey, sizeof (UsbKey));
 
     KeyDescriptor = GetKeyDescriptor (UsbKeyboardDevice, UsbKey.KeyCode);
-    ASSERT (KeyDescriptor != NULL);
-
+    if (KeyDescriptor == NULL) {
+      continue;
+    }
     if (!UsbKey.Down) {
       //
       // Key is released.
@@ -1513,7 +1517,9 @@ UsbKeyCodeToEfiInputKey (
   // KeyCode must in the range of  [0x4, 0x65] or [0xe0, 0xe7].
   //
   KeyDescriptor = GetKeyDescriptor (UsbKeyboardDevice, KeyCode);
-  ASSERT (KeyDescriptor != NULL);
+  if (KeyDescriptor == NULL) {
+    return EFI_DEVICE_ERROR;
+  }
 
   if (KeyDescriptor->Modifier == EFI_NS_KEY_MODIFIER) {
     //
@@ -1660,19 +1666,24 @@ UsbKeyCodeToEfiInputKey (
     KeyData->KeyState.KeyToggleState |= EFI_KEY_STATE_EXPOSED;
   }
   //
-  // Invoke notification functions if the key is registered.
+  // Signal KeyNotify process event if this key pressed matches any key registered.
   //
   NotifyList = &UsbKeyboardDevice->NotifyList;
   for (Link = GetFirstNode (NotifyList); !IsNull (NotifyList, Link); Link = GetNextNode (NotifyList, Link)) {
     CurrentNotify = CR (Link, KEYBOARD_CONSOLE_IN_EX_NOTIFY, NotifyEntry, USB_KB_CONSOLE_IN_EX_NOTIFY_SIGNATURE);
     if (IsKeyRegistered (&CurrentNotify->KeyData, KeyData)) {
-      CurrentNotify->KeyNotificationFn (KeyData);
+      //
+      // The key notification function needs to run at TPL_CALLBACK
+      // while current TPL is TPL_NOTIFY. It will be invoked in
+      // KeyNotifyProcessHandler() which runs at TPL_CALLBACK.
+      //
+      Enqueue (&UsbKeyboardDevice->EfiKeyQueueForNotify, KeyData, sizeof (*KeyData));
+      gBS->SignalEvent (UsbKeyboardDevice->KeyNotifyProcessEvent);
     }
   }
 
   return EFI_SUCCESS;
 }
-
 
 /**
   Create the queue.
@@ -1697,10 +1708,10 @@ InitQueue (
     FreePool (Queue->Buffer[0]);
   }
 
-  Queue->Buffer[0] = AllocatePool (ARRAY_SIZE (Queue->Buffer) * ItemSize);
+  Queue->Buffer[0] = AllocatePool (sizeof (Queue->Buffer) / sizeof (Queue->Buffer[0]) * ItemSize);
   ASSERT (Queue->Buffer[0] != NULL);
 
-  for (Index = 1; Index < ARRAY_SIZE (Queue->Buffer); Index++) {
+  for (Index = 1; Index < sizeof (Queue->Buffer) / sizeof (Queue->Buffer[0]); Index++) {
     Queue->Buffer[Index] = ((UINT8 *) Queue->Buffer[Index - 1]) + ItemSize;
   }
 }

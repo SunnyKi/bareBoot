@@ -1,7 +1,7 @@
 /** @file
   The XHCI controller driver.
 
-Copyright (c) 2011 - 2014, Intel Corporation. All rights reserved.<BR>
+Copyright (c) 2011 - 2016, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials
 are licensed and made available under the terms and conditions of the BSD License
 which accompanies this distribution.  The full text of the license may be found at
@@ -128,7 +128,7 @@ XhcGetCapability (
   Xhc             = XHC_FROM_THIS (This);
   *MaxSpeed       = EFI_USB_SPEED_SUPER;
   *PortNumber     = (UINT8) (Xhc->HcSParams1.Data.MaxPorts);
-  *Is64BitCapable = (UINT8) (Xhc->HcCParams.Data.Ac64);
+  *Is64BitCapable = (UINT8) Xhc->Support64BitDma;
   DEBUG ((EFI_D_INFO, "XhcGetCapability: %d ports, 64 bit %d\n", *PortNumber, *Is64BitCapable));
 
   gBS->RestoreTPL (OldTpl);
@@ -428,7 +428,7 @@ XhcGetRootHubPortStatus (
   //
   // Convert the XHCI port/port change state to UEFI status
   //
-  MapSize = ARRAY_SIZE (mUsbPortStateMap);
+  MapSize = sizeof (mUsbPortStateMap) / sizeof (USB_PORT_STATE_MAP);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (XHC_BIT_IS_SET (State, mUsbPortStateMap[Index].HwState)) {
@@ -442,7 +442,7 @@ XhcGetRootHubPortStatus (
     PortStatus->PortStatus |= USB_PORT_STAT_SUSPEND;
   }
 
-  MapSize = ARRAY_SIZE (mUsbPortChangeMap);
+  MapSize = sizeof (mUsbPortChangeMap) / sizeof (USB_PORT_STATE_MAP);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (XHC_BIT_IS_SET (State, mUsbPortChangeMap[Index].HwState)) {
@@ -450,7 +450,7 @@ XhcGetRootHubPortStatus (
     }
   }
 
-  MapSize = ARRAY_SIZE (mUsbClearPortChangeMap);
+  MapSize = sizeof (mUsbClearPortChangeMap) / sizeof (USB_CLEAR_PORT_MAP);
 
   for (Index = 0; Index < MapSize; Index++) {
     if (XHC_BIT_IS_SET (State, mUsbClearPortChangeMap[Index].HwState)) {
@@ -908,17 +908,28 @@ XhcControlTransfer (
   *TransferResult = Urb->Result;
   *DataLength     = Urb->Completed;
 
-  if (*TransferResult == EFI_USB_NOERROR) {
-    Status = EFI_SUCCESS;
-  } else if (*TransferResult == EFI_USB_ERR_STALL) {
-    RecoveryStatus = XhcRecoverHaltedEndpoint(Xhc, Urb);
-    if (EFI_ERROR (RecoveryStatus)) {
-      DEBUG ((EFI_D_ERROR, "XhcControlTransfer: XhcRecoverHaltedEndpoint failed\n"));
+  if (Status == EFI_TIMEOUT) {
+    //
+    // The transfer timed out. Abort the transfer by dequeueing of the TD.
+    //
+    RecoveryStatus = XhcDequeueTrbFromEndpoint(Xhc, Urb);
+    if (EFI_ERROR(RecoveryStatus)) {
+      DEBUG((EFI_D_ERROR, "XhcControlTransfer: XhcDequeueTrbFromEndpoint failed\n"));
     }
-    Status = EFI_DEVICE_ERROR;
     goto FREE_URB;
   } else {
-    goto FREE_URB;
+    if (*TransferResult == EFI_USB_NOERROR) {
+      Status = EFI_SUCCESS;
+    } else if (*TransferResult == EFI_USB_ERR_STALL) {
+      RecoveryStatus = XhcRecoverHaltedEndpoint(Xhc, Urb);
+      if (EFI_ERROR (RecoveryStatus)) {
+        DEBUG ((EFI_D_ERROR, "XhcControlTransfer: XhcRecoverHaltedEndpoint failed\n"));
+      }
+      Status = EFI_DEVICE_ERROR;
+      goto FREE_URB;
+    } else {
+      goto FREE_URB;
+    }
   }
 
   Xhc->PciIo->Flush (Xhc->PciIo);
@@ -947,7 +958,7 @@ XhcControlTransfer (
         // Store a copy of device scriptor as hub device need this info to configure endpoint.
         //
         CopyMem (&Xhc->UsbDevContext[SlotId].DevDesc, Data, *DataLength);
-        if (Xhc->UsbDevContext[SlotId].DevDesc.BcdUSB == 0x0300) {
+        if (Xhc->UsbDevContext[SlotId].DevDesc.BcdUSB >= 0x0300) {
           //
           // If it's a usb3.0 device, then its max packet size is a 2^n.
           //
@@ -1061,21 +1072,21 @@ XhcControlTransfer (
     //
     // Convert the XHCI port/port change state to UEFI status
     //
-    MapSize = ARRAY_SIZE (mUsbHubPortStateMap);
+    MapSize = sizeof (mUsbHubPortStateMap) / sizeof (USB_PORT_STATE_MAP);
     for (Index = 0; Index < MapSize; Index++) {
       if (XHC_BIT_IS_SET (State, mUsbHubPortStateMap[Index].HwState)) {
         PortStatus.PortStatus = (UINT16) (PortStatus.PortStatus | mUsbHubPortStateMap[Index].UefiState);
       }
     }
 
-    MapSize = ARRAY_SIZE (mUsbHubPortChangeMap);
+    MapSize = sizeof (mUsbHubPortChangeMap) / sizeof (USB_PORT_STATE_MAP);
     for (Index = 0; Index < MapSize; Index++) {
       if (XHC_BIT_IS_SET (State, mUsbHubPortChangeMap[Index].HwState)) {
         PortStatus.PortChangeStatus = (UINT16) (PortStatus.PortChangeStatus | mUsbHubPortChangeMap[Index].UefiState);
       }
     }
 
-    MapSize = ARRAY_SIZE (mUsbHubClearPortChangeMap);
+    MapSize = sizeof (mUsbHubClearPortChangeMap) / sizeof (USB_CLEAR_PORT_MAP);
 
     for (Index = 0; Index < MapSize; Index++) {
       if (XHC_BIT_IS_SET (State, mUsbHubClearPortChangeMap[Index].HwState)) {
@@ -1244,14 +1255,24 @@ XhcBulkTransfer (
   *TransferResult = Urb->Result;
   *DataLength     = Urb->Completed;
 
-  if (*TransferResult == EFI_USB_NOERROR) {
-    Status = EFI_SUCCESS;
-  } else if (*TransferResult == EFI_USB_ERR_STALL) {
-    RecoveryStatus = XhcRecoverHaltedEndpoint(Xhc, Urb);
-    if (EFI_ERROR (RecoveryStatus)) {
-      DEBUG ((EFI_D_ERROR, "XhcBulkTransfer: XhcRecoverHaltedEndpoint failed\n"));
+  if (Status == EFI_TIMEOUT) {
+    //
+    // The transfer timed out. Abort the transfer by dequeueing of the TD.
+    //
+    RecoveryStatus = XhcDequeueTrbFromEndpoint(Xhc, Urb);
+    if (EFI_ERROR(RecoveryStatus)) {
+      DEBUG((EFI_D_ERROR, "XhcBulkTransfer: XhcDequeueTrbFromEndpoint failed\n"));
     }
-    Status = EFI_DEVICE_ERROR;
+  } else {
+    if (*TransferResult == EFI_USB_NOERROR) {
+      Status = EFI_SUCCESS;
+    } else if (*TransferResult == EFI_USB_ERR_STALL) {
+      RecoveryStatus = XhcRecoverHaltedEndpoint(Xhc, Urb);
+      if (EFI_ERROR (RecoveryStatus)) {
+        DEBUG ((EFI_D_ERROR, "XhcBulkTransfer: XhcRecoverHaltedEndpoint failed\n"));
+      }
+      Status = EFI_DEVICE_ERROR;
+    }
   }
 
   Xhc->PciIo->Flush (Xhc->PciIo);
@@ -1486,10 +1507,6 @@ XhcSyncInterruptTransfer (
     return EFI_INVALID_PARAMETER;
   }
 
-  if (!XHCI_IS_DATAIN (EndPointAddress)) {
-    return EFI_INVALID_PARAMETER;
-  }
-
   if ((*DataToggle != 1) && (*DataToggle != 0)) {
     return EFI_INVALID_PARAMETER;
   }
@@ -1545,14 +1562,24 @@ XhcSyncInterruptTransfer (
   *TransferResult = Urb->Result;
   *DataLength     = Urb->Completed;
 
-  if (*TransferResult == EFI_USB_NOERROR) {
-    Status = EFI_SUCCESS;
-  } else if (*TransferResult == EFI_USB_ERR_STALL) {
-    RecoveryStatus = XhcRecoverHaltedEndpoint(Xhc, Urb);
-    if (EFI_ERROR (RecoveryStatus)) {
-      DEBUG ((EFI_D_ERROR, "XhcSyncInterruptTransfer: XhcRecoverHaltedEndpoint failed\n"));
+  if (Status == EFI_TIMEOUT) {
+    //
+    // The transfer timed out. Abort the transfer by dequeueing of the TD.
+    //
+    RecoveryStatus = XhcDequeueTrbFromEndpoint(Xhc, Urb);
+    if (EFI_ERROR(RecoveryStatus)) {
+      DEBUG((EFI_D_ERROR, "XhcSyncInterruptTransfer: XhcDequeueTrbFromEndpoint failed\n"));
     }
-    Status = EFI_DEVICE_ERROR;
+  } else {
+    if (*TransferResult == EFI_USB_NOERROR) {
+      Status = EFI_SUCCESS;
+    } else if (*TransferResult == EFI_USB_ERR_STALL) {
+      RecoveryStatus = XhcRecoverHaltedEndpoint(Xhc, Urb);
+      if (EFI_ERROR (RecoveryStatus)) {
+        DEBUG ((EFI_D_ERROR, "XhcSyncInterruptTransfer: XhcRecoverHaltedEndpoint failed\n"));
+      }
+      Status = EFI_DEVICE_ERROR;
+    }
   }
 
   Xhc->PciIo->Flush (Xhc->PciIo);
@@ -1833,7 +1860,7 @@ XhcCreateUsbHc (
   //
   Status = gBS->CreateEvent (
                   EVT_TIMER | EVT_NOTIFY_SIGNAL,
-                  TPL_CALLBACK,
+                  TPL_NOTIFY,
                   XhcMonitorAsyncRequests,
                   Xhc,
                   &Xhc->PollTimer
@@ -1854,7 +1881,7 @@ ON_ERROR:
   One notified function to stop the Host Controller when gBS->ExitBootServices() called.
 
   @param  Event                   Pointer to this event
-  @param  Context                 Event hanlder private data
+  @param  Context                 Event handler private data
 
 **/
 VOID
@@ -1976,7 +2003,7 @@ XhcDriverBindingStart (
                     &Supports
                     );
   if (!EFI_ERROR (Status)) {
-    Supports &= EFI_PCI_DEVICE_ENABLE;
+    Supports &= (UINT64)EFI_PCI_DEVICE_ENABLE;
     Status = PciIo->Attributes (
                       PciIo,
                       EfiPciIoAttributeOperationEnable,
@@ -1998,6 +2025,26 @@ XhcDriverBindingStart (
   if (Xhc == NULL) {
     DEBUG ((EFI_D_ERROR, "XhcDriverBindingStart: failed to create USB2_HC\n"));
     return EFI_OUT_OF_RESOURCES;
+  }
+
+  //
+  // Enable 64-bit DMA support in the PCI layer if this controller
+  // supports it.
+  //
+  if (Xhc->HcCParams.Data.Ac64 != 0) {
+    Status = PciIo->Attributes (
+                      PciIo,
+                      EfiPciIoAttributeOperationEnable,
+                      EFI_PCI_IO_ATTRIBUTE_DUAL_ADDRESS_CYCLE,
+                      NULL
+                      );
+    if (!EFI_ERROR (Status)) {
+      Xhc->Support64BitDma = TRUE;
+    } else {
+      DEBUG ((EFI_D_WARN,
+        "%a: failed to enable 64-bit DMA on 64-bit capable controller @ %p (%r)\n",
+        __FUNCTION__, Controller, Status));
+    }
   }
 
   XhcSetBiosOwnership (Xhc);
@@ -2109,7 +2156,7 @@ CLOSE_PCIIO:
 
 
 /**
-  Stop this driver on ControllerHandle. Support stoping any child handles
+  Stop this driver on ControllerHandle. Support stopping any child handles
   created by this driver.
 
   @param  This                 Protocol instance pointer.
