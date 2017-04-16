@@ -60,6 +60,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
+  bareBoot/bareBoot.dec
 
 [FeaturePcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport  ## CONSUMES
@@ -74,6 +75,8 @@
   DebugLib
   PcdLib
   ReportStatusCodeLib
+  MemLogLib
+  ShiftKeysLib
 
 [Guids]
   gEfiEventExitBootServicesGuid                 ## SOMETIMES_CONSUMES ## Event

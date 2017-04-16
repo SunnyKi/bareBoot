@@ -50,6 +50,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  bareBoot/bareBoot.dec
 
 [LibraryClasses]
   MemoryAllocationLib
@@ -60,6 +61,8 @@
   BaseMemoryLib
   DebugLib
   ReportStatusCodeLib
+  MemLogLib
+  ShiftKeysLib
 
 [Guids]
   gEfiEventExitBootServicesGuid                 ## SOMETIMES_CONSUMES ## Event

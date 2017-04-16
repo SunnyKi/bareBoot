@@ -61,6 +61,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  bareBoot/bareBoot.dec
 
 [LibraryClasses]
   BaseLib
@@ -71,6 +72,8 @@
   BaseMemoryLib
   DebugLib
   DevicePathLib
+  MemLogLib
+  ShiftKeysLib
 
 
 [Protocols]

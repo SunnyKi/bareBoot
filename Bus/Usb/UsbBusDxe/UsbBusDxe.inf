@@ -49,6 +49,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
+  bareBoot/bareBoot.dec
 
 
 [LibraryClasses]
@@ -60,6 +61,8 @@
   BaseMemoryLib
   DebugLib
   ReportStatusCodeLib
+  MemLogLib
+  ShiftKeysLib
 
 
 [Protocols]
