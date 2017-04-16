@@ -231,12 +231,12 @@
 
   # Usb Support
 !ifdef SPEEDUP
-  bareBoot/Bus/Pci/UhciDxe/UhciDxe.inf
-  bareBoot/Bus/Pci/EhciDxe/EhciDxe.inf
-  bareBoot/Bus/Pci/XhciDxe/XhciDxe.inf
-  bareBoot/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
-  bareBoot/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
-  bareBoot/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+  bareBoot/MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
+  bareBoot/MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
+  bareBoot/MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
+  bareBoot/MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+  bareBoot/MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+  bareBoot/MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !else
   MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
   MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf

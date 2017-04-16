@@ -872,7 +872,7 @@ ClearScreen:
 	push	Zcx
 
 	mov	al, ' '
-	mov	ah, 0x0C
+	mov	ah, 0x00
 	mov	Zdi, 0x000B8000
 	mov	Zcx, 80 * 24
 
