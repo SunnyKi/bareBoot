@@ -434,7 +434,7 @@ UpdateBootStrings (
   mAVersion = AllocatePool (USlen);
   (VOID) AsciiSPrint (mAVersion, USlen, "%s", uTmpBuff);
 
-  TokenToUpdate = STRING_TOKEN (STR_MINI_CLOVER_VERSION);
+  TokenToUpdate = STRING_TOKEN (STR_BAREBOOT_VERSION);
   HiiSetString (gBootManagerPrivate.HiiHandle, TokenToUpdate, NewString, NULL);
   FreePool (NewString);
 

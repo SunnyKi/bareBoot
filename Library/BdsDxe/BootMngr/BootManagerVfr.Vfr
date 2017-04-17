@@ -47,12 +47,12 @@ formset
       align center;
 
     banner
-      title = STRING_TOKEN(STR_MINI_CLOVER_VERSION),
+      title = STRING_TOKEN(STR_BAREBOOT_VERSION),
       line  1,
       align right;
 
     banner
-      title = STRING_TOKEN(STR_MINI_CLOVER_VERSION_UL),
+      title = STRING_TOKEN(STR_BAREBOOT_VERSION_UL),
       line  2,
       align right;
 
