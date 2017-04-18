@@ -1841,11 +1841,11 @@ GetUserSettings (
   dictPointer = GetDictionary (gConfigPlist, "PCI");
 
   if (dictPointer != NULL) {
-    gSettings.PCIRootUID = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0xFFFF);
+    gSettings.PCIRootUID   = (UINT16) GetNumProperty (dictPointer, "PCIRootUID", 0xFFFF);
     gSettings.ETHInjection = GetBoolProperty (dictPointer, "ETHInjection", FALSE);
     gSettings.USBInjection = GetBoolProperty (dictPointer, "USBInjection", FALSE);
-    gSettings.HDALayoutId =
-      (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
+    gSettings.ResetHDA     = GetBoolProperty (dictPointer, "ResetHDA", FALSE);
+    gSettings.HDALayoutId  = (UINT16) GetNumProperty (dictPointer, "HDAInjection", 0);
 
     prop = plDictFind (dictPointer, "DeviceProperties", 16, plKindString);
 

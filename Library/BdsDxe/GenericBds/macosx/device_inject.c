@@ -2357,6 +2357,17 @@ SetDevices (
               DBG ("Device Inject: HDA LayoutId = %d\n", gSettings.HDALayoutId);
               TmpDirty = set_hda_props (PciIo, &PCIdevice);
               StringDirty |= TmpDirty;
+              if (gSettings.ResetHDA) {
+                //Slice method from VoodooHDA
+                UINT8 Value = 0;
+                Status = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x44, 1, &Value);
+
+                if (EFI_ERROR (Status)) {
+                  continue;
+                }
+                Value &= 0xf8;
+                PciIo->Pci.Write (PciIo, EfiPciIoWidthUint8, 0x44, 1, &Value);
+              }
             }
           }
         }
