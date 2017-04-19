@@ -98,12 +98,12 @@ INF  MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 
   # Usb Support
 !ifdef SPEEDUP
-INF  bareBoot/MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
-INF  bareBoot/MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
-INF  bareBoot/MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
-INF  bareBoot/MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
-INF  bareBoot/MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
-INF  bareBoot/MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+INF  Speedup/Bus/Pci/UhciDxe/UhciDxe.inf
+INF  Speedup/Bus/Pci/EhciDxe/EhciDxe.inf
+INF  Speedup/Bus/Pci/XhciDxe/XhciDxe.inf
+INF  Speedup/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+INF  Speedup/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+INF  Speedup/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !else
 !ifndef NO_OHCI
 INF  QuarkSocPkg/QuarkSouthCluster/Usb/Ohci/Dxe/OhciDxe.inf

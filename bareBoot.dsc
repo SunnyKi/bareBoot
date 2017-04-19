@@ -227,15 +227,14 @@
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
 !endif
 
-
   # Usb Support
 !ifdef SPEEDUP
-  bareBoot/MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
-  bareBoot/MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
-  bareBoot/MdeModulePkg/Bus/Pci/XhciDxe/XhciDxe.inf
-  bareBoot/MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
-  bareBoot/MdeModulePkg/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
-  bareBoot/MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+  Speedup/Bus/Pci/UhciDxe/UhciDxe.inf
+  Speedup/Bus/Pci/EhciDxe/EhciDxe.inf
+  Speedup/Bus/Pci/XhciDxe/XhciDxe.inf
+  Speedup/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+  Speedup/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
+  Speedup/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !else
   MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
   MdeModulePkg/Bus/Pci/EhciDxe/EhciDxe.inf
