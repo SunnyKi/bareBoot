@@ -2,10 +2,8 @@
 
 set -e
 
-export WORKSPACE=$HOME/src
-export EDK_TOOLS_PATH=$WORKSPACE/edk2/BaseTools
-PACKAGES_PATH=$WORKSPACE/edk2/bareBoot:$WORKSPACE/edk2
-export PACKAGES_PATH
+export PACKAGES_PATH=$HOME/src/edk2
+export EDK_TOOLS_PATH=$HOME/src/edk2/BaseTools
 export GCC5_BIN=$HOME/src/opt/local/cross/bin/x86_64-clover-linux-gnu-
 export NASM_PREFIX=$HOME/src/opt/local/bin/
 
@@ -51,23 +49,23 @@ fnMainBuildScript ()
 {
 echo Running edk2 build for bareBoot$PROCESSOR with $DEF
 
-VERFILE=$WORKSPACE/edk2/bareBoot/Version.h
+VERFILE=Version.h
 echo "#define FIRMWARE_VERSION L\"2.31\"" > $VERFILE
 echo "#define FIRMWARE_BUILDDATE L\"`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $VERFILE
-echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/edk2/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
+echo "#define FIRMWARE_REVISION L\"`git tag | tail -n 1`\"" >> $VERFILE
 echo "#define FIRMWARE_BUILDDATE_ASCII \" (`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`)\"" >> $VERFILE
-echo "#define FIRMWARE_REVISION_ASCII \"bareBoot `cd $WORKSPACE/edk2/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
+echo "#define FIRMWARE_REVISION_ASCII \"bareBoot `git tag | tail -n 1`\"" >> $VERFILE
 
-build -j $WORKSPACE/edk2/Build/build.log -p $WORKSPACE/edk2/bareBoot/bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 $DEF
+build -j Build/build.log -p bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 $DEF
 }
 
 
 fnMainPostBuildScript ()
 {
 export BASETOOLS_DIR=$EDK_TOOLS_PATH/Source/C/bin
-export BOOTSECTOR_BIN_DIR=$WORKSPACE/edk2/bareBoot/BootSector/bin
-export BOOTSECTOR2_BIN_DIR=$WORKSPACE/edk2/bareBoot/BootSector2/bin
-export BUILD_DIR=$WORKSPACE/edk2/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"
+export BOOTSECTOR_BIN_DIR=BootSector/bin
+export BOOTSECTOR2_BIN_DIR=BootSector2/bin
+export BUILD_DIR=Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"
 
 echo Compressing bareBootEFIMainFv.FV ...
 $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/bareBootEFIMAINFV.z $BUILD_DIR/FV/BAREBOOTEFIMAINFV.Fv

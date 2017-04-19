@@ -1,7 +1,6 @@
 #!/bin/sh
-export BB_SOURCE_PATH=~/src/edk2/bareBoot
 export BB_ARCHIVE_PATH=~/src/bb
-export BUILD_PATH=~/src/edk2/Build
+export BUILD_PATH=Build
 
 if [[ $# -gt 0 ]];
 then
@@ -12,50 +11,42 @@ fi
 echo $ARCHIVE_NAME
 
 #SPEEDUP
-cd $BB_SOURCE_PATH
-source cbuild.sh -s -ia32 
+source cbuild.sh -s -ia32
 cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/for\ HDD/ata/32/
 rm -rf $BUILD_PATH/bareboot/
 
-cd $BB_SOURCE_PATH
-source cbuild.sh -s 
+source cbuild.sh -s
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/for\ HDD/ata/64/
 #cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/Efildgpt $BB_ARCHIVE_PATH/for\ HDD/ata/64/
 rm -rf $BUILD_PATH/bareboot/
 
-cd $BB_SOURCE_PATH
-source cbuild.sh -s -ia32 -b 
+source cbuild.sh -s -ia32 -b
 cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/for\ HDD/BlockIo/32/
 rm -rf $BUILD_PATH/bareboot/
 
-cd $BB_SOURCE_PATH
-source cbuild.sh -s -b 
+source cbuild.sh -s -b
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/for\ HDD/BlockIo/64/
 #cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/Efildgpt $BB_ARCHIVE_PATH/for\ HDD/BlockIo/64/
 rm -rf $BUILD_PATH/bareboot/
 
 # no SPEEDUP
-cd $BB_SOURCE_PATH
-source cbuild.sh -ia32 
+source cbuild.sh -ia32
 cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/standard/ata/32/
 #cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC5/FV/Efildr20 $BB_ARCHIVE_PATH/standard/ata/32/
 rm -rf $BUILD_PATH/bareboot/
 
-cd $BB_SOURCE_PATH
-source cbuild.sh  
+source cbuild.sh
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/standard/ata/64/
 #cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/Efildr20 $BB_ARCHIVE_PATH/standard/ata/64/
 #cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/Efildgpt $BB_ARCHIVE_PATH/standard/ata/64/
 rm -rf $BUILD_PATH/bareboot/
 
-cd $BB_SOURCE_PATH
-source cbuild.sh -b -ia32 
+source cbuild.sh -b -ia32
 cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/standard/BlockIo/32/
 #cp -vf $BUILD_PATH/bareboot/IA32/RELEASE_GCC5/FV/Efildr20 $BB_ARCHIVE_PATH/standard/BlockIo/32/
 rm -rf $BUILD_PATH/bareboot/
 
-cd $BB_SOURCE_PATH
-source cbuild.sh -b 
+source cbuild.sh -b
 cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/boot $BB_ARCHIVE_PATH/standard/BlockIo/64/
 #cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/Efildr20 $BB_ARCHIVE_PATH/standard/BlockIo/64/
 #cp -vf $BUILD_PATH/bareboot/X64/RELEASE_GCC5/FV/Efildgpt $BB_ARCHIVE_PATH/standard/BlockIo/64/

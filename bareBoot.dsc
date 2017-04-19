@@ -26,11 +26,11 @@
   PLATFORM_GUID                  = 199E24E0-0989-42AA-87F2-611A8C397E72
   PLATFORM_VERSION               = 0.4
   DSC_SPECIFICATION              = 0x00010005
-  OUTPUT_DIRECTORY               = $(WORKSPACE)/edk2/Build/bareBoot/$(ARCH)
+  OUTPUT_DIRECTORY               = Build/bareBoot/$(ARCH)
   SUPPORTED_ARCHITECTURES        = IA32 | X64
   BUILD_TARGETS                  = NOOPT | DEBUG | RELEASE
   SKUID_IDENTIFIER               = DEFAULT
-  FLASH_DEFINITION               = bareBoot/bareBoot.fdf
+  FLASH_DEFINITION               = bareBoot.fdf
 
 ################################################################################
 #
@@ -101,7 +101,7 @@
   #
   # Platform
   #
-  TimerLib|bareBoot/Library/DuetTimerLib/DuetTimerLib.inf
+  TimerLib|Library/DuetTimerLib/DuetTimerLib.inf
   #
   # Misc
   #
@@ -133,10 +133,10 @@
 
   DebugPrintErrorLevelLib|MdePkg/Library/BaseDebugPrintErrorLevelLib/BaseDebugPrintErrorLevelLib.inf  
   ReportStatusCodeLib|MdePkg/Library/BaseReportStatusCodeLibNull/BaseReportStatusCodeLibNull.inf
-  MemLogLib|bareBoot/Library/MemLogLibDefault/MemLogLibDefault.inf
-  PListLib|bareBoot/Library/PListLib/PListLib.inf
-  ShiftKeysLib|bareBoot/Library/ShiftKeysLib/ShiftKeysLib.inf
-  LegacyBiosThunkLib|bareBoot/Library/LegacyBiosThunkLib/LegacyBiosThunkLib.inf
+  MemLogLib|Library/MemLogLibDefault/MemLogLibDefault.inf
+  PListLib|Library/PListLib/PListLib.inf
+  ShiftKeysLib|Library/ShiftKeysLib/ShiftKeysLib.inf
+  LegacyBiosThunkLib|Library/LegacyBiosThunkLib/LegacyBiosThunkLib.inf
 
   UefiBootManagerLib|MdeModulePkg/Library/UefiBootManagerLib/UefiBootManagerLib.inf
   SortLib|MdeModulePkg/Library/UefiSortLib/UefiSortLib.inf
@@ -147,9 +147,9 @@
 
 ###################################################################################################
 [Components]
-  bareBoot/BootSector/BootSector.inf
-  bareBoot/BootSector2/BootSector2.inf
-  bareBoot/DxeIpl/DxeIpl.inf 
+  BootSector/BootSector.inf
+  BootSector2/BootSector2.inf
+  DxeIpl/DxeIpl.inf 
   MdeModulePkg/Core/Dxe/DxeMain.inf 
 
   MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
@@ -170,22 +170,22 @@
   MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
   MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 
-  bareBoot/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
+  GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 #  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 !ifdef DUETSTUFF
   DuetPkg/SmbiosGenDxe/SmbiosGen.inf
 !else
-  bareBoot/SmbiosGenDxe/SmbiosGen.inf
+  SmbiosGenDxe/SmbiosGen.inf
 !endif
 
-  bareBoot/EfiLdr/EfiLdr.inf {
+  EfiLdr/EfiLdr.inf {
     <LibraryClasses>
       DebugLib|MdePkg/Library/BaseDebugLibNull/BaseDebugLibNull.inf
       NULL|MdeModulePkg/Library/LzmaCustomDecompressLib/LzmaCustomDecompressLib.inf
   }
 
-  bareBoot/Library/BdsDxe/BdsDxe.inf {
+  Library/BdsDxe/BdsDxe.inf {
     <LibraryClasses>
       PcdLib|MdePkg/Library/DxePcdLib/DxePcdLib.inf
   }
@@ -194,21 +194,21 @@
 !ifdef EDK2CPUDXE
   UefiCpuPkg/CpuDxe/CpuDxe.inf
 !else
-  bareBoot/Cpu/CpuDxe/Cpu.inf
+  Cpu/CpuDxe/Cpu.inf
 !endif
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
-  bareBoot/AcpiResetDxe/Reset.inf
+  AcpiResetDxe/Reset.inf
   MdeModulePkg/Universal/Metronome/Metronome.inf
 
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
-  bareBoot/LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+  LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 !ifdef DUETSTUFF
   DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 !else
-  bareBoot/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
-  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+  PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
+  PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 !endif
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
@@ -218,7 +218,7 @@
 #  IntelFrameworkModulePkg/Csm/BiosThunk/BlockIoDxe/BlockIoDxe.inf
 
 !ifdef BLOCKIO
-  bareBoot/BlockIoDxe/BlockIoDxe.inf
+  BlockIoDxe/BlockIoDxe.inf
 !else
   MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
   MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
@@ -250,30 +250,24 @@
   PcAtChipsetPkg/IsaAcpiDxe/IsaAcpi.inf
   IntelFrameworkModulePkg/Bus/Isa/IsaBusDxe/IsaBusDxe.inf
   IntelFrameworkModulePkg/Bus/Isa/Ps2KeyboardDxe/Ps2keyboardDxe.inf
-  bareBoot/BiosKeyboard/KeyboardDxe.inf
+  BiosKeyboard/KeyboardDxe.inf
 
   MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
   MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 !ifdef EDK2PART
   MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
 !else
-  bareBoot/PartitionDxe/PartitionDxe.inf
+  PartitionDxe/PartitionDxe.inf
 !endif
 
 
   # Bios Thunk
-  bareBoot/BiosVideoThunkDxe/BiosVideo.inf
+  BiosVideoThunkDxe/BiosVideo.inf
 
   # HFS+
 !ifdef VBOXHFS
-  bareBoot/VBoxFsDxe/VBoxHfs.inf
+  VBoxFsDxe/VBoxHfs.inf
 !endif
-
-  # ACPI Support
-#  MdeModulePkg/Universal/Acpi/AcpiTableDxe/AcpiTableDxe.inf
-#  MdeModulePkg/Universal/Acpi/AcpiPlatformDxe/AcpiPlatformDxe.inf
-#  bareBoot/OsxAcpiTableDxe/AcpiTableDxe.inf
-#  bareBoot/OsxAcpiPlatformDxe/AcpiPlatformDxe.inf
 
   # DataHub
   IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf

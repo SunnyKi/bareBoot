@@ -20,7 +20,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
-  bareBoot/bareBoot.dec
+  bareBoot.dec
 
 [LibraryClasses]
   DebugLib

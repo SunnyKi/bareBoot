@@ -23,7 +23,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  bareBoot/bareBoot.dec
+  bareBoot.dec
 
 [Sources]
   bootsect.asm | INTEL

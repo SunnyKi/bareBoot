@@ -53,5 +53,5 @@
   MdePkg/MdePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
   IntelFrameworkModulePkg/IntelFrameworkModulePkg.dec
-  bareBoot/bareBoot.dec
+  bareBoot.dec
 

@@ -25,7 +25,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  bareBoot/bareBoot.dec
+  bareBoot.dec
   MdeModulePkg/MdeModulePkg.dec
   IntelFrameworkPkg/IntelFrameworkPkg.dec
 

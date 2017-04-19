@@ -40,7 +40,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  bareBoot/bareBoot.dec
+  bareBoot.dec
 
 [LibraryClasses]
   BaseLib

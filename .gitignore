@@ -3,6 +3,7 @@ Version.h
 Debug/
 Release/
 bin/
+Build/
 .vs
 
 *.com

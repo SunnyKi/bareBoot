@@ -60,7 +60,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  bareBoot/bareBoot.dec
+  bareBoot.dec
 
 [FeaturePcd]
   gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport  ## CONSUMES

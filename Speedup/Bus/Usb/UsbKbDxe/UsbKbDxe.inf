@@ -54,7 +54,7 @@
 [Packages]
   MdePkg/MdePkg.dec
   MdeModulePkg/MdeModulePkg.dec
-  bareBoot/bareBoot.dec
+  bareBoot.dec
 
 [LibraryClasses]
   MemoryAllocationLib
