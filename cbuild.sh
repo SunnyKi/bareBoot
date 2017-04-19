@@ -55,6 +55,9 @@ echo "#define FIRMWARE_BUILDDATE L\"`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`\"" >>
 echo "#define FIRMWARE_REVISION L\"`git tag | tail -n 1`\"" >> $VERFILE
 echo "#define FIRMWARE_BUILDDATE_ASCII \" (`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`)\"" >> $VERFILE
 echo "#define FIRMWARE_REVISION_ASCII \"bareBoot `git tag | tail -n 1`\"" >> $VERFILE
+if ! [ -d Build ]; then
+  mkdir Build
+fi
 
 build -j Build/build.log -p bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 $DEF
 }
