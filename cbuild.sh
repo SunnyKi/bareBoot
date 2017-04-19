@@ -1,12 +1,27 @@
 #!/bin/sh
 
+set -e
+
+export WORKSPACE=$HOME/src
+export EDK_TOOLS_PATH=$WORKSPACE/edk2/BaseTools
+PACKAGES_PATH=$WORKSPACE/edk2/bareBoot:$WORKSPACE/edk2
+export PACKAGES_PATH
+export GCC5_BIN=$HOME/src/opt/local/cross/bin/x86_64-clover-linux-gnu-
+export NASM_PREFIX=$HOME/src/opt/local/bin/
+
+echo NASM_PREFIX: $NASM_PREFIX
+echo GCC5_BIN: $GCC5_BIN
+
+RECONFIG=FALSE
+. $EDK_TOOLS_PATH/BuildEnv
+
+
 ## MAIN ARGUMENT PART##
 
 export TARGET_TOOLS=GCC5
 export PROCESSOR=X64
 export TARGET=RELEASE
 export DEF="-D NO_LOGO -D NO_FONT"
-export GCC5_BIN=$HOME/src/opt/local/cross/bin/x86_64-clover-linux-gnu-
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -16,11 +31,8 @@ while [[ $# -gt 0 ]]; do
         "-release") TARGET=RELEASE;;
         "-clean")   export ARG=clean;;
         "-cleanall") export ARG=cleanall;;
-#use BlockIoDxe instead SataControllerDxe and Co
         "-b") DEF="$DEF -D BLOCKIO" ;;
-#don't use usb drivers and oem config dir
         "-s") DEF="$DEF -D SPEEDUP" ;;
-#use VBoxFsDxe instead HFSPlus
         "-vhfs") DEF="$DEF -D VBOXHFS" ;;
         "-ohci") DEF="$DEF -D OHCI" ;;
         "-edk2_cpudxe") DEF="$DEF -D EDK2_CPUDXE" ;;
@@ -36,85 +48,29 @@ while [[ $# -gt 0 ]]; do
 done
 
 fnMainBuildScript ()
-# Function MAIN bareBoot BUILD SCRIPT
 {
-set -e
-shopt -s nocasematch
-if [ -z "$WORKSPACE" ]
-then
-  echo Initializing workspace
-  if [ ! -e `pwd`/edksetup.sh ]
-  then
-    cd ..
-  fi
-  export EDK_TOOLS_PATH=`pwd`/BaseTools
-  echo $EDK_TOOLS_PATH
-  source edksetup.sh BaseTools
-else
-  echo Building from: $WORKSPACE
-fi
-if [ -z "$NASM_PREFIX" ]
-then
-  export NASM_PREFIX=$HOME/src/opt/local/bin/
-fi
-  echo NASM_PREFIX: $NASM_PREFIX
-echo GCC5_BIN: $GCC5_BIN
-
-
-BUILD_ROOT_ARCH=$WORKSPACE/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"/$PROCESSOR
-
-if  [[ ! -f `which build` || ! -f `which GenFv` ]];
-then
-  echo Building tools as they are not in the path
-  make -C $WORKSPACE/BaseTools
-elif [[ ( -f `which build` ||  -f `which GenFv` )  && ! -d  $EDK_TOOLS_PATH/Source/C/bin ]];
-then
-  echo Building tools no $EDK_TOOLS_PATH/Source/C/bin directory
-  make -C $WORKSPACE/BaseTools
-else
-  echo using prebuilt tools
-fi
-
-if [[ $ARG == cleanall ]]; then
-  make -C $WORKSPACE/BaseTools clean
-  build -p $WORKSPACE/bareBoot/bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 clean
-exit $?
-fi
-
-if [[ $ARG == clean ]]; then
-  build -p $WORKSPACE/bareBoot/bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 clean
-exit $?
-fi
-
-# Build the edk2 bareBoot
 echo Running edk2 build for bareBoot$PROCESSOR with $DEF
-VERFILE=$WORKSPACE/bareBoot/Version.h
+
+VERFILE=$WORKSPACE/edk2/bareBoot/Version.h
 echo "#define FIRMWARE_VERSION L\"2.31\"" > $VERFILE
 echo "#define FIRMWARE_BUILDDATE L\"`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`\"" >> $VERFILE
-echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
+echo "#define FIRMWARE_REVISION L\"`cd $WORKSPACE/edk2/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
 echo "#define FIRMWARE_BUILDDATE_ASCII \" (`LC_ALL=C date \"+%Y-%m-%d %H:%M:%S\"`)\"" >> $VERFILE
-echo "#define FIRMWARE_REVISION_ASCII \"bareBoot `cd $WORKSPACE/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
+echo "#define FIRMWARE_REVISION_ASCII \"bareBoot `cd $WORKSPACE/edk2/bareBoot; git tag | tail -n 1`\"" >> $VERFILE
 
-build -p $WORKSPACE/bareBoot/bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 $DEF
-
+build -j $WORKSPACE/edk2/Build/build.log -p $WORKSPACE/edk2/bareBoot/bareBoot.dsc -a $PROCESSOR -b $TARGET -t $TARGET_TOOLS -n 3 $DEF
 }
 
 
 fnMainPostBuildScript ()
 {
-if [ -z "$EDK_TOOLS_PATH" ]
-then
-  export BASETOOLS_DIR=$WORKSPACE/BaseTools/Source/C/bin
-else
-  export BASETOOLS_DIR=$EDK_TOOLS_PATH/Source/C/bin
-fi
-
-export BOOTSECTOR_BIN_DIR=$WORKSPACE/bareBoot/BootSector/bin
-export BOOTSECTOR2_BIN_DIR=$WORKSPACE/bareBoot/BootSector2/bin
-export BUILD_DIR=$WORKSPACE/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"
+export BASETOOLS_DIR=$EDK_TOOLS_PATH/Source/C/bin
+export BOOTSECTOR_BIN_DIR=$WORKSPACE/edk2/bareBoot/BootSector/bin
+export BOOTSECTOR2_BIN_DIR=$WORKSPACE/edk2/bareBoot/BootSector2/bin
+export BUILD_DIR=$WORKSPACE/edk2/Build/bareBoot/$PROCESSOR/"$TARGET"_"$TARGET_TOOLS"
 
 echo Compressing bareBootEFIMainFv.FV ...
-$BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/bareBootEFIMAINFV.z $BUILD_DIR/FV/bareBootEFIMAINFV.Fv
+$BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/bareBootEFIMAINFV.z $BUILD_DIR/FV/BAREBOOTEFIMAINFV.Fv
 
 echo Compressing DxeMain.efi ...
 $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/$PROCESSOR/DxeCore.efi
@@ -123,7 +79,6 @@ echo Compressing DxeIpl.efi ...
 $BASETOOLS_DIR/LzmaCompress -e -o $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/$PROCESSOR/DxeIpl.efi	
 
 echo Generate Loader Image ...
-
 $BASETOOLS_DIR/GenFw --rebase 0x10000 -o $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/$PROCESSOR/EfiLoader.efi
 $BASETOOLS_DIR/EfiLdrImage -o $BUILD_DIR/FV/Efildr$PROCESSOR $BUILD_DIR/$PROCESSOR/EfiLoader.efi $BUILD_DIR/FV/DxeIpl.z $BUILD_DIR/FV/DxeMain.z $BUILD_DIR/FV/bareBootEFIMAINFV.z
 cat $BOOTSECTOR2_BIN_DIR/EfiLdrPrelude$PROCESSOR $BUILD_DIR/FV/Efildr$PROCESSOR > $BUILD_DIR/FV/boot
