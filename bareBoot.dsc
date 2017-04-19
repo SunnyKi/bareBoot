@@ -220,9 +220,8 @@
 !ifdef BLOCKIO
   bareBoot/BlockIoDxe/BlockIoDxe.inf
 !else
-  bareBoot/MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
-
-  bareBoot/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
+  MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
   MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf

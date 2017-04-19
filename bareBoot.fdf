@@ -89,8 +89,8 @@ INF  bareBoot/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 !ifdef BLOCKIO
 INF  bareBoot/BlockIoDxe/BlockIoDxe.inf
 !else
-INF  bareBoot/MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
-INF  bareBoot/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
+INF  MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+INF  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
 INF  MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
 INF  MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf
 INF  MdeModulePkg/Bus/Scsi/ScsiDiskDxe/ScsiDiskDxe.inf
