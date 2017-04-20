@@ -20,7 +20,7 @@ Revision History:
 #include "EfiLdr.h"
 
 EFI_STATUS
-EfiAddMemoryDescriptor(
+EfiAddMemoryDescriptor (
   UINTN                 *NoDesc,
   EFI_MEMORY_DESCRIPTOR *Desc,
   EFI_MEMORY_TYPE       Type,

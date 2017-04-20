@@ -61,6 +61,7 @@ IsGoodEFILAddr (
 }
 
 VOID
+EFIAPI
 EfiLoader (
   UINT32    BiosMemoryMapBaseAddress,
   UINT32    EFILAddr

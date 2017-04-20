@@ -22,7 +22,7 @@ Revision History:
 #define _EFILDR_SUPPORT_H_
 
 EFI_STATUS
-EfiAddMemoryDescriptor(
+EfiAddMemoryDescriptor (
   UINTN                 *NoDesc,
   EFI_MEMORY_DESCRIPTOR *Desc,
   EFI_MEMORY_TYPE       Type,
@@ -32,7 +32,7 @@ EfiAddMemoryDescriptor(
   );
 
 UINTN
-FindSpace(
+FindSpace (
   UINTN                       NoPages,
   IN UINTN                    *NumberOfMemoryMapEntries,
   IN EFI_MEMORY_DESCRIPTOR    *EfiMemoryDescriptor,
