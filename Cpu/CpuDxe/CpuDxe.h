@@ -118,7 +118,7 @@ CpuGetTimerValue (
     
 EFI_STATUS
 EFIAPI
-CpuSetMemoryAttributes(
+CpuSetMemoryAttributes (
   IN  EFI_CPU_ARCH_PROTOCOL           *This,
   IN  EFI_PHYSICAL_ADDRESS            BaseAddress,
   IN  UINT64                          Length,
