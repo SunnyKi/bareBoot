@@ -147,7 +147,7 @@
 
 ###################################################################################################
 [Components]
-  BootSector/BootSector.inf
+#  BootSector/BootSector.inf
   BootSector2/BootSector2.inf
   DxeIpl/DxeIpl.inf 
   MdeModulePkg/Core/Dxe/DxeMain.inf 
