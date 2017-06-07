@@ -205,6 +205,8 @@ typedef struct {
   UINT16  BootTimeout;
   UINT32  ScreenMode;
   UINT32  CsrActiveConfig;
+  UINT32  FwFeatures;
+  UINT32  FwFeaturesMask;
   BOOLEAN LoadExtraKexts;
   BOOLEAN CheckFakeSMC;
   BOOLEAN SaveVideoRom;

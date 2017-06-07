@@ -110,8 +110,6 @@ SetVariablesForOSX (
 )
 {
   EFI_STATUS  Status;
-  UINT32      FwFeatures;
-  UINT32      FwFeaturesMask;
   UINT32      BackgroundClear;
   CHAR8       *tmpMLB;
   UINTN       tmpMLBLen;
@@ -122,8 +120,6 @@ SetVariablesForOSX (
   CHAR8       *None;
 #endif
 
-  FwFeatures      = 0xc0007417;
-  FwFeaturesMask  = 0xc0007fff;
   BackgroundClear = 0x00000000;
 
   tmpMLBLen = AsciiStrLen (gSettings.MLB);
@@ -187,16 +183,16 @@ SetVariablesForOSX (
                   L"FirmwareFeatures",
                   &gEfiAppleNvramGuid,
                   EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  sizeof (FwFeatures),
-                  &FwFeatures
+                  sizeof (gSettings.FwFeatures),
+                  &gSettings.FwFeatures
                 );
 
   Status = gRS->SetVariable (
                   L"FirmwareFeaturesMask",
                   &gEfiAppleNvramGuid,
                   EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS,
-                  sizeof (FwFeaturesMask),
-                  &FwFeaturesMask
+                  sizeof (gSettings.FwFeaturesMask),
+                  &gSettings.FwFeaturesMask
                 );
 
   if (gSettings.Language[0] != '\0') {

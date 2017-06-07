@@ -1781,6 +1781,8 @@ GetUserSettings (
     gSettings.CheckFakeSMC = GetBoolProperty (dictPointer, "CheckFakeSMC", TRUE);
     gSettings.NvRam = GetBoolProperty (dictPointer, "NvRam", FALSE);
     gSettings.Hibernate = GetBoolProperty (dictPointer, "Hibernate", FALSE);
+    gSettings.FwFeatures = (UINT32) GetNumProperty (dictPointer, "FirmwareFeatures", 0xe907f537);
+    gSettings.FwFeaturesMask = (UINT32) GetNumProperty (dictPointer, "FirmwareFeaturesMask", 0xff1fff3f);
     gSettings.CsrActiveConfig = (UINT32) GetNumProperty (dictPointer, "CsrActiveConfig", 0);
     DBG ("GetUserSettings: CsrActiveConfig = %d\n", gSettings.CsrActiveConfig);
 

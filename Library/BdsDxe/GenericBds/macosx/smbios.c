@@ -1016,8 +1016,8 @@ PatchTableType128 (
   
     newSmbiosTable.osx.Type128->Hdr.Type = 128;
     newSmbiosTable.osx.Type128->Hdr.Length = sizeof (SMBIOS_TABLE_TYPE128);
-    newSmbiosTable.osx.Type128->FirmwareFeatures = 0xc0007417; //imac112 -> 0x1403
-    newSmbiosTable.osx.Type128->FirmwareFeaturesMask = 0xc0007fff; // 0xffff
+    newSmbiosTable.osx.Type128->FirmwareFeatures = gSettings.FwFeatures;
+    newSmbiosTable.osx.Type128->FirmwareFeaturesMask = gSettings.FwFeaturesMask;
 
     //    FW_REGION_RESERVED   = 0,
     //    FW_REGION_RECOVERY   = 1,
