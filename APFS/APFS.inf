@@ -16,5 +16,5 @@
 #
 
 [Binaries.X64]
-  PE32|X64/APFS_13.efi|*
+  PE32|X64/apfs.efi|*
 
