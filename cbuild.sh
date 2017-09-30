@@ -2,7 +2,7 @@
 
 set -e
 
-export WORKSPACE=/Volumes/Data/Workspace
+export WORKSPACE=`pwd`/..
 export PACKAGES_PATH=$WORKSPACE/bareBoot:$WORKSPACE/edk2
 export EDK_TOOLS_PATH=$WORKSPACE/edk2/BaseTools
 export GCC5_BIN=$WORKSPACE/opt/local/cross/bin/x86_64-clover-linux-gnu-
