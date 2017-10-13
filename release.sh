@@ -1,6 +1,7 @@
 #!/bin/sh
-export BB_ARCHIVE_PATH=~/src/bb
-export BUILD_PATH=Build
+export WORKSPACE_DIR=`pwd`/..
+export BB_ARCHIVE_PATH=${WORKSPACE_DIR}/bb
+export BUILD_PATH=${WORKSPACE_DIR}/Build
 
 if [[ $# -gt 0 ]];
 then
