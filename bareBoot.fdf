@@ -64,10 +64,10 @@ INF  Library/BdsDxe/BdsDxe.inf
 
 #INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
-!ifdef EDK2CPUDXE
-INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
-!else
+!ifdef OLDCPUDXE
 INF  Cpu/CpuDxe/Cpu.inf
+!else
+INF  UefiCpuPkg/CpuDxe/CpuDxe.inf
 !endif
 INF  AcpiResetDxe/Reset.inf
 INF  MdeModulePkg/Universal/Metronome/Metronome.inf

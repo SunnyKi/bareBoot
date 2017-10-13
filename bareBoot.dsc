@@ -122,7 +122,7 @@
 #  EblNetworkLib|EmbeddedPkg/Library/EblNetworkLib/EblNetworkLib.inf
 #  CpuExceptionHandlerLib|MdeModulePkg/Library/CpuExceptionHandlerLibNull/CpuExceptionHandlerLibNull.inf
   CpuExceptionHandlerLib|UefiCpuPkg/Library/CpuExceptionHandlerLib/DxeCpuExceptionHandlerLib.inf
-!ifdef EDK2CPUDXE
+!ifndef OLDCPUDXE
   MpInitLib|UefiCpuPkg/Library/MpInitLib/DxeMpInitLib.inf
 !endif
 
@@ -191,10 +191,10 @@
   }
 # ----+++++++------
   UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
-!ifdef EDK2CPUDXE
-  UefiCpuPkg/CpuDxe/CpuDxe.inf
-!else
+!ifdef OLDCPUDXE
   Cpu/CpuDxe/Cpu.inf
+!else
+  UefiCpuPkg/CpuDxe/CpuDxe.inf
 !endif
   PcAtChipsetPkg/8259InterruptControllerDxe/8259.inf
   AcpiResetDxe/Reset.inf
