@@ -152,7 +152,9 @@ INF  VBoxFsDxe/VBoxHfs.inf
 INF  RuleOverride=BINARY HFSPlus/HFSPlus.inf
 !endif
 #INF  RuleOverride=BINARY XhciDxe/XhciDxe.inf
+!if "$(ARCH)" == "X64"
 INF  RuleOverride=BINARY APFS/APFS.inf
+!endif
 
 !ifdef ION
   # Binary INF file to support toggle among different CPU architectures.
