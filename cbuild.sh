@@ -39,6 +39,8 @@ while [[ $# -gt 0 ]]; do
         "-m2s") DEF="$DEF -D MEMLOG2SERIAL" ;;
         "-ion") DEF="$DEF -D ION" ;;
         "-xcode5")    TARGET_TOOLS=XCODE5;;
+        "-edk2cpu") DEF="$DEF -D EDK2CPUDXE" ;;
+        "-edk2part") DEF="$DEF -D EDK2PART" ;;
         "-*")
          echo $"ERROR!"
         exit 1
