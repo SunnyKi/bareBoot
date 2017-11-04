@@ -41,48 +41,52 @@
 
 [Sources]
   Bds.h
-  BootMngr/BootManager.h
-  DuetBds/BdsPlatform.h
-  GenericBds/InternalBdsLib.h
-  String.h
-
-  BootMngr/BootManagerStrings.uni
-  Strings.uni
-
-  BootMngr/BootManagerVfr.Vfr
-
   BdsEntry.c
   BmLib.c
+
   BootMngr/BootManager.c
+  BootMngr/BootManager.h
+  BootMngr/BootManagerStrings.uni
+  BootMngr/BootManagerVfr.Vfr
+
   DuetBds/BdsPlatform.c
+  DuetBds/BdsPlatform.h
   DuetBds/PlatformData.c
+
   GenericBds/BdsBoot.c
   GenericBds/BdsConnect.c
   GenericBds/BdsConsole.c
   GenericBds/BdsMisc.c
   GenericBds/BdsUsbLegacy.c
-  GenericBds/macosx/AcpiPatcher.c
-  GenericBds/macosx/Console.c
-  GenericBds/macosx/cpu.c
-  GenericBds/macosx/DataHubCpu.c
-  GenericBds/macosx/device_inject.c
-  GenericBds/macosx/device_tree.c
-  GenericBds/macosx/Events.c
-  GenericBds/macosx/fixSDT.c
-  GenericBds/macosx/kernel_patcher.c
-  GenericBds/macosx/kext_inject.c
-  GenericBds/macosx/kext_patcher.c
-  GenericBds/macosx/nvram.c
-  GenericBds/macosx/SetVarProto.c
-  GenericBds/macosx/smbios.c
-  GenericBds/macosx/spd.c
-  GenericBds/macosx/Utils.c
-  GenericBds/macosx/Xuid.c
-  GenericBds/macosx/Hibernate.c
+  GenericBds/InternalBdsLib.h
   GenericBds/Performance.c
+
   Graphics/Graphics.c
   Graphics/picopng.c
+
   String.c
+  String.h
+
+  Strings.uni
+
+  macosx/AcpiPatcher.c
+  macosx/Console.c
+  macosx/DataHubCpu.c
+  macosx/Events.c
+  macosx/Hibernate.c
+  macosx/SetVarProto.c
+  macosx/Utils.c
+  macosx/Xuid.c
+  macosx/cpu.c
+  macosx/device_inject.c
+  macosx/device_tree.c
+  macosx/fixSDT.c
+  macosx/kernel_patcher.c
+  macosx/kext_inject.c
+  macosx/kext_patcher.c
+  macosx/nvram.c
+  macosx/smbios.c
+  macosx/spd.c
 
 [Packages]
   bareBoot.dec

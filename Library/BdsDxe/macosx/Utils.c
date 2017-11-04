@@ -9,8 +9,9 @@
 #include <Library/plist.h>
 
 #include "cpu.h"
-#include "../InternalBdsLib.h"
-#include "../../BootMaintLib.h"
+
+#include "BootMaintLib.h"
+#include "GenericBds/InternalBdsLib.h"
 
 CHAR8                           *OSVersion;
 EFI_GUID                        gPlatformUuid;
