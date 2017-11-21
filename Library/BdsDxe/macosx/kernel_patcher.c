@@ -1489,14 +1489,6 @@ KernelAndKextsPatcherStart (
       break;
   }
 
-  if (gSettings.DebugKernel && !gSettings.DebugKernelToCom) {
-    DebugKernelToScreen ();
-  }
-
-  if (gSettings.DebugKernelToCom && !gSettings.DebugKernel) {
-    DebugKernelToCom ();
-  }
-
   if (gSettings.CpuIdSing != 0) {
     KernelPatchCpuId_64 ();
   }

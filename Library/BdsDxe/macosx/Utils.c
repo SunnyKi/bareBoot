@@ -1730,8 +1730,6 @@ GetBootDefault (
   gSettings.ScreenMode = (UINT32) GetNumProperty (spdict, "ScreenMode", 0xffff);
   gSettings.BootTimeout = (UINT16) GetNumProperty (spdict, "Timeout", 0);
   gSettings.YoBlack = GetBoolProperty (spdict, "YoBlack", FALSE);
-  gSettings.DebugKernel = GetBoolProperty (spdict, "DebugKernel", FALSE);
-  gSettings.DebugKernelToCom = GetBoolProperty (spdict, "DebugKernelToCom", FALSE);
   gSettings.DivertLogs = GetNumProperty (spdict, "DivertLogs", 0);	// 0 - no divertion
 
   if (!GetUnicodeProperty (spdict, "DefaultBootVolume", gSettings.DefaultBoot, ARRAY_SIZE (gSettings.DefaultBoot))) {

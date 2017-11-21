@@ -206,8 +206,8 @@
 		<true/>
 		<key>CsrActiveConfig</key>
 		<integer>0</integer>
-		<key>DebugKernel</key>
-		<false/>
+		<key>DivertLogs</key>
+		<integer>0</integer>
 		<key>DefaultBootVolume</key>
 		<string>Mountain Lion</string>
 		<key>LoadExtraKexts</key>
