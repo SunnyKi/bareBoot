@@ -215,6 +215,7 @@ typedef struct {
   BOOLEAN Hibernate;
   BOOLEAN DebugKernel;
   BOOLEAN DebugKernelToCom;
+  UINTN   DivertLogs;		// This is enumeration! Divert darwin kernel logs: 0 - no divert (default), 1 - to screen, 2 - to com port
   //ACPI
   UINT64  ResetAddr;
   UINT8   ResetVal;

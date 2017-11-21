@@ -1472,6 +1472,23 @@ KernelAndKextsPatcherStart (
     }
   }
 
+  switch (gSettings.DivertLogs) {
+    case 0:	/* No divert at all */
+      break;
+
+    case 1:
+      DebugKernelToScreen ();
+      break;
+
+    case 2:
+      DebugKernelToCom ();
+      break;
+
+    default:	/* Configuration error. User barfed */
+      DBG ("%a: Bizzare DivertLogs (%d) in config\n", __FUNCTION__, gSettings.DivertLogs);
+      break;
+  }
+
   if (gSettings.DebugKernel && !gSettings.DebugKernelToCom) {
     DebugKernelToScreen ();
   }
