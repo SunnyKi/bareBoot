@@ -63,7 +63,6 @@
   PciCf8Lib|MdePkg/Library/BasePciCf8Lib/BasePciCf8Lib.inf
   PciExpressLib|MdePkg/Library/BasePciExpressLib/BasePciExpressLib.inf
   CacheMaintenanceLib|MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
-#  EfiFileLib|EmbeddedPkg/Library/EfiFileLib/EfiFileLib.inf
 #  PeiServicesLib|MdePkg/Library/PeiServicesLib/PeiServicesLib.inf
 #  SmbusLib|MdePkg/Library/DxeSmbusLib/DxeSmbusLib.inf
 #  S3BootScriptLib|MdeModulePkg/Library/PiDxeS3BootScriptLib/DxeS3BootScriptLib.inf
