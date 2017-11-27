@@ -60,7 +60,7 @@ INF  DuetPkg/SmbiosGenDxe/SmbiosGen.inf
 INF  SmbiosGenDxe/SmbiosGen.inf
 !endif
 
-INF  Library/BdsDxe/BdsDxe.inf
+INF  BdsDxe/BdsDxe.inf
 
 #INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
 INF  UefiCpuPkg/CpuIo2Dxe/CpuIo2Dxe.inf
