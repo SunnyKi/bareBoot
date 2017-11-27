@@ -352,10 +352,10 @@ PatchTableType1 (
   newSmbiosTable.std.Type1->Hdr.Length = (UINT8) NewSize;
   newSmbiosTable.std.Type1->WakeUpType = SystemWakeupTypePowerSwitch;
 
-  if (IsGuidValid (&gSystemID)) {
+  if (!IsZeroGuid (&gSystemID)) {
     newSmbiosTable.std.Type1->Uuid = gSystemID;
   } else {
-    if (IsGuidValid (&gPlatformUuid)) {
+    if (!IsZeroGuid (&gPlatformUuid)) {
       newSmbiosTable.std.Type1->Uuid = gPlatformUuid;
     } else {
       newSmbiosTable.std.Type1->Uuid = gUuid;
