@@ -2,6 +2,8 @@
 #include <Library/BaseMemoryLib.h>
 #include <Uefi/UefiBaseType.h>
 
+static EFI_GUID AllOnes_Guid                    = { 0xFFFFFFFF, 0xFFFF, 0xFFFF, { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }};
+
 VOID
 EraseGuid (
   OUT EFI_GUID *Guid
@@ -15,7 +17,7 @@ IsGuidValid (
   IN EFI_GUID *Guid
 )
 {
-  if (IsZeroGuid (Guid)) {
+  if (IsZeroGuid (Guid) || CompareGuid (Guid, &AllOnes_Guid)) {
     return FALSE;
   }
   return TRUE;
