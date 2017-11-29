@@ -171,6 +171,39 @@ Returns:
   return EFI_NOT_FOUND;
 }
 
+// LPC found - clear SMbus Disabled (3 bit Function Disable register 0x3418)
+
+VOID
+EnableSmbus (
+  PCI_IO_DEVICE       *PciIoDevice
+  )
+{
+  EFI_STATUS          Status;
+  EFI_PCI_IO_PROTOCOL *PciIo;
+  UINT32              rcba;
+  UINT32              *fdr;
+  UINT32              *hptcr;
+
+  PciIo   = &(PciIoDevice->PciIo);
+
+  Status = PciIo->Pci.Read (
+                        PciIo,
+                        EfiPciIoWidthUint32,
+                        (UINT64) (0xF0 & ~3),
+                        1,
+                        &rcba
+                      );
+  if (rcba != 0) {
+    rcba &= ~1;
+    fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
+    *fdr &= ~0x8;
+    hptcr = ((UINT32 *) (UINTN) (rcba + 0x3404));
+    if ((*hptcr & 0x80) ==  0) {
+      *hptcr |= 0x80;
+    }
+  }
+}
+
 EFI_STATUS
 PciPciDeviceInfoCollector (
   IN PCI_IO_DEVICE                      *Bridge,
@@ -195,9 +228,6 @@ Returns:
   UINT8               SecBus;
   PCI_IO_DEVICE       *PciIoDevice;
   EFI_PCI_IO_PROTOCOL *PciIo;
-  UINT32                rcba;
-  UINT32                *fdr;
-  UINT32                *hptcr;
 
   PciIoDevice = NULL;
   Status  = EFI_SUCCESS;
@@ -240,57 +270,35 @@ Returns:
                   &PciIoDevice
                   );
 
-        if (!EFI_ERROR (Status)) {
-          if ((StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
+        if (!EFI_ERROR (Status) && (StartBusNumber == 0) && (Device == 0x1F) && (Func == 0)) {
+          // If LPC found, enable Smbus
+          EnableSmbus (PciIoDevice);
+        }
 
-            //
-            // if found LPC - write 0 in SMbus Disabled (3 bit Function Disable register 0x3418)
-            //
-            PciIo   = &(PciIoDevice->PciIo);
+        //
+        // Recursively scan PCI busses on the other side of PCI-PCI bridges
+        //
+        if (!EFI_ERROR (Status) && (IS_PCI_BRIDGE (&Pci) || IS_CARDBUS_BRIDGE (&Pci))) {
 
-            Status = PciIo->Pci.Read (
-                                  PciIo,
-                                  EfiPciIoWidthUint32,
-                                  (UINT64) (0xF0 & ~3),
-                                  1,
-                                  &rcba
-                                );
-            if (rcba != 0) {
-              rcba &= ~1;
-              fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
-              *fdr &= ~0x8;
-              hptcr = ((UINT32 *) (UINTN) (rcba + 0x3404));
-              if ((*hptcr & 0x80) ==  0) {
-                *hptcr |= 0x80;
-              }
-            }
+          //
+          // If it is PPB, we need to get the secondary bus to continue the enumeration
+          //
+          PciIo   = &(PciIoDevice->PciIo);
+
+          Status  = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x19, 1, &SecBus);
+
+          if (EFI_ERROR (Status)) {
+            return Status;
           }
-
+              
           //
-          // Recursively scan PCI busses on the other side of PCI-PCI bridges
+          // If the PCI bridge is initialized then enumerate the next level bus
           //
-          if (IS_PCI_BRIDGE (&Pci) || IS_CARDBUS_BRIDGE (&Pci)) {
-
-            //
-            // If it is PPB, we need to get the secondary bus to continue the enumeration
-            //
-            PciIo   = &(PciIoDevice->PciIo);
-
-            Status  = PciIo->Pci.Read (PciIo, EfiPciIoWidthUint8, 0x19, 1, &SecBus);
-
-            if (EFI_ERROR (Status)) {
-              return Status;
-            }
-                
-            //
-            // If the PCI bridge is initialized then enumerate the next level bus
-            //
-            if (SecBus != 0) {
-              Status = PciPciDeviceInfoCollector (
-                        PciIoDevice,
-                        (UINT8) (SecBus)
-                        );
-	    }
+          if (SecBus != 0) {
+            Status = PciPciDeviceInfoCollector (
+                      PciIoDevice,
+                      (UINT8) (SecBus)
+                      );
           }
         }
 
