@@ -10,6 +10,9 @@
 
 #include "cpu.h"
 
+#include "BootMaintLib.h"
+#include "GenericBds/InternalBdsLib.h"
+
 CHAR8                           *OSVersion;
 EFI_GUID                        gPlatformUuid;
 EFI_GUID                        gSystemID;
@@ -1311,7 +1314,7 @@ DirNextEntry (
       if (BufferSize <= LastBufferSize) {
         BufferSize = LastBufferSize * 2;
       }
-      Buffer = ReallocatePool (LastBufferSize, BufferSize, Buffer);
+      Buffer = EfiReallocatePool (Buffer, LastBufferSize, BufferSize);
       LastBufferSize = BufferSize;
     }
     if (EFI_ERROR (Status)) {

@@ -206,7 +206,7 @@ SetVariablesForOSX (
                   );
   }
 
-  if (IsZeroGuid (&gSystemID) && !IsZeroGuid (&gPlatformUuid)) {
+  if (!IsGuidValid (&gSystemID) && IsGuidValid (&gPlatformUuid)) {
     Status = gRS->SetVariable (
                     L"platform-uuid",
                     &gEfiAppleBootGuid,
@@ -304,12 +304,12 @@ SetupDataForOSX (
   Status =  LogDataHub (&gEfiMiscSubClassGuid, L"Model", productName, (UINT32) StrSize (productName));
   Status =  LogDataHub (&gEfiMiscSubClassGuid, L"SystemSerialNumber", serialNumber, (UINT32) StrSize (serialNumber));
   /* XXX: Double log due to Leopard bug (feature?) */
-  if (!IsZeroGuid (&gSystemID)) {
+  if (IsGuidValid (&gSystemID)) {
     Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
     Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gSystemID, sizeof(EFI_GUID));
     DBG ("%a: system-id %g (rfc4112) injected (systemid)\n", __FUNCTION__, &gSystemID);
   } else {
-    if (IsZeroGuid (&gPlatformUuid)) {
+    if (!IsGuidValid (&gPlatformUuid)) {
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
       Status =  LogDataHub(&gEfiMiscSubClassGuid, L"system-id", &gUuid, sizeof(EFI_GUID));
       DBG ("%a: system-id %g (rfc4112) injected (uuid)\n", __FUNCTION__, &gUuid);
