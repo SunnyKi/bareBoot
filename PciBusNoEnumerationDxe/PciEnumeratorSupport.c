@@ -184,7 +184,7 @@ EnableSmbus (
   UINT32              *fdr;
   UINT32              *hptcr;
 
-  PciIo   = &(PciIoDevice->PciIo);
+  PciIo = &(PciIoDevice->PciIo);
 
   Status = PciIo->Pci.Read (
                         PciIo,
@@ -193,6 +193,11 @@ EnableSmbus (
                         1,
                         &rcba
                       );
+
+  if (EFI_ERROR (Status)) {
+    return;
+  }
+
   if (rcba != 0) {
     rcba &= ~1;
     fdr = ((UINT32 *) (UINTN) (rcba + 0x3418));
