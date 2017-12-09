@@ -197,12 +197,16 @@
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
   LegacyRegion2Dxe/LegacyRegion2Dxe.inf
+!ifdef EDK2PCI
+  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+!else
 !ifdef DUETPCI
   DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 !else
   PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
+!endif
 !endif
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf
