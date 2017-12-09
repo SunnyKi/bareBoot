@@ -20,7 +20,7 @@ EFI_EVENT OnReadyToBootEvent = NULL;
 EFI_EVENT ExitBootServiceEvent = NULL;
 
 #ifdef USB_FIXUP
-EFI_STATUS
+VOID
 USBOwnerFix (
   VOID
 )
