@@ -197,7 +197,7 @@
   PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
   PcAtChipsetPkg/8254TimerDxe/8254Timer.inf
   LegacyRegion2Dxe/LegacyRegion2Dxe.inf
-!ifdef DUETSTUFF
+!ifdef DUETPCI
   DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
 !else
