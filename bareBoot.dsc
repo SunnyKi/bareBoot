@@ -171,11 +171,7 @@
   GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 #  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
   MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-!ifdef DUETSTUFF
-  DuetPkg/SmbiosGenDxe/SmbiosGen.inf
-!else
   SmbiosGenDxe/SmbiosGen.inf
-!endif
 
   EfiLdr/EfiLdr.inf {
     <LibraryClasses>

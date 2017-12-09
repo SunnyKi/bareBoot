@@ -54,11 +54,7 @@ INF  MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
 
 INF  GraphicsConsoleDxe/GraphicsConsoleDxe.inf
 INF  MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
-!ifdef DUETSTUFF
-INF  DuetPkg/SmbiosGenDxe/SmbiosGen.inf
-!else
 INF  SmbiosGenDxe/SmbiosGen.inf
-!endif
 
 INF  BdsDxe/BdsDxe.inf
 
