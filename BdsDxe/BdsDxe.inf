@@ -49,9 +49,9 @@
   BootMngr/BootManagerStrings.uni
   BootMngr/BootManagerVfr.Vfr
 
-  DuetBds/BdsPlatform.c
-  DuetBds/BdsPlatform.h
-  DuetBds/PlatformData.c
+  PlatformBdsLib/BdsPlatform.c
+  PlatformBdsLib/BdsPlatform.h
+  PlatformBdsLib/PlatformData.c
 
   GenericBds/BdsBoot.c
   GenericBds/BdsConnect.c
