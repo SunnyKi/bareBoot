@@ -20,7 +20,7 @@
 
 [Defines]
   INF_VERSION                    = 0x00010005
-  BASE_NAME                      = DuetTimerLib
+  BASE_NAME                      = BBTimerLib
   FILE_GUID                      = 5F9A01F5-726E-4f59-809D-887F4766734E
   MODULE_TYPE                    = DXE_DRIVER
   VERSION_STRING                 = 1.0
@@ -31,12 +31,8 @@
 #  VALID_ARCHITECTURES           = IA32 X64
 #
 
-[Sources.Ia32]
+[Sources]
   X86TimerLib.c
-
-[Sources.X64]
-  X86TimerLib.c
-
 
 [Packages]
   MdePkg/MdePkg.dec
@@ -50,5 +46,3 @@
   
 [Guids]
   gEfiAcpiDescriptionGuid
-  
-  

@@ -75,13 +75,8 @@ INF  LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 !ifdef EDK2PCI
 INF  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
 !else
-!ifdef DUETPCI
-INF  DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
-INF  DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-!else
 INF  PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
 INF  PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-!endif
 !endif
 
   # IDE/AHCI Support

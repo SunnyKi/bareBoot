@@ -100,7 +100,7 @@
   #
   # Platform
   #
-  TimerLib|Library/DuetTimerLib/DuetTimerLib.inf
+  TimerLib|Library/BBTimerLib/BBTimerLib.inf
   #
   # Misc
   #
@@ -200,13 +200,8 @@
 !ifdef EDK2PCI
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
 !else
-!ifdef DUETPCI
-  DuetPkg/PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
-  DuetPkg/PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-!else
   PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
-!endif
 !endif
 
 #  IntelFrameworkModulePkg/Bus/Pci/VgaMiniPortDxe/VgaMiniPortDxe.inf

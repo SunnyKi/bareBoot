@@ -27,7 +27,7 @@
 
 [Packages]
   MdePkg/MdePkg.dec
-  DuetPkg/DuetPkg.dec
+  bareBoot.dec
 
 [LibraryClasses]
   UefiDriverEntryPoint
