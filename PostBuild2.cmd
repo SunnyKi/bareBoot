@@ -18,8 +18,8 @@
 
 set PKGNAME=bareBoot
 
-for %%i in (bareBoot\BootSector2\bin) do set BOOTSECTOR_BIN_DIR=%%~$PACKAGES_PATH:i
-for %%i in (bareBoot\GetVariables.bat) do set GETVARSSCRIPT=%%~$PACKAGES_PATH:i
+for %%i in (BootSector2\bin) do set BOOTSECTOR_BIN_DIR=%%~$PACKAGES_PATH:i
+for %%i in (GetVariables.bat) do set GETVARSSCRIPT=%%~$PACKAGES_PATH:i
 
 call %GETVARSSCRIPT%
 

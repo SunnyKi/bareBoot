@@ -59,7 +59,7 @@ then
   PROJECTNAME=$(basename $ACTIVE_PLATFORM .dsc)
 fi
 
-BOOTSECTOR_BIN_DIR=$(findInPackages bareBoot/BootSector2/bin)
+BOOTSECTOR_BIN_DIR=$(findInPackages BootSector2/bin)
 
 BUILD_DIR=$WORKSPACE/Build/$PROJECTNAME/$PROCESSOR/${TARGET}_$TOOLTAG
 
