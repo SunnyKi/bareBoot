@@ -301,11 +301,6 @@
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
   gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
 
-!ifdef USB_FIXUP
-[PcdsFeatureFlag]
-  gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|FALSE
-!endif
-
 ###################################################################################################
 #
 # BuildOptions Section - Define the module specific tool chain flags that should be used as
@@ -322,9 +317,6 @@
 !ifdef BLOCKIO
   DEFINE DEF_BLOCKIO = -DBLOCKIO
 !endif
-!ifdef USB_FIXUP
-  DEFINE DEF_USB_FIXUP = -DUSB_FIXUP
-!endif
 !ifdef SPEEDUP
   DEFINE DEF_SPEEDUP = -DSPEEDUP
 !endif
@@ -337,4 +329,4 @@
   DEFINE DEF_NDEBUG = 
 !endif
 
-  *_*_*_CC_FLAGS   = -DDISABLE_NEW_DEPRECATED_INTERFACES $(DEF_NDEBUG) $(DEF_BLOCKIO) $(DEF_USB_FIXUP) $(DEF_SPEEDUP) $(DEF_MEMLOG2SERIAL)
+  *_*_*_CC_FLAGS   = -DDISABLE_NEW_DEPRECATED_INTERFACES $(DEF_NDEBUG) $(DEF_BLOCKIO) $(DEF_SPEEDUP) $(DEF_MEMLOG2SERIAL)
