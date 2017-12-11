@@ -520,8 +520,8 @@ BdsLibEnumerateAllBootOption (
                            );
 
   if (EFI_ERROR (Status)) {
-    FreePool (PNConfigPlist2)
-    FreePool (gPNConfigPlist)
+    FreePool (PNConfigPlist2);
+    FreePool (gPNConfigPlist);
     gPNConfigPlist = NULL;
     return (Status);
   }
