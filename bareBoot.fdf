@@ -74,6 +74,7 @@ INF  PcAtChipsetPkg/PcatRealTimeClockRuntimeDxe/PcatRealTimeClockRuntimeDxe.inf
 INF  LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 !ifdef EDK2PCI
 INF  MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+INF  MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
 !else
 INF  PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
 INF  PciBusNoEnumerationDxe/PciBusNoEnumeration.inf

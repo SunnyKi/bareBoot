@@ -100,6 +100,10 @@
   #
   # Platform
   #
+!ifdef EDK2PCI
+  PciHostBridgeLib|MdeModulePkg/Library/PciHostBridgeLibNull/PciHostBridgeLibNull.inf
+  PciSegmentLib|MdePkg/Library/BasePciSegmentLibPci/BasePciSegmentLibPci.inf
+!endif
   TimerLib|Library/BBTimerLib/BBTimerLib.inf
   #
   # Misc
@@ -199,6 +203,7 @@
   LegacyRegion2Dxe/LegacyRegion2Dxe.inf
 !ifdef EDK2PCI
   MdeModulePkg/Bus/Pci/PciBusDxe/PciBusDxe.inf
+  MdeModulePkg/Bus/Pci/PciHostBridgeDxe/PciHostBridgeDxe.inf
 !else
   PciRootBridgeNoEnumerationDxe/PciRootBridgeNoEnumeration.inf
   PciBusNoEnumerationDxe/PciBusNoEnumeration.inf
