@@ -495,6 +495,8 @@ BdsLibEnumerateAllBootOption (
   DevicePathType  = 0;
   BlkIo           = NULL;
 
+  gPNConfigPlist = NULL;
+
   if (gProductNameDir != NULL) {
     TmpSize = UnicodeSPrint (Buffer, sizeof (Buffer), L"%s%s", gProductNameDir, L"config.plist") + 1;
     gPNConfigPlist = AllocateCopyPool (TmpSize * sizeof (CHAR16), Buffer);
@@ -518,6 +520,9 @@ BdsLibEnumerateAllBootOption (
                            );
 
   if (EFI_ERROR (Status)) {
+    FreePool (PNConfigPlist2)
+    FreePool (gPNConfigPlist)
+    gPNConfigPlist = NULL;
     return (Status);
   }
 
