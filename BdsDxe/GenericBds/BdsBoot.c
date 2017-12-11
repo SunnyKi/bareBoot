@@ -225,7 +225,7 @@ MacOS:
       ClearScreen (0xBFBFBF, NULL);
     }
   }
-  DBG ("%a: launching InitializeConsoleSim.\n",__FUNCTION__);
+  DBG ("%a: launching InitializeConsoleSim.\n", __FUNCTION__);
   InitializeConsoleSim (gImageHandle);
   
   Status = gBS->HandleProtocol (
@@ -239,34 +239,34 @@ MacOS:
                        &FHandle
                      );
   }
-  DBG ("%a: launching GetOSVersion.\n",__FUNCTION__);
+  DBG ("%a: launching GetOSVersion.\n", __FUNCTION__);
   GetOSVersion (FHandle);
-  DBG ("%a: launching GetCpuProps.\n",__FUNCTION__);
+  DBG ("%a: launching GetCpuProps.\n", __FUNCTION__);
   GetCpuProps ();
-  DBG ("%a: launching GetUserSettings.\n",__FUNCTION__);
+  DBG ("%a: launching GetUserSettings.\n", __FUNCTION__);
   GetUserSettings ();
   if (gSettings.Hibernate) {
-    DBG ("%a: launching PrepareHibernation.\n",__FUNCTION__);
+    DBG ("%a: launching PrepareHibernation.\n", __FUNCTION__);
     gIsHibernation = PrepareHibernation (DevicePath);
   }
   if (cDevProp == NULL) {
-    DBG ("%a: launching SetDevices (no cDevProp).\n",__FUNCTION__);
+    DBG ("%a: launching SetDevices (no cDevProp).\n", __FUNCTION__);
     SetDevices ();
   }
-  DBG ("%a: launching PatchSmbios.\n",__FUNCTION__);
+  DBG ("%a: launching PatchSmbios.\n", __FUNCTION__);
   PatchSmbios ();
-  DBG ("%a: launching PatchACPI.\n",__FUNCTION__);
+  DBG ("%a: launching PatchACPI.\n", __FUNCTION__);
   PatchACPI (gRootFHandle);
-  DBG ("%a: launching SetVariablesForOSX.\n",__FUNCTION__);
+  DBG ("%a: launching SetVariablesForOSX.\n", __FUNCTION__);
   SetVariablesForOSX ();
-  DBG ("%a: launching SetPrivateVarProto.\n",__FUNCTION__);
+  DBG ("%a: launching SetPrivateVarProto.\n", __FUNCTION__);
   SetPrivateVarProto ();
-  DBG ("%a: launching SetupDataForOSX.\n",__FUNCTION__);
+  DBG ("%a: launching SetupDataForOSX.\n", __FUNCTION__);
   SetupDataForOSX ();
-  DBG ("%a: launching EventsInitialize.\n",__FUNCTION__);
+  DBG ("%a: launching EventsInitialize.\n", __FUNCTION__);
   EventsInitialize ();
   if (gSettings.NvRam) {
-    DBG ("%a: launching PutNvramPlistToRtVars.\n",__FUNCTION__);
+    DBG ("%a: launching PutNvramPlistToRtVars.\n", __FUNCTION__);
     PutNvramPlistToRtVars ();
   }
 #if 0
@@ -312,7 +312,7 @@ MacOS:
 #endif
   Status = gBS->HandleProtocol (ImageHandle, &gEfiLoadedImageProtocolGuid, (VOID **) &ImageInfo);
   ASSERT_EFI_ERROR (Status);
-  DBG ("%a: AddBootArgs = %a, gSettings.BootArgs = %a\n",__FUNCTION__, AddBootArgs, gSettings.BootArgs);
+  DBG ("%a: AddBootArgs = %a, gSettings.BootArgs = %a\n", __FUNCTION__, AddBootArgs, gSettings.BootArgs);
   TmpSize = UnicodeSPrint (buffer, sizeof (buffer), L"%a", gSettings.BootArgs);
   
   if (TmpSize > 0) 
@@ -345,14 +345,14 @@ Next:
     goto Done;
   }
 #ifdef BOOT_DEBUG
-  DBG ("%a: launching StartImage.\n",__FUNCTION__);
+  DBG ("%a: launching StartImage.\n", __FUNCTION__);
   SaveBooterLog (gRootFHandle, BOOT_LOG);
 #endif
   Status = gBS->StartImage (ImageHandle, ExitDataSize, ExitData);
 
 Done:
 #ifdef BOOT_DEBUG
-  DBG ("%a: something wrong. we can not launch StartImage.\n",__FUNCTION__);
+  DBG ("%a: something wrong. we can not launch StartImage.\n", __FUNCTION__);
   SaveBooterLog (gRootFHandle, BOOT_LOG);
 #endif
   gRT->SetVariable (
