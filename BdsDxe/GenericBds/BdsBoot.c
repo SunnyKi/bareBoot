@@ -458,6 +458,7 @@ BdsLibBuildOneOptionFromHandle (
 
   @retval EFI_OUT_OF_RESOURCES   Failed to enumerate the boot device and create the boot option list
 **/
+
 EFI_STATUS
 EFIAPI
 BdsLibEnumerateAllBootOption (
@@ -507,13 +508,17 @@ BdsLibEnumerateAllBootOption (
 
   ZeroMem (Buffer, sizeof (Buffer));
   
-  gBS->LocateHandleBuffer (
+  Status = gBS->LocateHandleBuffer (
                            ByProtocol,
                            &gEfiBlockIoProtocolGuid,
                            NULL,
                            &NumberBlockIoHandles,
                            &BlockIoHandles
                            );
+
+  if (EFI_ERROR (Status)) {
+    return (Status);
+  }
 
   for (Index = 0; Index < NumberBlockIoHandles; Index++) {
 
@@ -551,7 +556,7 @@ BdsLibEnumerateAllBootOption (
     }
   }
 
-  gBS->LocateHandleBuffer (
+  Status = gBS->LocateHandleBuffer (
          ByProtocol,
          &gEfiSimpleFileSystemProtocolGuid,
          NULL,
@@ -559,6 +564,10 @@ BdsLibEnumerateAllBootOption (
          &FileSystemHandles
        );
   
+  if (EFI_ERROR (Status)) {
+    return (Status);
+  }
+
   for (Index = 0; Index < NumberFileSystemHandles; Index++) {
     DevicePath  = DevicePathFromHandle (FileSystemHandles[Index]);
     Status = gBS->HandleProtocol (
@@ -566,13 +575,17 @@ BdsLibEnumerateAllBootOption (
                     &gEfiSimpleFileSystemProtocolGuid,
                     (VOID *) &Volume
                   );
-    if (!EFI_ERROR (Status)) {
-      Status = Volume->OpenVolume (
-                         Volume,
-                         &FHandle
-                       );
+
+    if (EFI_ERROR (Status)) {
+      continue;
     }
+
+    Status = Volume->OpenVolume (Volume, &FHandle);
     
+    if (EFI_ERROR (Status)) {
+      continue;
+    }
+
     if ((gPNConfigPlist != NULL) && (FileExists (FHandle, gPNConfigPlist)) && (ConfigNotFound)) {
       gPNDirExists = TRUE;
       gRootFHandle = FHandle;
