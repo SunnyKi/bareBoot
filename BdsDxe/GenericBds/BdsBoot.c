@@ -467,20 +467,21 @@ BdsLibEnumerateAllBootOption (
 {
   EFI_STATUS                    Status;
   BOOLEAN                       ConfigNotFound;
-  UINTN                         Index, Index2;
-  EFI_DEVICE_PATH_PROTOCOL      *DevicePath;
-  CHAR16                        Buffer[255];
-  EFI_HANDLE                    *FileSystemHandles;
-  UINTN                         NumberFileSystemHandles;
-  EFI_FILE_HANDLE               FHandle;
-  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
-  CHAR16                        *VolumeName;
-  UINTN                         NumberBlockIoHandles;
-  EFI_HANDLE                    *BlockIoHandles;
-  EFI_BLOCK_IO_PROTOCOL         *BlkIo;
-  UINTN                         DevicePathType;
-  UINT16                        CdromNumber;
   CHAR16                        *PNConfigPlist2;
+  CHAR16                        *VolumeName;
+  CHAR16                        Buffer[255];
+  EFI_BLOCK_IO_PROTOCOL         *BlkIo;
+  EFI_DEVICE_PATH_PROTOCOL      *DevicePath;
+  EFI_FILE_HANDLE               FHandle;
+  EFI_HANDLE                    *BlockIoHandles;
+  EFI_HANDLE                    *FileSystemHandles;
+  EFI_SIMPLE_FILE_SYSTEM_PROTOCOL *Volume;
+  UINT16                        CdromNumber;
+  UINTN                         DevicePathType;
+  UINTN                         Index2;
+  UINTN                         Index;
+  UINTN                         NumberBlockIoHandles;
+  UINTN                         NumberFileSystemHandles;
   UINTN                         TmpSize;
   
   gRootFHandle    = NULL;
