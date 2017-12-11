@@ -480,7 +480,7 @@ BdsLibEnumerateAllBootOption (
   EFI_BLOCK_IO_PROTOCOL         *BlkIo;
   UINTN                         DevicePathType;
   UINT16                        CdromNumber;
-  UINT16                        *PNConfigPlist2;
+  CHAR16                        *PNConfigPlist2;
   UINTN                         TmpSize;
   
   gRootFHandle    = NULL;
