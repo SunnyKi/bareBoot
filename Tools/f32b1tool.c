@@ -220,5 +220,13 @@ main(int argc, char* argv[]) {
 	}
 
 	f32close();
+
+	if (fs0 != NULL) {
+		free (fs0);
+	}
+
+	if (s0 != NULL) {
+		free (s0);
+	}
 	return 0;
 }
