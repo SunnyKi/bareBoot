@@ -18,9 +18,9 @@ UINT32                    gSleepTime = 0;
 
 
 #pragma pack(push, 1)
-//
+
 // Just the first part of HFS+ volume header from where we can take modification time
-//
+
 typedef struct _HFSPlusVolumeHeaderMin {
   UINT16  signature;
   UINT16  version;
@@ -42,14 +42,13 @@ typedef struct _HFSPlusVolumeHeaderMin {
 } HFSPlusVolumeHeaderMin;
 
 // IOHibernateImageHeader.signature
-enum
-{
+
+enum {
     kIOHibernateHeaderSignature        = 0x73696d65,
     kIOHibernateHeaderInvalidSignature = 0x7a7a7a7a
 };
 
-typedef struct _IOHibernateImageHeaderMin
-{
+typedef struct _IOHibernateImageHeaderMin {
   UINT64	imageSize;
   UINT64	image1Size;
   
@@ -104,8 +103,7 @@ typedef struct _IOHibernateImageHeaderMin
 
 } IOHibernateImageHeaderMin;
 
-typedef struct _IOHibernateImageHeaderMinSnow
-{
+typedef struct _IOHibernateImageHeaderMinSnow {
   UINT64	imageSize;
   UINT64	image1Size;
 
@@ -133,8 +131,7 @@ typedef struct _IOHibernateImageHeaderMinSnow
   UINT32	processorFlags;
 } IOHibernateImageHeaderMinSnow;
 
-typedef struct _AppleRTCHibernateVars
-{
+typedef struct _AppleRTCHibernateVars {
   UINT8   signature[4];
   UINT32  revision;
   UINT8	  booterSignature[20];
@@ -143,18 +140,17 @@ typedef struct _AppleRTCHibernateVars
 
 #pragma pack(pop)
 
-//
 // Taken from VBoxFsDxe
-//
 
-//static fsw_u32 mac_to_posix(fsw_u32 mac_time)
-INT32 mac_to_posix(UINT32 mac_time)
+INT32
+mac_to_posix(UINT32 mac_time)
 {
   /* Mac time is 1904 year based */
   return mac_time ?  mac_time - 2082844800 : 0;
 }
 
 /** BlockIo->Read() override. */
+
 EFI_STATUS
 EFIAPI OurBlockIoRead (
   IN EFI_BLOCK_IO_PROTOCOL          *This,
@@ -165,16 +161,18 @@ EFIAPI OurBlockIoRead (
   )
 {
   EFI_STATUS          Status;
+
   Status = OrigBlockIoRead (This, MediaId, Lba, BufferSize, Buffer);
   
   // Enter special processing only when gSleepImageOffset == 0, to avoid recursion when Boot/Log=true
-  if (gSleepImageOffset == 0 && Status == EFI_SUCCESS && BufferSize >= sizeof (IOHibernateImageHeaderMin)) {
 
+  if (gSleepImageOffset == 0 && Status == EFI_SUCCESS && BufferSize >= sizeof (IOHibernateImageHeaderMin)) {
     IOHibernateImageHeaderMin *Header;
     IOHibernateImageHeaderMinSnow *Header2;
     UINT32 BlockSize = 0;
     
     // Mark that we are executing, to avoid entering above phrase again, and don't add DBGs outside this scope, to avoid recursion
+
     gSleepImageOffset = (UINT64) - 1;
     
     if (This->Media != NULL) {
@@ -189,13 +187,14 @@ EFIAPI OurBlockIoRead (
     Header2 = (IOHibernateImageHeaderMinSnow *) Buffer;
     DBG("%a: sig lion: %x\n", __FUNCTION__, Header->signature);
     DBG("%a: sig snow: %x\n", __FUNCTION__, Header2->signature);
-    // DBG(" sig swap: %x\n", SwapBytes32(Header->signature));
     
     if (Header->signature == kIOHibernateHeaderSignature ||
         Header2->signature == kIOHibernateHeaderSignature) {
       gSleepImageOffset = MultU64x32 (Lba, BlockSize);
       DBG("%a: got sleep image offset\n", __FUNCTION__);
-      //save sleep time as lvs1974 suggested
+
+      // save sleep time as lvs1974 suggested
+
       if (Header->signature == kIOHibernateHeaderSignature) {
         gSleepTime = Header->sleepTime;
       } else
@@ -219,6 +218,7 @@ EFIAPI OurBlockIoRead (
  * and calculate position from there.
  * It's for hack after all :)
  */
+
 UINT64
 GetSleepImagePosition (
   IN  EFI_HANDLE                VolHandle,
@@ -246,19 +246,27 @@ GetSleepImagePosition (
                   &gEfiBlockIoProtocolGuid,
                   (VOID **) &DiskBlockIO
                 );
+
+  if (EFI_ERROR (Status)) {
+    return 0;
+  }
+
   Status = gBS->HandleProtocol (
                   VolHandle,
                   &gEfiSimpleFileSystemProtocolGuid,
                   (VOID *) &Volume
                 );
 
+  if (EFI_ERROR (Status)) {
+    return 0;
+  }
+
   FHandle = NULL;
 
-  if (!EFI_ERROR (Status)) {
-    Status = Volume->OpenVolume (
-                       Volume,
-                       &FHandle
-                     );
+  Status = Volume->OpenVolume (Volume, &FHandle);
+
+  if (EFI_ERROR (Status)) {
+    return 0;
   }
 
   // Open sleepimage
@@ -269,14 +277,17 @@ GetSleepImagePosition (
   ImageName = AllocatePool (ARRAY_SIZE (SleepImageFileName) + 2);
   (VOID) StrCpyS (ImageName, ARRAY_SIZE (SleepImageFileName), SleepImageFileName);
   Status = FHandle->Open (FHandle, &File, ImageName, EFI_FILE_MODE_READ, 0);
+
   if (EFI_ERROR(Status)) {
     DBG("%a: sleepimage not found -> %r\n", __FUNCTION__, Status);
     return 0;
   }
 
   // We want to read the first 512 bytes from sleepimage
+
   BufferSize = 512;
   Buffer = AllocatePool (BufferSize);
+
   if (Buffer == NULL) {
     DBG("%a: could not allocate buffer for sleepimage\n", __FUNCTION__);
     return 0;
@@ -289,16 +300,20 @@ GetSleepImagePosition (
   gSleepImageOffset = 0;
   Status = File->Read (File, &BufferSize, Buffer);
   DiskBlockIO->ReadBlocks = OrigBlockIoRead;
+
   // OurBlockIoRead always returns invalid parameter in order to avoid driver caching, so that is a good value
+
   if (Status == EFI_INVALID_PARAMETER) {
     Status = EFI_SUCCESS;
   }
   DBG("%a: reading completed: %r\n", __FUNCTION__, Status);
 
   // Close sleepimage
+
   File->Close (File);
   
   // We don't use the buffer, as actual signature checking is being done by OurBlockIoRead
+
   if (Buffer) {
     FreePool (Buffer);
   }
@@ -314,6 +329,7 @@ GetSleepImagePosition (
 /** Returns TRUE if /private/var/vm/sleepimage exists
  *  and it's modification time is close to volume modification time).
  */
+
 BOOLEAN
 IsSleepImageValidBySleepTime (
   IN  EFI_HANDLE                VolHandle
@@ -329,10 +345,10 @@ IsSleepImageValidBySleepTime (
 
   DBG("%a: gSleepTime: %d\n", __FUNCTION__, gSleepTime);
 
-  //
   // Get HFS+ volume nodification time
   //
   // use 4KB aligned page to avoid possible issues with BlockIo buffer alignment
+
   Status = gBS->HandleProtocol (
                   VolHandle,
                   &gEfiBlockIoProtocolGuid,
@@ -340,11 +356,13 @@ IsSleepImageValidBySleepTime (
                 );
   Pages = EFI_SIZE_TO_PAGES (BlockIo->Media->BlockSize);
   Buffer = AllocatePages (Pages);
+
   if (Buffer == NULL) {
     return FALSE;
   }
 
   Status = BlockIo->ReadBlocks (BlockIo, BlockIo->Media->MediaId, 2, BlockIo->Media->BlockSize, Buffer);
+
   if (EFI_ERROR(Status)) {
     DBG("%a: can not read HFS+ header -> %r\n", __FUNCTION__, Status);
     FreePages(Buffer, Pages);
@@ -358,12 +376,12 @@ IsSleepImageValidBySleepTime (
 
   FreePages(Buffer, Pages);
 
-  //
   // Check that sleepimage is not more then 5 secs older then volume modification date
   // Idea is from Chameleon
-  //
+
   TimeDiff = HFSVolumeModifyDate - (INTN) gSleepTime;
   DBG("%a: image older then volume: %d sec\n", __FUNCTION__, TimeDiff);
+
   if (TimeDiff > 5) {
     DBG("%a: image too old\n", __FUNCTION__);
     return FALSE;
@@ -385,7 +403,6 @@ PrepareHibernation (
   AppleRTCHibernateVars     RtcVars;
   EFI_HANDLE                DiskHandle;
   EFI_HANDLE                VolHandle;
-//  UINT8                     *VarData = NULL;
 
   Size = 0;
   Node = DuplicateDevicePath (DevicePath);
@@ -395,6 +412,7 @@ PrepareHibernation (
           IsDevicePathEnd (Node) != TRUE) {
     Node = NextDevicePathNode (Node);
   }
+
   if (IsDevicePathEnd (Node) == TRUE) {
     DBG ("%a: no HD node in device path (%s)\n", __FUNCTION__,
           ConvertDevicePathToText (DevicePath, FALSE, FALSE)
@@ -419,13 +437,6 @@ PrepareHibernation (
     Size = GetDevicePathSize(BootImageDevPath);
     DBG("%a: boot-image = %s\n", __FUNCTION__, ConvertDevicePathToText (BootImageDevPath, FALSE, FALSE));
 
-  //  VarData = (UINT8*)BootImageDevPath;
-  //  PrintBytes(VarData, Size);
-  //   VarData[6] = 8;
-  //  VarData[24] = 0xFF;
-  //  VarData[25] = 0xFF;
-  //  DBG(" boot-image corrected = %s\n", ConvertDevicePathToText (BootImageDevPath, FALSE, FALSE));
-
     if (mDiskDevicePath != NULL) {
       FreePool (mDiskDevicePath);
     }
@@ -438,6 +449,7 @@ PrepareHibernation (
                                 Size,
                                 BootImageDevPath
                               );
+
     if (EFI_ERROR(Status)) {
       DBG("%a: can not write boot-image -> %r\n", __FUNCTION__, Status);
       return FALSE;
@@ -445,7 +457,7 @@ PrepareHibernation (
 
     DBG("%a: setting dummy boot-switch-vars\n", __FUNCTION__);
 
-    Size = sizeof(RtcVars);
+    Size = sizeof (RtcVars);
     Value = &RtcVars;
     SetMem (&RtcVars, Size, 0);
 
@@ -463,6 +475,7 @@ PrepareHibernation (
                                 Size,
                                 Value
                               );
+
     if (EFI_ERROR(Status)) {
       DBG("%a: can not write boot-switch-vars -> %r\n", __FUNCTION__, Status);
       return FALSE;
@@ -473,4 +486,3 @@ PrepareHibernation (
     return FALSE;
   }
 }
-
