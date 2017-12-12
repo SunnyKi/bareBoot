@@ -164,6 +164,7 @@ main(int argc, char* argv[]) {
 	unsigned char* s0;
 	unsigned char* fs0 = NULL;
 	int minsectors;
+	int rc = 0;
 
 	if (argc != 3) {
 		usage(argv[0]);
@@ -179,8 +180,8 @@ main(int argc, char* argv[]) {
 	if (s0[0x42] != 0x28) {
 			if (memcmp(&s0[0x52], "FAT32   ", 8) != 0) {
 			fprintf(stderr, "%s does not look like fat32fs\n", argv[1]);
-			f32close();
-			return 1;
+			rc = 1;
+			goto finita;
 		}
 	}
 
@@ -198,8 +199,8 @@ main(int argc, char* argv[]) {
 	if (ressec < minsectors) {
 		fprintf(stderr, "%s: not enough reserved sectors (%d), need %d\n",
 				argv[1], ressec, minsectors);
-		f32close();
-		return 1;
+		rc = 1;
+		goto finita;
 	}
 
 	bkps = bcsectors;
@@ -219,6 +220,7 @@ main(int argc, char* argv[]) {
 		writesectors(fs0, fsis, 1);
 	}
 
+finita:
 	f32close();
 
 	if (fs0 != NULL) {
