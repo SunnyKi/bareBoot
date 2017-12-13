@@ -133,20 +133,6 @@ BiosKeyboardDriverBindingSupported (
   EFI_LEGACY_8259_PROTOCOL                  *Legacy8259;
   EFI_ISA_IO_PROTOCOL                       *IsaIo;
 
-#if 0
-  //
-  // See if the Legacy BIOS Protocol is available
-  //
-  Status = gBS->LocateProtocol (
-                  &gEfiLegacyBiosProtocolGuid,
-                  NULL,
-                  (VOID **) &LegacyBios
-                  );
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-#endif
   //
   // See if the Legacy 8259 Protocol is available
   //
@@ -212,9 +198,6 @@ BiosKeyboardDriverBindingStart (
   )
 {
   EFI_STATUS                                Status;
-#if 0
-  EFI_LEGACY_BIOS_PROTOCOL                  *LegacyBios;
-#endif
   EFI_ISA_IO_PROTOCOL                       *IsaIo;
   BIOS_KEYBOARD_DEV                         *BiosKeyboardPrivate;
   IA32_REGISTER_SET                         Regs;
@@ -238,20 +221,6 @@ BiosKeyboardDriverBindingStart (
         (VOID **) &Ps2Policy
         );
 
-#if 0
-  //
-  // See if the Legacy BIOS Protocol is available
-  //
-  Status = gBS->LocateProtocol (
-                  &gEfiLegacyBiosProtocolGuid,
-                  NULL,
-                  (VOID **) &LegacyBios
-                  );
-
-  if (EFI_ERROR (Status)) {
-    return Status;
-  }
-#endif
   //
   // Establish legacy environment for thunk call for all children handle.
   //
@@ -312,9 +281,6 @@ BiosKeyboardDriverBindingStart (
   //
   BiosKeyboardPrivate->Signature                  = BIOS_KEYBOARD_DEV_SIGNATURE;
   BiosKeyboardPrivate->Handle                     = Controller;
-#if 0
-  BiosKeyboardPrivate->LegacyBios                 = NULL; // LegacyBios;
-#endif
   //
   // Child handle need to consume the Legacy Bios protocol
   //
@@ -418,9 +384,9 @@ BiosKeyboardDriverBindingStart (
                   FeaturePcdGet (PcdPs2KbdExtendedVerification)
                   );
   if (EFI_ERROR (Status)) {
-#if 0
+
     DEBUG ((EFI_D_ERROR, "[KBD]Reset Failed. Status - %r\n", Status));
-#endif
+
     StatusCode = EFI_PERIPHERAL_KEYBOARD | EFI_P_EC_NOT_DETECTED;
     goto Done;
   }
@@ -447,28 +413,15 @@ BiosKeyboardDriverBindingStart (
     KeyboardWrite (BiosKeyboardPrivate, 0xed);
     KeyboardWaitForValue (BiosKeyboardPrivate, 0xfa, KEYBOARD_WAITFORVALUE_TIMEOUT);
     KeyboardWrite (BiosKeyboardPrivate, Command);
-#if 0
-    //
-    // Call Legacy BIOS Protocol to set whatever is necessary
-    //
-    LegacyBios->UpdateKeyboardLedStatus (LegacyBios, Command);
-#endif
   }
   //
   // Get Configuration
   //
   Regs.H.AH = 0xc0;
 
-#if 0
-  CarryFlag = BiosKeyboardPrivate->LegacyBios->Int86 (
-                                                 BiosKeyboardPrivate->LegacyBios,
-                                                 0x15,
-                                                 &Regs
-                                                 );
-#endif
   CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x15, &Regs);
 
-  if (!CarryFlag) {
+  if (!CarryFlag) {	// XXX: ???
     //
     // Check bit 6 of Feature Byte 2.
     // If it is set, then Int 16 Func 09 is supported
@@ -478,16 +431,9 @@ BiosKeyboardDriverBindingStart (
       // Get Keyboard Functionality
       //
       Regs.H.AH = 0x09;
-#if 0
-      CarryFlag = BiosKeyboardPrivate->LegacyBios->Int86 (
-                                                     BiosKeyboardPrivate->LegacyBios,
-                                                     0x16,
-                                                     &Regs
-                                                     );
-#endif
-  CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
+      CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
 
-      if (!CarryFlag) {
+      if (!CarryFlag) {	// XXX: ???
         //
         // Check bit 5 of AH.
         // If it is set, then INT 16 Finc 10-12 are supported.
@@ -501,9 +447,9 @@ BiosKeyboardDriverBindingStart (
       }
     }
   }
-#if 0
+
   DEBUG ((EFI_D_INFO, "[KBD]Extended keystrokes supported by CSM16 - %02x\n", (UINTN)BiosKeyboardPrivate->ExtendedKeyboard));
-#endif
+
   BiosKeyboardPrivate->ControllerNameTable = NULL;
   AddUnicodeString2 (
              "eng",
@@ -1782,9 +1728,9 @@ CheckKeyboardConnect (
              KBC_INPBUF_VIA60_KBEN
              );
   if (EFI_ERROR (Status)) {
-#if 0
+
     DEBUG ((EFI_D_ERROR, "[KBD]CheckKeyboardConnect - Keyboard enable failed!\n"));
-#endif
+
     REPORT_STATUS_CODE (
       EFI_ERROR_CODE | EFI_ERROR_MINOR,
       EFI_PERIPHERAL_KEYBOARD | EFI_P_EC_CONTROLLER_ERROR
@@ -1799,9 +1745,9 @@ CheckKeyboardConnect (
              );
 
   if (EFI_ERROR (Status)) {
-#if 0
+
     DEBUG ((EFI_D_ERROR, "[KBD]CheckKeyboardConnect - Timeout!\n"));
-#endif
+
     REPORT_STATUS_CODE (
       EFI_ERROR_CODE | EFI_ERROR_MINOR,
       EFI_PERIPHERAL_KEYBOARD | EFI_P_EC_CONTROLLER_ERROR
@@ -1853,13 +1799,6 @@ BiosKeyboardTimerHandler (
     Regs.H.AH = 0x01;
   }
 
-#if 0
-  BiosKeyboardPrivate->LegacyBios->Int86 (
-                                     BiosKeyboardPrivate->LegacyBios,
-                                     0x16,
-                                     &Regs
-                                     );
-#endif
   LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
   if (Regs.E.EFLAGS.Bits.ZF != 0) {
     gBS->RestoreTPL (OldTpl);
@@ -1875,13 +1814,6 @@ BiosKeyboardTimerHandler (
     Regs.H.AH = 0x00;
   }
 
-#if 0
-  BiosKeyboardPrivate->LegacyBios->Int86 (
-                                     BiosKeyboardPrivate->LegacyBios,
-                                     0x16,
-                                     &Regs
-                                     );
-#endif
   LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
   KeyData.Key.ScanCode            = (UINT16) Regs.H.AH;
   KeyData.Key.UnicodeChar         = (UINT16) Regs.H.AL;
@@ -1970,23 +1902,6 @@ BiosKeyboardTimerHandler (
   } else {
     KeyData.Key.ScanCode     = SCAN_NULL;
   }
-
-#if 0
-  //
-  // CSM16 has converted the Ctrl+[a-z] to [1-26], converted it back.
-  //
-  if ((KeyData.KeyState.KeyShiftState & (EFI_LEFT_CONTROL_PRESSED | EFI_RIGHT_CONTROL_PRESSED)) != 0) {
-    if (KeyData.Key.UnicodeChar >= 1 && KeyData.Key.UnicodeChar <= 26) {
-      if (((KeyData.KeyState.KeyShiftState & (EFI_LEFT_SHIFT_PRESSED | EFI_RIGHT_SHIFT_PRESSED)) != 0) ==
-          ((KeyData.KeyState.KeyToggleState & EFI_CAPS_LOCK_ACTIVE) != 0)
-          ) {
-        KeyData.Key.UnicodeChar = (UINT16) (KeyData.Key.UnicodeChar + L'a' - 1);
-      } else {
-        KeyData.Key.UnicodeChar = (UINT16) (KeyData.Key.UnicodeChar + L'A' - 1);
-      }
-    }
-  }
-#endif
 
   //
   // Need not return associated shift state if a class of printable characters that
@@ -2217,9 +2132,6 @@ BiosKeyboardSetState (
   BIOS_KEYBOARD_DEV                     *BiosKeyboardPrivate;
   EFI_TPL                               OldTpl;
   UINT8                                 Command;
-#if 0
-  EFI_LEGACY_BIOS_PROTOCOL              *LegacyBios;
-#endif
 
   if (KeyToggleState == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -2235,18 +2147,6 @@ BiosKeyboardSetState (
   }
 
   BiosKeyboardPrivate = TEXT_INPUT_EX_BIOS_KEYBOARD_DEV_FROM_THIS (This);
-#if 0
-  //
-  // See if the Legacy BIOS Protocol is available
-  //
-  Status = gBS->LocateProtocol (
-                  &gEfiLegacyBiosProtocolGuid,
-                  NULL,
-                  (VOID **) &LegacyBios
-                  );
-
-  ASSERT_EFI_ERROR (Status);
-#endif
 
   //
   // Enter critical section
