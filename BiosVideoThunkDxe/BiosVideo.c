@@ -1364,34 +1364,6 @@ BiosVideoCheckForVbe (
   //    ES:DI buffer filled
   //    01h failed (e.g. non-DDC monitor)
 
-#if 0
-  gBS->SetMem (&Regs, sizeof (Regs), 0);
-  Regs.X.AX = VESA_BIOS_EXTENSIONS_EDID;
-  Regs.X.BX = 1;
-  Regs.X.CX = 0;
-  Regs.X.DX = 1;
-  Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-  Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
-
-  LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
-
-  DBG ("%a: block 1 read with status 0x%x, ExtensionFlag 0x%x\n",
-       __FUNCTION__,
-       Regs.X.AX,
-       BiosVideoPrivate->VbeEdidDataBlock->ExtensionFlag);
-
-  if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
-
-    if (ParseEdidData ((UINT8 *) BiosVideoPrivate->VbeEdidDataBlock, &ValidEdidTiming) == TRUE) {
-      EdidFound = TRUE;
-
-      DBG ("%a: Edid1 found\n", __FUNCTION__);
-    } else {
-      ZeroMem (&ValidEdidTiming, sizeof (VESA_BIOS_EXTENSIONS_VALID_EDID_TIMING));
-    }
-  }
-#endif
-
   EdidFound = FALSE;
 
   gBS->SetMem (&Regs, sizeof (Regs), 0);
@@ -2664,9 +2636,6 @@ BiosVideoGraphicsOutputVgaBlt (
   EFI_TPL             OriginalTPL;
   UINT8               *MemAddress;
   UINTN               BytesPerScanLine;
-#if 0
-  UINTN               BytesPerBitPlane;
-#endif
   UINTN               Bit;
   UINTN               Index;
   UINTN               Index1;
@@ -2706,9 +2675,6 @@ BiosVideoGraphicsOutputVgaBlt (
   PciIo             = BiosVideoPrivate->PciIo;
   MemAddress        = BiosVideoPrivate->ModeData[CurrentMode].LinearFrameBuffer;
   BytesPerScanLine  = BiosVideoPrivate->ModeData[CurrentMode].BytesPerScanLine >> 3;
-#if 0
-  BytesPerBitPlane  = BytesPerScanLine * BiosVideoPrivate->ModeData[CurrentMode].VerticalResolution;
-#endif
   VgaFrameBuffer    = BiosVideoPrivate->VgaFrameBuffer;
   //
   // We need to fill the Virtual Screen buffer with the blt data.
