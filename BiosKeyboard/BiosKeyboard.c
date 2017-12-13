@@ -133,10 +133,10 @@ BiosKeyboardDriverBindingSupported (
   EFI_LEGACY_8259_PROTOCOL                  *Legacy8259;
   EFI_ISA_IO_PROTOCOL                       *IsaIo;
 
+#if 0
   //
   // See if the Legacy BIOS Protocol is available
   //
-#if 0
   Status = gBS->LocateProtocol (
                   &gEfiLegacyBiosProtocolGuid,
                   NULL,
@@ -313,7 +313,7 @@ BiosKeyboardDriverBindingStart (
   BiosKeyboardPrivate->Signature                  = BIOS_KEYBOARD_DEV_SIGNATURE;
   BiosKeyboardPrivate->Handle                     = Controller;
 #if 0
-  BiosKeyboardPrivate->LegacyBios                 = NULL; //LegacyBios;
+  BiosKeyboardPrivate->LegacyBios                 = NULL; // LegacyBios;
 #endif
   //
   // Child handle need to consume the Legacy Bios protocol
@@ -447,10 +447,10 @@ BiosKeyboardDriverBindingStart (
     KeyboardWrite (BiosKeyboardPrivate, 0xed);
     KeyboardWaitForValue (BiosKeyboardPrivate, 0xfa, KEYBOARD_WAITFORVALUE_TIMEOUT);
     KeyboardWrite (BiosKeyboardPrivate, Command);
+#if 0
     //
     // Call Legacy BIOS Protocol to set whatever is necessary
     //
-#if 0
     LegacyBios->UpdateKeyboardLedStatus (LegacyBios, Command);
 #endif
   }
@@ -467,6 +467,7 @@ BiosKeyboardDriverBindingStart (
                                                  );
 #endif
   CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x15, &Regs);
+
   if (!CarryFlag) {
     //
     // Check bit 6 of Feature Byte 2.
@@ -1970,10 +1971,10 @@ BiosKeyboardTimerHandler (
     KeyData.Key.ScanCode     = SCAN_NULL;
   }
 
+#if 0
   //
   // CSM16 has converted the Ctrl+[a-z] to [1-26], converted it back.
   //
-#if 0
   if ((KeyData.KeyState.KeyShiftState & (EFI_LEFT_CONTROL_PRESSED | EFI_RIGHT_CONTROL_PRESSED)) != 0) {
     if (KeyData.Key.UnicodeChar >= 1 && KeyData.Key.UnicodeChar <= 26) {
       if (((KeyData.KeyState.KeyShiftState & (EFI_LEFT_SHIFT_PRESSED | EFI_RIGHT_SHIFT_PRESSED)) != 0) ==
@@ -1986,6 +1987,7 @@ BiosKeyboardTimerHandler (
     }
   }
 #endif
+
   //
   // Need not return associated shift state if a class of printable characters that
   // are normally adjusted by shift modifiers.
@@ -2233,10 +2235,10 @@ BiosKeyboardSetState (
   }
 
   BiosKeyboardPrivate = TEXT_INPUT_EX_BIOS_KEYBOARD_DEV_FROM_THIS (This);
+#if 0
   //
   // See if the Legacy BIOS Protocol is available
   //
-#if 0
   Status = gBS->LocateProtocol (
                   &gEfiLegacyBiosProtocolGuid,
                   NULL,
@@ -2245,6 +2247,7 @@ BiosKeyboardSetState (
 
   ASSERT_EFI_ERROR (Status);
 #endif
+
   //
   // Enter critical section
   //
