@@ -147,7 +147,6 @@ LegacyBiosInt86 (
 {
   UINTN                 Status;
   IA32_REGISTER_SET     ThunkRegSet;
-  BOOLEAN               Ret;
   UINT16                *Stack16;
   volatile UINT32       *IVTPtr;
   BOOLEAN               Enabled;
@@ -225,7 +224,5 @@ LegacyBiosInt86 (
 
   CopyMem (&(Regs->E.EFLAGS), &(ThunkRegSet.E.EFLAGS), sizeof (UINT32));
 
-  Ret = (BOOLEAN) (Regs->E.EFLAGS.Bits.CF == 1);
-
-  return Ret;
+  return (Regs->E.EFLAGS.Bits.CF == 1);
 }
