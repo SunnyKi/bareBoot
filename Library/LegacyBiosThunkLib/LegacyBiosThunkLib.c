@@ -37,9 +37,9 @@ InitializeBiosIntCaller (
   UINT32                ExtraStackSize;
   EFI_PHYSICAL_ADDRESS  LegacyRegionBase;
   UINT32                LegacyRegionSize;
-  //
+
   // Get LegacyRegion
-  //
+
   AsmGetThunk16Properties (&RealModeBufferSize, &ExtraStackSize);
   LegacyRegionSize = (((RealModeBufferSize + ExtraStackSize) / EFI_PAGE_SIZE) + 1) * EFI_PAGE_SIZE;
   LegacyRegionBase = 0x0C0000;
@@ -53,7 +53,7 @@ InitializeBiosIntCaller (
   
   ThunkContext->RealModeBuffer     = (VOID*)(UINTN)LegacyRegionBase;
   ThunkContext->RealModeBufferSize = LegacyRegionSize;
-  ThunkContext->ThunkAttributes    = THUNK_ATTRIBUTE_BIG_REAL_MODE|THUNK_ATTRIBUTE_DISABLE_A20_MASK_INT_15;
+  ThunkContext->ThunkAttributes    = THUNK_ATTRIBUTE_BIG_REAL_MODE | THUNK_ATTRIBUTE_DISABLE_A20_MASK_INT_15;
   AsmPrepareThunk16(ThunkContext);
 }
 
@@ -90,10 +90,9 @@ InitializeInterruptRedirection (
   UINTN                 Index;
   UINT8                 ProtectedModeBaseVector;
 
-  //
   // Get LegacyRegion
-  //
-  LegacyRegionLength = sizeof(InterruptRedirectionCode);
+
+  LegacyRegionLength = sizeof (InterruptRedirectionCode);
   LegacyRegionBase = 0x0C0000;
   Status = gBS->AllocatePages (
                   AllocateMaxAddress,
@@ -103,21 +102,19 @@ InitializeInterruptRedirection (
                   );
   ASSERT_EFI_ERROR (Status);
 
-  //
   // Copy code to legacy region
-  //
+
   CopyMem ((VOID *)(UINTN)LegacyRegionBase, InterruptRedirectionCode, sizeof (InterruptRedirectionCode));
 
-  //
   // Get VectorBase, it should be 0x68
-  //
+
   Status = Legacy8259->GetVector (Legacy8259, Efi8259Irq0, &ProtectedModeBaseVector);
   ASSERT_EFI_ERROR (Status);
 
-  //
   // Patch IVT 0x68 ~ 0x6f
-  //
+
   IdtArray = (UINT32 *) 0;
+
   for (Index = 0; Index < 8; Index++) {
     IdtArray[ProtectedModeBaseVector + Index] = ((EFI_SEGMENT (LegacyRegionBase + Index * 4)) << 16) | (EFI_OFFSET (LegacyRegionBase + Index * 4));
   }
@@ -178,13 +175,12 @@ LegacyBiosInt86 (
   ThunkRegSet.E.DS   = Regs->E.DS;
   ThunkRegSet.E.ES   = Regs->E.ES;
 
-  //
   // The call to Legacy16 is a critical section to EFI
-  //
+
   Enabled = SaveAndDisableInterrupts();
-  //
+
   // Set Legacy16 state. 0x08, 0x70 is legacy 8259 vector bases.
-  //
+
   Status = Legacy8259->SetMode (Legacy8259, Efi8259LegacyMode, NULL, NULL);
   ASSERT_EFI_ERROR (Status);
 
@@ -195,6 +191,7 @@ LegacyBiosInt86 (
   // executes IRET to return control to the caller. It is important that
   // trap flag is not set in this value because the resulting INT1 will
   // stop execution.
+
   Stack16 [0] = 0;
 
   ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
@@ -205,15 +202,13 @@ LegacyBiosInt86 (
   ThunkContext->RealModeState = &ThunkRegSet;
   AsmThunk16 (ThunkContext);
 
-  //
   // Restore protected mode interrupt state
-  //
+
   Status = Legacy8259->SetMode (Legacy8259, Efi8259ProtectedMode, NULL, NULL);
   ASSERT_EFI_ERROR (Status);
 
-  //
   // End critical section
-  //
+
   SetInterruptState (Enabled);
 
   Regs->E.EDI      = ThunkRegSet.E.EDI;
@@ -234,97 +229,3 @@ LegacyBiosInt86 (
 
   return Ret;
 }
-
-#if 0
-BOOLEAN
-EFIAPI
-LegacyBiosInt86 (
-  IN  BIOS_BLOCK_IO_DEV               *BiosDev,
-  IN  UINT8                           BiosInt,
-  IN  IA32_REGISTER_SET               *Regs
-  )
-{
-  UINTN                 Status;
-  UINTN                 Eflags;
-  IA32_REGISTER_SET     ThunkRegSet;
-  BOOLEAN               Ret;
-  UINT16                *Stack16;
-  
-  ZeroMem (&ThunkRegSet, sizeof (ThunkRegSet));
-  ThunkRegSet.E.EFLAGS.Bits.Reserved_0 = 1;
-  ThunkRegSet.E.EFLAGS.Bits.Reserved_1 = 0;
-  ThunkRegSet.E.EFLAGS.Bits.Reserved_2 = 0;
-  ThunkRegSet.E.EFLAGS.Bits.Reserved_3 = 0;
-  ThunkRegSet.E.EFLAGS.Bits.IOPL       = 3;
-  ThunkRegSet.E.EFLAGS.Bits.NT         = 0;
-  ThunkRegSet.E.EFLAGS.Bits.IF         = 1;
-  ThunkRegSet.E.EFLAGS.Bits.TF         = 0;
-  ThunkRegSet.E.EFLAGS.Bits.CF         = 0;
-  
-  ThunkRegSet.E.EDI  = Regs->E.EDI;
-  ThunkRegSet.E.ESI  = Regs->E.ESI;
-  ThunkRegSet.E.EBP  = Regs->E.EBP;
-  ThunkRegSet.E.EBX  = Regs->E.EBX;
-  ThunkRegSet.E.EDX  = Regs->E.EDX;
-  ThunkRegSet.E.ECX  = Regs->E.ECX;
-  ThunkRegSet.E.EAX  = Regs->E.EAX;
-  ThunkRegSet.E.DS   = Regs->E.DS;
-  ThunkRegSet.E.ES   = Regs->E.ES;
-
-  //
-  // The call to Legacy16 is a critical section to EFI
-  //
-  Eflags = AsmReadEflags ();
-  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
-    DisableInterrupts ();
-  }
-
-  //
-  // Set Legacy16 state. 0x08, 0x70 is legacy 8259 vector bases.
-  //
-  Status = BiosDev->Legacy8259->SetMode (BiosDev->Legacy8259, Efi8259LegacyMode, NULL, NULL);
-  ASSERT_EFI_ERROR (Status);
-  
-  Stack16 = (UINT16 *)((UINT8 *) BiosDev->ThunkContext->RealModeBuffer + BiosDev->ThunkContext->RealModeBufferSize - sizeof (UINT16));
-
-  ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
-  ThunkRegSet.E.ESP  = (UINT16) (UINTN) Stack16;
-
-  ThunkRegSet.E.Eip  = (UINT16)((UINT32 *)NULL)[BiosInt];
-  ThunkRegSet.E.CS   = (UINT16)(((UINT32 *)NULL)[BiosInt] >> 16);
-  BiosDev->ThunkContext->RealModeState = &ThunkRegSet;
-  AsmThunk16 (BiosDev->ThunkContext);
-  
-  //
-  // Restore protected mode interrupt state
-  //
-  Status = BiosDev->Legacy8259->SetMode (BiosDev->Legacy8259, Efi8259ProtectedMode, NULL, NULL);
-  ASSERT_EFI_ERROR (Status);
-
-  //
-  // End critical section
-  //
-  if ((Eflags & EFI_CPU_EFLAGS_IF) != 0) {
-    EnableInterrupts ();
-  }
-
-  Regs->E.EDI      = ThunkRegSet.E.EDI;      
-  Regs->E.ESI      = ThunkRegSet.E.ESI;  
-  Regs->E.EBP      = ThunkRegSet.E.EBP;  
-  Regs->E.EBX      = ThunkRegSet.E.EBX;  
-  Regs->E.EDX      = ThunkRegSet.E.EDX;  
-  Regs->E.ECX      = ThunkRegSet.E.ECX;  
-  Regs->E.EAX      = ThunkRegSet.E.EAX;
-  Regs->E.SS       = ThunkRegSet.E.SS;
-  Regs->E.CS       = ThunkRegSet.E.CS;  
-  Regs->E.DS       = ThunkRegSet.E.DS;  
-  Regs->E.ES       = ThunkRegSet.E.ES;
-
-  CopyMem (&(Regs->E.EFLAGS), &(ThunkRegSet.E.EFLAGS), sizeof (UINT32));
-
-  Ret = (BOOLEAN) (Regs->E.EFLAGS.Bits.CF == 1);
-
-  return Ret;
-}
-#endif
-
