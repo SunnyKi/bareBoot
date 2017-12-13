@@ -140,7 +140,7 @@ Int13GetDeviceParameters (
   IN  BIOS_LEGACY_DRIVE    *Drive
   )
 {
-  UINTN                 CarryFlag;
+  BOOLEAN               CarryFlag;
   UINT16                Cylinder;
   IA32_REGISTER_SET Regs;
 
@@ -149,7 +149,7 @@ Int13GetDeviceParameters (
   Regs.H.AH = 0x08;
   Regs.H.DL = Drive->Number;
   CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
-  if (CarryFlag != 0 || Regs.H.AH != 0x00) {
+  if (CarryFlag || Regs.H.AH != 0x00) {
     Drive->ErrorCode = Regs.H.AH;
     return FALSE;
   }
@@ -194,7 +194,7 @@ Int13Extensions (
   IN  BIOS_LEGACY_DRIVE    *Drive
   )
 {
-  INTN                  CarryFlag;
+  BOOLEAN           CarryFlag;
   IA32_REGISTER_SET Regs;
 
   ZeroMem (&Regs, sizeof (IA32_REGISTER_SET));
@@ -206,7 +206,7 @@ Int13Extensions (
   DBG( "Int13Extensions: INT 13 41 DL=%02x : CF=%d BX=%04x CX=%04x\n",
       Drive->Number, CarryFlag, Regs.X.BX, Regs.X.CX);
 
-  if (CarryFlag != 0 || Regs.X.BX != 0xaa55) {
+  if (CarryFlag || Regs.X.BX != 0xaa55) {
     Drive->ExtendedInt13            = FALSE;
     Drive->DriveLockingAndEjecting  = FALSE;
     Drive->Edd                      = FALSE;
@@ -238,9 +238,9 @@ GetDriveParameters (
   IN  BIOS_LEGACY_DRIVE   *Drive
   )
 {
-  INTN                  CarryFlag;
+  BOOLEAN           CarryFlag;
   IA32_REGISTER_SET Regs;
-  UINTN                 PointerMath;
+  UINTN             PointerMath;
 
   ZeroMem (&Regs, sizeof (IA32_REGISTER_SET));
 
@@ -256,7 +256,7 @@ GetDriveParameters (
   CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
   DBG( "GetDriveParameters: INT 13 48 DL=%02x : CF=%d AH=%02x\n", Drive->Number, CarryFlag, Regs.H.AH);
 
-  if (CarryFlag != 0 || Regs.H.AH != 0x00) {
+  if (CarryFlag || Regs.H.AH != 0x00) {
     Drive->ErrorCode = Regs.H.AH;
     SetMem (&Drive->Parameters, sizeof (Drive->Parameters), 0xaf);
     return FALSE;
@@ -279,7 +279,7 @@ GetDriveParameters (
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
     DBG( "GetDriveParameters: INT 13 20 DL=%02x : CF=%d AL=%02x\n", Drive->Number, CarryFlag, Regs.H.AL);
 
-    if (CarryFlag != 0) {
+    if (CarryFlag) {
       //
       // Media not present or unknown media present
       //
@@ -438,7 +438,7 @@ Edd30BiosReadBlocks (
   UINTN                     TransferByteSize;
   UINTN                     BlockSize;
   BIOS_LEGACY_DRIVE         *Bios;
-  UINTN                     CarryFlag;
+  BOOLEAN                   CarryFlag;
   UINTN                     MaxTransferBlocks;
   EFI_BLOCK_IO_PROTOCOL     *BlockIo;
 
@@ -503,7 +503,7 @@ Edd30BiosReadBlocks (
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
     Media->MediaPresent = TRUE;
 
-    if (CarryFlag != 0) {
+    if (CarryFlag) {
       //
       // Return Error Status
       //
@@ -582,7 +582,7 @@ Edd30BiosWriteBlocks (
   UINTN                     TransferByteSize;
   UINTN                     BlockSize;
   BIOS_LEGACY_DRIVE         *Bios;
-  UINTN                     CarryFlag;
+  BOOLEAN                   CarryFlag;
   UINTN                     MaxTransferBlocks;
   EFI_BLOCK_IO_PROTOCOL     *BlockIo;
 
@@ -651,7 +651,7 @@ Edd30BiosWriteBlocks (
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
     Media->MediaPresent = TRUE;
 
-    if (CarryFlag != 0) {
+    if (CarryFlag) {
       //
       // Return Error Status
       //
@@ -733,7 +733,7 @@ BiosBlockIoReset (
 {
   BIOS_BLOCK_IO_DEV     *BiosBlockIoDev;
   IA32_REGISTER_SET     Regs;
-  UINTN                 CarryFlag;
+  BOOLEAN               CarryFlag;
 
   BiosBlockIoDev  = BIOS_BLOCK_IO_FROM_THIS (This);
 
@@ -743,13 +743,13 @@ BiosBlockIoReset (
   Regs.H.DL       = BiosBlockIoDev->Bios.Number;
   CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
 
-  if (CarryFlag != 0) {
+  if (CarryFlag) {
     if (Regs.H.AL == BIOS_RESET_FAILED) {
       Regs.H.AH = 0x00;
       Regs.H.DL = BiosBlockIoDev->Bios.Number;
       CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
 
-      if (CarryFlag != 0) {
+      if (CarryFlag) {
         BiosBlockIoDev->Bios.ErrorCode = Regs.H.AH;
         return EFI_DEVICE_ERROR;
       }
@@ -805,7 +805,7 @@ Edd11BiosReadBlocks (
   UINTN                     TransferByteSize;
   UINTN                     BlockSize;
   BIOS_LEGACY_DRIVE         *Bios;
-  UINTN                     CarryFlag;
+  BOOLEAN                   CarryFlag;
   UINTN                     MaxTransferBlocks;
   EFI_BLOCK_IO_PROTOCOL     *BlockIo;
 
@@ -875,7 +875,7 @@ Edd11BiosReadBlocks (
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
     Media->MediaPresent = TRUE;
 
-    if (CarryFlag != 0) {
+    if (CarryFlag) {
       //
       // Return Error Status
       //
@@ -955,7 +955,7 @@ Edd11BiosWriteBlocks (
   UINTN                     TransferByteSize;
   UINTN                     BlockSize;
   BIOS_LEGACY_DRIVE         *Bios;
-  UINTN                     CarryFlag;
+  BOOLEAN                   CarryFlag;
   UINTN                     MaxTransferBlocks;
   EFI_BLOCK_IO_PROTOCOL     *BlockIo;
 
@@ -1032,7 +1032,7 @@ Edd11BiosWriteBlocks (
     CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
     Media->MediaPresent = TRUE;
 
-    if (CarryFlag != 0) {
+    if (CarryFlag) {
       //
       // Return Error Status
       //
@@ -1115,7 +1115,7 @@ BiosReadLegacyDrive (
   UINTN                 CheckLba;
   UINTN                 BlockSize;
   BIOS_LEGACY_DRIVE     *Bios;
-  UINTN                 CarryFlag;
+  BOOLEAN               CarryFlag;
   UINTN                 Retry;
   EFI_BLOCK_IO_PROTOCOL *BlockIo;
 
@@ -1199,11 +1199,11 @@ BiosReadLegacyDrive (
 
       CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
       Retry--;
-    } while (CarryFlag != 0 && Retry != 0 && Regs.H.AH != BIOS_DISK_CHANGED);
+    } while (CarryFlag && Retry != 0 && Regs.H.AH != BIOS_DISK_CHANGED);
 
     Media->MediaPresent = TRUE;
 
-    if (CarryFlag != 0) {
+    if (CarryFlag) {
       //
       // Return Error Status
       //
@@ -1295,7 +1295,7 @@ BiosWriteLegacyDrive (
   UINTN                 CheckLba;
   UINTN                 BlockSize;
   BIOS_LEGACY_DRIVE     *Bios;
-  UINTN                 CarryFlag;
+  BOOLEAN               CarryFlag;
   UINTN                 Retry;
   EFI_BLOCK_IO_PROTOCOL *BlockIo;
 
@@ -1384,11 +1384,11 @@ BiosWriteLegacyDrive (
 
       CarryFlag = LegacyBiosInt86 (BiosBlockIoDev->Legacy8259, BiosBlockIoDev->ThunkContext, 0x13, &Regs);
       Retry--;
-    } while (CarryFlag != 0 && Retry != 0 && Regs.H.AH != BIOS_DISK_CHANGED);
+    } while (CarryFlag && Retry != 0 && Regs.H.AH != BIOS_DISK_CHANGED);
 
     Media->MediaPresent = TRUE;
 
-    if (CarryFlag != 0) {
+    if (CarryFlag) {
       //
       // Return Error Status
       //
