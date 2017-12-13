@@ -602,7 +602,7 @@ BiosVideoChildHandleUninstall (
   )
 {
   EFI_STATUS                   Status;
-  IA32_REGISTER_SET        Regs;
+  IA32_REGISTER_SET            Regs;
   EFI_GRAPHICS_OUTPUT_PROTOCOL *GraphicsOutput;
   EFI_VGA_MINI_PORT_PROTOCOL   *VgaMiniPort;
   BIOS_VIDEO_DEV               *BiosVideoPrivate;
@@ -691,13 +691,13 @@ BiosVideoChildHandleUninstall (
   //
   Regs.H.AH = 0x00;
   Regs.H.AL = 0x03;
-  LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+  (void) LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
   
   Regs.H.AH = 0x11;
   Regs.H.AL = 0x14;
   Regs.H.BL = 0;
-  LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
-  
+  (void) LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+
   //
   // Do not disable IO/memory decode since that would prevent legacy ROM from working
   //
@@ -1254,6 +1254,7 @@ BiosVideoCheckForVbe (
   UINT16                                 *VMPtr16;
   EFI_GRAPHICS_OUTPUT_PROTOCOL_MODE      *GraphicsOutputMode;
   UINT32                                 BestMode;
+  BOOLEAN                                CarryFlag;
   
   // Allocate buffer under 1MB for VBE data structures
 
@@ -1320,13 +1321,13 @@ BiosVideoCheckForVbe (
 
   DBG ("%a: VESA avialable?\n", __FUNCTION__);
 
-  LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+  CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
     
   Status = EFI_DEVICE_ERROR;
 
   // See if the VESA call succeeded
 
-  if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+  if (CarryFlag || Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
     return Status;
   }
 
@@ -1374,7 +1375,7 @@ BiosVideoCheckForVbe (
   Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
   Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeEdidDataBlock);
 
-  LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+  CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
 
   DBG ("%a: block 0 read with status 0x%x, ExtensionFlag 0x%x\n",
        __FUNCTION__,
@@ -1383,7 +1384,7 @@ BiosVideoCheckForVbe (
 
   // See if the VESA call succeeded
 
-  if (Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+  if (!CarryFlag && Regs.X.AX == VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
 
     // Parse EDID data structure to retrieve modes supported by monitor
 
@@ -1479,11 +1480,11 @@ BiosVideoCheckForVbe (
     Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeModeInformationBlock);
     Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeModeInformationBlock);
 
-    LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+    CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
 
     // See if the call succeeded.  If it didn't, then try the next mode.
 
-    if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+    if (CarryFlag || Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
       continue;
     }
 
@@ -1933,8 +1934,9 @@ BiosVideoGraphicsOutputSetMode (
 {
   EFI_STATUS              Status;
   BIOS_VIDEO_DEV          *BiosVideoPrivate;
-  IA32_REGISTER_SET   Regs;
+  IA32_REGISTER_SET       Regs;
   BIOS_VIDEO_MODE_DATA    *ModeData;
+  BOOLEAN                 CarryFlag;
 
   BiosVideoPrivate = BIOS_VIDEO_DEV_FROM_GRAPHICS_OUTPUT_THIS (This);
 
@@ -1999,7 +2001,12 @@ BiosVideoGraphicsOutputSetMode (
     // Set VGA Mode
     //
     Regs.X.AX = ModeData->VbeModeNumber;
-    LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+    CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+
+    if (CarryFlag || Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+      return EFI_DEVICE_ERROR;
+    }
+
     DBG ("BiosVideo: Set VGA Mode\n");
 
   } else {
@@ -2024,12 +2031,12 @@ BiosVideoGraphicsOutputSetMode (
     Regs.E.ES = EFI_SEGMENT ((UINTN) BiosVideoPrivate->VbeCrtcInformationBlock);
     Regs.X.DI = EFI_OFFSET ((UINTN) BiosVideoPrivate->VbeCrtcInformationBlock);
 
-    LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+    CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
 
     //
     // Check to see if the call succeeded
     //
-    if (Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
+    if (CarryFlag || Regs.X.AX != VESA_BIOS_EXTENSIONS_STATUS_SUCCESS) {
       return EFI_DEVICE_ERROR;
     }
     DBG ("BiosVideo: Set VBE Mode succeeded\n");
@@ -3033,8 +3040,9 @@ BiosVideoVgaMiniPortSetMode (
   IN  UINTN                       ModeNumber
   )
 {
-  BIOS_VIDEO_DEV        *BiosVideoPrivate;
+  BIOS_VIDEO_DEV    *BiosVideoPrivate;
   IA32_REGISTER_SET Regs;
+  BOOLEAN           CarryFlag;
 
   if (This == NULL) {
     return EFI_INVALID_PARAMETER;
@@ -3060,13 +3068,20 @@ BiosVideoVgaMiniPortSetMode (
     //
     Regs.H.AH = 0x00;
     Regs.H.AL = 0x83;
-    LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+    CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+
+    if (CarryFlag) {
+      return EFI_DEVICE_ERROR;
+    }
     
     Regs.H.AH = 0x11;
     Regs.H.AL = 0x14;
     Regs.H.BL = 0;
-    LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
-    
+    CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+
+    if (CarryFlag) {
+      return EFI_DEVICE_ERROR;
+    }
     break;
 
   case 1:
@@ -3075,12 +3090,20 @@ BiosVideoVgaMiniPortSetMode (
     //
     Regs.H.AH = 0x00;
     Regs.H.AL = 0x83;
-    LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+    CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+
+    if (CarryFlag) {
+      return EFI_DEVICE_ERROR;
+    }
     
     Regs.H.AH = 0x11;
     Regs.H.AL = 0x12;
     Regs.H.BL = 0;
-    LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+    CarryFlag = LegacyBiosInt86 (BiosVideoPrivate->Legacy8259, BiosVideoPrivate->ThunkContext, 0x10, &Regs);
+
+    if (CarryFlag) {
+      return EFI_DEVICE_ERROR;
+    }
     break;
 
   default:
