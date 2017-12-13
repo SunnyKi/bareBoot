@@ -421,7 +421,7 @@ BiosKeyboardDriverBindingStart (
 
   CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x15, &Regs);
 
-  if (!CarryFlag) {	// XXX: ???
+  if (!CarryFlag) {
     //
     // Check bit 6 of Feature Byte 2.
     // If it is set, then Int 16 Func 09 is supported
@@ -433,7 +433,7 @@ BiosKeyboardDriverBindingStart (
       Regs.H.AH = 0x09;
       CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
 
-      if (!CarryFlag) {	// XXX: ???
+      if (!CarryFlag) {
         //
         // Check bit 5 of AH.
         // If it is set, then INT 16 Finc 10-12 are supported.
@@ -1782,6 +1782,7 @@ BiosKeyboardTimerHandler (
   EFI_KEY_DATA                       KeyData;
   LIST_ENTRY                         *Link;
   BIOS_KEYBOARD_CONSOLE_IN_EX_NOTIFY *CurrentNotify;
+  BOOLEAN                            CarryFlag;
 
   BiosKeyboardPrivate = Context;
 
@@ -1799,8 +1800,9 @@ BiosKeyboardTimerHandler (
     Regs.H.AH = 0x01;
   }
 
-  LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
-  if (Regs.E.EFLAGS.Bits.ZF != 0) {
+  CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
+
+  if (CarryFlag || Regs.E.EFLAGS.Bits.ZF != 0) {
     gBS->RestoreTPL (OldTpl);
     return;
   }
@@ -1814,7 +1816,13 @@ BiosKeyboardTimerHandler (
     Regs.H.AH = 0x00;
   }
 
-  LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
+  CarryFlag = LegacyBiosInt86 (BiosKeyboardPrivate->Legacy8259, BiosKeyboardPrivate->ThunkContext, 0x16, &Regs);
+
+  if (CarryFlag) {
+    gBS->RestoreTPL (OldTpl);
+    return;
+  }
+
   KeyData.Key.ScanCode            = (UINT16) Regs.H.AH;
   KeyData.Key.UnicodeChar         = (UINT16) Regs.H.AL;
 
