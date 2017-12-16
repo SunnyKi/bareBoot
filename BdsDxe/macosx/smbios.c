@@ -552,7 +552,7 @@ PatchTableType4and7 (
     ZeroMem ((VOID*) newSmbiosTable.std.Type7, MAX_TABLE_SIZE);
     CopyMem ((VOID*) newSmbiosTable.std.Type7, (VOID*) SmbiosTable.std.Type7, TableSize);
 
-    CoreCache = newSmbiosTable.std.Type7->CacheConfiguration & 7;
+    CoreCache = newSmbiosTable.std.Type7->CacheConfiguration & (MAX_CACHE_COUNT - 1);
 
     if (newSmbiosTable.std.Type7->SocketDesignation == 0) {
       SSocketD[1] = (CHAR8) (0x31 + CoreCache);
