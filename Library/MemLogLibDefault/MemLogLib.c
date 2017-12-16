@@ -91,7 +91,7 @@ GetTiming(VOID)
 /**
   Inits mem log.
 
-  @retval EFI_SUCCESS   The constructor always returns EFI_SUCCESS.
+  @retval The constructor returns EFI_SUCCESS or EFI_OUT_OF_RESOURCES.
 
 **/
 EFI_STATUS
@@ -187,6 +187,10 @@ MemLogVA (
     if (EFI_ERROR (Status)) {
       return;
     }
+  }
+  
+  if (mMemLog == NULL) {
+    return;
   }
   
   //
@@ -332,11 +336,15 @@ SetMemLogCallback (
   
   if (mMemLog == NULL) {
     Status = MemLogInit ();
+
     if (EFI_ERROR (Status)) {
       return;
     }
   }
-  mMemLog->Callback = Callback;
+
+  if (mMemLog != NULL) {
+    mMemLog->Callback = Callback;
+  }
 }
 
 /**
@@ -350,9 +358,14 @@ GetMemLogTscTicksPerSecond (VOID)
   
   if (mMemLog == NULL) {
     Status = MemLogInit ();
+
     if (EFI_ERROR (Status)) {
       return 0;
     }
   }
-  return mMemLog->TscFreqSec;
+
+  if (mMemLog != NULL) {
+    return mMemLog->TscFreqSec;
+  }
+  return 0;
 }
