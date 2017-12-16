@@ -1086,7 +1086,7 @@ SetInterruptDescriptorTableHandlerAddress (
   gIdtTable[Index].Bits.GateType    = IA32_IDT_GATE_TYPE_INTERRUPT_32;
   gIdtTable[Index].Bits.OffsetHigh  = (UINT16)(UintnHandler >> 16);
 #if defined (MDE_CPU_X64)
-  gIdtTable[Index].Bits.OffsetUpper = (UINT32)(UintnHandler >> 32);
+  gIdtTable[Index].Bits.OffsetUpper = (UINT32) RShiftU64 (UintnHandler, 32);
   gIdtTable[Index].Bits.Reserved_1  = 0;
 #endif
 }
@@ -1166,7 +1166,7 @@ InitInterruptDescriptorTable (
           OldIdt[Index].Bits.OffsetLow +
           (((UINTN) OldIdt[Index].Bits.OffsetHigh) << 16)
 #if defined (MDE_CPU_X64)
-            + (((UINTN) OldIdt[Index].Bits.OffsetUpper) << 32)
+            + (UINTN) LShiftU64 (OldIdt[Index].Bits.OffsetUpper, 32)
 #endif
           );
     } else {
