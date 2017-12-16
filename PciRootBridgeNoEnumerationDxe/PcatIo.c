@@ -20,8 +20,6 @@ Revision History
 
 --*/
 
-#include <Library/PciLib.h>
-
 #include "PcatPciRootBridge.h"
 
 BOOLEAN                  mPciOptionRomTableInstalled = FALSE;
@@ -188,7 +186,9 @@ PcatRootBridgeIoPciRW (
     // Access PCI-Express space by using memory mapped method.
     //
     PciExpressRegAddr = (PrivateData->PciExpressBaseAddress) |
-                        PCI_LIB_ADDRESS (PciAddress.Bus, PciAddress.Device, PciAddress.Function, 0);
+                        (PciAddress.Bus      << 20) |
+                        (PciAddress.Device   << 15) |
+                        (PciAddress.Function << 12);
     if (PciAddress.ExtendedRegister != 0) {
       PciExpressRegAddr += PciAddress.ExtendedRegister;
     } else {
