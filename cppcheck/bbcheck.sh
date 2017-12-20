@@ -14,11 +14,13 @@
 EDK2HOME=$BBHOME/../edk2; export EDK2HOME
 EDK2CFG=$BBHOME/cppcheck/edk2.cfg; export EDK2CFG
 
+CPU=X64; export CPU
+
 exec $BBHOME/cppcheck/cppcheck.sh \
 	--library=$BBHOME/cppcheck/bareBoot.cfg \
 	--inconclusive \
 	\
-	-D MDE_CPU_X64 \
+	-D MDE_CPU_$CPU \
 	\
 	-I $BBHOME/DxeIpl \
 	-I $BBHOME/EfiLdr \
@@ -31,7 +33,7 @@ exec $BBHOME/cppcheck/cppcheck.sh \
 	-I $BBHOME/VBoxFsDxe \
 	\
 	-I $EDK2HOME/MdePkg/Include \
-	-I $EDK2HOME/MdePkg/Include/X64 \
+	-I $EDK2HOME/MdePkg/Include/$CPU \
 	-I $EDK2HOME/MdeModulePkg/Include \
 	-I $EDK2HOME/IntelFrameworkPkg/Include \
 	-I $EDK2HOME/IntelFrameworkModulePkg/Include \
