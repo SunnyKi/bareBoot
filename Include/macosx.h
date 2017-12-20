@@ -93,7 +93,7 @@
 
 #define GEN_PMCON_1                 0xA0
 
-#define PCIADDR(bus, dev, func) ((1 << 31) | ((bus) << 16) | ((dev) << 11) | ((func) << 8))
+#define PCIADDR(bus, dev, func) ((1U << 31) | ((bus) << 16) | ((dev) << 11) | ((func) << 8))
 
 #define REG8(base, reg)  ((volatile UINT8 *)(UINTN)base)[(reg)]
 #define REG16(base, reg)  ((volatile UINT16 *)(UINTN)base)[(reg) >> 1]
