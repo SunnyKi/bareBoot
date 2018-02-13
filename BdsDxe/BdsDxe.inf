@@ -59,7 +59,6 @@
   GenericBds/BdsMisc.c
   GenericBds/BdsUsbLegacy.c
   GenericBds/InternalBdsLib.h
-  GenericBds/Performance.c
 
   Graphics/Graphics.c
   Graphics/picopng.c
@@ -156,7 +155,6 @@
   gDriverHealthFormSetGuid                      ## SOMETIMES_PRODUCES ## DriverHealth HII Package
 #
   gEfiPcAnsiGuid                                ## CONSUMES ## GUID (The type of terminal)
-  gPerformanceProtocolGuid                      ## SOMETIMES_PRODUCES ## Variable:L"PerfDataMemAddr" (The ACPI address of performance data)
   gEfiUartDevicePathGuid                        ## CONSUMES ## GUID (Identify the device path for UARD device)
   gEfiSasDevicePathGuid                         ## CONSUMES ## GUID (Identify the device path for SAS device)
   gLastEnumLangGuid                             ## SOMETIMES_PRODUCES ## Variable:L"LastEnumLang" (Platform language at last time enumeration.)
