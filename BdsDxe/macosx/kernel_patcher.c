@@ -1155,64 +1155,38 @@ KernelLapicPatch_32 (
 
 VOID
 EFIAPI
-DebugKernelToScreen (
-  VOID
+DivertLogFunction (
+  CHAR8* srcName,
+  CHAR8* dstName
 )
 {
-  UINT32            printfAddr;
-  UINT32            kprintfAddr;
+  UINT32            srcAddr;
+  UINT32            dstAddr;
   UINT32            delta;
-  UINT8             *binary;
+  UINT8*            srcCode;
 
   // thanks to RevoGirl and Pike R. Alpha
-  GetFunction ("_printf", &printfAddr);
-  GetFunction ("_kprintf", &kprintfAddr);
-  DBG ("%a: printfAddr = 0x%x\n", __FUNCTION__, printfAddr);
-  DBG ("%a: kprintfAddr = 0x%x\n", __FUNCTION__, kprintfAddr);
-  if (kprintfAddr > printfAddr) {
-    delta = (0xFFFFFFFF - (kprintfAddr - printfAddr)) - 4;
-  } else {
-    delta = (printfAddr - kprintfAddr) - 5;
-  }
-  DBG ("%a: delta = 0x%x\n", __FUNCTION__, delta);
-  binary = (UINT8 *)(UINTN) kprintfAddr;
-  binary [0] = 0xE9;
-  binary [1] = (UINT8) ((delta & 0x000000FF) >>  0);
-  binary [2] = (UINT8) ((delta & 0x0000FF00) >>  8);
-  binary [3] = (UINT8) ((delta & 0x00FF0000) >> 16);
-  binary [4] = (UINT8) ((delta & 0xFF000000) >> 24);
-  binary [5] = 0xC3;
-}
+  //
+  GetFunction (dstName, &dstAddr);
+  GetFunction (srcName, &srcAddr);
 
-VOID
-EFIAPI
-DebugKernelToCom (
-  VOID
-)
-{
-  UINT32            printfAddr;
-  UINT32            kprintfAddr;
-  UINT32            delta;
-  UINT8             *binary;
 
-  // thanks to RevoGirl and Pike R. Alpha
-  GetFunction ("_printf", &printfAddr);
-  GetFunction ("_kprintf", &kprintfAddr);
-  DBG ("%a: printfAddr = 0x%x\n", __FUNCTION__, printfAddr);
-  DBG ("%a: kprintfAddr = 0x%x\n", __FUNCTION__, kprintfAddr);
-  if (printfAddr > kprintfAddr) {
-    delta = (0xFFFFFFFF - (printfAddr - kprintfAddr)) - 4;
+  if (srcAddr > dstAddr) {
+    delta = (0xFFFFFFFF - (srcAddr - dstAddr)) - 4;
   } else {
-    delta = (kprintfAddr - printfAddr) - 5;
+    delta = (dstAddr - srcAddr) - 5;
   }
-  DBG ("%a: delta = 0x%x\n", __FUNCTION__, delta);
-  binary = (UINT8 *)(UINTN) printfAddr;
-  binary [0] = 0xE9;
-  binary [1] = (UINT8) ((delta & 0x000000FF) >>  0);
-  binary [2] = (UINT8) ((delta & 0x0000FF00) >>  8);
-  binary [3] = (UINT8) ((delta & 0x00FF0000) >> 16);
-  binary [4] = (UINT8) ((delta & 0xFF000000) >> 24);
-  binary [5] = 0xC3;
+
+  DBG ("%a: srcAddr = 0x%08x dstAddr = 0x%08x delta = 0x%08x\n", __FUNCTION__, srcAddr, dstAddr, delta);
+
+  srcCode = (UINT8 *)(UINTN) srcAddr;
+
+  srcCode [0] = 0xE9;
+  srcCode [1] = (UINT8) ((delta & 0x000000FF) >>  0);
+  srcCode [2] = (UINT8) ((delta & 0x0000FF00) >>  8);
+  srcCode [3] = (UINT8) ((delta & 0x00FF0000) >> 16);
+  srcCode [4] = (UINT8) ((delta & 0xFF000000) >> 24);
+  srcCode [5] = 0xC3;
 }
 
 VOID
@@ -1477,11 +1451,11 @@ KernelAndKextsPatcherStart (
       break;
 
     case 1:
-      DebugKernelToScreen ();
+      DivertLogFunction ("_kprintf", "_printf");
       break;
 
     case 2:
-      DebugKernelToCom ();
+      DivertLogFunction ("_printf", "_kprintf");
       break;
 
     default:	/* Configuration error. User barfed */
