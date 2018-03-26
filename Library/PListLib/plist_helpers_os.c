@@ -33,9 +33,10 @@
 #include "plist.h"
 #include "plist_helpers.h"
 
-char*
-_plstrcpy(char* dst, const char* src) {
-	return strcpy(dst, src);
+int
+_plstrcpy(char* dst, unsigned int dsz, const char* src) {
+	(void) strncpy(dst, src, dsz);
+	return TRUE;
 }
 
 int
