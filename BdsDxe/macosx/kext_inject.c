@@ -174,14 +174,22 @@ LoadKext (
 
   CopyMem ((CHAR8 *) infoAddr + sizeof (_BooterKextFileInfo), infoDictBuffer,
            infoDictBufferLength);
-  CopyMem ((CHAR8 *) infoAddr + sizeof (_BooterKextFileInfo) +
-           infoDictBufferLength, executableBuffer, executableBufferLength);
+
+  if (executableBufferLength > 0) {
+    CopyMem ((CHAR8 *) infoAddr + sizeof (_BooterKextFileInfo) +
+             infoDictBufferLength, executableBuffer, executableBufferLength);
+  }
+
   CopyMem ((CHAR8 *) infoAddr + sizeof (_BooterKextFileInfo) +
            infoDictBufferLength + executableBufferLength, bundlePathBuffer,
            bundlePathBufferLength);
 
   FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
-  FreeAlignedPages (executableFatBuffer, EFI_SIZE_TO_PAGES (executableFatBufferLength));
+
+  if (executableFatBufferLength > 0) {
+    FreeAlignedPages (executableFatBuffer, EFI_SIZE_TO_PAGES (executableFatBufferLength));
+  }
+
   FreePool (bundlePathBuffer);
 
   return EFI_SUCCESS;
