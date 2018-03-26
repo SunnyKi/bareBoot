@@ -6,4 +6,4 @@ pltest:
 	${CC} ${CFLAGS} -o plist -Wall -g -I. ${SRCS}
 
 clean:
-	/bin/rm -f a.out plist *.o
+	/bin/rm -fr a.out plist *.o *.dSYM
