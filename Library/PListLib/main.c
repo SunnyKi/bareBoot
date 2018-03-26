@@ -29,7 +29,7 @@
 #include "plist.h"
 #include "plist_xml_parser.h"
 
-#define PLBUFSIZE 500000
+#define PLBUFSIZE (2 * 1024 * 1024)
 
 char ibig[PLBUFSIZE];
 char obig[PLBUFSIZE];
