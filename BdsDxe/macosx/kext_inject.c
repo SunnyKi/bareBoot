@@ -381,7 +381,7 @@ LoadKexts (
   InitializeUnicodeCollationProtocol ();
 
   KextsDir = AllocatePool (200 * sizeof (CHAR16));
-  (VOID) UnicodeSPrint (KextsDir, 200 * sizeof (CHAR16), L"%skexts\\common\\",
+  (VOID) UnicodeSPrint (KextsDir, 200 * sizeof (CHAR16), L"%skexts\\common",
                         gPNDirExists ? gProductNameDir : BB_HOME_DIR);
 
   if (!FileExists (gRootFHandle, KextsDir)) {
