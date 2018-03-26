@@ -79,7 +79,7 @@ ThinFatFile (
 }
 
 EFI_STATUS
-  EFIAPI
+EFIAPI
 LoadKext (
   IN CHAR16 *FileName,
   IN cpu_type_t archCpuType,
@@ -126,8 +126,7 @@ LoadKext (
   if (GetUnicodeProperty (plist, "CFBundleExecutable", Executable, ARRAY_SIZE (Executable))) {
     if (NoContents) {
       UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, Executable);
-    }
-    else {
+    } else {
       UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s\\%s", FileName, L"Contents\\MacOS",
                      Executable);
     }
@@ -151,6 +150,7 @@ LoadKext (
       return EFI_NOT_FOUND;
     }
   }
+
   plNodeDelete (plist);
 
   bundlePathBufferLength = StrLen (FileName) + 1;
@@ -188,7 +188,7 @@ LoadKext (
 }
 
 EFI_STATUS
-  EFIAPI
+EFIAPI
 AddKext (
   IN CHAR16 *FileName,
   IN cpu_type_t archCpuType
@@ -203,8 +203,7 @@ AddKext (
   if (EFI_ERROR (Status)) {
     DBG ("%a: load kext %s failed\n", __FUNCTION__, FileName);
     FreePool (KextEntry);
-  }
-  else {
+  } else {
     DBG ("%a: load kext %s successful\n", __FUNCTION__, FileName);
     InsertTailList (&gKextList, &KextEntry->Link);
   }
@@ -223,13 +222,13 @@ GetListCount (
   if (!IsListEmpty (List)) {
     for (Link = List->ForwardLink; Link != List; Link = Link->ForwardLink)
       Count++;
-  }
-  else {
+  } else {
     DBG ("%a: Kext Inject - list is empty.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
     Print (L"%a: Get List Count - list is empty.\n", __FUNCTION__);
 #endif
   }
+
   return Count;
 }
 
@@ -257,9 +256,7 @@ GetKextsSize (
       kextsSize += RoundPage (KextEntry->kext.length);
     }
   }
-  else {
 
-  }
   return kextsSize;
 }
 
@@ -425,8 +422,7 @@ LoadKexts (
       FreePool (KextsDir);
       CommonKextsDir = FALSE;
       KextsDir = GetExtraKextsDir ();
-    }
-    else {
+    } else {
       FreePool (KextsDir);
       KextsDir = NULL;
     }
@@ -588,8 +584,7 @@ InjectKexts (
       KextBase = RoundPage (KextBase + KextEntry->kext.length);
       Index++;
     }
-  }
-  else {
+  } else {
     DBG ("%a: Kext Inject - kext list is empty.\n",__FUNCTION__);
 #ifdef KEXT_INJECT_DEBUG
     Print (L"%a: kext list is empty.\n", __FUNCTION__);
