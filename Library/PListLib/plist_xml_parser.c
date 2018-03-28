@@ -845,6 +845,8 @@ PListXMLNewTag (void) {
       tag[i].tagNext = tag + i + 1;
     }
 
+    i--;
+    tag[i].tagNext = NULL;
     gPListXMLTagsFree = tag;
     gPListXMLTagsArena = tag;
   }
