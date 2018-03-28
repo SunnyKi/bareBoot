@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - 2016 Nikolai Saoukh. All rights reserved.
+ * Copyright (c) 2013-2018 Nikolai Saoukh. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,13 +38,13 @@ plbuf_t ibuf = {ibig, 0, 0 };
 plbuf_t obuf = {obig, sizeof(obig), 0 };
 
 int main(int argc, char* argv[]) {
-	FILE* ifp;
 	void* pl;
 #ifdef DEBUG
 	void* dp;
 	void* kp;
 	int rc;
-#endif
+#else
+	FILE* ifp;
 
 	if (argc > 1) {
 		ifp = fopen(argv[1], "rb");
@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
 		plNodeDelete(pl);
 		obuf.pos = 0;
 	}
+#endif
 
 #ifdef DEBUG
 	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
