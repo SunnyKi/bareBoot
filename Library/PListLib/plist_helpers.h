@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Nikolai Saoukh. All rights reserved.
+ * Copyright (c) 2013-2018 Nikolai Saoukh. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,6 +46,7 @@ int _plint2str(vlong val, char* vbuf, unsigned int bsz);
 vlong _plstr2vlong(char* vbuf, unsigned int bsz);
 
 void* _plzalloc(unsigned int sz);
+void* _plrealloc(void* ptr, unsigned int osz, unsigned int nsz);
 void _plfree(void* ptr);
 
 char* _plb64encode(char* idat, unsigned int ilen, unsigned int* olen);

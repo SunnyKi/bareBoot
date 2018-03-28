@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Nikolai Saoukh. All rights reserved.
+ * Copyright (c) 2013-2018 Nikolai Saoukh. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -168,6 +168,11 @@ _plzalloc (
     return NULL;
   }
   return AllocateZeroPool (sz);
+}
+
+void*
+_plrealloc(void* ptr, unsigned int osz, unsigned int nsz) {
+	return ReallocatePool (osz, nsz, ptr);
 }
 
 /* Following sources heavily inspired by SunnyKi ;-) */
