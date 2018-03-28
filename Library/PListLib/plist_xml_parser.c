@@ -146,31 +146,6 @@ PListXMLDecode (const char* src) {
 #endif
 
 //==========================================================================
-// PListXMLFreeTag
-
-void
-PListXMLFreeTag (TagPtr tag) {
-  if (tag == NULL) {
-    return;
-  }
-
-  if (tag->string != NULL) {
-    PListXMLFreeSymbol (tag->string);
-  }
-
-  PListXMLFreeTag (tag->tag);
-  PListXMLFreeTag (tag->tagNext);
-  // Clear and free the tag.
-  tag->type = kTagTypeNone;
-  tag->string = NULL;
-  tag->dataLen = 0;
-  tag->tag = NULL;
-  tag->offset = 0;
-  tag->tagNext = gPListXMLTagsFree;
-  gPListXMLTagsFree = tag;
-}
-
-//==========================================================================
 // PListXMLGetNextTag
 
 int
@@ -750,37 +725,7 @@ PListXMLFixDataMatchingTag (char* buffer, char* tag, unsigned int* lenPtr) {
 }
 
 //==========================================================================
-// PListXMLNewTag
-
-#define TAGS_CACHE_SIZE 0x2000
-
-TagPtr
-PListXMLNewTag (void) {
-  unsigned int i;
-  TagPtr       tag;
-
-  if (gPListXMLTagsFree == NULL) {
-    tag = (TagPtr) _plzalloc (TAGS_CACHE_SIZE * sizeof (Tag));
-
-    if (tag == NULL) {
-      return NULL;
-    }
-
-    // Initalize the new tags.
-    for (i = 0; i < TAGS_CACHE_SIZE; i++) {
-      tag[i].tagNext = tag + i + 1;
-    }
-
-    gPListXMLTagsFree = tag;
-    gPListXMLTagsArena = tag;
-  }
-
-  tag = gPListXMLTagsFree;
-  gPListXMLTagsFree = tag->tagNext;
-  return tag;
-}
-
-#undef TAGS_CACHE_SIZE
+// PListXMLNewSymbol
 
 char*
 PListXMLNewSymbol (char* string) {
@@ -879,6 +824,64 @@ PListXMLFindSymbol (char * string, SymbolPtr * prevSymbol) {
   }
 
   return symbol;
+}
+
+//==========================================================================
+// PListXMLNewTag
+
+#define TAGS_CACHE_SIZE 0x0100
+
+TagPtr
+PListXMLNewTag (void) {
+  unsigned int i;
+  TagPtr       tag;
+
+  if (gPListXMLTagsFree == NULL) {
+    tag = (TagPtr) _plzalloc (TAGS_CACHE_SIZE * sizeof (Tag));
+
+    if (tag == NULL) {
+      return NULL;
+    }
+
+    // Initalize the new tags.
+    for (i = 0; i < TAGS_CACHE_SIZE; i++) {
+      tag[i].tagNext = tag + i + 1;
+    }
+
+    gPListXMLTagsFree = tag;
+    gPListXMLTagsArena = tag;
+  }
+
+  tag = gPListXMLTagsFree;
+  gPListXMLTagsFree = tag->tagNext;
+  return tag;
+}
+
+#undef TAGS_CACHE_SIZE
+
+//==========================================================================
+// PListXMLFreeTag
+
+void
+PListXMLFreeTag (TagPtr tag) {
+  if (tag == NULL) {
+    return;
+  }
+
+  if (tag->string != NULL) {
+    PListXMLFreeSymbol (tag->string);
+  }
+
+  PListXMLFreeTag (tag->tag);
+  PListXMLFreeTag (tag->tagNext);
+  // Clear and free the tag.
+  tag->type = kTagTypeNone;
+  tag->string = NULL;
+  tag->dataLen = 0;
+  tag->tag = NULL;
+  tag->offset = 0;
+  tag->tagNext = gPListXMLTagsFree;
+  gPListXMLTagsFree = tag;
 }
 
 //==========================================================================
