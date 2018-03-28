@@ -201,7 +201,6 @@ PListXMLParseNextTag (char* buffer, TagPtr * tag, unsigned int* lenPtr) {
   char*    tagName;
 
   length = 0;
-  pos = 0;
   tagName = NULL;
 
   *lenPtr = 0;
@@ -346,8 +345,6 @@ PListXMLParse (const char* buffer, unsigned int bSize, TagPtr* dict) {
 //
 // xml
 //
-
-#define DOFREE 1
 
 //==========================================================================
 // PListXMLGetProperty
