@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 Nikolai Saoukh. All rights reserved.
+ * Copyright (c) 2013-2018 Nikolai Saoukh. All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,118 +28,24 @@
 
 #include "plist_xml_parser.h"
 
-struct _plchain;
 struct _plnode;
 
-struct _plchain {
-	struct _plchain* next;
-	struct _plchain* prev;
-	struct _plnode* payload;
-};
-
-typedef struct _plchain _plchain_t;
-
 struct _plnode {
-	struct _plchain* children;
+	int refcnt;
+	plkind_t kind;
+
 	struct _plnode* keyval;
 	char* datval;
 	unsigned int datlen;
 	vlong intval; /* int64 */
-	int refcnt;
-	plkind_t kind;
+	struct _plnode** amap;	/* array map to values */
+	unsigned int acap;	/* array capacity size */
+	unsigned int asiz;	/* number of items in array */
 };
 
 typedef struct _plnode _plnode_t;
 
 int _plGrowTree(TagPtr ipl, void* pn);
-
-/* Chain reaction ;-) */
-
-_plchain_t*
-_plChainNew(_plnode_t* np) {
-	_plchain_t* cp;
-
-	cp = (_plchain_t*) _plzalloc(sizeof(_plchain_t));
-	if (cp != NULL) {
-		cp->payload = np;
-		cp->next = cp;
-		cp->prev = cp;
-	}
-	return cp;
-}
-
-void
-_plChainDelete(_plchain_t* cp) {
-	_plchain_t* wcp;
-
-	if (cp == NULL) { return; }
-
-	wcp = cp;
-	while (wcp->next != cp) {
-		_plchain_t* np;
-
-		np = wcp->next;
-		plNodeDelete(wcp->payload);
-		_plfree(wcp);
-		wcp = np;
-	}
-	plNodeDelete(wcp->payload);
-	_plfree(wcp);
-}
-
-unsigned int
-_plChainCount(_plchain_t* cp) {
-	_plchain_t* wcp;
-	unsigned int sz;
-
-	if (cp == NULL) { return 0; }
-	sz = 1;
-	wcp = cp;
-	while (wcp->next != cp) {
-		sz++;
-		wcp = wcp->next;
-	}
-	return sz;
-}
-
-int
-_plChainAdd(_plchain_t** cpp, _plnode_t* pn) {
-	_plchain_t* wcp;
-
-	wcp = _plChainNew(pn);
-	if (wcp == NULL) { return 0; }
-	if (*cpp == NULL) { *cpp = wcp; return 1; }
-
-	wcp->next = *cpp;
-	wcp->prev = (*cpp)->prev;
-	wcp->prev->next = wcp;
-	(*cpp)->prev = wcp;
-
-	return 1;
-}
-
-_plnode_t*
-_plChainGetLoad(_plchain_t* cp, unsigned int lnum) {
-	_plchain_t* wcp;
-	unsigned int lcnt;
-
-	if (cp == NULL) { return NULL; }
-
-#if 0
-	for (lcnt = 0, wcp = cp; lcnt < lnum && wcp != cp; lcnt++, wcp = wcp->next)
-		;
-	return lcnt == lnum ? wcp->payload : NULL;
-#else
-	lcnt = 0;
-	wcp = cp;
-	do {
-		if (lcnt == lnum) { return wcp->payload; }
-		lcnt++;
-		wcp = wcp->next;
-	} while (wcp != cp);
-	return NULL;
-#endif
-}
 
 /* Property List stuff */
 
@@ -164,8 +70,11 @@ plNodeDelete(void* node) {
 
 	if (pn->datval != NULL) { _plfree(pn->datval); }
 	if (pn->keyval != NULL) { plNodeDelete(pn->keyval); }
-	if (pn->children != NULL) { _plChainDelete(pn->children); }
-
+	if (pn->amap != NULL) {
+		unsigned int i;
+		for (i = 0; i < pn->asiz; i++) { plNodeDelete(pn->amap[i]); }
+		_plfree(pn->amap);
+	}
 	_plfree(node);
 }
 
@@ -189,8 +98,24 @@ plNodeAdd(void* bag, void* node) {
 		if (plDictFind(bag, plNodeGetBytes(node), plNodeGetSize(node), plKindAny) != NULL) { return 0; }
 		/* FALLTHROUGH */
 	case plKindArray:
-		if (_plChainAdd(&bn->children, dn)) { dn->refcnt++; return 1; }
-		return 0;
+		if (bn->asiz >= bn->acap) {
+			unsigned int ncap;
+			unsigned int nsz;
+			unsigned int osz;
+			_plnode_t** nmap;
+
+			ncap = bn->acap + (bn->acap >> 2) + 1;
+			osz = bn->acap * sizeof (*bn->amap);
+			nsz = ncap * sizeof (*bn->amap);
+			nmap = _plrealloc(bn->amap, osz, nsz);
+			if (nmap == NULL) { return 0; }
+			bn->acap = ncap;
+			bn->amap = nmap;
+		}
+		bn->amap[bn->asiz] = dn;
+		bn->asiz++;
+		dn->refcnt++;
+		return 1;
 	case plKindKey:
 		if (plNodeGetItem(bag, 0) != NULL) { return 0; }
 		bn->keyval = dn;
@@ -271,11 +196,14 @@ plNodeGetSize(void* pn) {
 
 	wn = (_plnode_t*) pn;
 	switch(plNodeGetKind(pn)) {
-	case plKindArray:
 	case plKindDict:
-		return _plChainCount(wn->children);
+		/* FALLTHROUGH */
+	case plKindArray:
+		return wn->asiz;
 	case plKindKey:
+		/* FALLTHROUGH */
 	case plKindData:
+		/* FALLTHROUGH */
 	case plKindString:
 		return wn->datval != NULL ? wn->datlen : 0;
 	default:
@@ -288,7 +216,9 @@ char*
 plNodeGetBytes(void* pn) {
 	switch (plNodeGetKind(pn)) {
 	case plKindKey:
+		/* FALLTHROUGH */
 	case plKindData:
+		/* FALLTHROUGH */
 	case plKindString:
 		return ((_plnode_t*) pn)->datval;
 	default:
@@ -305,8 +235,10 @@ plNodeGetItem(void* bag, unsigned int inum) {
 	bn = (_plnode_t*) bag;
 	switch (plNodeGetKind(bag)) {
 	case plKindArray:
+		/* FALLTHROUGH */
 	case plKindDict:
-		return _plChainGetLoad(bn->children, inum);
+		if (inum < bn->asiz) { return bn->amap[inum]; }
+		break;
 	case plKindKey:
 		return bn->keyval;
 	default:
@@ -450,7 +382,6 @@ plXmlToNode(plbuf_t* ibuf) {
 	void* pn;
 	int rc;
 
-	rc = 0;
 	pn = NULL;
 
 	rc = PListXMLParse(ibuf->dat, ibuf->len, &plist);
