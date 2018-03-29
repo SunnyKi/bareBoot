@@ -841,12 +841,10 @@ PListXMLNewTag (void) {
     }
 
     // Initalize the new tags.
-    for (i = 0; i < TAGS_CACHE_SIZE; i++) {
+    for (i = 0; i < TAGS_CACHE_SIZE - 1; i++) {
       tag[i].tagNext = tag + i + 1;
     }
 
-    i--;
-    tag[i].tagNext = NULL;
     gPListXMLTagsFree = tag;
     gPListXMLTagsArena = tag;
   }
