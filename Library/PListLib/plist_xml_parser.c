@@ -57,7 +57,6 @@ struct _Symbol {
 
 SymbolPtr gPListXMLSymbolsHead;
 TagPtr    gPListXMLTagsFree;
-void*    gPListXMLTagsArena;
 
 static char* buffer_start = NULL;
 
@@ -826,35 +825,23 @@ PListXMLFindSymbol (char * string, SymbolPtr * prevSymbol) {
 //==========================================================================
 // PListXMLNewTag
 
-#define TAGS_CACHE_SIZE 0x0100
-
 TagPtr
 PListXMLNewTag (void) {
-  unsigned int i;
   TagPtr       tag;
 
   if (gPListXMLTagsFree == NULL) {
-    tag = (TagPtr) _plzalloc (TAGS_CACHE_SIZE * sizeof (Tag));
+    tag = (TagPtr) _plzalloc (sizeof (Tag));
 
     if (tag == NULL) {
       return NULL;
     }
-
-    // Initalize the new tags.
-    for (i = 0; i < TAGS_CACHE_SIZE - 1; i++) {
-      tag[i].tagNext = tag + i + 1;
-    }
-
-    gPListXMLTagsFree = tag;
-    gPListXMLTagsArena = tag;
+  } else {
+    tag = gPListXMLTagsFree;
+    gPListXMLTagsFree = tag->tagNext;
   }
 
-  tag = gPListXMLTagsFree;
-  gPListXMLTagsFree = tag->tagNext;
   return tag;
 }
-
-#undef TAGS_CACHE_SIZE
 
 //==========================================================================
 // PListXMLFreeTag
@@ -887,8 +874,11 @@ PListXMLFreeTag (TagPtr tag) {
 void
 PListXMLCleanup (void) {
   SymbolPtr symbol;
+  TagPtr tag;
+  TagPtr ntag;
 
   symbol = gPListXMLSymbolsHead;
+
   while (symbol != NULL) {
     SymbolPtr next;
 
@@ -896,6 +886,14 @@ PListXMLCleanup (void) {
     _plfree (symbol);
     symbol = next;
   }
-  _plfree (gPListXMLTagsArena);
+
+  tag = gPListXMLTagsFree;
+
+  while (tag != NULL) {
+    ntag = tag->tagNext;
+    _plfree(tag);
+    tag = ntag;
+  }
+
   gPListXMLTagsFree = NULL;
 }
