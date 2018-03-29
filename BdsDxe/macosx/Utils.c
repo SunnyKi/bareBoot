@@ -1669,6 +1669,22 @@ VOID* plist
 }
 
 VOID *
+LoadPListBuffer (
+  IN UINT8 **rbuf,
+  IN UINTN *rlen
+)
+{
+  EFI_STATUS Status;
+  plbuf_t pbuf;
+
+  pbuf.pos = 0;
+  pbuf.dat = rbuf;
+  pbuf.len = rlen;
+
+  return plXmlToNode (&pbuf);
+}
+
+VOID *
 LoadPListFile (
   IN EFI_FILE * RootFileHandle,
   IN CHAR16 *XmlPlistPath

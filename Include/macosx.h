@@ -626,6 +626,12 @@ plist2dbg (
 );
 
 VOID*
+LoadPListBuffer (
+  IN UINT8 **rbuf,
+  IN UINTN *rlen
+);
+
+VOID*
 LoadPListFile (
   IN EFI_FILE *RootFileHandle,
   IN CHAR16* XmlPlistPath
