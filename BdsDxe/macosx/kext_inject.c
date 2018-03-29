@@ -102,46 +102,53 @@ LoadKext (
   CHAR16 TempName[256];
 
   UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, L"Contents\\Info.plist");
-  plist = LoadPListFile (gRootFHandle, TempName);
+  Status = egLoadFile (gRootFHandle, TempName, &infoDictBuffer, &infoDictBufferLength);
 
-  if (plist == NULL) {
+  if (EFI_ERROR (Status)) {
     UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, L"Info.plist");
-    plist = LoadPListFile (gRootFHandle, TempName);
+    Status = egLoadFile (gRootFHandle, TempName, &infoDictBuffer, &infoDictBufferLength);
 
-    if (plist == NULL) {
-      DBG ("%a: Error loading kext %s plist!\n", __FUNCTION__, FileName);
+    if (EFI_ERROR (Status)) {
+      DBG ("%a: Error reading %s\n", __FUNCTION__, TempName);
       return EFI_NOT_FOUND;
     }
+
     NoContents = TRUE;
   }
 
-  Status =
-    egLoadFile (gRootFHandle, TempName, &infoDictBuffer, &infoDictBufferLength);
-  if (EFI_ERROR (Status)) {
-    DBG ("%a: Error loading kext %s raw plist! (%r)\n", __FUNCTION__, FileName, Status);
-    plNodeDelete (plist);
+  DBG ("%a: (%s) raw loaded\n", __FUNCTION__, TempName);
+
+  plist = LoadPListBuffer (infoDictBuffer, infoDictBufferLength);
+
+  if (plist == NULL) {
+    DBG ("%a: Error parsing %s\n", __FUNCTION__, TempName);
+    FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
     return EFI_NOT_FOUND;
   }
+
+  DBG ("%a: (%s) plist parsed\n", __FUNCTION__, TempName);
 
   if (GetUnicodeProperty (plist, "CFBundleExecutable", Executable, ARRAY_SIZE (Executable))) {
     if (NoContents) {
       UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s", FileName, Executable);
     } else {
-      UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s\\%s", FileName, L"Contents\\MacOS",
-                     Executable);
+      UnicodeSPrint (TempName, sizeof (TempName), L"%s\\%s\\%s", FileName, L"Contents\\MacOS", Executable);
     }
-    Status =
-      egLoadFile (gRootFHandle, TempName, &executableFatBuffer,
+
+    Status = egLoadFile (gRootFHandle, TempName, &executableFatBuffer,
                   &executableFatBufferLength);
+
     if (EFI_ERROR (Status)) {
       DBG ("%a: Failed to load extra kext: %s (%r)\n", __FUNCTION__, FileName, Status);
       FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
       plNodeDelete (plist);
       return EFI_NOT_FOUND;
     }
+
     executableBuffer = executableFatBuffer;
     executableBufferLength = executableFatBufferLength;
     Status = ThinFatFile (&executableBuffer, &executableBufferLength, archCpuType);
+
     if (EFI_ERROR (Status)) {
       FreeAlignedPages (infoDictBuffer, EFI_SIZE_TO_PAGES (infoDictBufferLength));
       FreeAlignedPages (executableFatBuffer, EFI_SIZE_TO_PAGES (executableFatBufferLength));
@@ -149,6 +156,8 @@ LoadKext (
       plNodeDelete (plist);
       return EFI_NOT_FOUND;
     }
+  } else {
+      DBG ("%a: (%s) without executable\n", __FUNCTION__, FileName);
   }
 
   plNodeDelete (plist);
