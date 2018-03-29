@@ -1670,15 +1670,14 @@ VOID* plist
 
 VOID *
 LoadPListBuffer (
-  IN UINT8 **rbuf,
-  IN UINTN *rlen
+  IN UINT8 *rbuf,
+  IN UINTN rlen
 )
 {
-  EFI_STATUS Status;
   plbuf_t pbuf;
 
   pbuf.pos = 0;
-  pbuf.dat = rbuf;
+  pbuf.dat = (CHAR8 *)rbuf;
   pbuf.len = rlen;
 
   return plXmlToNode (&pbuf);

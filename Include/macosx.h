@@ -627,8 +627,8 @@ plist2dbg (
 
 VOID*
 LoadPListBuffer (
-  IN UINT8 **rbuf,
-  IN UINTN *rlen
+  IN UINT8 *rbuf,
+  IN UINTN rlen
 );
 
 VOID*
