@@ -94,8 +94,10 @@ plNodeAdd(void* bag, void* node) {
 	case plKindDict:
 		/* We add to dict only well formed keys */
 		if (plNodeGetKind(node) != plKindKey || plNodeGetItem(node, 0) == NULL) { return 0; }
-		/* No duplicatates, please! */
+#ifdef PLISTLIB_NO_DUPS
+		/* No duplicates, please! */
 		if (plDictFind(bag, plNodeGetBytes(node), plNodeGetSize(node), plKindAny) != NULL) { return 0; }
+#endif
 		/* FALLTHROUGH */
 	case plKindArray:
 		if (bn->asiz >= bn->acap) {
