@@ -1678,7 +1678,7 @@ LoadPListBuffer (
 
   pbuf.pos = 0;
   pbuf.dat = (CHAR8 *)rbuf;
-  pbuf.len = rlen;
+  pbuf.len = (unsigned int) rlen;
 
   return plXmlToNode (&pbuf);
 }

@@ -27,6 +27,7 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/MemoryAllocationLib.h>
 #include <Library/PrintLib.h>
+#include <Library/DebugLib.h>
 
 #include <b64/cencode.h>
 #include <b64/cdecode.h>
@@ -164,15 +165,27 @@ _plzalloc (
   unsigned int sz
 )
 {
+  void* rv;
+
   if (sz == 0) {
     return NULL;
   }
-  return AllocateZeroPool (sz);
+  rv = AllocateZeroPool (sz);
+  if (rv == NULL) {
+    DEBUG ((DEBUG_INFO, "%a: NULL from AllocateZeroPool(%u)\n", __FUNCTION__, sz));
+  }
+  return rv;
 }
 
 void*
 _plrealloc(void* ptr, unsigned int osz, unsigned int nsz) {
-	return ReallocatePool (osz, nsz, ptr);
+  void* rv;
+
+  rv = ReallocatePool (osz, nsz, ptr);
+  if (rv == NULL) {
+    DEBUG ((DEBUG_INFO, "%a: NULL from ReallocatePool(%p, %u, %u)\n", __FUNCTION__, ptr, osz, nsz));
+  }
+  return rv;
 }
 
 /* Following sources heavily inspired by SunnyKi ;-) */
