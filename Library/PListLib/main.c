@@ -39,10 +39,10 @@ plbuf_t obuf = {obig, sizeof(obig), 0 };
 
 int main(int argc, char* argv[]) {
 	void* pl;
-	int rc;
 #ifdef DEBUG
 	void* dp;
 	void* kp;
+	int rc;
 #else
 	FILE* ifp;
 
@@ -59,9 +59,9 @@ int main(int argc, char* argv[]) {
 
 		pl = plXmlToNode(&ibuf);
 
-		if (pl != NULL ) {
-		       	rc = plNodeToXml(pl, &obuf);
-			if (rc) { fwrite(obig, 1, obuf.pos, stdout); }
+		if (pl != NULL) {
+			(void) plNodeToXml(pl, &obuf);
+			fwrite(obig, 1, obuf.pos, stdout);
 		}
 		plNodeDelete(pl);
 		obuf.pos = 0;
