@@ -86,7 +86,7 @@ InitializeInterruptRedirection (
   EFI_STATUS            Status;
   EFI_PHYSICAL_ADDRESS  LegacyRegionBase;
   UINTN                 LegacyRegionLength;
-  UINT32                *IdtArray;
+  UINT32                *IDTPtr;
   UINTN                 Index;
   UINT8                 ProtectedModeBaseVector;
 
@@ -113,10 +113,11 @@ InitializeInterruptRedirection (
 
   // Patch IVT 0x68 ~ 0x6f
 
-  IdtArray = (UINT32 *) 0;
+  IDTPtr = (UINT32 *) (UINTN) (ProtectedModeBaseVector << 2);
 
   for (Index = 0; Index < 8; Index++) {
-    IdtArray[ProtectedModeBaseVector + Index] = ((EFI_SEGMENT (LegacyRegionBase + Index * 4)) << 16) | (EFI_OFFSET (LegacyRegionBase + Index * 4));
+    (void) WriteUnaligned32 (IDTPtr, ((EFI_SEGMENT (LegacyRegionBase + Index * 4)) << 16) | (EFI_OFFSET (LegacyRegionBase + Index * 4)));
+    IDTPtr++;
   }
 
   return ;
@@ -148,8 +149,9 @@ LegacyBiosInt86 (
   UINTN                 Status;
   IA32_REGISTER_SET     ThunkRegSet;
   UINT16                *Stack16;
-  volatile UINT32       *IVTPtr;
   BOOLEAN               Enabled;
+  UINT32                *IVTPtr;
+  UINTN                 IVTVal;
   
   IVTPtr = NULL;
 
@@ -196,8 +198,12 @@ LegacyBiosInt86 (
   ThunkRegSet.E.SS   = (UINT16) (((UINTN) Stack16 >> 16) << 12);
   ThunkRegSet.E.ESP  = (UINT16) (UINTN) Stack16;
 
-  ThunkRegSet.E.Eip  = (UINT16) IVTPtr[BiosInt];
-  ThunkRegSet.E.CS   = (UINT16) (IVTPtr[BiosInt] >> 16);
+  IVTPtr  = (UINT32 *) (UINTN) (BiosInt << 2);
+  IVTVal  = ReadUnaligned32 (IVTPtr);
+
+  ThunkRegSet.E.Eip  = (UINT16) IVTVal;
+  ThunkRegSet.E.CS   = (UINT16) (IVTVal >> 16);
+
   ThunkContext->RealModeState = &ThunkRegSet;
   AsmThunk16 (ThunkContext);
 
