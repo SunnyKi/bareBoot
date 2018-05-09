@@ -54,7 +54,6 @@
 #undef int32_t
 #undef int64_t
 
-#pragma pack(1)
 #ifdef _MSC_VER
 /* vasily: disable warning for non-standard anonymous struct/union
  * declarations
@@ -66,6 +65,8 @@
 struct hfs_dirrec {
     fsw_u8      _dummy;
 };
+
+#pragma pack(2)
 
 struct fsw_hfs_key
 {
