@@ -292,6 +292,8 @@
 
   BiosVideoThunkDxe/BiosVideo.inf
 
+  FatPkg/EnhancedFatDxe/Fat.inf
+
   # HFS+
 
 !ifdef VBOXHFS

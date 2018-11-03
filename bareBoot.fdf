@@ -141,7 +141,8 @@ INF  BiosVideoThunkDxe/BiosVideo.inf
 
 INF  IntelFrameworkModulePkg/Universal/DataHubDxe/DataHubDxe.inf
 
-INF  RuleOverride=BINARY FatBinPkg/EnhancedFatDxe/Fat.inf
+INF  FatPkg/EnhancedFatDxe/Fat.inf
+
 !ifdef VBOXHFS
 INF  VBoxFsDxe/VBoxHfs.inf
 !else
