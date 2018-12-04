@@ -1450,11 +1450,11 @@ KernelAndKextsPatcherStart (
     case 0:	/* No divert at all */
       break;
 
-    case 1:
+    case 1:	/* kernel msgs to screen */
       DivertLogFunction ("_kprintf", "_printf");
       break;
 
-    case 2:
+    case 2:	/* kernel msgs to com port */
       DivertLogFunction ("_printf", "_kprintf");
       break;
 
