@@ -20,3 +20,7 @@ LIBS = -lCommon
 OBJECTS = EfiLdrImage.o
 
 include $(MAKEROOT)/Makefiles/app.makefile
+
+LOCAL_TOOLS_DIR=$(shell uname -s)-$(shell uname -m)
+ 
+APPLICATION = $(EDK_TOOLS_PATH)/Bin/$(LOCAL_TOOLS_DIR)/$(APPNAME)
