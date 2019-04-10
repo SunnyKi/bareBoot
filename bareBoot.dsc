@@ -318,6 +318,10 @@
 #
 ################################################################################
 
+[PcdsFeatureFlag]
+
+  gEfiMdeModulePkgTokenSpaceGuid.PcdTurnOffUsbLegacySupport|TRUE
+
 [PcdsFixedAtBuild]
 
   gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"Apple"
