@@ -18,6 +18,7 @@ CPU=X64; export CPU
 
 exec $BBHOME/cppcheck/cppcheck.sh \
 	--library=$BBHOME/cppcheck/bareBoot.cfg \
+	--enable=information \
 	--inconclusive \
 	\
 	-D MDE_CPU_$CPU \
