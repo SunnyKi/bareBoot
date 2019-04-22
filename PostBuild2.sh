@@ -36,13 +36,14 @@ function findInPackages
   echo $1
 }
 
-if [ $# = 2 ]
+ACTIVE_PLATFORM=bareBoot
+
+if [ $# = 3 ]
 then
   PROCESSOR=$1
-  TOOLTAG=$2
+  TARGET=$2
+  TOOLTAG=$3
 fi
-
-source $WORKSPACE/Conf/target.txt
 
 if [ -z "$PROCESSOR" ]
 then
