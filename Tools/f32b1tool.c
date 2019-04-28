@@ -24,7 +24,7 @@
 
 void
 usage(char* myname) {
-	fprintf(stderr, "Usage: %s special-file-with-fat32-fs bootcodefile\n", myname);
+	fprintf(stderr, "Usage: %s /dev/rdiskXsY bootcodefile\n", myname);
 	exit(2);
 }
 
@@ -134,6 +134,7 @@ writesectors (unsigned char* sv, int sn, int sc) {
 		fprintf(stderr, "Can not write %d sectors (%d first)\n", sc, sn);
 		exit(1);
 	}
+	fflush(f32p);
 }
 
 unsigned short
@@ -162,7 +163,6 @@ main(int argc, char* argv[]) {
 	unsigned short fsis;	/* FSinfo sector number */
 	unsigned short ressec;	/* reserved sector count */
 	unsigned char* s0;
-	unsigned char* fs0 = NULL;
 	int minsectors;
 	int rc = 0;
 
@@ -178,7 +178,7 @@ main(int argc, char* argv[]) {
 
 	/* little paranoia ;-) */
 	if (s0[0x42] != 0x28) {
-			if (memcmp(&s0[0x52], "FAT32   ", 8) != 0) {
+		if (memcmp(&s0[0x52], "FAT32   ", 8) != 0) {
 			fprintf(stderr, "%s does not look like fat32fs\n", argv[1]);
 			rc = 1;
 			goto finita;
@@ -188,47 +188,55 @@ main(int argc, char* argv[]) {
 	ressec = getword(s0, 0x0E);	/* count of reserved sectors */
 	fsis = getword(s0, 0x30);	/* FSinfo sector number */
 
-	if (fsis == 0x0000 || fsis == 0xFFFF) {
+	if (fsis != 0x0000 && fsis != 0xFFFF)
+		ressec--;	/* one sector per fsinfo */
+	else
 		fsis = 0x0000;
-	} else {
-		fs0 = readsectors(fsis, 1);
-		fsis = 2 * bcsectors;	/* next after bootcode backup */
-	}
 
-	minsectors = 2 * bcsectors + (fsis ? 1 : 0);
+	minsectors = 2 * bcsectors;
+
 	if (ressec < minsectors) {
-		fprintf(stderr, "%s: not enough reserved sectors (%d), need %d\n",
+		fprintf(stderr, "%s: not enough reserved sectors (%d available, need %d)\n",
 				argv[1], ressec, minsectors);
 		rc = 1;
 		goto finita;
 	}
 
-	bkps = bcsectors;
+	if (bcsectors >= fsis) {
+		fprintf(stderr, "%s: no space for new bootcode (%d available, need %d)\n",
+			argv[1], fsis, bcsectors);
+		rc = 1;
+		goto finita;
+	}
+
+	bkps = bcsectors;	/* backup sector(s) after bootcode? */
+
 	if (fsis != 0x0000) {
-		bkps++;
+		if (fsis < minsectors) {
+			/* place backup sector(s) after FSinfo */
+			bkps = fsis + 1;
+
+			if (bkps + bcsectors - 1 > ressec) {
+				fprintf(stderr, "%s: no space for backup bootcode (%d available, need %d)\n",
+					argv[1], ressec - fsis, bcsectors);
+				rc = 1;
+				goto finita;
+			}
+		}
 	}
 
 	patchbc(bootcode, s0);
 
-	putword(fsis, bootcode, 0x30);
 	putword(bkps, bootcode, 0x32);
 
 	writesectors(bootcode, 0, bcsectors);
 	writesectors(bootcode, bcsectors, bcsectors);
 
-	if (fsis) {
-		writesectors(fs0, fsis, 1);
-	}
-
 finita:
 	f32close();
 
-	if (fs0 != NULL) {
-		free (fs0);
-	}
-
-	if (s0 != NULL) {
+	if (s0 != NULL)
 		free (s0);
-	}
-	return 0;
+
+	return rc;
 }
