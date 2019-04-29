@@ -30,7 +30,7 @@ INCLUDE_FILES = \
   $(MODULE_DIR)/Include/gptstruct.nasm \
   $(MODULE_DIR)/Include/mbrstruct.nasm
 
-all:	init $(TARGET_FILES)
+all:	bindir init $(TARGET_FILES)
 
 #=============
 
@@ -62,6 +62,9 @@ $(OUTPUT_DIR)/nopsector:	$(MODULE_DIR)/nopsector.nasmb
 	$(NASM_PREFIX)nasm $(NASMB_FLAGS) -o $@ $?
 
 #=============
+
+bindir:
+	$(MD) $(MODULE_DIR)/bin
 
 clean:
 	$(RM) $(TARGET_FILES)
