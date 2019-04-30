@@ -1,5 +1,5 @@
 /*
-;*   Copyright (c) 2016, Nikolai Saoukh. All rights reserved.<BR>
+;*   Copyright (c) 2016-2019, Nikolai Saoukh. All rights reserved.
 ;*
 ;*   This program and the accompanying materials
 ;*   are licensed and made available under the terms and conditions of the BSD License
@@ -11,7 +11,8 @@
 */
 
 /*
- * Tool to stuff oversized boot1 code to fat32 volume.
+ * Tool to stuff boot1 code to fat32 volume.
+ * WARNING! Use this tool on UNMOUNTED fs ONLY!
  * Damn foolproofness is not included.
  *
  * compile as
@@ -58,7 +59,6 @@ loadbootcode(char* bcfilename) {
 	if (bcsize < 512 || (bcsize & 511) != 0) {
 		fclose(bfp);
 		fprintf(stderr, "Bootcode size %ld of %s is not multilple of 512\n", bcsize, bcfilename);
-		bcsectors = 0;
 		exit(1);
 	}
 	bootcode = malloc(bcsize);
@@ -159,11 +159,13 @@ patchbc(unsigned char* bc, unsigned char* src) {
 
 int
 main(int argc, char* argv[]) {
-	unsigned short bkps;	/* bootcode backup sector number */
-	unsigned short fsis;	/* FSinfo sector number */
-	unsigned short ressec;	/* reserved sector count */
-	unsigned char* s0;
-	int minsectors;
+	unsigned short rsecs;	/* reserved sectors count */
+	unsigned short fsinum;	/* FSinfo sector number */
+	int tbsectors;		/* Total boot sectors (primary + backup) */
+
+	unsigned char* bs0 = NULL;	/* incore copy of boot sector 0 (original) */
+	unsigned char* fs0 = NULL;	/* incore copy of FSinfo sector */
+
 	int rc = 0;
 
 	if (argc != 3) {
@@ -174,69 +176,50 @@ main(int argc, char* argv[]) {
 
 	f32open(argv[1]);
 
-	s0 = readsectors(0, 1);
+	bs0 = readsectors(0, 1);
 
 	/* little paranoia ;-) */
-	if (s0[0x42] != 0x28) {
-		if (memcmp(&s0[0x52], "FAT32   ", 8) != 0) {
+	if (bs0[0x42] != 0x28) {
+		if (memcmp(&bs0[0x52], "FAT32   ", 8) != 0) {
 			fprintf(stderr, "%s does not look like fat32fs\n", argv[1]);
 			rc = 1;
 			goto finita;
 		}
 	}
 
-	ressec = getword(s0, 0x0E);	/* count of reserved sectors */
-	fsis = getword(s0, 0x30);	/* FSinfo sector number */
+	rsecs = getword(bs0, 0x0E);	/* Number of reserved sectors */
+	fsinum = getword(bs0, 0x30);	/* FSinfo sector number */
 
-	if (fsis != 0x0000 && fsis != 0xFFFF)
-		ressec--;	/* one sector per fsinfo */
-	else
-		fsis = 0x0000;
+	if (fsinum != 0x0000 && fsinum != 0xFFFF) {
+		fs0 = readsectors(fsinum, 1);	/* make copy for relocation */
+		rsecs--;			/* one sector for FSinfo out of total */
+	}
 
-	minsectors = 2 * bcsectors;
+	tbsectors = 2 * bcsectors;
 
-	if (ressec < minsectors) {
+	if (rsecs < tbsectors) {
 		fprintf(stderr, "%s: not enough reserved sectors (%d available, need %d)\n",
-				argv[1], ressec, minsectors);
+				argv[1], rsecs, tbsectors);
 		rc = 1;
 		goto finita;
 	}
 
-	if (bcsectors >= fsis) {
-		fprintf(stderr, "%s: no space for new bootcode (%d available, need %d)\n",
-			argv[1], fsis, bcsectors);
-		rc = 1;
-		goto finita;
+	patchbc(bootcode, bs0);
+
+	if (fs0 != NULL) {
+		writesectors(fs0, tbsectors, 1);
+		putword(tbsectors, bootcode, 0x30);
 	}
 
-	bkps = bcsectors;	/* backup sector(s) after bootcode? */
-
-	if (fsis != 0x0000) {
-		if (fsis < minsectors) {
-			/* place backup sector(s) after FSinfo */
-			bkps = fsis + 1;
-
-			if (bkps + bcsectors - 1 > ressec) {
-				fprintf(stderr, "%s: no space for backup bootcode (%d available, need %d)\n",
-					argv[1], ressec - fsis, bcsectors);
-				rc = 1;
-				goto finita;
-			}
-		}
-	}
-
-	patchbc(bootcode, s0);
-
-	putword(bkps, bootcode, 0x32);
-
+	putword(bcsectors, bootcode, 0x32);
 	writesectors(bootcode, 0, bcsectors);
 	writesectors(bootcode, bcsectors, bcsectors);
 
 finita:
 	f32close();
 
-	if (s0 != NULL)
-		free (s0);
+	if (bs0 != NULL) { free (bs0); }
+	if (fs0 != NULL) { free (fs0); }
 
 	return rc;
 }
