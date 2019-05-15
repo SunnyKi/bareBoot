@@ -102,7 +102,7 @@ INF  Speedup/Bus/Usb/UsbKbDxe/UsbKbDxe.inf
 INF  Speedup/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
 !else
 !ifndef NO_OHCI
-INF  QuarkSocPkg/QuarkSouthCluster/Usb/Ohci/Dxe/OhciDxe.inf
+INF  OhciDxe/OhciDxe.inf
 !endif
 !ifndef NO_UHCI
 INF  MdeModulePkg/Bus/Pci/UhciDxe/UhciDxe.inf
