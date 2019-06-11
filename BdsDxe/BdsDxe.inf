@@ -43,6 +43,7 @@
   Bds.h
   BdsEntry.c
   BmLib.c
+  BootMaintLib.h
 
   BootMngr/BootManager.c
   BootMngr/BootManager.h
@@ -60,7 +61,9 @@
   GenericBds/BdsUsbLegacy.c
   GenericBds/InternalBdsLib.h
 
+  Graphics/Graphics.h
   Graphics/Graphics.c
+  Graphics/picopng.h
   Graphics/picopng.c
 
   String.c
@@ -70,22 +73,41 @@
 
   macosx/AcpiPatcher.c
   macosx/Console.c
+  macosx/ConsoleControl.h
   macosx/DataHubCpu.c
   macosx/Events.c
   macosx/Hibernate.c
+  macosx/LoaderUefi.h
+  macosx/OsxSmBios.h
   macosx/SetVarProto.c
   macosx/Utils.c
   macosx/Xuid.c
+  macosx/ati.h
+  macosx/ati_reg.h
+  macosx/boot.h
   macosx/cpu.c
+  macosx/cpu.h
   macosx/device_inject.c
+  macosx/device_inject.h
   macosx/device_tree.c
+  macosx/device_tree.h
   macosx/fixSDT.c
+  macosx/gma.h
   macosx/kernel_patcher.c
+  macosx/kernel_patcher.h
   macosx/kext_inject.c
+  macosx/kext_inject.h
   macosx/kext_patcher.c
+  macosx/loader.h
+  macosx/memvendors.h
+  macosx/nlist.h
+  macosx/nvidia.h
   macosx/nvram.c
   macosx/smbios.c
   macosx/spd.c
+  macosx/spd.h
+  macosx/sse3_5_patcher.h
+  macosx/sse3_patcher.h
 
 [Packages]
   bareBoot.dec

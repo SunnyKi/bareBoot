@@ -15,6 +15,7 @@
 #
 
 [Sources]
+  ../../Include/Library/ShiftKeysLib.h
   ShiftKeysLib.c
 
 [Packages]

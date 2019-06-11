@@ -15,6 +15,7 @@
 #
 
 [Sources]
+  ../../Include/Library/LegacyBiosThunkLib.h
   LegacyBiosThunkLib.c
 
 [Packages]

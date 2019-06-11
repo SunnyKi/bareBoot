@@ -2,7 +2,7 @@
 #  Apple Property List library
 ##
 
-# Copyright (c) 2013 Nikolai Saoukh. All rights reserved.
+# Copyright (c) 2013-2019 Nikolai Saoukh. All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -38,10 +38,18 @@
 [Sources]
   b64/cdecode.c
   b64/cencode.c
+
+  b64/cdecode.h
+  b64/cencode.h
+
   plist_helpers_edk2.c
   plist_internal.c
   plist_xml_out.c
   plist_xml_parser.c
+
+  plist.h
+  plist_helpers.h
+  plist_xml_parser.h
 
 [Packages]
   MdePkg/MdePkg.dec

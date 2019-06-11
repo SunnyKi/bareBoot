@@ -38,11 +38,13 @@
   LegacyBiosThunkLib
 
 [Sources]
-  BiosVideo.h
+  915resolution.c
+  915resolution.h
+  AtomBios.h
   BiosVideo.c
+  BiosVideo.h
   ComponentName.c
   VesaBiosExtensions.h
-  915resolution.c
 
 [Protocols]
   gEfiPciIoProtocolGuid
