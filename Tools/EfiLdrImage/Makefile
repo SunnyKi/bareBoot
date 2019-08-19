@@ -10,7 +10,10 @@
 # THE PROGRAM IS DISTRIBUTED UNDER THE BSD LICENSE ON AN "AS IS" BASIS,
 # WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #
-!INCLUDE ..\Makefiles\ms.common
+
+MAKEROOT = $(EDK_TOOLS_PATH)\Source\C
+
+!INCLUDE $(MAKEROOT)\Makefiles\ms.common
 
 APPNAME = EfiLdrImage
 
@@ -18,5 +21,5 @@ LIBS = $(LIB_PATH)\Common.lib
 
 OBJECTS = EfiLdrImage.obj
 
-!INCLUDE ..\Makefiles\ms.app
+!INCLUDE $(MAKEROOT)\Makefiles\ms.app
 
