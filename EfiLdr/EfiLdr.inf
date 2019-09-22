@@ -44,12 +44,7 @@
   Debug.c
   PeLoader.c
   Support.c
-  #TianoDecompress.c
-  #TianoDecompress.h
   LzmaDecompress.h
-
-[Guids]
-  gTianoCustomDecompressGuid
 
 [BuildOptions]
   MSFT:*_*_*_DLINK_FLAGS = /BASE:0x10000
