@@ -458,7 +458,6 @@ extern EFI_GUID                        gEfiAppleBootGuid;
 extern EFI_GUID                        gEfiMiscSubClassGuid;
 extern BOOLEAN                         SSSE3;
 extern EFI_UNICODE_COLLATION_PROTOCOL  *gUnicodeCollation;
-extern GLOBAL_REMOVE_IF_UNREFERENCED CONST CHAR8 *EfiMemoryTypeDesc[14];
 extern UINT64                          gSleepImageOffset;
 extern BOOLEAN                         gIsHibernation;
 
