@@ -246,6 +246,8 @@ GetFunction (
 
   binary = (UINT8 *) KernelData;
 
+  *Addr = 0;
+
   if (is64BitKernel) {
     binaryIndex = sizeof (struct mach_header_64);
   } else {
@@ -1170,6 +1172,10 @@ DivertLogFunction (
   GetFunction (dstName, &dstAddr);
   GetFunction (srcName, &srcAddr);
 
+  if (dstAddr == 0 || srcAddr == 0) {
+    DBG ("%a: Failure! Either %a or %a not found\n", __FUNCTION__, srcName, dstName);
+    return;
+  }
 
   if (srcAddr > dstAddr) {
     delta = (0xFFFFFFFF - (srcAddr - dstAddr)) - 4;
