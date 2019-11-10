@@ -1458,10 +1458,12 @@ KernelAndKextsPatcherStart (
 
     case 1:	/* kernel msgs to screen */
       DivertLogFunction ("_kprintf", "_printf");
+      DivertLogFunction ("_IOLog", "_printf");
       break;
 
     case 2:	/* kernel msgs to com port */
       DivertLogFunction ("_printf", "_kprintf");
+      DivertLogFunction ("_IOLog", "_kprintf");
       break;
 
     default:	/* Configuration error. User barfed */
