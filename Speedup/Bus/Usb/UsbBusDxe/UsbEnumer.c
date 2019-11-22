@@ -160,7 +160,7 @@ UsbCreateInterface (
 
   if (EFI_ERROR (Status)) {
     gBS->UninstallMultipleProtocolInterfaces (
-           &UsbIf->Handle,
+           UsbIf->Handle,
            &gEfiDevicePathProtocolGuid,
            UsbIf->DevicePath,
            &gEfiUsbIoProtocolGuid,
