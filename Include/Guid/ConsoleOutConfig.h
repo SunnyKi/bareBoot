@@ -1,5 +1,5 @@
 /**@file
-  Setup Variable data structure for Duet platform.
+  Setup Variable data structure for bareBoot platform.
 
 Copyright (c) 2010, Intel Corporation. All rights reserved.<BR>
 This program and the accompanying materials                          
@@ -12,10 +12,10 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
-#ifndef __DUET_CONSOLEOUT_CONFIG_H__
-#define __DUET_CONSOLEOUT_CONFIG_H__
+#ifndef __BAREBOOT_CONSOLEOUT_CONFIG_H__
+#define __BAREBOOT_CONSOLEOUT_CONFIG_H__
 
-#define DUET_CONSOLEOUT_CONFIG_GUID  \
+#define BAREBOOT_CONSOLEOUT_CONFIG_GUID  \
   { 0xED150714, 0xDF30, 0x407D, { 0xB2, 0x4A, 0x4B, 0x74, 0x2F, 0xD5, 0xCE, 0xA2 } }
 
 #pragma pack(1)
@@ -25,9 +25,9 @@ typedef struct {
   //
   UINT32        ConOutColumn;
   UINT32        ConOutRow;
-} DUET_CONSOLEOUT_CONFIG;
+} BAREBOOT_CONSOLEOUT_CONFIG;
 #pragma pack()
 
-extern EFI_GUID   gDuetConsoleOutConfigGuid;
+extern EFI_GUID   gBareBootConsoleOutConfigGuid;
 
 #endif

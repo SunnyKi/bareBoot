@@ -3,7 +3,7 @@
   
   ACPI power management timer is a 24-bit or 32-bit fixed rate free running count-up
   timer that runs off a 3.579545 MHz clock. 
-  When startup, Duet will check the FADT to determine whether the PM timer is a 
+  When startup, bareBoot will check the FADT to determine whether the PM timer is a 
   32-bit or 24-bit timer.
 
   Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>

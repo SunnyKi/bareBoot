@@ -1,7 +1,7 @@
 ## @file
 #  An EFI/Framework Emulation Platform with UEFI HII interface supported.
 #
-#  Developer's UEFI Emulation. DUET provides an EFI/UEFI IA32/X64 environment on legacy BIOS,
+#  bareBoot provides an EFI/UEFI IA32/X64 environment on legacy BIOS,
 #  to help developing and debugging native EFI/UEFI drivers.
 #
 #  Copyright (c) 2010 - 2011, Intel Corporation. All rights reserved.<BR>

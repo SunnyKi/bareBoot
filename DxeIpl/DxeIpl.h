@@ -12,8 +12,8 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 
 **/
 
-#ifndef _DUET_DXEIPL_H_
-#define _DUET_DXEIPL_H_
+#ifndef _BAREBOOT_DXEIPL_H_
+#define _BAREBOOT_DXEIPL_H_
 
 #include <FrameworkPei.h>
 
@@ -45,5 +45,5 @@ WITHOUT WARRANTIES OR REPRESENTATIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED.
 #include <Library/PrintLib.h>
 #include <Library/IoLib.h>
 
-#endif // _DUET_DXEIPL_H_
+#endif // _BAREBOOT_DXEIPL_H_
 

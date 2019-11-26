@@ -1,7 +1,7 @@
 ## @file 
 #
 # This Package provides all definitions(including functions, MACROs, structures and library classes)
-# and libraries instances, which are only used by Duet platform.
+# and libraries instances, which are only used by bareBoot platform.
 #
 # Copyright (c) 2007 - 2011, Intel Corporation. All rights reserved.<BR>
 #
@@ -34,7 +34,7 @@
   gEfiPciOptionRomTableGuid     = { 0x7462660F, 0x1CBD, 0x48DA, { 0xAD, 0x11, 0x91, 0x71, 0x79, 0x13, 0x83, 0x1C }}
 
   ## Include/Guid/ConsoleOutConfig.h
-  gDuetConsoleOutConfigGuid     = { 0xED150714, 0xDF30, 0x407D, { 0xB2, 0x4A, 0x4B, 0x74, 0x2F, 0xD5, 0xCE, 0xA2 }}
+  gBareBootConsoleOutConfigGuid     = { 0xED150714, 0xDF30, 0x407D, { 0xB2, 0x4A, 0x4B, 0x74, 0x2F, 0xD5, 0xCE, 0xA2 }}
   
   ## Include/Guid/DxeCoreFileName.h
   gDxeCoreFileNameGuid          = { 0xD6A2CB7F, 0x6A18, 0x4e2f, { 0xB4, 0x3B, 0x99, 0x20, 0xA7, 0x33, 0x70, 0x0A }}

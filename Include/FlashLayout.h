@@ -25,7 +25,7 @@ Abstract:
 #include "EfiFlashMap.h"
 
 //
-// Firmware Volume Information for DUET
+// Firmware Volume Information for BAREBOOT
 //
 #define FV_BLOCK_SIZE               0x10000
 #define FV_BLOCK_MASK               0x0FFFF
