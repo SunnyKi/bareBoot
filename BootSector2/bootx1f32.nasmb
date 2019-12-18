@@ -230,6 +230,7 @@ nextStage:
 ;--------------------------------------------------------------------------
 
 	mov	dl, [zBIOSDriveNumber]	; load BIOS drive number
+	mov	si, gDatum		; load BPB address
 	jmp	(kPayloadLowAddr >> 4):((kPayloadLowAddr & 0xFFFF) + XOFFSET)
 
 ;--------------------------------------------------------------------------
