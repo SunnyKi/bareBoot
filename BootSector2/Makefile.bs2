@@ -43,10 +43,10 @@ $(OUTPUT_DIR)/bootx0ss:	$(MODULE_DIR)/bootx0.nasmb $(INCLUDE_FILES)
 #=============
 
 $(OUTPUT_DIR)/bootx1f32:	$(MODULE_DIR)/bootx1f32.nasmb $(INCLUDE_FILES)
-	$(NASM_PREFIX)nasm $(NASMB_FLAGS) -DBOOTSEL=0 -DUSESIDL=1 -DVERBOSE=1 -DCLOVER_COMPAT=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasmb
+	$(NASM_PREFIX)nasm $(NASMB_FLAGS) -DBOOTSEL=0 -DUSESIDL=1 -DVERBOSE=1 -DXOFFSET=0x200 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasmb
 
 $(OUTPUT_DIR)/bootx1f32alt:	$(MODULE_DIR)/bootx1f32.nasmb $(INCLUDE_FILES)
-	$(NASM_PREFIX)nasm $(NASMB_FLAGS) -DBOOTSEL=1 -DUSESIDL=1 -DVERBOSE=1 -DCLOVER_COMPAT=1 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasmb
+	$(NASM_PREFIX)nasm $(NASMB_FLAGS) -DBOOTSEL=1 -DUSESIDL=1 -DVERBOSE=1 -DXOFFSET=0x200 -i $(MODULE_DIR)/Include/ -o $@ $(MODULE_DIR)/bootx1f32.nasmb
 
 #=============
 
